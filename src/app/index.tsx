@@ -13,7 +13,6 @@ import {
   SizableText
 } from 'tamagui';
 import { Sparkles, Moon, Sun, ArrowRight, Check } from '@tamagui/lucide-icons-2';
-import '../../tamagui.config';
 
 export default function Index() {
   const [counter, setCounter] = useState(0);
@@ -37,7 +36,7 @@ export default function Index() {
             <Sparkles size={28} color="$color" />
             <H1 textAlign="center" color="$color">HaydiGiy</H1>
           </XStack>
-          <Paragraph textAlign="center" theme={"alt1" as any} size="$4">
+          <Paragraph textAlign="center" color="$color10" size="$4">
             Tamagui is now fully configured!
           </Paragraph>
         </YStack>
@@ -50,13 +49,12 @@ export default function Index() {
           width="100%" 
           maxWidth={350} 
           padding="$4"
-          {...{ animation: 'bouncy' }}
-          hoverStyle={{ scale: 0.98 }}
-          pressStyle={{ scale: 0.95 }}
+          hoverStyle={{ scale: 0.98, transition: 'bouncy' }}
+          pressStyle={{ scale: 0.95, transition: 'bouncy' }}
         >
           <Card.Header>
             <H3>Ready to Build</H3>
-            <Paragraph theme={"alt2" as any}>React Native + Web Ready</Paragraph>
+            <Paragraph color="$color10">React Native + Web Ready</Paragraph>
           </Card.Header>
           
           <YStack paddingVertical="$4" gap="$2">
@@ -76,9 +74,9 @@ export default function Index() {
 
           <Card.Footer>
             <XStack flex={1} justifyContent="space-between" alignItems="center">
-              <Button 
-                size="$3" 
-                theme={"active" as any} 
+              <Button
+                size="$3"
+                theme="accent"
                 iconAfter={ArrowRight}
                 onPress={() => setCounter(c => c + 1)}
               >

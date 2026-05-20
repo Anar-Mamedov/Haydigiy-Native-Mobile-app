@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
-import { TamaguiProvider, Theme } from 'tamagui';
+import { TamaguiProvider } from 'tamagui';
 import config from '../../tamagui.config';
 import { loadWebStyles } from '../theme/web-css';
 
@@ -31,13 +31,11 @@ export default function RootLayout() {
 
   return (
     <TamaguiProvider config={config} defaultTheme={colorScheme === 'dark' ? 'dark' : 'light'}>
-      <Theme name={colorScheme === 'dark' ? 'dark' : 'light'}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
-      </Theme>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      />
     </TamaguiProvider>
   );
 }
