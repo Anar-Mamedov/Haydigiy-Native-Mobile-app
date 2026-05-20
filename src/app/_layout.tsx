@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
-import { TamaguiProvider } from 'tamagui';
-import config from '../../tamagui.config';
+import { AppProviders } from '@/lib/providers/app-providers';
 import { loadWebStyles } from '../theme/web-css';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
@@ -12,8 +10,6 @@ SplashScreen.preventAutoHideAsync();
 loadWebStyles();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  
   const [loaded, error] = useFonts({
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
@@ -30,12 +26,12 @@ export default function RootLayout() {
   }
 
   return (
-    <TamaguiProvider config={config} defaultTheme={colorScheme === 'dark' ? 'dark' : 'light'}>
+    <AppProviders>
       <Stack
         screenOptions={{
           headerShown: false,
         }}
       />
-    </TamaguiProvider>
+    </AppProviders>
   );
 }

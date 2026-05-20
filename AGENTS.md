@@ -54,6 +54,7 @@ For this project, use a scalable architecture where each library has one clear r
 - List performance: use FlashList for product feeds, category results, and other heavy scrolling commerce lists instead of default FlatList when performance matters.
 - Images: use Expo Image for product and marketing visuals so disk and memory caching are handled consistently.
 - Forms and validation: use React Hook Form with Zod for checkout, auth, profile, and other validated forms.
+- If a selected native library is not supported in Expo Go, do not let the app crash in Expo Go during development. Either require a development build explicitly or provide a safe development fallback while preserving the production architecture.
 
 # Required Folder Architecture
 
@@ -134,7 +135,9 @@ Configure the project with Expo Application Services (EAS) from the beginning.
 - Add tests for critical business logic, stores, validators, schemas, pure utility functions, and interactive reusable components.
 - For components, write tests when they contain user interaction, state transitions, conditional rendering, form behavior, data transformation, or other meaningful logic.
 - Purely visual wrapper components with no meaningful logic do not always require dedicated tests, but shared interactive primitives should be tested.
+- If a reusable interactive component is theme-aware or changes appearance across light and dark modes, test that its key labels, icons, and interactive content still render correctly after theme changes.
 - For bug fixes, add a regression test whenever the affected layer can be tested reasonably.
+- After theme, navigation, layout shell, provider, or reusable UI changes, verify the affected flows in the running app instead of relying only on typecheck and tests.
 - Every remote-data screen and async flow must explicitly handle `loading`, `error`, `empty`, and `success` states.
 - Do not allow silent failures for API requests, persistence, checkout steps, auth flows, or cart synchronization.
 - Centralize environment configuration and validate required environment variables at startup or configuration load time.
@@ -163,12 +166,22 @@ This application must use Tamagui as its primary and enforced UI system. The pro
 - Prefer Tamagui primitives such as `Stack`, `XStack`, `YStack`, `ZStack`, `Text`, `Button`, `Input`, and other Tamagui-first building blocks for application UI.
 - If a non-Tamagui native or third-party view is required, wrap it behind a clean abstraction and integrate it with the Tamagui theme and token system instead of scattering raw usage across screens.
 - Support both light theme and dark theme for every screen, state, and reusable component.
+- Theme support is not considered complete until the screen is visually checked in both light mode and dark mode and all core surfaces remain readable.
+- Safe areas, status bar styling, tab bars, navigation containers, modal surfaces, cards, sheets, and scroll containers must follow the active theme and must not stay stuck in light colors while the rest of the UI is dark, or vice versa.
+- Shared buttons, toggles, segmented controls, tabs, icons, and text labels must maintain readable contrast in both themes.
+- Shared interactive UI primitives such as buttons, segmented controls, toggles, tabs, and similar controls must not rely on implicit default text or icon coloring when theme changes can make content unreadable.
+- If text or icon contrast needs to be enforced for reliability, define that behavior inside the reusable component itself instead of patching individual screens.
+- Theme switching must preserve content visibility. Labels, icons, and other button content must not disappear, collapse, clip unexpectedly, or become unreadable after changing between light and dark modes.
+- Reusable theme-aware interactive components should be verified not only for static appearance but also for transition correctness after switching themes.
+- When a reusable segmented control, toggle group, or tab-like component is created, ensure its layout remains stable and each segment has enough space for its icon and label in both themes.
 - Do not hard-code colors, spacing, radii, typography sizes, shadows, or similar design values when a token or theme value should be used instead.
 - Prefer theme values and tokens over raw style literals so design stays consistent and theme-aware.
 - Use Tamagui theme and token APIs for styling decisions, and use `useTheme()` only when runtime theme access is actually needed.
+- Do not call Tamagui token readers or theme-dependent APIs at module scope in a way that can run before Tamagui has been initialized for the app. Theme-dependent reads should happen through provider-safe code paths or centralized helpers that do not break runtime initialization.
 - Prefer reusable `styled()` components and variants over repetitive one-off styling.
 - Avoid building screen layouts with raw React Native `View`, `Text`, or `StyleSheet` for normal app UI when Tamagui components can express the same result.
 - Keep theme definitions, tokens, and design primitives centralized so style behavior is predictable across the entire application.
+- If a reusable UI primitive needs explicit text or icon styling for contrast, define that behavior inside the reusable component so screens do not have to patch theme issues locally.
 
 # Accessibility And Observability Standards
 
