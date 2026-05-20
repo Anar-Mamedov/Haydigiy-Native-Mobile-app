@@ -1,0 +1,21 @@
+diff --git a/node_modules/expo-modules-core/src/sweet/setUpJsLogger.fx.ts b/node_modules/expo-modules-core/src/sweet/setUpJsLogger.fx.ts
+index bda3440..65673e7 100644
+--- a/node_modules/expo-modules-core/src/sweet/setUpJsLogger.fx.ts
++++ b/node_modules/expo-modules-core/src/sweet/setUpJsLogger.fx.ts
+@@ -47,9 +47,13 @@ if (
+     ];
+ 
+     for (const listener of listeners) {
+-      NativeJSLogger.addListener(listener.eventName, ({ message }: { message: string }) => {
+-        listener.action(message);
+-      });
++      if (typeof NativeJSLogger.addListener === 'function') {
++        NativeJSLogger.addListener(listener.eventName, ({ message }: { message: string }) => {
++          listener.action(message);
++        });
++      } else {
++        console.warn(`[Expo] NativeJSLogger.addListener is not a function. Keys:`, Object.keys(NativeJSLogger));
++      }
+     }
+   }
+ }
