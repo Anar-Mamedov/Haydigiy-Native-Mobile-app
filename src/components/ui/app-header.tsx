@@ -1,6 +1,6 @@
 import { useRouter, usePathname } from 'expo-router';
 import { Heart, Menu, ShoppingCart, UserRound, Search } from '@tamagui/lucide-icons-2';
-import { Button, Theme, XStack, YStack, Paragraph } from 'tamagui';
+import { Button, Theme, XStack, YStack, Paragraph, useTheme, useThemeName } from 'tamagui';
 import { useCartStore, calculateCartItemCount } from '@/features/cart/store/use-cart-store';
 import { Image } from 'expo-image';
 
@@ -9,10 +9,14 @@ export function AppHeader() {
   const pathname = usePathname();
   const items = useCartStore((state) => state.items);
   const cartCount = calculateCartItemCount(items);
+  const theme = useTheme();
+  const themeName = useThemeName();
 
-  const headerBg = '#F6F6F6';
-  const borderBottomColor = '#E5E7EB';
-  const iconColor = 'black';
+  const isDark = themeName === 'dark' || themeName.includes('dark');
+
+  const headerBg = isDark ? theme.background.val : '#F6F6F6';
+  const borderBottomColor = isDark ? theme.borderColor.val : '#E5E7EB';
+  const iconColor = isDark ? 'white' : 'black';
 
   // The web mobile header logic: homepage vs subpages
   const isHomePage = pathname === '/' || pathname === '/(tabs)' || pathname === '/(tabs)/';
@@ -46,8 +50,8 @@ export function AppHeader() {
   return (
     <XStack
       alignItems="center"
-      backgroundColor={headerBg}
-      borderBottomColor={borderBottomColor}
+      backgroundColor={headerBg as any}
+      borderBottomColor={borderBottomColor as any}
       borderBottomWidth={1}
       height={56}
       justifyContent="space-between"
@@ -84,6 +88,7 @@ export function AppHeader() {
             source={require('../../../assets/images/hg-logo.svg')}
             style={{ width: 115, height: 32 }}
             contentFit="contain"
+            tintColor={isDark ? 'white' : undefined}
           />
         </Button>
       </XStack>
