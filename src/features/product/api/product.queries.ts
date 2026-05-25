@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { productKeys } from '@/features/product/api/product.keys';
 import { mapAvailableFilters, mapProductDto, mapSearchProductDto } from '@/features/product/api/product.mapper';
 import {
@@ -55,6 +55,9 @@ export function useInfiniteSearchProductsQuery(filters: Omit<SearchProductsParam
       const { current_page, last_page } = lastPage.pagination;
       return current_page < last_page ? current_page + 1 : undefined;
     },
+    // Keep the previous results and filter options on screen while a new filter
+    // selection is being fetched, so toggling filters doesn't blank the list.
+    placeholderData: keepPreviousData,
   });
 }
 

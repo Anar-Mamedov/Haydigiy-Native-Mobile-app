@@ -49,11 +49,14 @@ function collectExpandableIds(nodes: CategoryNode[]): number[] {
 export function CategoryFilterTree({ activeIds, categories, onToggle }: CategoryFilterTreeProps) {
   const tree = useMemo(() => buildCategoryTree(categories), [categories]);
   const expandableIds = useMemo(() => collectExpandableIds(tree), [tree]);
+  const expandableKey = expandableIds.join(',');
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set(expandableIds));
 
+  // Re-expand only when the set of expandable categories actually changes by content,
+  // not on every re-render (which would reset the user's expand/collapse state).
   useEffect(() => {
-    setExpandedIds(new Set(expandableIds));
-  }, [expandableIds]);
+    setExpandedIds(new Set(expandableKey.length ? expandableKey.split(',').map(Number) : []));
+  }, [expandableKey]);
 
   const toggleExpanded = (id: number) => {
     setExpandedIds((current) => {

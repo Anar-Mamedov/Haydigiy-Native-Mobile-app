@@ -38,4 +38,18 @@ describe('CategoryFilterTree', () => {
     fireEvent.press(screen.getByLabelText('KADIN alt kategorilerini gizle'));
     expect(screen.queryByLabelText('Kadın Alt Giyim kategori filtresi')).toBeNull();
   });
+
+  it('keeps the expand/collapse state when re-rendered with an equivalent category list', () => {
+    const { rerender } = renderWithTamagui(
+      <CategoryFilterTree activeIds={[]} categories={categories} onToggle={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByLabelText('KADIN alt kategorilerini gizle'));
+    expect(screen.queryByLabelText('Kadın Alt Giyim kategori filtresi')).toBeNull();
+
+    // A new array reference with identical content (as happens on every parent
+    // re-render after a checkbox toggle) must not reset the collapsed state.
+    rerender(<CategoryFilterTree activeIds={[]} categories={[...categories]} onToggle={jest.fn()} />);
+    expect(screen.queryByLabelText('Kadın Alt Giyim kategori filtresi')).toBeNull();
+  });
 });
