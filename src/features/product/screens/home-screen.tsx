@@ -1,110 +1,179 @@
-import { useRouter } from 'expo-router';
-import { ShoppingBag } from '@tamagui/lucide-icons-2';
-import { H1, Paragraph, Spinner, XStack, YStack } from 'tamagui';
-import { AppButton, AppScreen, EmptyState, SectionCard, ThemeToggle } from '@/components/ui';
-import { CartSummaryCard } from '@/features/cart/components/cart-summary-card';
-import { useCartStore } from '@/features/cart/store/use-cart-store';
-import { useFeaturedProductsQuery } from '@/features/product/api/product.queries';
-import { ProductGrid } from '@/features/product/components/product-grid';
-import { useAppTheme } from '@/lib/theme/use-app-theme';
-import { Product } from '@/types/product.types';
+import { useState } from 'react';
+import { RefreshControl, useWindowDimensions } from 'react-native';
+import { ScrollView, Paragraph, Spinner, XStack, YStack } from 'tamagui';
+import { AppHeader, AppScreen, EmptyState } from '@/components/ui';
+import { useMobilePageDesignQuery } from '@/features/product/api/page-design.queries';
+import { HomeBannerSection } from '@/features/product/components/home-banner-section';
+import { HomeHeadingSection } from '@/features/product/components/home-heading-section';
+import { HomeSliderSection } from '@/features/product/components/home-slider-section';
+import { HomeStorySection } from '@/features/product/components/home-story-section';
+import { HomeTextSection } from '@/features/product/components/home-text-section';
+import { MobileHomeSearch } from '@/features/product/components/mobile-home-search';
+import { HomeFooter } from '@/features/product/components/home-footer';
+import { BannerContent, StoryContent, HeadingContent, TextContent, Section } from '@/types/page-design.types';
 
 export function HomeScreen() {
-  const router = useRouter();
-  const addItem = useCartStore((state) => state.addItem);
-  const { data, isError, isPending, refetch } = useFeaturedProductsQuery();
-  const { setThemePreference, themePreference } = useAppTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const containerWidth = windowWidth - 20; // 10px padding on each side to match web mobile layout
 
-  const handleAddToCart = (product: Product) => {
-    addItem(product);
+  const {
+    data: designData,
+    isPending,
+    isError,
+    refetch: refetchDesign,
+  } = useMobilePageDesignQuery();
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetchDesign();
+    setIsRefreshing(false);
   };
 
-  const handleProductPress = (product: Product) => {
-    router.push({
-      params: { id: product.id },
-      pathname: '/product/[id]',
-    });
+  const handleRetry = () => {
+    refetchDesign();
+  };
+
+  // Group dynamic sections in order
+  const activeSections = designData?.sections
+    ? [...designData.sections]
+        .filter((section) => section.status)
+        .sort((a, b) => a.order - b.order)
+    : [];
+
+  // Group sections by row matching the 12-column CSS grid system of the web mobile layout
+  const rows: Section[][] = [];
+  let currentRow: Section[] = [];
+  let currentSpan = 0;
+
+  activeSections.forEach((section) => {
+    const span = section.type === 'banner' ? (section.width_ratio ?? 12) : 12;
+
+    if (currentSpan + span > 12) {
+      if (currentRow.length > 0) {
+        rows.push(currentRow);
+      }
+      currentRow = [section];
+      currentSpan = span;
+    } else {
+      currentRow.push(section);
+      currentSpan += span;
+    }
+  });
+
+  if (currentRow.length > 0) {
+    rows.push(currentRow);
+  }
+
+  const renderSection = (section: Section, width: number) => {
+    switch (section.type) {
+      case 'story':
+        return (
+          <HomeStorySection
+            content={section.content as StoryContent}
+            key={section.id}
+          />
+        );
+      case 'slider':
+        return (
+          <HomeSliderSection
+            content={section.content as StoryContent}
+            key={section.id}
+          />
+        );
+      case 'banner':
+        return (
+          <HomeBannerSection
+            content={section.content as BannerContent}
+            key={section.id}
+            width={width}
+          />
+        );
+      case 'heading':
+        return (
+          <HomeHeadingSection
+            content={section.content as HeadingContent}
+            key={section.id}
+          />
+        );
+      case 'text':
+        return (
+          <HomeTextSection
+            content={section.content as TextContent}
+            key={section.id}
+          />
+        );
+      default:
+        return null;
+    }
   };
 
   return (
-    <AppScreen scrollable={false}>
-      <YStack gap="$4">
-        <SectionCard>
-          <YStack gap="$4">
-            <XStack alignItems="center" justifyContent="space-between">
-              <YStack gap="$2">
-                <XStack alignItems="center" gap="$2">
-                  <ShoppingBag color="$color" size={24} />
-                  <H1 size="$9">HaydiGiy</H1>
-                </XStack>
-                <Paragraph color="$color10">
-                  Trendyol-style mobile commerce starter built with Expo Router, Tamagui, Query,
-                  and Zustand persistence.
-                </Paragraph>
-              </YStack>
-            </XStack>
-            <ThemeToggle onValueChange={setThemePreference} value={themePreference} />
-            <XStack gap="$3">
-              <AppButton flex={1} onPress={() => router.push('/(tabs)/cart')}>
-                Open cart
-              </AppButton>
-              <AppButton flex={1} onPress={() => router.push('/checkout')}>
-                Checkout
-              </AppButton>
-            </XStack>
-          </YStack>
-        </SectionCard>
+    <AppScreen scrollable={false} header={<AppHeader />} padding={0} gap={0}>
 
-        <CartSummaryCard />
-
-        <YStack flex={1} gap="$3">
-          <XStack alignItems="center" justifyContent="space-between">
-            <YStack gap="$1">
-              <Paragraph fontSize="$6" fontWeight="700">
-                Featured picks
-              </Paragraph>
-              <Paragraph color="$color10">
-                FlashList + Expo Image + reusable Tamagui product cards
-              </Paragraph>
-            </YStack>
-          </XStack>
-
-          {isPending ? (
-            <SectionCard>
-              <XStack alignItems="center" gap="$3" justifyContent="center" padding="$4">
-                <Spinner />
-                <Paragraph>Loading featured products...</Paragraph>
-              </XStack>
-            </SectionCard>
-          ) : null}
-
-          {isError ? (
-            <EmptyState
-              actionLabel="Retry loading"
-              description="The product feed could not be loaded. Retry the query to verify the data flow."
-              onActionPress={() => refetch()}
-              title="Unable to load featured products"
-            />
-          ) : null}
-
-          {!isPending && !isError && data?.length === 0 ? (
-            <EmptyState
-              description="No products were returned for the featured feed."
-              title="Featured feed is empty"
-            />
-          ) : null}
-
-          {!isPending && !isError && data?.length ? (
-            <YStack flex={1}>
-              <ProductGrid
-                onAddToCart={handleAddToCart}
-                onProductPress={handleProductPress}
-                products={data}
-              />
-            </YStack>
-          ) : null}
+      {isPending ? (
+        <YStack alignItems="center" flex={1} justifyContent="center" gap="$3">
+          <Spinner color="#f27a1a" size="large" />
+          <Paragraph color="$color10">Yükleniyor...</Paragraph>
         </YStack>
-      </YStack>
+      ) : null}
+
+      {isError ? (
+        <EmptyState
+          actionLabel="Tekrar Dene"
+          description="Sayfa yüklenirken bir sorun oluştu. Lütfen bağlantınızı kontrol edip tekrar deneyin."
+          onActionPress={handleRetry}
+          title="Sayfa Yüklenemedi"
+        />
+      ) : null}
+
+      {!isPending && !isError ? (
+        <ScrollView
+          flex={1}
+          refreshControl={
+            <RefreshControl
+              colors={['#f27a1a']}
+              onRefresh={handleRefresh}
+              refreshing={isRefreshing}
+              tintColor="#f27a1a"
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          <YStack paddingTop={8} paddingHorizontal={10} paddingBottom="$4" width="100%">
+            <YStack paddingHorizontal={8} width="100%">
+              <MobileHomeSearch />
+            </YStack>
+
+            <YStack gap={12} marginTop={10} width="100%">
+              {rows.map((row, rowIndex) => {
+                const isSingleFullWidth =
+                  row.length === 1 &&
+                  (row[0].type !== 'banner' || (row[0].width_ratio ?? 12) === 12);
+
+                if (isSingleFullWidth) {
+                  return renderSection(row[0], containerWidth);
+                }
+
+                return (
+                  <XStack gap={12} key={rowIndex} width="100%">
+                    {row.map((section) => {
+                      const span = section.type === 'banner' ? (section.width_ratio ?? 12) : 12;
+                      const gap = 12;
+                      const itemWidth =
+                        (span / 12) * containerWidth - ((12 - span) / 12) * gap;
+                      return renderSection(section, itemWidth);
+                    })}
+                  </XStack>
+                );
+              })}
+            </YStack>
+
+            <HomeFooter />
+          </YStack>
+        </ScrollView>
+      ) : null}
     </AppScreen>
   );
 }

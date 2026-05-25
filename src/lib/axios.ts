@@ -22,6 +22,8 @@ apiClient.interceptors.request.use(async (config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
+  config.headers['X-Frontend-Key'] = 'hgk_8bX2Z-PQv9L0aj-YdTk14';
+
   return config;
 });
 
