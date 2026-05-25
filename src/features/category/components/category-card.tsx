@@ -49,7 +49,7 @@ export function CategoryCard({ category, onPress }: { category: MenuItem; onPres
               contentFit="cover"
             />
           ) : isPending ? (
-            <Spinner size="small" color="#f27a1a" />
+            <Spinner size="small" color="$brand" />
           ) : (
             <Paragraph fontSize={18} color="$color10">👕</Paragraph>
           )}

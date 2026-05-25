@@ -15,6 +15,12 @@ jest.mock('expo-router', () => ({
     back: mockBack,
     canGoBack: mockCanGoBack,
   }),
+  router: {
+    get push() { return mockPush; },
+    get replace() { return mockReplace; },
+    get back() { return mockBack; },
+    get canGoBack() { return mockCanGoBack; },
+  },
 }));
 
 jest.mock('../api/category.queries', () => ({
@@ -169,14 +175,20 @@ describe('CategoriesScreen', () => {
     renderWithTamagui(<CategoriesScreen />);
 
     fireEvent.press(screen.getByText('Giyim Tüm Ürünler'));
-    expect(mockPush).toHaveBeenCalledWith('/kategori/giyim');
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/kategori/giyim',
+      params: { c: '20', q: '' },
+    });
   });
 
   it('navigates when a category grid card is pressed', () => {
     renderWithTamagui(<CategoriesScreen />);
 
     fireEvent.press(screen.getByText('Elbise'));
-    expect(mockPush).toHaveBeenCalledWith('/kategori/elbise');
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/kategori/elbise',
+      params: { c: '30', q: '' },
+    });
   });
 
   it('filters subcategories when typing in search input', () => {

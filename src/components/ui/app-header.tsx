@@ -133,7 +133,7 @@ export function AppHeader() {
                   {cartCount > 0 ? (
                     <XStack
                       alignItems="center"
-                      backgroundColor="#f27a1a"
+                      backgroundColor="$brand"
                       borderRadius={10}
                       height={18}
                       justifyContent="center"

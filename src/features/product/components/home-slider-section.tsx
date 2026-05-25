@@ -135,7 +135,7 @@ export function HomeSliderSection({ content }: HomeSliderSectionProps) {
             const isActive = index === activeIndex;
             return (
               <YStack
-                backgroundColor={isActive ? '#f27a1a' : '$borderColor'}
+                backgroundColor={isActive ? '$brand' : '$borderColor'}
                 borderRadius={isActive ? 6 : 4}
                 height={8}
                 key={index}

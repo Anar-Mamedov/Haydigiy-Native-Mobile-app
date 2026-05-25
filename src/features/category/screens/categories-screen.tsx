@@ -7,6 +7,8 @@ import { useRouter } from 'expo-router';
 import { useMenuGroupsQuery, useMenuItemsQuery } from '../api/category.queries';
 import { CategoryCard } from '../components/category-card';
 import { MenuItem } from '../types/category.types';
+import { handleLinkPress } from '@/utils/link-handler';
+import { BRAND_COLOR } from '@/lib/theme/colors';
 
 export function CategoriesScreen() {
   const router = useRouter();
@@ -65,10 +67,14 @@ export function CategoriesScreen() {
   const handleCategoryPress = (categoryId: number | null, url: string, menuItem?: MenuItem) => {
     const targetUrl = menuItem?.url || url;
     if (targetUrl) {
-      const formatted = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
-      router.push(formatted as any);
+      let formatted = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
+      if (categoryId && !formatted.includes('c=')) {
+        const separator = formatted.includes('?') ? '&' : '?';
+        formatted = `${formatted}${separator}c=${categoryId}`;
+      }
+      handleLinkPress(formatted);
     } else if (categoryId) {
-      router.push(`/kategori/c-${categoryId}` as any);
+      handleLinkPress(`/kategori/c-${categoryId}?c=${categoryId}`);
     }
   };
 
@@ -107,7 +113,7 @@ export function CategoriesScreen() {
         height={40}
         minWidth={0}
       >
-        <Search color="#f27a1a" size={18} />
+        <Search color="$brand" size={18} />
         <TextInput
           placeholder="Ürün veya kategori ara"
           placeholderTextColor="#9ca3af"
@@ -129,7 +135,7 @@ export function CategoriesScreen() {
     <AppScreen scrollable={false} header={customHeader} padding={0} gap={0}>
       {isPending ? (
         <YStack alignItems="center" flex={1} justifyContent="center" gap="$3">
-          <Spinner color="#f27a1a" size="large" />
+          <Spinner color="$brand" size="large" />
           <Paragraph color="$color10">Kategoriler yükleniyor...</Paragraph>
         </YStack>
       ) : null}
@@ -180,7 +186,7 @@ export function CategoriesScreen() {
                     }}
                   >
                     <Paragraph
-                      color={isActive ? '#f27a1a' : '$color'}
+                      color={isActive ? '$brand' : '$color'}
                       fontWeight={isActive ? '800' : '500'}
                       fontSize={13.5}
                     >
@@ -193,7 +199,7 @@ export function CategoriesScreen() {
                         left={12}
                         right={12}
                         height={2}
-                        backgroundColor="#f27a1a"
+                        backgroundColor="$brand"
                         borderRadius={100}
                       />
                     )}
@@ -228,11 +234,11 @@ export function CategoriesScreen() {
                         paddingHorizontal: 12,
                         backgroundColor: isActive ? theme.background.val : 'transparent',
                         borderLeftWidth: isActive ? 3 : 0,
-                        borderLeftColor: '#f27a1a',
+                        borderLeftColor: BRAND_COLOR,
                       }}
                     >
                       <Paragraph
-                        color={isActive ? '#f27a1a' : '$color10'}
+                        color={isActive ? '$brand' : '$color10'}
                         fontWeight={isActive ? '700' : '500'}
                         fontSize={13}
                       >
@@ -250,7 +256,7 @@ export function CategoriesScreen() {
                 {/* View All Button */}
                 {selectedMain && (
                   <Button
-                    backgroundColor="#f27a1a"
+                    backgroundColor="$brand"
                     borderRadius={8}
                     height={40}
                     onPress={() => {

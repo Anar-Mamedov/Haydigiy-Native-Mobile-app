@@ -38,7 +38,7 @@ export function HomeFooter() {
       <YStack gap="$3">
         <Card borderColor="$borderColor" borderRadius="$4" borderWidth={1} padding="$4">
           <XStack alignItems="center" gap="$3">
-            <Phone color="#f27a1a" size={20} />
+            <Phone color="$brand" size={20} />
             <YStack flex={1}>
               <Paragraph fontSize="$2" fontWeight="700">
                 Müşteri Hizmetleri:
@@ -61,7 +61,7 @@ export function HomeFooter() {
 
         <Card borderColor="$borderColor" borderRadius="$4" borderWidth={1} padding="$4">
           <XStack alignItems="center" gap="$3">
-            <Mail color="#f27a1a" size={20} />
+            <Mail color="$brand" size={20} />
             <YStack flex={1}>
               <Paragraph fontSize="$2" fontWeight="700">
                 Geri Bildirim:
@@ -84,7 +84,7 @@ export function HomeFooter() {
 
         <Card borderColor="$borderColor" borderRadius="$4" borderWidth={1} padding="$4">
           <XStack alignItems="flex-start" gap="$3">
-            <MapPin color="#f27a1a" size={20} style={{ marginTop: 2 }} />
+            <MapPin color="$brand" size={20} style={{ marginTop: 2 }} />
             <YStack flex={1}>
               <Paragraph fontSize="$2" fontWeight="700">
                 Mağaza Adresi:

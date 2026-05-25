@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { RefreshControl, useWindowDimensions } from 'react-native';
 import { ScrollView, Paragraph, Spinner, XStack, YStack } from 'tamagui';
 import { AppHeader, AppScreen, EmptyState } from '@/components/ui';
+import { BRAND_COLOR } from '@/lib/theme/colors';
 import { useMobilePageDesignQuery } from '@/features/product/api/page-design.queries';
 import { HomeBannerSection } from '@/features/product/components/home-banner-section';
 import { HomeHeadingSection } from '@/features/product/components/home-heading-section';
@@ -114,7 +115,7 @@ export function HomeScreen() {
 
       {isPending ? (
         <YStack alignItems="center" flex={1} justifyContent="center" gap="$3">
-          <Spinner color="#f27a1a" size="large" />
+          <Spinner color="$brand" size="large" />
           <Paragraph color="$color10">Yükleniyor...</Paragraph>
         </YStack>
       ) : null}
@@ -133,10 +134,10 @@ export function HomeScreen() {
           flex={1}
           refreshControl={
             <RefreshControl
-              colors={['#f27a1a']}
+              colors={[BRAND_COLOR]}
               onRefresh={handleRefresh}
               refreshing={isRefreshing}
-              tintColor="#f27a1a"
+              tintColor={BRAND_COLOR}
             />
           }
           showsVerticalScrollIndicator={false}

@@ -39,7 +39,7 @@ export function HomeTextSection({ content }: HomeTextSectionProps) {
                 paddingHorizontal="$2"
                 paddingVertical="$1"
               >
-                <Paragraph color="$color11" fontSize="$3" fontWeight="600" hoverStyle={{ color: '#f27a1a' }}>
+                <Paragraph color="$color11" fontSize="$3" fontWeight="600" hoverStyle={{ color: '$brand' }}>
                   {text}
                 </Paragraph>
               </Button>

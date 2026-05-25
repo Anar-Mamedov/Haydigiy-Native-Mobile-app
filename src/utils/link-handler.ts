@@ -14,20 +14,85 @@ export function handleLinkPress(link: string | null | undefined) {
     return;
   }
 
-  // Handle category search/filter relative web links (e.g. /elbise-ikili-takim?c=40)
-  if (link.startsWith('/')) {
-    // Navigate to categories tab and pass query filter as parameters
-    router.push({
-      pathname: '/(tabs)/categories',
-      params: { query: link },
+  // Normalize link: ensure it starts with /
+  let normalizedLink = link;
+  if (!normalizedLink.startsWith('/')) {
+    normalizedLink = '/' + normalizedLink;
+  }
+
+  // Parse path and search params
+  const [pathWithSlash, queryString] = normalizedLink.split('?');
+  const path = pathWithSlash.toLowerCase();
+
+  // Parse query params
+  const params: Record<string, string> = {};
+  if (queryString) {
+    queryString.split('&').forEach((pair) => {
+      const [key, val] = pair.split('=');
+      if (key) {
+        params[key] = decodeURIComponent(val || '');
+      }
     });
+  }
+
+  // 1. Cart
+  if (path === '/sepet' || path === '/cart') {
+    router.push('/(tabs)/cart');
     return;
   }
 
-  // Fallback to standard routing
-  try {
-    router.push(link as any);
-  } catch (err) {
-    console.warn('Could not route link:', link, err);
+  // 2. Favorites
+  if (path === '/favori-listem' || path === '/favorites') {
+    router.push('/(tabs)/favorites');
+    return;
   }
+
+  // 3. Profile
+  if (path === '/hesabim' || path === '/profile') {
+    router.push('/(tabs)/profile');
+    return;
+  }
+
+  // 4. Checkout
+  if (path === '/checkout' || path === '/odeme') {
+    router.push('/checkout');
+    return;
+  }
+
+  // 5. Product Detail
+  if (path.startsWith('/product/')) {
+    const parts = pathWithSlash.split('/');
+    const id = parts[parts.length - 1];
+    if (id) {
+      router.push(`/product/${id}` as any);
+      return;
+    }
+  }
+
+  // 6. Search
+  if (path === '/search' || path === '/search-products') {
+    const q = params.q || '';
+    router.push({
+      pathname: '/kategori/search',
+      params: { q },
+    } as any);
+    return;
+  }
+
+  // 7. Category Route
+  // E.g. /kategori/elbise?c=40 or /elbise?c=40
+  const parts = pathWithSlash.split('/').filter(Boolean);
+  let slug = parts[parts.length - 1] || 'all';
+  if (parts[0] === 'kategori' && parts.length > 1) {
+    slug = parts.slice(1).join('/');
+  }
+
+  router.push({
+    pathname: `/kategori/${slug}`,
+    params: {
+      c: params.c || '',
+      q: params.q || '',
+      ...params,
+    },
+  } as any);
 }

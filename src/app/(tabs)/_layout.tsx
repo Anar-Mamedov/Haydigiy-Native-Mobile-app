@@ -4,6 +4,7 @@ import { useTheme, useThemeName } from 'tamagui';
 import { useCartStore, calculateCartItemCount } from '@/features/cart/store/use-cart-store';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BRAND_COLOR } from '@/lib/theme/colors';
 
 // Custom SVG Icons matching the web's bottom navigation
 function HomeTabIcon({ color, size }: { color: string; size: number }) {
@@ -101,7 +102,7 @@ export default function TabsLayout() {
         sceneStyle: {
           backgroundColor: theme.background.val,
         },
-        tabBarActiveTintColor: '#f27a1a',
+        tabBarActiveTintColor: BRAND_COLOR,
         tabBarInactiveTintColor: inactiveColor,
         tabBarStyle: {
           backgroundColor: theme.background.val,
@@ -146,7 +147,7 @@ export default function TabsLayout() {
         options={{
           tabBarBadge: cartCount > 0 ? cartCount : undefined,
           tabBarBadgeStyle: {
-            backgroundColor: '#f27a1a',
+            backgroundColor: BRAND_COLOR,
             color: 'white',
             fontSize: 10,
             fontWeight: 'bold',

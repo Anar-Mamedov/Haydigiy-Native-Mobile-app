@@ -5,13 +5,11 @@ import { tokenValues } from '@/lib/theme/token-values';
 import { Product } from '@/types/product.types';
 
 type ProductGridProps = {
-  onAddToCart: (product: Product) => void;
   onProductPress: (product: Product) => void;
   products: Product[];
 };
 
 export function ProductGrid({
-  onAddToCart,
   onProductPress,
   products,
 }: ProductGridProps) {
@@ -26,7 +24,6 @@ export function ProductGrid({
       renderItem={({ item }) => (
         <YStack flex={1} padding="$2">
           <ProductCard
-            onAddToCart={() => onAddToCart(item)}
             onOpen={() => onProductPress(item)}
             product={item}
           />

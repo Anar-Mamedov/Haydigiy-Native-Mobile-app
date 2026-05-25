@@ -24,7 +24,7 @@ export function MobileHomeSearch() {
       width="100%"
     >
       <XStack alignItems="center" flex={1} gap="$3">
-        <Search color="#f27a1a" size={20} />
+        <Search color="$brand" size={20} />
         <Paragraph color="$color10" fontSize="$3" fontWeight="500">
           Ürün veya kategori ara
         </Paragraph>
