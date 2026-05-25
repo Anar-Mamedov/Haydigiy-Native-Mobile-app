@@ -1,4 +1,4 @@
-import { ProductDto, SearchProductDto, SearchProductsResponseDto } from '@/features/product/api/product.dtos';
+import { ProductDto, SearchProductDto, SearchProductsResponseDto, SearchSuggestionsResponseDto } from '@/features/product/api/product.dtos';
 import { mockProductDtos } from '@/features/product/data/mock-product-dtos';
 import { apiClient } from '@/lib/axios';
 import { appEnv, getRequiredApiBaseUrl } from '@/lib/env';
@@ -133,4 +133,42 @@ export async function searchProductDtos(params: SearchProductsParams): Promise<S
     total,
     per_page: perPage,
   };
+}
+
+export async function getSearchSuggestions(query: string): Promise<SearchSuggestionsResponseDto> {
+  if (!query.trim()) {
+    return { products: [], categories: [] };
+  }
+
+  if (!appEnv.apiBaseUrl) {
+    await sleep(100);
+    const lowercaseQuery = query.toLowerCase();
+    const matchedProducts = mockProductDtos
+      .filter((p) => p.title.toLowerCase().includes(lowercaseQuery))
+      .slice(0, 8)
+      .map((p, idx) => ({
+        id: idx + 1,
+        name: p.title,
+        slug: p.slug,
+        image: p.image_url,
+      }));
+    const matchedCategories = [
+      { id: 1, name: 'Giyim', slug: 'giyim' },
+      { id: 2, name: 'Elbise', slug: 'elbise' },
+      { id: 3, name: 'Pantolon', slug: 'pantolon' },
+      { id: 4, name: 'Etek', slug: 'etek' },
+      { id: 5, name: 'T-shirt', slug: 't-shirt' },
+    ].filter((c) => c.name.toLowerCase().includes(lowercaseQuery));
+
+    return {
+      products: matchedProducts,
+      categories: matchedCategories,
+    };
+  }
+
+  getRequiredApiBaseUrl();
+  const response = await apiClient.get<SearchSuggestionsResponseDto>('/search/search-suggestions', {
+    params: { q: query },
+  });
+  return response.data;
 }

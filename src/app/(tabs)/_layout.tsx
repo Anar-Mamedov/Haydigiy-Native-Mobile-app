@@ -184,6 +184,12 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="gezdiklerim"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

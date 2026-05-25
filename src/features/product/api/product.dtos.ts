@@ -163,3 +163,21 @@ export interface SearchProductsResponseDto {
   current_page?: number;
   last_page?: number;
 }
+
+export interface SearchSuggestionProductDto {
+  id: number;
+  name: string;
+  slug: string;
+  image: string;
+}
+
+export interface SearchSuggestionCategoryDto {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface SearchSuggestionsResponseDto {
+  products: SearchSuggestionProductDto[];
+  categories: SearchSuggestionCategoryDto[];
+}

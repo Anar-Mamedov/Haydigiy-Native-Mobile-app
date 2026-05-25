@@ -6,6 +6,7 @@ import {
   listFeaturedProductDtos,
   searchProductDtos,
   SearchProductsParams,
+  getSearchSuggestions,
 } from '@/services/product.service';
 
 export function useFeaturedProductsQuery() {
@@ -58,6 +59,15 @@ export function useInfiniteSearchProductsQuery(filters: Omit<SearchProductsParam
     // Keep the previous results and filter options on screen while a new filter
     // selection is being fetched, so toggling filters doesn't blank the list.
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useSearchSuggestionsQuery(query: string) {
+  const trimmedQuery = query.trim();
+  return useQuery({
+    enabled: trimmedQuery.length >= 3,
+    queryFn: () => getSearchSuggestions(trimmedQuery),
+    queryKey: productKeys.suggestions(trimmedQuery),
   });
 }
 

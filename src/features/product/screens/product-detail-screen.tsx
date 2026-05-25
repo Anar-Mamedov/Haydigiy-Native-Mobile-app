@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { H2, Paragraph, Spinner, XStack, YStack } from 'tamagui';
@@ -6,12 +7,25 @@ import { useCartStore } from '@/features/cart/store/use-cart-store';
 import { useProductByIdQuery } from '@/features/product/api/product.queries';
 import { tokenValues } from '@/lib/theme/token-values';
 import { formatCurrency } from '@/utils/format-currency';
+import { trackViewedProduct } from '@/utils/recently-viewed';
 
 export function ProductDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const addItem = useCartStore((state) => state.addItem);
   const { data, isError, isPending, refetch } = useProductByIdQuery(id ?? '');
+
+  useEffect(() => {
+    if (data) {
+      trackViewedProduct({
+        id: data.id,
+        name: data.title,
+        slug: data.slug,
+        thumb: data.imageUrl,
+        price: String(data.price),
+      });
+    }
+  }, [data]);
 
   return (
     <AppScreen>

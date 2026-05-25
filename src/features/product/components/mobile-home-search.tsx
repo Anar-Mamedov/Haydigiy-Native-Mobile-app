@@ -6,7 +6,7 @@ export function MobileHomeSearch() {
   const router = useRouter();
 
   const handlePress = () => {
-    router.push('/(tabs)/categories');
+    router.push('/search-suggestions');
   };
 
   return (
