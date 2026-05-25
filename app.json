@@ -1,16 +1,24 @@
 {
   "expo": {
-    "name": "Mobile_app",
-    "slug": "Mobile_app",
-    "version": "1.0.0",
+    "name": "Haydigiy",
+    "slug": "haydigiy-webview-app",
+    "version": "2.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobileapp",
+    "scheme": "haydigiywebviewapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "buildNumber": "16",
+      "bundleIdentifier": "com.faprika.haydigiy.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.faprika.haydigiy",
+      "versionCode": 16,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -40,6 +48,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "74d084b0-27e0-4668-a29b-e958789de835"
+      }
+    },
+    "owner": "anar_mammadov",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/74d084b0-27e0-4668-a29b-e958789de835"
     }
   }
 }

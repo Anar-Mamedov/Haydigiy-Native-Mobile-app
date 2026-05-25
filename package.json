@@ -1,7 +1,7 @@
 {
-  "name": "mobile_app",
+  "name": "haydigiy-webview-app",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -12,7 +12,12 @@
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "build:android": "npx eas build --platform android --profile production",
+    "build:android:apk": "npx eas build --platform android --profile preview-apk",
+    "build:ios": "npx eas build --platform ios --profile production",
+    "update:production": "npx eas update --channel production",
+    "update:preview": "npx eas update --channel preview"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
