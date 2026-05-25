@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
-import { Paragraph, Spinner, XStack, YStack, ScrollView, Button } from 'tamagui';
-import { ArrowLeft, SlidersHorizontal, ArrowUpDown, ShoppingCart } from '@tamagui/lucide-icons-2';
+import { Paragraph, Spinner, XStack, YStack } from 'tamagui';
+import { ArrowLeft, ShoppingCart } from '@tamagui/lucide-icons-2';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 
@@ -16,7 +16,7 @@ import { SortSheet, SORT_OPTIONS } from '../components/sort-sheet';
 import { FilterSheet, FilterShortcutSection } from '../components/filter-sheet';
 import { ColorVariantsSheet } from '../components/color-variants-sheet';
 import { QuickFilterDropdown } from '../components/quick-filter-dropdown';
-import { FilterPill } from '../components/filter-pill';
+import { ProductListHeader } from '../components/product-list-header';
 
 interface ProductListScreenProps {
   slug: string;
@@ -240,104 +240,6 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
 
   return (
     <AppScreen scrollable={false} header={customHeader} padding={0} gap={0}>
-      {/* Filters and Sorting Toolbar */}
-      <XStack
-        borderBottomWidth={1}
-        borderBottomColor="$borderColor"
-        backgroundColor="$background"
-        height={46}
-        width="100%"
-      >
-        <Button
-          flex={1}
-          height="100%"
-          variant="outlined"
-          borderWidth={0}
-          borderRadius={0}
-          borderRightWidth={1}
-          borderRightColor="$borderColor"
-          onPress={() => {
-            setQuickFilterSection(null);
-            setIsSortOpen(true);
-          }}
-          icon={<ArrowUpDown size={16} color="$brand" />}
-        >
-          <Paragraph
-            fontSize={13}
-            fontWeight="500"
-            color="$color"
-            numberOfLines={1}
-          >
-            {activeSortLabel}
-          </Paragraph>
-        </Button>
-        <Button
-          flex={1}
-          height="100%"
-          variant="outlined"
-          borderWidth={0}
-          borderRadius={0}
-          onPress={() => {
-            setQuickFilterSection(null);
-            setIsFilterOpen(true);
-          }}
-          icon={<SlidersHorizontal size={16} color="$brand" />}
-        >
-          <Paragraph
-            fontSize={13}
-            fontWeight="500"
-            color="$color"
-          >
-            Filtrele{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
-          </Paragraph>
-        </Button>
-      </XStack>
-
-      {/* Horizontal Quick-Filter Pills Row */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        backgroundColor="$background"
-        borderBottomWidth={1}
-        borderBottomColor="$borderColor"
-        paddingVertical={8}
-        height={48}
-        maxHeight={48}
-        flex={0}
-      >
-        <XStack paddingHorizontal="$3" gap="$2" alignItems="center" height="100%">
-          {categoryFilterOptions > 0 ? (
-            <FilterPill
-              label="Kategori"
-              isActive={Boolean(productCategories)}
-              isOpen={quickFilterSection === 'categories'}
-              onPress={() => handleToggleQuickFilter('categories')}
-            />
-          ) : null}
-
-          <FilterPill
-            label="Renk"
-            isActive={Boolean(colors)}
-            isOpen={quickFilterSection === 'colors'}
-            onPress={() => handleToggleQuickFilter('colors')}
-          />
-
-          <FilterPill
-            label="Beden"
-            isActive={Boolean(variants)}
-            isOpen={quickFilterSection === 'variants'}
-            onPress={() => handleToggleQuickFilter('variants')}
-          />
-
-          <FilterPill
-            label="Fiyat"
-            isActive={Boolean(priceRange)}
-            isOpen={quickFilterSection === 'price'}
-            onPress={() => handleToggleQuickFilter('price')}
-          />
-        </XStack>
-      </ScrollView>
-
       <QuickFilterDropdown
         activeFilters={{
           colors,
@@ -375,65 +277,90 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
       {/* Product List Grid */}
       {!isPending && !isError && (
         <YStack flex={1} width="100%">
-          {products.length > 0 ? (
-            <FlashList
-              contentContainerStyle={{
-                paddingTop: 8,
-                paddingBottom: 24,
-                paddingHorizontal: 8,
-              }}
-              data={products}
-              keyExtractor={(item, index) => `${item.id}-${index}`}
-              numColumns={2}
-              onEndReached={() => {
-                if (hasNextPage && !isFetchingNextPage) {
-                  fetchNextPage();
+          <FlashList
+            contentContainerStyle={{
+              paddingTop: 8,
+              paddingBottom: 24,
+              paddingHorizontal: 8,
+            }}
+            data={products}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            numColumns={2}
+            onEndReached={() => {
+              if (hasNextPage && !isFetchingNextPage) {
+                fetchNextPage();
+              }
+            }}
+            onEndReachedThreshold={0.5}
+            onScroll={() => {
+              if (quickFilterSection !== null) {
+                setQuickFilterSection(null);
+              }
+            }}
+            refreshControl={
+              <RefreshControl
+                colors={[BRAND_COLOR]}
+                onRefresh={refetch}
+                refreshing={isFetching && !isFetchingNextPage}
+                tintColor={BRAND_COLOR}
+              />
+            }
+            ListHeaderComponent={
+              <ProductListHeader
+                activeSortLabel={activeSortLabel}
+                activeFiltersCount={activeFiltersCount}
+                categoryFilterOptions={categoryFilterOptions}
+                productCategories={productCategories}
+                colors={colors}
+                variants={variants}
+                priceRange={priceRange}
+                quickFilterSection={quickFilterSection}
+                onSortPress={() => {
+                  setQuickFilterSection(null);
+                  setIsSortOpen(true);
+                }}
+                onFilterPress={() => {
+                  setQuickFilterSection(null);
+                  setIsFilterOpen(true);
+                }}
+                onToggleQuickFilter={handleToggleQuickFilter}
+              />
+            }
+            ListEmptyComponent={
+              <EmptyState
+                actionLabel={activeFiltersCount > 0 ? 'Filtreleri Temizle' : undefined}
+                description={
+                  activeFiltersCount > 0
+                    ? 'Seçtiğiniz filtre değerlerine uygun ürün bulunamadı. Filtreleri sıfırlayarak tekrar deneyebilirsiniz.'
+                    : 'Bu kategoride henüz sergilenecek ürün bulunmamaktadır.'
                 }
-              }}
-              onEndReachedThreshold={0.5}
-              refreshControl={
-                <RefreshControl
-                  colors={[BRAND_COLOR]}
-                  onRefresh={refetch}
-                  refreshing={isFetching && !isFetchingNextPage}
-                  tintColor={BRAND_COLOR}
-                />
-              }
-              renderItem={({ item }) => {
-                const displayedProduct = selectedVariantsMap[item.id] || item;
-                return (
-                  <YStack flex={1} padding="$1.5">
-                    <ProductCard
-                      onOpen={() => handleProductPress(displayedProduct)}
-                      product={displayedProduct}
-                      onColorPress={() => {
-                        setActiveColorProduct(item);
-                        setIsColorSheetOpen(true);
-                      }}
-                    />
-                  </YStack>
-                );
-              }}
-              ListFooterComponent={
-                isFetchingNextPage ? (
-                  <YStack paddingVertical="$4" alignItems="center" justifyContent="center">
-                    <Spinner color="$brand" size="small" />
-                  </YStack>
-                ) : null
-              }
-            />
-          ) : (
-            <EmptyState
-              actionLabel={activeFiltersCount > 0 ? 'Filtreleri Temizle' : undefined}
-              description={
-                activeFiltersCount > 0
-                  ? 'Seçtiğiniz filtre değerlerine uygun ürün bulunamadı. Filtreleri sıfırlayarak tekrar deneyebilirsiniz.'
-                  : 'Bu kategoride henüz sergilenecek ürün bulunmamaktadır.'
-              }
-              onActionPress={activeFiltersCount > 0 ? handleResetFilters : undefined}
-              title="Ürün Bulunamadı"
-            />
-          )}
+                onActionPress={activeFiltersCount > 0 ? handleResetFilters : undefined}
+                title="Ürün Bulunamadı"
+              />
+            }
+            renderItem={({ item }) => {
+              const displayedProduct = selectedVariantsMap[item.id] || item;
+              return (
+                <YStack flex={1} padding="$1.5">
+                  <ProductCard
+                    onOpen={() => handleProductPress(displayedProduct)}
+                    product={displayedProduct}
+                    onColorPress={() => {
+                      setActiveColorProduct(item);
+                      setIsColorSheetOpen(true);
+                    }}
+                  />
+                </YStack>
+              );
+            }}
+            ListFooterComponent={
+              isFetchingNextPage ? (
+                <YStack paddingVertical="$4" alignItems="center" justifyContent="center">
+                  <Spinner color="$brand" size="small" />
+                </YStack>
+              ) : null
+            }
+          />
         </YStack>
       )}
 

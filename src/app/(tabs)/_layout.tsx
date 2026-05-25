@@ -178,6 +178,12 @@ export default function TabsLayout() {
           title: 'Hesabım',
         }}
       />
+      <Tabs.Screen
+        name="kategori/[slug]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
