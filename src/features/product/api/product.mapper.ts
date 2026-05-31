@@ -260,3 +260,137 @@ function extractSizes(dto: SearchProductDto): ProductSize[] {
   });
 }
 
+export function mapProductDetailDto(dto: any): Product {
+  const rawImage =
+    dto.medias?.[0]?.medium ||
+    dto.image_urls?.medium ||
+    dto.image_url ||
+    null;
+
+  const imagesList = Array.isArray(dto.medias)
+    ? dto.medias.map((m: any) => getImageUrl(m.medium || m.thumb || m.large)).filter(Boolean)
+    : [getImageUrl(rawImage)];
+
+  const otherColorsMapped = Array.isArray(dto.other_colors)
+    ? dto.other_colors.map((color: any) => ({
+        id: String(color.id),
+        name: color.name || '',
+        slug: color.slug || '',
+        imageUrl: getImageUrl(color.media?.thumb || color.media?.medium || color.media?.large),
+        price: parseSafely(color.price),
+        isStock: color.is_stock ?? true,
+      }))
+    : [];
+
+  const variantsMapped = Array.isArray(dto.variants)
+    ? dto.variants.map((v: any) => ({
+        id: String(v.id),
+        name: v.name,
+        name2: v.name_2,
+        quantity: parseSafely(v.pivot?.quantity || v.quantity),
+        price: parseSafely(v.pivot?.price || v.price),
+        hasStock: parseSafely(v.pivot?.quantity || v.quantity) > 0,
+      }))
+    : [];
+
+  const reviewsMapped = Array.isArray(dto.reviews)
+    ? dto.reviews.map((r: any) => ({
+        id: String(r.id),
+        rating: parseSafely(r.rating, 5),
+        comment: r.comment || '',
+        userName: r.user_name || r.user?.name || 'Kullanıcı',
+        userSurname: r.user?.surname,
+        createdAt: r.created_at || '',
+      }))
+    : [];
+
+  const questionsMapped = Array.isArray(dto.questions)
+    ? dto.questions.map((q: any) => ({
+        id: String(q.id),
+        question: q.question || '',
+        reply: typeof q.reply === 'object' && q.reply !== null ? q.reply.reply : q.reply,
+        userName: q.user_name || q.user?.name || 'Kullanıcı',
+        createdAt: q.created_at || '',
+      }))
+    : [];
+
+  const similarProductsMapped = Array.isArray(dto.similar_products)
+    ? dto.similar_products.map((p: any) => ({
+        id: String(p.id),
+        name: p.name,
+        slug: p.slug,
+        price: parseSafely(p.price),
+        imageUrl: getImageUrl(p.media?.thumb || p.media?.medium || p.media?.large),
+        hasStock: p.is_stock ?? true,
+      }))
+    : [];
+
+  const propertiesMapped = Array.isArray(dto.properties)
+    ? dto.properties.map((p: any) => ({
+        name: p.parent?.name || '',
+        value: p.name || '',
+      }))
+    : [];
+
+  let featureIconsMapped: FeatureIcon[] = [];
+  if (Array.isArray(dto.feature_icons)) {
+    featureIconsMapped = dto.feature_icons.map((icon: any) => ({
+      id: icon.id,
+      name: icon.name || '',
+      slug: icon.slug || '',
+      description: icon.description,
+      assetUrl: getImageUrl(icon.asset_url),
+      positionHint: icon.position_hint,
+      displayOrder: icon.pivot?.display_order,
+      position: icon.pivot?.position,
+    }));
+  }
+
+  return {
+    badge: dto.badge,
+    brand: dto.brand_name || 'HaydiGiy',
+    category: dto.category?.name || 'Giyim',
+    categorySlug: dto.category?.slug,
+    categoryId: dto.category?.id,
+    currency: 'TRY',
+    description: dto.description || '',
+    id: String(dto.id),
+    imageUrl: getImageUrl(rawImage),
+    originalPrice: dto.other_price ? parseSafely(dto.other_price) : undefined,
+    price: parseSafely(dto.price),
+    rating: parseSafely(dto.average_rating || (dto.reviews?.length ? dto.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / dto.reviews.length : 0)),
+    reviewCount: parseSafely(dto.reviews_count || dto.reviews?.length || 0),
+    sellerName: dto.supplier?.name || 'HaydiGiy',
+    shippingLabel: dto.shipping_label || (dto.feature_icons?.[0]?.name ? dto.feature_icons[0].name : ''),
+    slug: dto.slug,
+    title: dto.name,
+    sizes: variantsMapped.map((v: any) => ({ name: v.name, hasStock: v.hasStock })),
+    hasStock: dto.is_stock ?? true,
+    images: imagesList,
+    otherColors: otherColorsMapped,
+    videoPath: dto.video_path ? getImageUrl(dto.video_path) : null,
+    featureIcons: featureIconsMapped,
+    variants: variantsMapped,
+    reviews: reviewsMapped,
+    questions: questionsMapped,
+    similarProducts: similarProductsMapped,
+    stockCode: dto.stock_code,
+    cartCount: dto.cart_count,
+    favoritesCount: dto.favorites_count,
+    totalQuantity: dto.total_quantity,
+    isApprovedForSale: dto.is_approved_for_sale === undefined ? true : Number(dto.is_approved_for_sale) === 1,
+    properties: propertiesMapped,
+    model: dto.model ? {
+      height: dto.model.height,
+      weight: dto.model.weight,
+      chest: dto.model.chest,
+      waist: dto.model.waist,
+      hip: dto.model.hip,
+      model_body: dto.model.model_body,
+    } : null,
+    variantOnModel: dto.variant_on_model ? {
+      name: dto.variant_on_model.name,
+    } : null,
+  };
+}
+

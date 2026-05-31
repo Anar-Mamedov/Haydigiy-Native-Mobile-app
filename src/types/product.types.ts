@@ -60,10 +60,60 @@ export type ProductAvailableFilters = {
   useProductCategoryFilters: boolean;
 };
 
+export type ProductReview = {
+  id: string;
+  rating: number;
+  comment: string;
+  userName: string;
+  userSurname?: string;
+  createdAt: string;
+};
+
+export type ProductQuestion = {
+  id: string;
+  question: string;
+  reply?: string;
+  userName: string;
+  createdAt: string;
+};
+
+export type SimilarProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  imageUrl: string;
+  hasStock: boolean;
+};
+
+export type ProductVariant = {
+  id: string;
+  name: string;
+  name2?: string | null;
+  quantity: number;
+  price: number;
+  hasStock: boolean;
+};
+
+export type ProductModel = {
+  height?: string;
+  weight?: string;
+  chest?: string;
+  waist?: string;
+  hip?: string;
+  model_body?: string;
+};
+
+export type ProductVariantOnModel = {
+  name?: string;
+};
+
 export type Product = {
   badge?: string;
   brand: string;
   category: string;
+  categorySlug?: string;
+  categoryId?: number;
   currency: 'TRY';
   description: string;
   id: string;
@@ -76,6 +126,8 @@ export type Product = {
   shippingLabel: string;
   slug: string;
   title: string;
+  is_favorite?: boolean;
+  isFavorite?: boolean;
   sizes?: ProductSize[];
   hasStock?: boolean;
   images?: string[];
@@ -85,8 +137,21 @@ export type Product = {
     slug: string;
     imageUrl: string;
     price: number;
+    isStock?: boolean;
   }>;
   videoPath?: string | null;
   featureIcons?: FeatureIcon[];
+  variants?: ProductVariant[];
+  reviews?: ProductReview[];
+  questions?: ProductQuestion[];
+  similarProducts?: SimilarProduct[];
+  stockCode?: string;
+  cartCount?: number;
+  favoritesCount?: number;
+  totalQuantity?: number;
+  isApprovedForSale?: boolean;
+  properties?: Array<{ name: string; value: string }>;
+  model?: ProductModel | null;
+  variantOnModel?: ProductVariantOnModel | null;
 };
 

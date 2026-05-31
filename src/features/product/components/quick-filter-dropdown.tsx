@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, TextInput } from 'react-native';
-import { Paragraph, ScrollView, XStack, YStack, useTheme } from 'tamagui';
+import { Pressable } from 'react-native';
+import { Input, Paragraph, ScrollView, XStack, YStack } from 'tamagui';
 import { Search } from '@tamagui/lucide-icons-2';
 import { FilterProperty, ProductAvailableFilters } from '@/types/product.types';
 import { FilterShortcutSection } from './filter-sheet';
@@ -55,16 +55,19 @@ function SearchField({ onChangeText, placeholder, value }: {
   placeholder: string;
   value: string;
 }) {
-  const theme = useTheme();
-
   return (
     <XStack alignItems="center" backgroundColor="$backgroundHover" borderColor="$borderColor" borderRadius={5} borderWidth={1} height={48} paddingHorizontal={12}>
-      <Search size={18} color="#9ca3af" />
-      <TextInput
+      <Search size={18} color="$color9" />
+      <Input
+        flex={1}
+        backgroundColor="transparent"
+        borderWidth={0}
+        paddingLeft={10}
+        fontSize={15}
+        color="$color"
+        placeholderTextColor="$color9"
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9ca3af"
-        style={{ color: theme.color.val, flex: 1, fontSize: 15, paddingLeft: 10 }}
         value={value}
       />
     </XStack>

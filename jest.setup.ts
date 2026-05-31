@@ -48,3 +48,32 @@ jest.mock('expo-secure-store', () => ({
     mockSecureStore.set(key, value);
   }),
 }));
+
+jest.mock('expo-video', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  return {
+    __esModule: true,
+    VideoView: ({ player, fullscreenOptions, nativeControls, contentFit, playsInline, ...props }: any) =>
+      React.createElement(View, {
+        ...props,
+        testID: props.testID ?? 'expo-video-view',
+      }),
+    useVideoPlayer: jest.fn((_source: unknown, setup?: (player: any) => void) => {
+      const player = {
+        addListener: jest.fn(() => ({ remove: jest.fn() })),
+        currentTime: 0,
+        loop: false,
+        pause: jest.fn(),
+        play: jest.fn(),
+        playing: false,
+        status: 'idle',
+      };
+
+      setup?.(player);
+
+      return player;
+    }),
+  };
+});

@@ -1,0 +1,150 @@
+import React, { useState } from 'react';
+import { WashingMachine } from '@tamagui/lucide-icons-2';
+import { XStack, YStack, Paragraph, Button, Theme, useThemeName } from 'tamagui';
+import { Image } from 'expo-image';
+import { Pressable } from 'react-native';
+
+interface Property {
+  name: string;
+  value: string;
+}
+
+interface MobileProductInformationProps {
+  productData: {
+    description: string;
+    imageUrl: string;
+  };
+  properties?: Property[];
+  onWashingInstructionsPress?: () => void;
+}
+
+export function MobileProductInformation({
+  productData,
+  properties = [],
+  onWashingInstructionsPress,
+}: MobileProductInformationProps) {
+  const [showMore, setShowMore] = useState(false);
+  const themeName = useThemeName();
+  const isDark = themeName === 'dark' || themeName.includes('dark');
+
+  const description = productData?.description?.trim();
+  const hasDescription = description && description.length > 0;
+  const hasProperties = properties && properties.length > 0;
+
+  if (!hasDescription && !hasProperties) {
+    return null;
+  }
+
+  return (
+    <YStack gap="$4" padding="$4" backgroundColor="$background" borderTopWidth={8} borderTopColor="$color3">
+      {/* Product Description Section */}
+      {hasDescription && (
+        <YStack gap="$3" paddingBottom="$1">
+          <Paragraph fontSize={15} fontWeight="700" color="$color">
+            Ürün Açıklaması
+          </Paragraph>
+
+          <YStack gap="$3">
+            {/* Product Thumbnail */}
+            {productData.imageUrl && (
+              <XStack>
+                <Image
+                  source={{ uri: productData.imageUrl }}
+                  style={{ width: 80, height: 108, borderRadius: 8 }}
+                  contentFit="cover"
+                />
+              </XStack>
+            )}
+
+            {/* Expand / Collapse Button for Description */}
+            <Pressable onPress={() => setShowMore(!showMore)}>
+              <XStack alignItems="center" gap="$1">
+                <Paragraph color="$brand" fontSize={12} fontWeight="700">
+                  {showMore ? 'DAHA AZ GÖSTER' : 'DAHA FAZLA GÖSTER'}
+                </Paragraph>
+                <Paragraph color="$brand" fontSize={11} style={{ transform: [{ rotate: showMore ? '180deg' : '0deg' }] }}>
+                  ↓
+                </Paragraph>
+              </XStack>
+            </Pressable>
+          </YStack>
+
+          {/* Description Text */}
+          <Paragraph
+            fontSize={12}
+            color="$color11"
+            lineHeight={18}
+            numberOfLines={showMore ? undefined : 4}
+            marginTop="$1"
+          >
+            {description}
+          </Paragraph>
+        </YStack>
+      )}
+
+      {/* Product Specifications Section */}
+      {hasProperties && (
+        <YStack gap="$3" borderTopWidth={hasDescription ? 1 : 0} borderTopColor="$borderColor" paddingTop={hasDescription ? "$4" : 0}>
+          <Paragraph fontSize={15} fontWeight="700" color="$color">
+            Ürün Özellikleri
+          </Paragraph>
+
+          <YStack gap="$2">
+            {properties.slice(0, showMore ? undefined : 6).map((property, index) => (
+              <XStack
+                key={index}
+                justifyContent="space-between"
+                alignItems="center"
+                paddingVertical="$3"
+                paddingHorizontal="$3.5"
+                borderRadius={8}
+                borderWidth={1}
+                borderColor="$borderColor"
+                backgroundColor="$background"
+              >
+                <Paragraph fontSize={12} color="$color10" fontWeight="600">
+                  {property.name}
+                </Paragraph>
+                <Paragraph fontSize={12} fontWeight="700" color="$color" textAlign="right">
+                  {property.value}
+                </Paragraph>
+              </XStack>
+            ))}
+          </YStack>
+
+          {properties.length > 6 && (
+            <Pressable onPress={() => setShowMore(!showMore)} style={{ marginTop: 4 }}>
+              <XStack alignItems="center" gap="$1">
+                <Paragraph color="$brand" fontSize={12} fontWeight="700">
+                  {showMore ? 'DAHA AZ GÖSTER' : 'DAHA FAZLA GÖSTER'}
+                </Paragraph>
+                <Paragraph color="$brand" fontSize={11} style={{ transform: [{ rotate: showMore ? '180deg' : '0deg' }] }}>
+                  ↓
+                </Paragraph>
+              </XStack>
+            </Pressable>
+          )}
+        </YStack>
+      )}
+
+      {/* Washing Instructions Card Button */}
+      {onWashingInstructionsPress && (
+        <Button
+          backgroundColor={isDark ? '#1F2937' : 'white'}
+          borderColor="$borderColor"
+          borderWidth={2}
+          borderRadius={8}
+          height={44}
+          onPress={onWashingInstructionsPress}
+          icon={<WashingMachine size={18} color="$brand" />}
+          pressStyle={{ backgroundColor: '$backgroundPress' }}
+          marginTop="$2"
+        >
+          <Paragraph fontSize={13} fontWeight="700" color="$color">
+            Yıkama Talimatları
+          </Paragraph>
+        </Button>
+      )}
+    </YStack>
+  );
+}

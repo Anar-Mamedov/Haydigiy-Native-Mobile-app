@@ -172,3 +172,218 @@ export async function getSearchSuggestions(query: string): Promise<SearchSuggest
   });
   return response.data;
 }
+
+export async function getCurrentSlugById(id: string): Promise<{ success: boolean; slug: string }> {
+  if (!appEnv.apiBaseUrl) {
+    await sleep(50);
+    const mockProduct = mockProductDtos.find((p) => p.id === id) || mockProductDtos[0];
+    return { success: true, slug: mockProduct.slug };
+  }
+
+  getRequiredApiBaseUrl();
+  const response = await apiClient.get<{ success: boolean; slug: string }>(`/product/by-id/${id}`);
+  return response.data;
+}
+
+export async function getProductDetailBySlug(slug: string): Promise<any> {
+  if (!appEnv.apiBaseUrl) {
+    await sleep(150);
+    const baseProduct = mockProductDtos.find((p) => p.slug === slug) || mockProductDtos[0];
+    
+    // Return rich structured mock data matching the connects backend payload
+    return {
+      id: parseInt(baseProduct.id.replace(/\D/g, '')) || 80321,
+      type: 'product',
+      name: baseProduct.title + ' Siyah - 80321.2164.',
+      category_id: 12,
+      brand_id: 1,
+      group_id: '80321',
+      buybox_id: null,
+      color_id: 2,
+      supplier_id: 1,
+      supplier_code: 'SPL-80321',
+      stock_code: '80321.2164.',
+      price: String(baseProduct.price),
+      cost_price: String(baseProduct.price * 0.7),
+      other_price: String(baseProduct.original_price ?? baseProduct.price * 1.3),
+      tax_glass: null,
+      vat_amount: 10,
+      tax_status: 1,
+      description: baseProduct.description_text + ' Konforlu ve Şık Tasarım\nVücudu saran ve zarif bir silüet sunan siyah dar paça kot pantolon modelimiz, her anınızda şıklığı garantiliyor. %100 pamuk içeriğiyle gün boyu rahatlık sunan bu tasarım, esnekliği sayesinde hareket özgürlüğünüzü kısıtlamaz. Klasik yüksek bel kot kesimi, modern görünümüyle stilinize zarif bir dokunuş katıyor.',
+      backorder_status: 0,
+      slug: baseProduct.slug,
+      status: 'active',
+      is_favorite: true,
+      is_stock: true,
+      is_approved_for_sale: 1,
+      category: {
+        id: 12,
+        parent_id: 1,
+        name: baseProduct.category_name,
+        slug: 'giyim',
+        parent: [
+          { id: 1, parent_id: null, name: 'Ana Sayfa', slug: 'ana-sayfa', parent: [] }
+        ]
+      },
+      medias: [
+        {
+          id: 1,
+          product_id: 80321,
+          sort: '1',
+          front: 1,
+          back: 0,
+          created_at: '2026-01-01',
+          updated_at: '2026-01-01',
+          thumb: baseProduct.image_url,
+          medium: baseProduct.image_url,
+          large: baseProduct.image_url
+        },
+        {
+          id: 2,
+          product_id: 80321,
+          sort: '2',
+          front: 0,
+          back: 1,
+          created_at: '2026-01-01',
+          updated_at: '2026-01-01',
+          thumb: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1200&q=80',
+          medium: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1200&q=80',
+          large: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=1200&q=80'
+        }
+      ],
+      other_colors: mockProductDtos.slice(0, 3).map((p, idx) => ({
+        id: idx + 200,
+        group_id: '80321',
+        name: p.title,
+        slug: p.slug,
+        is_favorite: false,
+        is_stock: true,
+        media: {
+          id: idx + 500,
+          thumb: p.image_url,
+          medium: p.image_url,
+          large: p.image_url,
+          product_id: idx + 200
+        }
+      })),
+      variants: [
+        { id: 36, parent_id: 80321, name: '36', name_2: null, sort: 1, pivot: { product_id: 80321, variant_id: 36, stock_code: '36-code', quantity: '10', id: 360, price: String(baseProduct.price), assortment_quantity: null } },
+        { id: 38, parent_id: 80321, name: '38', name_2: null, sort: 2, pivot: { product_id: 80321, variant_id: 38, stock_code: '38-code', quantity: '5', id: 380, price: String(baseProduct.price), assortment_quantity: null } },
+        { id: 40, parent_id: 80321, name: '40', name_2: null, sort: 3, pivot: { product_id: 80321, variant_id: 40, stock_code: '40-code', quantity: '8', id: 400, price: String(baseProduct.price), assortment_quantity: null } },
+        { id: 42, parent_id: 80321, name: '42', name_2: null, sort: 4, pivot: { product_id: 80321, variant_id: 42, stock_code: '42-code', quantity: '0', id: 420, price: String(baseProduct.price), assortment_quantity: null } },
+        { id: 44, parent_id: 80321, name: '44', name_2: null, sort: 5, pivot: { product_id: 80321, variant_id: 44, stock_code: '44-code', quantity: '0', id: 440, price: String(baseProduct.price), assortment_quantity: null } }
+      ],
+      similar_products: mockProductDtos.slice(0, 4).map((p, idx) => ({
+        id: idx + 800,
+        name: p.title,
+        slug: p.slug,
+        price: String(p.price),
+        is_stock: true,
+        media: {
+          id: idx + 900,
+          thumb: p.image_url,
+          medium: p.image_url,
+          large: p.image_url,
+          product_id: idx + 800
+        }
+      })),
+      favorites_count: 1000,
+      cart_count: 35,
+      total_quantity: 23,
+      reviews: [
+        { id: 1, rating: 5, comment: 'yıkamadım rengi akar mı cabuk solar mı bilmiyorum ama cok beğendim', user: { name: 'C***u', surname: 'S***r' }, created_at: '2026-05-20T00:00:00Z' },
+        { id: 2, rating: 4, comment: 'Kalıbı tam oturdu, kumaşı çok kaliteli.', user: { name: 'A***e', surname: 'K***a' }, created_at: '2026-05-18T00:00:00Z' },
+        { id: 3, rating: 3, comment: 'Güzel ama bedeni bir tık dar geldi, iade edip büyük alacağım.', user: { name: 'M***e', surname: 'Y***z' }, created_at: '2026-05-15T00:00:00Z' }
+      ],
+      questions: [
+        { id: 1, question: 'Ben 36 beden pantolon aldım olmadı 38 ile değişim yapabilirmiyiz', reply: { reply: 'Merhabalar, 😊 Değişimimiz yoktur, sadece iademiz mevcuttur. 🙏' }, user: { name: 'A**a E**l' }, created_at: '2026-05-19T00:00:00Z' },
+        { id: 2, question: 'Stok yenilendiğinde haber verir misiniz çok beğendim almak istiyorum', reply: { reply: 'Merhabalar, 😊 Stok güncellemeleri web sitemiz üzerinden yapılmaktadır. Ürünü favorilerinize ekleyerek stoklara geldiğinde bildirim alabilirsiniz. 🙏' }, user: { name: 'H**a G**i' }, created_at: '2026-05-16T00:00:00Z' },
+        { id: 3, question: 'Yüksek bel mi 70kg 167 boy 42beden olurmu', reply: { reply: 'Merhabalar, yüksek beldir. Sizler için L/40 beden uygun olabileceğini öngörmekteyiz fakat vücut özelliklerinize istinaden değişkenlik gösterebilir, sevgilerimizle 🌸' }, user: { name: 'C****n G****r' }, created_at: '2026-05-16T00:00:00Z' }
+      ],
+      properties: [
+        { id: 1, name: 'Dar Paça', parent: { id: 10, name: 'Model' } },
+        { id: 2, name: '34 cm', parent: { id: 11, name: 'Bel Yüksekliği' } },
+        { id: 3, name: 'Dar', parent: { id: 12, name: 'Kalıp' } },
+        { id: 4, name: '%100 Pamuk', parent: { id: 13, name: 'Kumaş İçeriği' } },
+        { id: 5, name: '34 cm', parent: { id: 14, name: 'Bel Genişliği' } },
+        { id: 6, name: '48 cm', parent: { id: 15, name: 'Basen Genişliği' } }
+      ],
+      feature_icons: [
+        { id: 1, name: 'Hızlı Kargo', slug: 'hizli-kargo', description: 'Bugün sipariş verirsen yarın kargoda', asset_url: '' }
+      ],
+      video_path: null
+    };
+  }
+
+  getRequiredApiBaseUrl();
+  const response = await apiClient.get<any>(`/product/${slug}`, {
+    params: { p: 1 }
+  });
+  return response.data;
+}
+
+export async function getProductReviews(slug: string): Promise<any> {
+  if (!appEnv.apiBaseUrl) {
+    await sleep(50);
+    return {
+      reviews: {
+        data: [
+          { id: 1, rating: 5, comment: 'yıkamadım rengi akar mı cabuk solar mı bilmiyorum ama cok beğendim', user: { name: 'C***u', surname: 'S***r' }, created_at: '2026-05-20T00:00:00Z' },
+          { id: 2, rating: 4, comment: 'Kalıbı tam oturdu, kumaşı çok kaliteli.', user: { name: 'A***e', surname: 'K***a' }, created_at: '2026-05-18T00:00:00Z' },
+          { id: 3, rating: 3, comment: 'Güzel ama bedeni bir tık dar geldi, iade edip büyük alacağım.', user: { name: 'M***e', surname: 'Y***z' }, created_at: '2026-05-15T00:00:00Z' }
+        ],
+        next_page_url: null
+      }
+    };
+  }
+
+  getRequiredApiBaseUrl();
+  const response = await apiClient.get<any>(`/product/${slug}/review`);
+  return response.data;
+}
+
+export async function submitProductFeedback(productId: string, slug: string, value: string): Promise<any> {
+  if (!appEnv.apiBaseUrl) {
+    await sleep(100);
+    return { success: true };
+  }
+
+  getRequiredApiBaseUrl();
+  const response = await apiClient.post<any>('/product-feedback', {
+    product_id: productId,
+    product_slug: slug,
+    value
+  });
+  return response.data;
+}
+
+export async function calculateSize(height: number, weight: number, gender: string): Promise<any> {
+  if (!appEnv.apiBaseUrl) {
+    await sleep(150);
+    const heightM = height / 100;
+    const bmi = weight / (heightM * heightM);
+    let recommended_size = 'M';
+    if (bmi < 18.5) recommended_size = 'XS';
+    else if (bmi < 22) recommended_size = 'S';
+    else if (bmi < 25) recommended_size = 'M';
+    else if (bmi < 28) recommended_size = 'L';
+    else if (bmi < 32) recommended_size = 'XL';
+    else recommended_size = 'XXL';
+
+    return {
+      status: 'success',
+      data: {
+        recommended_size,
+        bmi,
+        description: 'Vücut kitle indeksinize göre hesaplanan beden önerisidir.',
+        gender
+      }
+    };
+  }
+
+  getRequiredApiBaseUrl();
+  const response = await apiClient.get<any>('/size-calculator', {
+    params: { height, weight, gender }
+  });
+  return response.data;
+}

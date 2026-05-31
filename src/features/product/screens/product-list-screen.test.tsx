@@ -45,6 +45,7 @@ const mockProducts = [
     reviewCount: 20,
     shippingLabel: 'Fast shipping',
     category: 'Elbise',
+    videoPath: 'https://example.com/product-1-video.mp4',
     sizes: [
       { name: 'S', hasStock: true },
       { name: 'M', hasStock: false },
@@ -199,6 +200,16 @@ describe('ProductListScreen', () => {
 
     fireEvent.press(screen.getByText('Test Product 1'));
     expect(mockPush).toHaveBeenCalledWith('/product/product-1');
+  });
+
+  it('opens product video inside a modal from the product card video button', () => {
+    renderWithTamagui(<ProductListScreen slug="elbise" categoryId={40} />);
+
+    fireEvent.press(screen.getByLabelText('Test Product 1 videosunu aç'));
+
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(screen.getByTestId('product-video-modal')).toBeTruthy();
+    expect(screen.getByTestId('product-carousel-video')).toBeTruthy();
   });
 
   it('selects multiple categories (parent and child) without hiding the others', () => {

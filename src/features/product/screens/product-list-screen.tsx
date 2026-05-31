@@ -17,6 +17,7 @@ import { FilterSheet, FilterShortcutSection } from '../components/filter-sheet';
 import { ColorVariantsSheet } from '../components/color-variants-sheet';
 import { QuickFilterDropdown } from '../components/quick-filter-dropdown';
 import { ProductListHeader } from '../components/product-list-header';
+import { ProductVideoModal } from '../components/product-video-modal';
 
 interface ProductListScreenProps {
   slug: string;
@@ -50,6 +51,7 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
   const [selectedVariantsMap, setSelectedVariantsMap] = useState<Record<string, Product>>({});
   const [activeColorProduct, setActiveColorProduct] = useState<Product | null>(null);
   const [isColorSheetOpen, setIsColorSheetOpen] = useState(false);
+  const [activeVideoProduct, setActiveVideoProduct] = useState<Product | null>(null);
 
   const handleSelectColorVariant = (variant: {
     id: string;
@@ -189,6 +191,12 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
 
   const handleProductPress = (product: Product) => {
     router.push(`/product/${product.id}` as any);
+  };
+
+  const handleVideoModalOpenChange = (open: boolean) => {
+    if (!open) {
+      setActiveVideoProduct(null);
+    }
   };
 
   // Custom Navigation Header
@@ -344,6 +352,7 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
                 <YStack flex={1} padding="$1.5">
                   <ProductCard
                     onOpen={() => handleProductPress(displayedProduct)}
+                    onVideoPress={setActiveVideoProduct}
                     product={displayedProduct}
                     onColorPress={() => {
                       setActiveColorProduct(item);
@@ -389,6 +398,14 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
         selectedVariantId={activeColorProduct ? (selectedVariantsMap[activeColorProduct.id]?.id || activeColorProduct.id) : null}
         onSelectVariant={handleSelectColorVariant}
       />
+
+      {activeVideoProduct?.videoPath ? (
+        <ProductVideoModal
+          onOpenChange={handleVideoModalOpenChange}
+          open={Boolean(activeVideoProduct.videoPath)}
+          videoUri={activeVideoProduct.videoPath}
+        />
+      ) : null}
     </AppScreen>
   );
 }

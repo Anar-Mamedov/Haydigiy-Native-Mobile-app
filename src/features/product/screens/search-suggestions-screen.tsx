@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Pressable, TextInput } from 'react-native';
-import { Paragraph, Spinner, XStack, YStack, ScrollView, useTheme } from 'tamagui';
+import { Pressable } from 'react-native';
+import { Input, Paragraph, Spinner, XStack, YStack, ScrollView, useTheme } from 'tamagui';
 import { ChevronLeft, Search, X, Eye } from '@tamagui/lucide-icons-2';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
@@ -126,20 +126,20 @@ export function SearchSuggestionsScreen() {
         paddingHorizontal="$3"
         height={42}
       >
-        <TextInput
+        <Input
+          flex={1}
+          height="100%"
+          backgroundColor="transparent"
+          borderWidth={0}
+          padding={0}
+          fontSize={14}
+          color="$color"
+          placeholderTextColor="$color9"
           placeholder="Ürün veya kategori ara"
-          placeholderTextColor="#9ca3af"
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={handleSearchSubmit}
           autoFocus
-          style={{
-            flex: 1,
-            height: '100%',
-            fontSize: 14,
-            color: theme.color.val,
-            padding: 0,
-          }}
         />
         {query ? (
           <Pressable onPress={handleClear} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}>

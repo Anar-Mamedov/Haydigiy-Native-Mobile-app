@@ -5,4 +5,5 @@ export type CartLineItem = {
   sellerName: string;
   title: string;
   unitPrice: number;
+  size?: string;
 };

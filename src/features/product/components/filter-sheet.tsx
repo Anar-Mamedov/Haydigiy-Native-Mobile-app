@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, TextInput } from 'react-native';
-import { Sheet, XStack, YStack, Paragraph, ScrollView, Button, useTheme } from 'tamagui';
+import { Pressable } from 'react-native';
+import { Sheet, XStack, YStack, Paragraph, ScrollView, Button, Input } from 'tamagui';
 import { ChevronDown, ChevronRight, Search, X } from '@tamagui/lucide-icons-2';
 import { FilterProperty, ProductAvailableFilters } from '@/types/product.types';
 import { CategoryFilterTree } from './category-filter-tree';
@@ -81,11 +81,21 @@ function hasActiveFilters(activeFilters: ActiveFilters) {
 }
 
 function SearchField({ onChangeText, placeholder, value }: { onChangeText: (value: string) => void; placeholder: string; value: string }) {
-  const theme = useTheme();
   return (
     <XStack alignItems="center" backgroundColor="$backgroundHover" borderColor="$borderColor" borderRadius={5} borderWidth={1} height={40} paddingHorizontal={10}>
-      <Search color="#9ca3af" size={16} />
-      <TextInput onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#9ca3af" style={{ color: theme.color.val, flex: 1, fontSize: 14, paddingLeft: 10 }} value={value} />
+      <Search color="$color9" size={16} />
+      <Input
+        flex={1}
+        backgroundColor="transparent"
+        borderWidth={0}
+        paddingLeft={10}
+        fontSize={14}
+        color="$color"
+        placeholderTextColor="$color9"
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        value={value}
+      />
     </XStack>
   );
 }

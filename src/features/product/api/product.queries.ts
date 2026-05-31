@@ -1,12 +1,15 @@
 import { useQuery, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { productKeys } from '@/features/product/api/product.keys';
-import { mapAvailableFilters, mapProductDto, mapSearchProductDto } from '@/features/product/api/product.mapper';
+import { mapAvailableFilters, mapProductDto, mapSearchProductDto, mapProductDetailDto } from '@/features/product/api/product.mapper';
 import {
   getProductByIdDto,
   listFeaturedProductDtos,
   searchProductDtos,
   SearchProductsParams,
   getSearchSuggestions,
+  getProductDetailBySlug,
+  getCurrentSlugById,
+  getProductReviews,
 } from '@/services/product.service';
 
 export function useFeaturedProductsQuery() {
@@ -68,6 +71,42 @@ export function useSearchSuggestionsQuery(query: string) {
     enabled: trimmedQuery.length >= 3,
     queryFn: () => getSearchSuggestions(trimmedQuery),
     queryKey: productKeys.suggestions(trimmedQuery),
+  });
+}
+
+export function useProductDetailsQuery(idOrSlug: string) {
+  return useQuery({
+    enabled: Boolean(idOrSlug),
+    queryKey: productKeys.detail(idOrSlug),
+    queryFn: async () => {
+      let slug = idOrSlug;
+      const isNumeric = /^\d+$/.test(idOrSlug);
+      
+      if (isNumeric) {
+        try {
+          const res = await getCurrentSlugById(idOrSlug);
+          if (res?.success && res.slug) {
+            slug = res.slug;
+          }
+        } catch (error) {
+          console.warn('Failed to resolve slug by id, falling back to direct slug fetch:', error);
+        }
+      }
+      
+      const rawDetail = await getProductDetailBySlug(slug);
+      return mapProductDetailDto(rawDetail);
+    },
+  });
+}
+
+export function useProductReviewsQuery(slug: string) {
+  return useQuery({
+    enabled: Boolean(slug),
+    queryKey: [...productKeys.all, 'reviews', slug] as const,
+    queryFn: async () => {
+      const response = await getProductReviews(slug);
+      return response?.reviews?.data || [];
+    },
   });
 }
 

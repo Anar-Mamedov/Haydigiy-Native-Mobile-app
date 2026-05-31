@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import { Heart, Play } from '@tamagui/lucide-icons-2';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { Paragraph, ScrollView, XStack, YStack } from 'tamagui';
-import * as WebBrowser from 'expo-web-browser';
 import { SectionCard } from '@/components/ui/section-card';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
@@ -12,6 +11,7 @@ import { ProductImageCarousel } from './product-image-carousel';
 
 type ProductCardProps = {
   onOpen: () => void;
+  onVideoPress?: (product: Product) => void;
   product: Product;
   onColorPress?: (product: Product) => void;
 };
@@ -131,7 +131,7 @@ function RatingStars({
   );
 }
 
-export function ProductCard({ onOpen, product, onColorPress }: ProductCardProps) {
+export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: ProductCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
 
   const ratingValue = product.rating ?? 0;
@@ -148,11 +148,14 @@ export function ProductCard({ onOpen, product, onColorPress }: ProductCardProps)
       .join(' • ') || '';
   const colorOptionsCount = product.otherColors?.length ?? 0;
 
-  const handleVideoPress = async (event?: GestureResponderEvent) => {
+  const handleVideoPress = (event?: GestureResponderEvent) => {
     stopPressPropagation(event);
-    if (product.videoPath) {
-      await WebBrowser.openBrowserAsync(product.videoPath);
+    if (onVideoPress) {
+      onVideoPress(product);
+      return;
     }
+
+    onOpen();
   };
 
   return (

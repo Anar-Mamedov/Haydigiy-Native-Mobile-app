@@ -61,4 +61,38 @@ describe('ProductCard', () => {
     expect(screen.getByLabelText('Test Product favorilerden çıkar')).toBeTruthy();
   });
 
+  it('opens product detail instead of an external browser when video is pressed', () => {
+    const onOpen = jest.fn();
+
+    renderWithTamagui(
+      <ProductCard
+        onOpen={onOpen}
+        product={{ ...product, videoPath: 'https://example.com/product-video.mp4' }}
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Test Product videosunu aç'));
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the provided in-app video handler when video is pressed', () => {
+    const onOpen = jest.fn();
+    const onVideoPress = jest.fn();
+    const videoProduct = { ...product, videoPath: 'https://example.com/product-video.mp4' };
+
+    renderWithTamagui(
+      <ProductCard
+        onOpen={onOpen}
+        onVideoPress={onVideoPress}
+        product={videoProduct}
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Test Product videosunu aç'));
+
+    expect(onVideoPress).toHaveBeenCalledWith(videoProduct);
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
 });

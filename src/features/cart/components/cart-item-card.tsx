@@ -36,6 +36,11 @@ export function CartItemCard({
           <Paragraph color="$color10" size="$3">
             Seller: {item.sellerName}
           </Paragraph>
+          {item.size ? (
+            <Paragraph color="$color10" size="$3">
+              Beden: {item.size}
+            </Paragraph>
+          ) : null}
           <Paragraph>{formatCurrency(item.unitPrice)}</Paragraph>
           <XStack alignItems="center" gap="$2">
             <AppButton circular icon={Minus} onPress={onDecrease} size="$3" />
