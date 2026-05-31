@@ -31,6 +31,7 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
@@ -41,3 +42,13 @@ app-example
 # generated native folders
 /ios
 /android
+
+# AI configuration & rules
+GEMINI.md
+CLAUDE.md
+AGENTS.md
+.claude/
+
+# UI & build caches
+.tamagui/
+
