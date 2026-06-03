@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, Spinner, YStack, Paragraph, XStack, useThemeName } from 'tamagui';
 import { Alert, Linking, Pressable } from 'react-native';
-import { ChevronRight, ThumbsUp } from '@tamagui/lucide-icons-2';
+import { ThumbsUp } from '@tamagui/lucide-icons-2';
 import { AppScreen, EmptyState } from '@/components/ui';
 import { useCartStore } from '@/features/cart/store/use-cart-store';
 import { useProductDetailsQuery } from '@/features/product/api/product.queries';
@@ -366,6 +366,11 @@ export function ProductDetailScreen() {
           onOpenChange={setShowVideoModal}
           open={showVideoModal}
           videoUri={displayData.videoPath}
+          product={displayData}
+          onPrimaryCta={() => {
+            setShowVideoModal(false);
+            handleAddToCart();
+          }}
         />
       ) : null}
     </AppScreen>

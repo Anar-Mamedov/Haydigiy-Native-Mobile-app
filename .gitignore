@@ -48,6 +48,7 @@ GEMINI.md
 CLAUDE.md
 AGENTS.md
 .claude/
+skill/
 
 # UI & build caches
 .tamagui/

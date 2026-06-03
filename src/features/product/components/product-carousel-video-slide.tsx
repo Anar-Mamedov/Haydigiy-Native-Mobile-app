@@ -3,6 +3,7 @@ import { Pressable } from 'react-native';
 import { VideoView, useVideoPlayer, type VideoSource } from 'expo-video';
 import { Play } from '@tamagui/lucide-icons-2';
 import { Paragraph, YStack } from 'tamagui';
+import { getVideoSource } from '../utils/video';
 
 type ProductCarouselVideoSlideProps = {
   autoplayRequest: number;
@@ -12,15 +13,6 @@ type ProductCarouselVideoSlideProps = {
   uri: string;
   width: number;
 };
-
-function getVideoSource(uri: string): VideoSource {
-  const normalizedUri = uri.split('?')[0]?.toLowerCase() ?? uri.toLowerCase();
-
-  return {
-    uri,
-    contentType: normalizedUri.endsWith('.m3u8') ? 'hls' : 'progressive',
-  };
-}
 
 export function ProductCarouselVideoSlide({
   onOpenPress,

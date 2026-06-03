@@ -404,6 +404,13 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
           onOpenChange={handleVideoModalOpenChange}
           open={Boolean(activeVideoProduct.videoPath)}
           videoUri={activeVideoProduct.videoPath}
+          product={activeVideoProduct}
+          onPrimaryCta={() => {
+            handleVideoModalOpenChange(false);
+            if (activeVideoProduct) {
+              handleProductPress(activeVideoProduct);
+            }
+          }}
         />
       ) : null}
     </AppScreen>
