@@ -1,5 +1,6 @@
+import { ReactNode } from 'react';
 import { Pressable } from 'react-native';
-import { ScrollView, XStack, YStack, Paragraph, Input, Button } from 'tamagui';
+import { ScrollView, XStack, YStack, Paragraph, Input } from 'tamagui';
 import { Search, X, TrendingDown } from '@tamagui/lucide-icons-2';
 import { FavoritesFilter } from '@/types/favorite.types';
 
@@ -72,56 +73,75 @@ export function FavoritesToolbar({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: 8, alignItems: 'center' }}
       >
-        <Button
-          height={32}
-          borderRadius={16}
-          backgroundColor={hasCategories ? '$brand' : '$background'}
-          borderColor={hasCategories ? '$brand' : '$borderColor'}
-          borderWidth={1}
-          paddingHorizontal="$3"
+        <ToolbarChip
+          active={hasCategories}
+          accessibilityLabel="Kategori filtresi"
           onPress={onOpenCategorySheet}
         >
-          <XStack alignItems="center" gap="$1.5">
-            <Paragraph fontSize={12} fontWeight="600" color={hasCategories ? 'white' : '$color'}>
-              Kategori {hasCategories ? `(${selectedCategoryCount})` : ''}
-            </Paragraph>
-            <Paragraph fontSize={10} color={hasCategories ? 'white' : '$color10'}>
-              ▼
-            </Paragraph>
-          </XStack>
-        </Button>
+          <Paragraph fontSize={12} fontWeight="600" color={hasCategories ? 'white' : '$color'}>
+            Kategori {hasCategories ? `(${selectedCategoryCount})` : ''}
+          </Paragraph>
+          <Paragraph fontSize={10} color={hasCategories ? 'white' : '$color10'}>
+            ▼
+          </Paragraph>
+        </ToolbarChip>
 
-        <Button
-          height={32}
-          borderRadius={16}
-          backgroundColor={inStockActive ? '$brand' : '$background'}
-          borderColor={inStockActive ? '$brand' : '$borderColor'}
-          borderWidth={1}
-          paddingHorizontal="$3"
+        <ToolbarChip
+          active={inStockActive}
+          accessibilityLabel="Stokta olanlar filtresi"
           onPress={() => onToggleFilter('inStock')}
         >
           <Paragraph fontSize={12} fontWeight="600" color={inStockActive ? 'white' : '$color'}>
             Stokta Olanlar
           </Paragraph>
-        </Button>
+        </ToolbarChip>
 
-        <Button
-          height={32}
-          borderRadius={16}
-          backgroundColor={discountedActive ? '$brand' : '$background'}
-          borderColor={discountedActive ? '$brand' : '$borderColor'}
-          borderWidth={1}
-          paddingHorizontal="$3"
+        <ToolbarChip
+          active={discountedActive}
+          accessibilityLabel="Fiyatı düşenler filtresi"
           onPress={() => onToggleFilter('discounted')}
         >
-          <XStack alignItems="center" gap="$1.5">
-            <TrendingDown size={14} color={discountedActive ? 'white' : '$brand'} />
-            <Paragraph fontSize={12} fontWeight="600" color={discountedActive ? 'white' : '$color'}>
-              Fiyatı Düşenler
-            </Paragraph>
-          </XStack>
-        </Button>
+          <TrendingDown size={14} color={discountedActive ? 'white' : '$brand'} />
+          <Paragraph fontSize={12} fontWeight="600" color={discountedActive ? 'white' : '$color'}>
+            Fiyatı Düşenler
+          </Paragraph>
+        </ToolbarChip>
       </ScrollView>
     </YStack>
+  );
+}
+
+interface ToolbarChipProps {
+  active: boolean;
+  accessibilityLabel: string;
+  onPress: () => void;
+  children: ReactNode;
+}
+
+/**
+ * Filter chip built on Pressable + XStack (not Tamagui Button) so `$background`
+ * and `$color` resolve against the screen theme. A Tamagui Button establishes
+ * its own sub-theme, which made the inactive chip text unreadable (dark-on-dark)
+ * in dark mode.
+ */
+function ToolbarChip({ active, accessibilityLabel, onPress, children }: ToolbarChipProps) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={onPress}>
+      {({ pressed }) => (
+        <XStack
+          alignItems="center"
+          gap="$1.5"
+          height={32}
+          borderRadius={16}
+          borderWidth={1}
+          paddingHorizontal="$3"
+          backgroundColor={active ? '$brand' : '$background'}
+          borderColor={active ? '$brand' : '$borderColor'}
+          opacity={pressed ? 0.85 : 1}
+        >
+          {children}
+        </XStack>
+      )}
+    </Pressable>
   );
 }

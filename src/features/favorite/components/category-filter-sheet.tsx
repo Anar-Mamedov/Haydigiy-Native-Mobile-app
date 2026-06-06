@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Pressable } from 'react-native';
-import { Sheet, YStack, XStack, Paragraph, Button, ScrollView } from 'tamagui';
+import { Sheet, YStack, XStack, Paragraph, ScrollView } from 'tamagui';
 import { X } from '@tamagui/lucide-icons-2';
 import { FilterCheckbox } from '@/components/ui/filter-checkbox';
+import { AppButton } from '@/components/ui/app-button';
 
 interface CategoryFilterSheetProps {
   open: boolean;
@@ -105,7 +106,7 @@ export function CategoryFilterSheet({
           borderTopColor="$borderColor"
           backgroundColor="$background"
         >
-          <Button
+          <AppButton
             flex={1}
             backgroundColor="$backgroundHover"
             borderColor="$borderColor"
@@ -114,17 +115,18 @@ export function CategoryFilterSheet({
             onPress={handleClear}
           >
             Temizle
-          </Button>
-          <Button
+          </AppButton>
+          <AppButton
             flex={1}
             backgroundColor="$brand"
+            color="white"
+            borderColor="transparent"
+            borderWidth={0}
             borderRadius="$4"
             onPress={handleApply}
           >
-            <Paragraph color="white" fontWeight="700">
-              Uygula
-            </Paragraph>
-          </Button>
+            Uygula
+          </AppButton>
         </XStack>
       </Sheet.Frame>
     </Sheet>

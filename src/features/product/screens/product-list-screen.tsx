@@ -286,6 +286,13 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
       {!isPending && !isError && (
         <YStack flex={1} width="100%">
           <FlashList
+            // FlashList v2 enables maintainVisibleContentPosition by default (for
+            // chat-like lists); on iOS it intermittently inserts blank space above
+            // the header when content height changes (refresh / pagination / header
+            // re-measure). This catalog is top-anchored, so disable it. Pair with
+            // contentInsetAdjustmentBehavior="never" to stop iOS auto top-insets.
+            maintainVisibleContentPosition={{ disabled: true }}
+            contentInsetAdjustmentBehavior="never"
             contentContainerStyle={{
               paddingTop: 8,
               paddingBottom: 24,

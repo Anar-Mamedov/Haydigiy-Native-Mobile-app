@@ -287,7 +287,7 @@ export function CategoriesScreen() {
                 ) : (
                   <YStack alignItems="center" justifyContent="center" height={200}>
                     <Paragraph color="$color10" fontSize={13} textAlign="center">
-                      "{searchTerm}" için sonuç bulunamadı.
+                      {`"${searchTerm}" için sonuç bulunamadı.`}
                     </Paragraph>
                   </YStack>
                 )}

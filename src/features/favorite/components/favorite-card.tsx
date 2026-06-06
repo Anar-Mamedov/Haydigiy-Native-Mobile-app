@@ -44,7 +44,7 @@ export function FavoriteCard({
       overflow="hidden"
       position="relative"
       flex={1}
-      shadowColor="rgba(0, 0, 0, 0.05)"
+      shadowColor="$shadowColor"
       shadowRadius={2}
       shadowOffset={{ width: 0, height: 1 }}
     >
@@ -104,7 +104,7 @@ export function FavoriteCard({
               alignItems="center"
               justifyContent="center"
               zIndex={10}
-              shadowColor="rgba(0,0,0,0.15)"
+              shadowColor="$shadowColor"
               shadowRadius={2}
               shadowOffset={{ width: 0, height: 1 }}
             >
@@ -119,7 +119,7 @@ export function FavoriteCard({
               left={0}
               right={0}
               bottom={0}
-              backgroundColor="rgba(0,0,0,0.05)"
+              backgroundColor="$shadowColor"
               alignItems="center"
               justifyContent="center"
               zIndex={10}
@@ -163,22 +163,34 @@ export function FavoriteCard({
 
         {hasStock && (
           <XStack gap="$2" marginTop="auto" height={36}>
-            <Button
-              flex={1}
-              height={36}
-              backgroundColor="$backgroundHover"
-              borderColor="$borderColor"
-              borderWidth={1}
-              borderRadius="$2"
-              paddingHorizontal="$2"
-              justifyContent="center"
-              alignItems="center"
+            {/* Pressable + XStack (not Tamagui Button) so $backgroundHover / $color
+                resolve against the screen theme; a Button sub-theme made this text
+                unreadable (dark-on-dark) in dark mode. */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Beden seç"
               onPress={() => onOpenSizeSelector(favorite)}
+              style={{ flex: 1 }}
             >
-              <Paragraph fontSize={11} color="$color" numberOfLines={1}>
-                {selectedSize ? `Beden: ${selectedSize}` : 'Beden Seç'}
-              </Paragraph>
-            </Button>
+              {({ pressed }) => (
+                <XStack
+                  flex={1}
+                  height={36}
+                  backgroundColor="$backgroundHover"
+                  borderColor="$borderColor"
+                  borderWidth={1}
+                  borderRadius="$2"
+                  paddingHorizontal="$2"
+                  justifyContent="center"
+                  alignItems="center"
+                  opacity={pressed ? 0.85 : 1}
+                >
+                  <Paragraph fontSize={11} color="$color" numberOfLines={1}>
+                    {selectedSize ? `Beden: ${selectedSize}` : 'Beden Seç'}
+                  </Paragraph>
+                </XStack>
+              )}
+            </Pressable>
 
             <Button
               height={36}

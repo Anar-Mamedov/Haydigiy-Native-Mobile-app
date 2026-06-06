@@ -235,6 +235,11 @@ export function FavoritesScreen() {
         ) : (
           <YStack flex={1} width="100%">
             <FlashList
+              // Top-anchored grid: opt out of FlashList v2's default
+              // maintainVisibleContentPosition and iOS auto content-insets, which
+              // otherwise insert intermittent blank space above the list on iOS.
+              maintainVisibleContentPosition={{ disabled: true }}
+              contentInsetAdjustmentBehavior="never"
               contentContainerStyle={{ paddingTop: 8, paddingBottom: 24, paddingHorizontal: 8 }}
               data={visibleFavorites}
               keyExtractor={(item) => String(item.product.id)}

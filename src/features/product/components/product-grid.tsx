@@ -15,6 +15,11 @@ export function ProductGrid({
 }: ProductGridProps) {
   return (
     <FlashList
+      // Top-anchored grid: opt out of FlashList v2's default
+      // maintainVisibleContentPosition and iOS auto content-insets, which
+      // otherwise insert intermittent blank space above the list on iOS.
+      maintainVisibleContentPosition={{ disabled: true }}
+      contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{
         paddingBottom: tokenValues.sectionListPaddingBottom,
       }}

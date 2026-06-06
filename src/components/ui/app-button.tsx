@@ -44,7 +44,7 @@ export const AppButton = forwardRef<any, AppButtonProps>(function AppButton(
       <XStack alignItems="center" gap="$2" justifyContent="center">
         {renderIcon(icon)}
         {typeof children === 'string' ? (
-          <Paragraph fontWeight="700" numberOfLines={1} style={{ color: textColor }}>
+          <Paragraph fontWeight="600" numberOfLines={1} style={{ color: textColor }}>
             {children}
           </Paragraph>
         ) : (

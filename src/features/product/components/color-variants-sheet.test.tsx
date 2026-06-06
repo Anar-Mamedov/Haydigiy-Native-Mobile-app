@@ -5,11 +5,17 @@ import { Product } from '@/types/product.types';
 
 jest.mock('tamagui', () => {
   const actual = jest.requireActual('tamagui');
-  const React = require('react');
+  const React = jest.requireActual('react');
 
-  const SheetRoot = ({ children, open }: any) => (open ? React.createElement(React.Fragment, null, children) : null);
-  SheetRoot.Overlay = () => null;
-  SheetRoot.Frame = ({ children, ...props }: any) => React.createElement(actual.YStack, props, children);
+  const SheetRoot = function SheetRoot({ children, open }: any) {
+    return open ? React.createElement(React.Fragment, null, children) : null;
+  };
+  SheetRoot.Overlay = function SheetOverlay() {
+    return null;
+  };
+  SheetRoot.Frame = function SheetFrame({ children, ...props }: any) {
+    return React.createElement(actual.YStack, props, children);
+  };
 
   return {
     ...actual,

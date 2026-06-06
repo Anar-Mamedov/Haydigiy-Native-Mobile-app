@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, useCallback, type ReactElement } from 'react';
 import { Modal, Share } from 'react-native';
 import { VideoView, useVideoPlayer, type VideoSource } from 'expo-video';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { XStack, YStack, Paragraph, Button } from 'tamagui';
+import { AppButton } from '@/components/ui/app-button';
 import { Image } from 'expo-image';
 import { Heart, Share2, ThumbsUp, ThumbsDown, ChevronLeft, Image as ImageIcon } from '@tamagui/lucide-icons-2';
 import { Product } from '@/types/product.types';
@@ -84,7 +85,6 @@ export function ProductVideoModal({
   onPrimaryCta,
   onToggleFavorite,
 }: ProductVideoModalProps) {
-  const insets = useSafeAreaInsets();
   const [isFavorite, setIsFavorite] = useState(false);
   const [likeStatus, setLikeStatus] = useState<'liked' | 'disliked' | null>(null);
   const { player, errorMessage } = useFullscreenVideoPlayer(videoUri, open);
@@ -132,6 +132,10 @@ export function ProductVideoModal({
       statusBarTranslucent
       visible={open}
     >
+      {/* Own SafeAreaProvider: a RN Modal is a separate window, so the app-level
+          insets don't apply here. Measuring inside the modal gives the correct
+          bottom inset (Android nav bar / home indicator) for the CTA. */}
+      <SafeAreaProvider style={{ flex: 1 }}>
       <YStack backgroundColor={OVERLAY.background} flex={1} position="relative" testID="product-video-modal">
         <VideoView
           testID="product-carousel-video"
@@ -172,27 +176,30 @@ export function ProductVideoModal({
           justifyContent="space-between"
         >
           {/* Top Bar with safe area padding */}
-          <XStack
-            paddingTop={insets.top + 8}
-            paddingHorizontal="$4"
-            pointerEvents="box-none"
-            justifyContent="flex-start"
-          >
-            <Button
-              accessibilityLabel="Geri"
-              backgroundColor={OVERLAY.scrimSoft}
-              borderRadius={22}
-              width={44}
-              height={44}
-              circular
-              icon={<ChevronLeft size={28} color={OVERLAY.foreground} />}
-              onPress={handleClose}
-              pointerEvents="auto"
-            />
-          </XStack>
+          <SafeAreaView edges={['top']} pointerEvents="box-none">
+            <XStack
+              paddingTop="$2"
+              paddingHorizontal="$4"
+              pointerEvents="box-none"
+              justifyContent="flex-start"
+            >
+              <Button
+                accessibilityLabel="Geri"
+                backgroundColor={OVERLAY.scrimSoft}
+                borderRadius={22}
+                width={44}
+                height={44}
+                circular
+                icon={<ChevronLeft size={28} color={OVERLAY.foreground} />}
+                onPress={handleClose}
+                pointerEvents="auto"
+              />
+            </XStack>
+          </SafeAreaView>
 
           {/* Bottom Area (Actions + Product details card) */}
-          <YStack pointerEvents="box-none" width="100%" gap="$3" paddingBottom={insets.bottom + 16}>
+          <SafeAreaView edges={['bottom']} pointerEvents="box-none">
+          <YStack pointerEvents="box-none" width="100%" gap="$3" paddingBottom="$4">
             {/* Middle part: side actions (right) */}
             <XStack
               justifyContent="flex-end"
@@ -298,24 +305,28 @@ export function ProductVideoModal({
 
                   {/* Add To Cart button / Primary CTA */}
                   {onPrimaryCta && (
-                    <Button
+                    <AppButton
                       accessibilityLabel="Sepete Ekle"
                       backgroundColor={BRAND_COLOR}
+                      color={OVERLAY.foreground}
+                      borderColor="transparent"
+                      borderWidth={0}
                       borderRadius="$3"
-                      paddingVertical="$3"
+                      size="$5"
                       onPress={onPrimaryCta}
+                      pressStyle={{ opacity: 0.85 }}
                     >
-                      <Paragraph color={OVERLAY.foreground} fontSize="$5" fontWeight="700">
-                        Sepete Ekle
-                      </Paragraph>
-                    </Button>
+                      Sepete Ekle
+                    </AppButton>
                   )}
                 </YStack>
               </YStack>
             )}
           </YStack>
+          </SafeAreaView>
         </YStack>
       </YStack>
+      </SafeAreaProvider>
     </Modal>
   );
 }

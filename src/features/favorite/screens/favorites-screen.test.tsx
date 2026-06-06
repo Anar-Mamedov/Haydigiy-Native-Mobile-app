@@ -3,6 +3,15 @@ import { FavoritesScreen } from './favorites-screen';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { useFavoritesQuery } from '@/features/favorite/api/favorite.queries';
 import { getAccessToken } from '@/lib/storage/secure-storage';
+import { useAuthStore } from '@/features/auth/store/use-auth-store';
+
+const authenticatedUser = {
+  id: 'user-1',
+  email: 'anar@example.com',
+  name: 'Anar',
+  surname: 'Mamedov',
+  phoneNumber: '5551234567',
+};
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
@@ -87,6 +96,7 @@ const mockFavorites = [
 describe('FavoritesScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    useAuthStore.setState({ user: null });
     (useFavoritesQuery as jest.Mock).mockReturnValue({
       data: mockFavorites,
       isPending: false,
@@ -97,6 +107,7 @@ describe('FavoritesScreen', () => {
 
   it('renders favorites list correctly on successful load', async () => {
     (getAccessToken as jest.Mock).mockResolvedValue('mock-token');
+    useAuthStore.setState({ user: authenticatedUser });
 
     renderWithTamagui(<FavoritesScreen />);
 
@@ -105,8 +116,9 @@ describe('FavoritesScreen', () => {
     expect(screen.getByText('T-shirt 2')).toBeTruthy();
   });
 
-  it('renders unauthenticated state when token is missing', async () => {
+  it('renders unauthenticated state when there is no session', async () => {
     (getAccessToken as jest.Mock).mockResolvedValue(null);
+    useAuthStore.setState({ user: null });
 
     renderWithTamagui(<FavoritesScreen />);
 
@@ -116,6 +128,7 @@ describe('FavoritesScreen', () => {
 
   it('renders search input field', async () => {
     (getAccessToken as jest.Mock).mockResolvedValue('mock-token');
+    useAuthStore.setState({ user: authenticatedUser });
 
     renderWithTamagui(<FavoritesScreen />);
 

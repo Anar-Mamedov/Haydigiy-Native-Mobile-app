@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Pressable } from 'react-native';
 import { Input, Paragraph, Spinner, XStack, YStack, ScrollView, useTheme } from 'tamagui';
-import { ChevronLeft, Search, X, Eye } from '@tamagui/lucide-icons-2';
+import { ChevronLeft, Search, X } from '@tamagui/lucide-icons-2';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 
@@ -273,7 +273,7 @@ export function SearchSuggestionsScreen() {
             <YStack alignItems="center" justifyContent="center" padding="$8" gap="$3">
               <Search color="$color8" size={48} />
               <Paragraph color="$color" fontSize={15} textAlign="center" paddingHorizontal="$4">
-                "{query}" için sonuç bulunamadı
+                {`"${query}" için sonuç bulunamadı`}
               </Paragraph>
               <Pressable onPress={handleSearchSubmit}>
                 {({ pressed }) => (

@@ -26,6 +26,7 @@
     "@react-navigation/elements": "^2.9.10",
     "@react-navigation/native": "^7.1.33",
     "@shopify/flash-list": "2.0.2",
+    "@tamagui/animations-react-native": "^2.0.0-rc.42",
     "@tamagui/animations-reanimated": "^2.0.0-rc.42",
     "@tamagui/config": "^2.0.0-rc.42",
     "@tamagui/core": "^2.0.0-rc.42",
