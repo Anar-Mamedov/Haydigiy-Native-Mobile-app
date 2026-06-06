@@ -7,6 +7,7 @@ import { AppScreen, EmptyState } from '@/components/ui';
 import { useCartStore } from '@/features/cart/store/use-cart-store';
 import { useProductDetailsQuery } from '@/features/product/api/product.queries';
 import { trackViewedProduct } from '@/utils/recently-viewed';
+import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 import { ProductVariant, Product } from '@/types/product.types';
 
 // Subcomponents
@@ -148,6 +149,7 @@ export function ProductDetailScreen() {
     : null;
 
   const displayData = product || previewProduct;
+  const { isFavorite, toggleFavorite } = useToggleFavorite(displayData);
 
   if (isPending && !previewProduct) {
     return (
@@ -196,8 +198,8 @@ export function ProductDetailScreen() {
           {/* Images / Carousel */}
           <ProductCarousel
             images={displayData.images || [displayData.imageUrl]}
-            isFavorite={displayData.is_favorite ?? false}
-            onToggleFavorite={() => {}}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
             onVideoPress={() => setShowVideoModal(true)}
             stockCode={displayData.stockCode}
             videoPath={displayData.videoPath}

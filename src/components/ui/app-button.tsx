@@ -3,14 +3,16 @@ import { Button, GetProps, Paragraph, useTheme, XStack } from 'tamagui';
 
 export type AppButtonProps = GetProps<typeof Button> & {
   children?: ReactNode;
+  /** Text/icon color. Applied to the button content rather than forwarded to Button. */
+  color?: string;
 };
 
 export const AppButton = forwardRef<any, AppButtonProps>(function AppButton(
-  { children, icon, iconAfter, ...buttonProps },
+  { children, icon, iconAfter, color, ...buttonProps },
   ref,
 ) {
   const theme = useTheme();
-  const textColor = theme.color.val;
+  const textColor = color || theme.color.val;
 
   const renderIcon = (iconNode: AppButtonProps['icon']) => {
     if (!iconNode) {

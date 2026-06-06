@@ -112,6 +112,7 @@ export type Product = {
   badge?: string;
   brand: string;
   category: string;
+  categories?: string[];
   categorySlug?: string;
   categoryId?: number;
   currency: 'TRY';

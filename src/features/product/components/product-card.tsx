@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { GestureResponderEvent, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { Heart, Play } from '@tamagui/lucide-icons-2';
@@ -8,6 +7,7 @@ import { SectionCard } from '@/components/ui/section-card';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
 import { ProductImageCarousel } from './product-image-carousel';
+import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 
 type ProductCardProps = {
   onOpen: () => void;
@@ -132,7 +132,7 @@ function RatingStars({
 }
 
 export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: ProductCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { isFavorite, toggleFavorite: handleToggleFavorite } = useToggleFavorite(product);
 
   const ratingValue = product.rating ?? 0;
   const fullStars = Math.floor(ratingValue);
@@ -278,7 +278,7 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
             accessibilityRole="button"
             onPress={(e) => {
               stopPressPropagation(e);
-              setIsFavorite(!isFavorite);
+              handleToggleFavorite();
             }}
             style={({ pressed }) => ({
               position: 'absolute',

@@ -7,6 +7,7 @@ type EmptyStateProps = {
   description: string;
   onActionPress?: ButtonProps['onPress'];
   title: string;
+  primary?: boolean;
 };
 
 export function EmptyState({
@@ -14,6 +15,7 @@ export function EmptyState({
   description,
   onActionPress,
   title,
+  primary,
 }: EmptyStateProps) {
   return (
     <YStack
@@ -31,7 +33,22 @@ export function EmptyState({
         {description}
       </Paragraph>
       {actionLabel && onActionPress ? (
-        <AppButton onPress={onActionPress}>{actionLabel}</AppButton>
+        <AppButton
+          onPress={onActionPress}
+          {...(primary
+            ? {
+                backgroundColor: '$brand',
+                borderColor: '$brand',
+                color: 'white',
+                pressStyle: {
+                  backgroundColor: '$brand',
+                  opacity: 0.8,
+                },
+              }
+            : {})}
+        >
+          {actionLabel}
+        </AppButton>
       ) : null}
     </YStack>
   );

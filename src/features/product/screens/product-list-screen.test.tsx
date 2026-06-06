@@ -31,6 +31,27 @@ jest.mock('@/features/product/api/product.queries', () => ({
   useInfiniteSearchProductsQuery: jest.fn(),
 }));
 
+jest.mock('@/features/favorite/api/favorite.queries', () => {
+  const { useFavoriteStore } = require('@/features/favorite/store/use-favorite-store');
+  return {
+    useToggleFavorite: (product: any) => {
+      const isFavorite = useFavoriteStore((state: any) => state.isFavorite(product?.id ?? ''));
+      const toggleFavorite = () => {
+        if (isFavorite) {
+          useFavoriteStore.getState().removeFavorite(product.id);
+        } else {
+          useFavoriteStore.getState().addFavorite(product.id);
+        }
+      };
+      return {
+        isFavorite,
+        toggleFavorite,
+        isPending: false,
+      };
+    },
+  };
+});
+
 const mockProducts = [
   {
     id: 'product-1',
