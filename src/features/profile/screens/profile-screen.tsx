@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, User, LogOut } from '@tamagui/lucide-icons-2';
-import { H2, Paragraph, YStack, XStack, Button, Separator, Card, ScrollView } from 'tamagui';
-import { AppScreen, SectionCard, ThemeToggle, AppButton } from '@/components/ui';
-import { useAppTheme } from '@/lib/theme/use-app-theme';
+import { ArrowLeft } from '@tamagui/lucide-icons-2';
+import { Paragraph, YStack, XStack, Button, Separator, ScrollView } from 'tamagui';
+import { AppScreen } from '@/components/ui';
 import { useAuthStore } from '../../auth/store/use-auth-store';
 import { useAuthStatus } from '../../auth/hooks/use-auth-status';
 import { LoginForm } from '../../auth/components/login-form';
 import { RegisterForm } from '../../auth/components/register-form';
 import { FastLoginForm } from '../../auth/components/fast-login-form';
 import { OtpVerification } from '../../auth/components/otp-verification';
+import { AccountHub } from '../components/account-hub';
+import { AccountHeader } from '../components/account-header';
+import { useUserProfileQuery } from '../api/profile.queries';
 
 type ActiveView = 'login' | 'register' | 'fast-login' | 'otp';
 
 export function ProfileScreen() {
   const router = useRouter();
-  const { setThemePreference, themePreference } = useAppTheme();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const { isAuthenticated, isLoading: authChecking } = useAuthStatus();
+  // Profile holds the authoritative e-mail verification flag (from /user/profile).
+  const { data: profile } = useUserProfileQuery(isAuthenticated);
 
   // Navigation states for unauthenticated views
   const [activeView, setActiveView] = useState<ActiveView>('login');
@@ -57,71 +61,25 @@ export function ProfileScreen() {
 
   // 1. Authenticated User Profile View
   if (isAuthenticated && user) {
-    const fullName = `${user.name || ''} ${user.surname || ''}`.trim() || 'Kullanıcı';
-    
+    const handleUserInfoPress = () => {
+      Alert.alert('Yakında', 'Bu bölüm yakında eklenecek.');
+    };
+
+    // The profile endpoint is authoritative for the verification flag.
+    const headerUser =
+      profile != null ? { ...user, emailVerified: profile.emailVerified } : user;
+
     return (
-      <AppScreen>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <YStack gap="$5" paddingBottom="$4">
-            {/* Header / User Info Card */}
-            <Card elevation={4} size="$4" borderWidth={1} borderColor="$borderColor" backgroundColor="$background" borderRadius="$8" padding="$4">
-              <YStack gap="$4" alignItems="center">
-                <YStack
-                  width={80}
-                  height={80}
-                  borderRadius={40}
-                  backgroundColor="$brand"
-                  justifyContent="center"
-                  alignItems="center"
-                  elevation={2}
-                >
-                  <User color="white" size={40} />
-                </YStack>
-                <YStack alignItems="center" gap="$1">
-                  <H2 fontSize="$7" fontWeight="800" color="$color">
-                    {fullName}
-                  </H2>
-                  {user.email ? (
-                    <Paragraph color="$color10" size="$3">
-                      {user.email}
-                    </Paragraph>
-                  ) : null}
-                  {user.phoneNumber ? (
-                    <Paragraph color="$color10" size="$3">
-                      +90 {user.phoneNumber}
-                    </Paragraph>
-                  ) : null}
-                </YStack>
-              </YStack>
-            </Card>
-
-            {/* Appearance / Theme Selector */}
-            <SectionCard>
-              <YStack gap="$3">
-                <Paragraph fontSize="$6" fontWeight="700" color="$color">
-                  Görünüm
-                </Paragraph>
-                <ThemeToggle onValueChange={setThemePreference} value={themePreference} />
-              </YStack>
-            </SectionCard>
-
-            {/* Log Out Actions */}
-            <YStack paddingHorizontal="$1" gap="$3">
-              <AppButton
-                id="profile-logout-btn"
-                backgroundColor="$red3"
-                color="$red10"
-                borderColor="$red6"
-                borderWidth={1}
-                icon={LogOut}
-                onPress={handleLogout}
-                pressStyle={{ backgroundColor: '$red4', opacity: 0.8 }}
-              >
-                Çıkış Yap
-              </AppButton>
-            </YStack>
-          </YStack>
-        </ScrollView>
+      <AppScreen
+        header={
+          <AccountHeader
+            onBack={handleBackPress}
+            onPressName={handleUserInfoPress}
+            user={headerUser}
+          />
+        }
+      >
+        <AccountHub onLogout={handleLogout} />
       </AppScreen>
     );
   }
