@@ -7,6 +7,7 @@ export * from '@/components/ui/confirm-dialog';
 export * from '@/components/ui/disclosure-sheet';
 export * from '@/components/ui/empty-state';
 export * from '@/components/ui/filter-checkbox';
+export * from '@/components/ui/pagination';
 export * from '@/components/ui/quantity-stepper';
 export * from '@/components/ui/section-card';
 export * from '@/components/ui/theme-toggle';

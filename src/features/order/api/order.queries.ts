@@ -1,0 +1,31 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { orderKeys } from './order.keys';
+import { mapOrdersResponse, mapReturnRequestsResponse } from './order.mapper';
+import { getOrdersDto, getReturnRequestsDto } from '@/services/order.service';
+import { OrderFilters, OrdersPage } from '@/types/order.types';
+
+/**
+ * Single-page orders feed (numbered pagination, like the web order list). The
+ * "returned" filter reads `/return-requests`; every other filter reads `/order`.
+ * Previous page data is kept while a new page loads to avoid list flicker.
+ */
+export function useOrdersQuery(filters: OrderFilters, page: number, enabled = true) {
+  return useQuery<OrdersPage>({
+    queryKey: orderKeys.list(filters, page),
+    enabled,
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const params = {
+        page,
+        search: filters.search,
+        category: filters.category,
+        dateFilter: filters.dateFilter,
+      };
+
+      if (filters.category === 'returned') {
+        return mapReturnRequestsResponse(await getReturnRequestsDto(params));
+      }
+      return mapOrdersResponse(await getOrdersDto(params));
+    },
+  });
+}

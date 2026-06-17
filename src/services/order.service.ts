@@ -1,5 +1,48 @@
 import { apiClient } from '@/lib/axios';
 import { appEnv } from '@/lib/env';
+import { OrdersResponseDto, ReturnRequestsResponseDto } from '@/features/order/api/order.dtos';
+import { OrderCategory, OrderDateFilter } from '@/types/order.types';
+
+const EMPTY_PAGE = { data: [], meta: { current_page: 1, last_page: 1, per_page: 0, total: 0 } };
+
+type OrderListParams = {
+  page: number;
+  search?: string;
+  category?: OrderCategory;
+  dateFilter?: OrderDateFilter;
+};
+
+function buildOrderParams({ page, search, category, dateFilter }: OrderListParams) {
+  const params: Record<string, string | number> = { page };
+  if (search) params.search = search;
+  if (category && category !== 'all') params.category = category;
+  if (dateFilter && dateFilter !== 'all') params.date_filter = dateFilter;
+  return params;
+}
+
+/** Orders list (`GET /order`) — used for the all / active / cancelled filters. */
+export async function getOrdersDto(params: OrderListParams): Promise<OrdersResponseDto> {
+  if (!appEnv.apiBaseUrl) return EMPTY_PAGE;
+
+  const response = await apiClient.get<OrdersResponseDto>('/order', {
+    params: buildOrderParams(params),
+    headers: { Accept: 'application/json' },
+  });
+  return response.data ?? EMPTY_PAGE;
+}
+
+/** Return requests (`GET /return-requests`) — used for the "İadeler" filter. */
+export async function getReturnRequestsDto(
+  params: OrderListParams,
+): Promise<ReturnRequestsResponseDto> {
+  if (!appEnv.apiBaseUrl) return EMPTY_PAGE;
+
+  const response = await apiClient.get<ReturnRequestsResponseDto>('/return-requests', {
+    params: buildOrderParams(params),
+    headers: { Accept: 'application/json' },
+  });
+  return response.data ?? EMPTY_PAGE;
+}
 
 export interface OrderPrepareResponseDto {
   order_token?: string;

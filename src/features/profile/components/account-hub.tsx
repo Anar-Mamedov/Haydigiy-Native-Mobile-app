@@ -43,9 +43,11 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     Alert.alert('Yakında', 'Bu bölüm yakında eklenecek.');
   };
 
+  const goToOrders = () => router.push('/(tabs)/orders');
+
   const orderActions = [
-    { icon: <Package color="white" size={24} />, label: 'Tüm\nSiparişlerim', onPress: showPending },
-    { icon: <RotateCcw color="white" size={24} />, label: 'İptal ve\nİadeler', onPress: showPending },
+    { icon: <Package color="white" size={24} />, label: 'Tüm\nSiparişlerim', onPress: goToOrders },
+    { icon: <RotateCcw color="white" size={24} />, label: 'İptal ve\nİadeler', onPress: goToOrders },
     {
       icon: <MessageSquare color="white" size={24} />,
       label: 'Ürün\nDeğerlendirme',

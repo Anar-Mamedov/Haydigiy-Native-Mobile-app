@@ -189,6 +189,12 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="orders"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
