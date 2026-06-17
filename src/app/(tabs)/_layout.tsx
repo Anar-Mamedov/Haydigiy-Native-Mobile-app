@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Linking } from 'react-native';
 import { useTheme, useThemeName } from 'tamagui';
-import { useCartStore, calculateCartItemCount } from '@/features/cart/store/use-cart-store';
+import { useCartCount } from '@/features/cart/api/cart.queries';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BRAND_COLOR } from '@/lib/theme/colors';
@@ -89,8 +89,7 @@ export default function TabsLayout() {
   const theme = useTheme();
   const themeName = useThemeName();
   const insets = useSafeAreaInsets();
-  const items = useCartStore((state) => state.items);
-  const cartCount = calculateCartItemCount(items);
+  const cartCount = useCartCount();
 
   const isDark = themeName === 'dark' || themeName.includes('dark');
   const inactiveColor = isDark ? '#9ca3af' : '#6b7280';

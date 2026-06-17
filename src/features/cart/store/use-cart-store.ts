@@ -9,6 +9,7 @@ type CartState = {
   clearCart: () => void;
   items: CartLineItem[];
   removeItem: (productId: string, size?: string) => void;
+  setItems: (items: CartLineItem[]) => void;
   setQuantity: (productId: string, quantity: number, size?: string) => void;
 };
 
@@ -20,10 +21,36 @@ export function calculateCartSubtotal(items: CartLineItem[]) {
   return items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 }
 
+/**
+ * Total of the pre-discount prices. Combined with {@link calculateCartSubtotal}
+ * this yields the amount saved, mirroring the web cart's struck-through pricing.
+ */
+export function calculateCartOriginalSubtotal(items: CartLineItem[]) {
+  return items.reduce(
+    (sum, item) => sum + item.quantity * (item.originalPrice ?? item.unitPrice),
+    0,
+  );
+}
+
+export function calculateCartSavings(items: CartLineItem[]) {
+  return Math.max(calculateCartOriginalSubtotal(items) - calculateCartSubtotal(items), 0);
+}
+
 export function createCartStoreInitialState() {
   return {
     items: [] as CartLineItem[],
   };
+}
+
+/** Remaining stock for the chosen variant, or the product total when unsized. */
+function resolveStock(product: Product, size?: string): number | undefined {
+  if (size) {
+    const variant = product.variants?.find((candidate) => candidate.name === size);
+    if (variant) {
+      return variant.quantity;
+    }
+  }
+  return product.totalQuantity;
 }
 
 function mapProductToCartItem(product: Product, size?: string): CartLineItem {
@@ -35,7 +62,21 @@ function mapProductToCartItem(product: Product, size?: string): CartLineItem {
     title: product.title,
     unitPrice: product.price,
     size,
+    slug: product.slug,
+    originalPrice:
+      product.originalPrice && product.originalPrice > product.price
+        ? product.originalPrice
+        : undefined,
+    stock: resolveStock(product, size),
   };
+}
+
+/** Clamp a requested quantity to the [1, stock] range when stock is known. */
+function clampQuantity(quantity: number, stock?: number): number {
+  if (typeof stock === 'number' && stock > 0) {
+    return Math.min(quantity, stock);
+  }
+  return quantity;
 }
 
 export const useCartStore = create<CartState>()(
@@ -73,6 +114,9 @@ export const useCartStore = create<CartState>()(
           ),
         }));
       },
+      setItems: (items) => {
+        set({ items });
+      },
       setQuantity: (productId, quantity, size) => {
         set((state) => ({
           items:
@@ -82,7 +126,7 @@ export const useCartStore = create<CartState>()(
                 )
               : state.items.map((item) =>
                   item.productId === productId && item.size === size
-                    ? { ...item, quantity }
+                    ? { ...item, quantity: clampQuantity(quantity, item.stock) }
                     : item,
                 ),
         }));

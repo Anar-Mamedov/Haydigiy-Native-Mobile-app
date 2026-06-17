@@ -1,4 +1,5 @@
 import { AlertDialog, Button, Paragraph, XStack, YStack } from 'tamagui';
+import { AppAlertDialog } from '@/components/ui/app-alert-dialog';
 
 export type ConfirmDialogProps = {
   open: boolean;
@@ -28,24 +29,8 @@ export function ConfirmDialog({
   isConfirming,
 }: ConfirmDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialog.Portal>
-        <AlertDialog.Overlay
-          key="overlay"
-          backgroundColor="$shadowColor"
-          opacity={0.5}
-        />
-        <AlertDialog.Content
-          key="content"
-          backgroundColor="$background"
-          borderRadius="$6"
-          borderWidth={1}
-          borderColor="$borderColor"
-          width="90%"
-          maxWidth={340}
-          padding="$5"
-        >
-          <YStack gap="$3">
+    <AppAlertDialog maxWidth={340} onOpenChange={onOpenChange} open={open}>
+      <YStack gap="$3">
             <AlertDialog.Title asChild>
               <Paragraph fontSize={16} fontWeight="700" color="$color" textAlign="center">
                 {title}
@@ -94,9 +79,7 @@ export function ConfirmDialog({
                 </Button>
               </AlertDialog.Action>
             </XStack>
-          </YStack>
-        </AlertDialog.Content>
-      </AlertDialog.Portal>
-    </AlertDialog>
+      </YStack>
+    </AppAlertDialog>
   );
 }

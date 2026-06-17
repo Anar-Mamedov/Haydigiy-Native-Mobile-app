@@ -27,10 +27,56 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Axios isteğin gövdesini JSON string'e çevirir; logda obje olarak görünmesi için geri parse et
+const parseRequestData = (data: any) => {
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data);
+    } catch {
+      return data;
+    }
+  }
+  return data;
+};
+
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Geliştirme modunda istek + yanıtı TEK log'da birleştir
+    if (__DEV__) {
+      console.log(`🔵 API ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+        status: response.status,
+        params: response.config.params,
+        request: parseRequestData(response.config.data),
+        response: response.data,
+      });
+    }
+    return response;
+  },
   async (error) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    // Detaylı network error logging (Xiaomi/Oppo debug için)
+    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+      console.error('Network Error Details:', {
+        message: error.message,
+        code: error.code,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL,
+        },
+      });
+    }
+
+    // Sunucudan dönen hata yanıtlarını (400 vb.) istek + yanıt birlikte TEK log'da göster
+    if (error.response && error.response.status !== 401) {
+      console.error(`🔴 API ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
+        status: error.response.status,
+        params: error.config?.params,
+        request: parseRequestData(error.config?.data),
+        response: error.response.data,
+      });
+    }
+
+    if (error.response && error.response.status === 401) {
       await clearAccessToken();
     }
 

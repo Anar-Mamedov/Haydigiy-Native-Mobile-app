@@ -1,20 +1,19 @@
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Home, Grid, Search, ShoppingCart, UserRound } from '@tamagui/lucide-icons-2';
-import { Button, Theme, XStack, YStack, Paragraph, useTheme, useThemeName } from 'tamagui';
-import { useCartStore, calculateCartItemCount } from '@/features/cart/store/use-cart-store';
+import { Button, Theme, XStack, YStack, Paragraph, useTheme } from 'tamagui';
+import { useCartCount } from '@/features/cart/api/cart.queries';
 import { Pressable } from 'react-native';
 
 export function ProductDetailHeader() {
   const router = useRouter();
-  const items = useCartStore((state) => state.items);
-  const cartCount = calculateCartItemCount(items);
+  const cartCount = useCartCount();
   const theme = useTheme();
-  const themeName = useThemeName();
 
-  const isDark = themeName === 'dark' || themeName.includes('dark');
-  const headerBg = isDark ? theme.background.val : 'white';
-  const borderBottomColor = isDark ? theme.borderColor.val : '#E5E7EB';
-  const iconColor = isDark ? 'white' : '#4B5563';
+  // Theme-token-derived colors (no raw literals).
+  const headerBg = theme.background.val;
+  const borderBottomColor = theme.borderColor.val;
+  const iconColor = theme.color.val;
+  const searchBg = theme.backgroundHover.val;
 
   return (
     <XStack
@@ -73,7 +72,7 @@ export function ProductDetailHeader() {
         style={{
           flex: 1,
           height: 36,
-          backgroundColor: isDark ? '#2D3748' : '#F3F4F6',
+          backgroundColor: searchBg,
           borderRadius: 8,
           flexDirection: 'row',
           alignItems: 'center',
@@ -81,8 +80,8 @@ export function ProductDetailHeader() {
           gap: 6,
         }}
       >
-        <Search color={isDark ? '#9CA3AF' : '#9CA3AF'} size={16} />
-        <Paragraph color={isDark ? '#9CA3AF' : '#6B7280'} fontSize={13} numberOfLines={1}>
+        <Search color="$color10" size={16} />
+        <Paragraph color="$color10" fontSize={13} numberOfLines={1}>
           Ürün ve kategori ara
         </Paragraph>
       </Pressable>
@@ -111,7 +110,15 @@ export function ProductDetailHeader() {
                   top={-6}
                 >
                   <Theme name="dark">
-                    <Paragraph color="white" fontSize={10} fontWeight="900" textAlign="center">
+                    <Paragraph
+                      color="white"
+                      fontSize={10}
+                      fontWeight="900"
+                      includeFontPadding={false}
+                      lineHeight={18}
+                      textAlign="center"
+                      textAlignVertical="center"
+                    >
                       {cartCount > 9 ? '9+' : cartCount}
                     </Paragraph>
                   </Theme>

@@ -12,6 +12,7 @@ function mapFavoriteVariant(v: FavoriteVariantDto): ProductVariant {
     quantity: qty,
     price: v.price ? parseFloat(v.price) : 0,
     hasStock: qty > 0,
+    pivotId: String(v.variant_id ?? v.id),
   };
 }
 

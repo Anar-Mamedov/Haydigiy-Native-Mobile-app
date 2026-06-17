@@ -5,7 +5,7 @@ import { Spinner, YStack, Paragraph } from 'tamagui';
 import { FlashList } from '@shopify/flash-list';
 
 import { AppScreen, EmptyState, ConfirmDialog } from '@/components/ui';
-import { useCartStore } from '@/features/cart/store/use-cart-store';
+import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useFavoritesQuery, useRemoveFavoriteMutation } from '../api/favorite.queries';
 import { getFavoritePricing } from '../utils/favorite-pricing';
@@ -36,7 +36,7 @@ export function FavoritesScreen() {
   const [productToRemove, setProductToRemove] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  const addItem = useCartStore((state) => state.addItem);
+  const addToCart = useAddToCartMutation();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -132,7 +132,11 @@ export function FavoritesScreen() {
   };
 
   const handleAddToCart = (product: Product, size: string) => {
-    addItem(product, size);
+    const variant = product.variants?.find((candidate) => candidate.name === size);
+    const variantId = variant?.pivotId ?? variant?.id;
+    if (variantId) {
+      addToCart.mutate({ variantId });
+    }
     Alert.alert('Başarılı', `${product.title} (${size}) sepetinize eklendi.`, [
       { text: 'Alışverişe Devam Et', style: 'cancel' },
       { text: 'Sepete Git', onPress: () => router.push('/(tabs)/cart') },

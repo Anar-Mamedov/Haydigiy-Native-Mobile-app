@@ -7,7 +7,7 @@ import { FlashList } from '@shopify/flash-list';
 
 import { AppScreen, EmptyState } from '@/components/ui';
 import { ProductCard } from '@/features/product/components/product-card';
-import { useCartStore, calculateCartItemCount } from '@/features/cart/store/use-cart-store';
+import { useCartCount } from '@/features/cart/api/cart.queries';
 import { useInfiniteSearchProductsQuery } from '@/features/product/api/product.queries';
 import { useStableCategoryOptions } from '@/features/product/hooks/use-stable-category-options';
 import { BRAND_COLOR } from '@/lib/theme/colors';
@@ -28,9 +28,8 @@ interface ProductListScreenProps {
 export function ProductListScreen({ slug, categoryId, searchQuery }: ProductListScreenProps) {
   const router = useRouter();
 
-  // Cart integration
-  const cartItems = useCartStore((state) => state.items);
-  const cartCount = calculateCartItemCount(cartItems);
+  // Cart integration — badge count derives from the hydrated cart store.
+  const cartCount = useCartCount();
 
   // Filters & Sorting state
   const [sorting, setSorting] = useState('');
@@ -237,7 +236,15 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
             right={-2}
             top={-2}
           >
-            <Paragraph color="white" fontSize={10} fontWeight="900" textAlign="center">
+            <Paragraph
+              color="white"
+              fontSize={10}
+              fontWeight="900"
+              includeFontPadding={false}
+              lineHeight={18}
+              textAlign="center"
+              textAlignVertical="center"
+            >
               {cartCount > 9 ? '9+' : cartCount}
             </Paragraph>
           </XStack>

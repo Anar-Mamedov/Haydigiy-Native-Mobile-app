@@ -93,6 +93,8 @@ export type ProductVariant = {
   quantity: number;
   price: number;
   hasStock: boolean;
+  /** Product-variant pivot id; this is the `variant_id` the cart API expects. */
+  pivotId?: string;
 };
 
 export type ProductModel = {

@@ -1,22 +1,23 @@
 import { useRouter, usePathname } from 'expo-router';
 import { Heart, Menu, ShoppingCart, UserRound, Search } from '@tamagui/lucide-icons-2';
 import { Button, Theme, XStack, YStack, Paragraph, useTheme, useThemeName } from 'tamagui';
-import { useCartStore, calculateCartItemCount } from '@/features/cart/store/use-cart-store';
+import { useCartCount } from '@/features/cart/api/cart.queries';
 import { Image } from 'expo-image';
 
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
-  const items = useCartStore((state) => state.items);
-  const cartCount = calculateCartItemCount(items);
+  const cartCount = useCartCount();
   const theme = useTheme();
   const themeName = useThemeName();
 
   const isDark = themeName === 'dark' || themeName.includes('dark');
 
-  const headerBg = isDark ? theme.background.val : '#F6F6F6';
-  const borderBottomColor = isDark ? theme.borderColor.val : '#E5E7EB';
-  const iconColor = isDark ? 'white' : 'black';
+  // Theme-token-derived surface colors (no raw literals): the light header reads
+  // as a subtle elevated gray and the dark header keeps the base surface.
+  const headerBg = isDark ? theme.background.val : theme.backgroundHover.val;
+  const borderBottomColor = theme.borderColor.val;
+  const iconColor = theme.color.val;
 
   // The web mobile header logic: homepage vs subpages
   const isHomePage = pathname === '/' || pathname === '/(tabs)' || pathname === '/(tabs)/';
@@ -88,7 +89,7 @@ export function AppHeader() {
             source={require('../../../assets/images/hg-logo.svg')}
             style={{ width: 115, height: 32 }}
             contentFit="contain"
-            tintColor={isDark ? 'white' : undefined}
+            tintColor={isDark ? theme.color.val : undefined}
           />
         </Button>
       </XStack>
@@ -144,7 +145,15 @@ export function AppHeader() {
                       top={-6}
                     >
                       <Theme name="dark">
-                        <Paragraph color="white" fontSize={10} fontWeight="900" textAlign="center">
+                        <Paragraph
+                          color="white"
+                          fontSize={10}
+                          fontWeight="900"
+                          includeFontPadding={false}
+                          lineHeight={18}
+                          textAlign="center"
+                          textAlignVertical="center"
+                        >
                           {cartCount > 9 ? '9+' : cartCount}
                         </Paragraph>
                       </Theme>

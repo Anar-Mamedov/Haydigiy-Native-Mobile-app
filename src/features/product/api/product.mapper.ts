@@ -290,6 +290,7 @@ export function mapProductDetailDto(dto: any): Product {
         quantity: parseSafely(v.pivot?.quantity || v.quantity),
         price: parseSafely(v.pivot?.price || v.price),
         hasStock: parseSafely(v.pivot?.quantity || v.quantity) > 0,
+        pivotId: v.pivot?.id != null ? String(v.pivot.id) : String(v.id),
       }))
     : [];
 

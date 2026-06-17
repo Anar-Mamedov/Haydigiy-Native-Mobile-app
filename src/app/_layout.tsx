@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { AppProviders } from '@/lib/providers/app-providers';
+import { CartHydrator } from '@/features/cart/components/cart-hydrator';
 import { loadWebStyles } from '../theme/web-css';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
@@ -27,6 +28,7 @@ export default function RootLayout() {
 
   return (
     <AppProviders>
+      <CartHydrator />
       <Stack
         screenOptions={{
           headerShown: false,

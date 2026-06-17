@@ -4,7 +4,7 @@ import { ScrollView, Spinner, YStack, Paragraph, XStack, useThemeName } from 'ta
 import { Alert, Linking, Pressable } from 'react-native';
 import { ThumbsUp } from '@tamagui/lucide-icons-2';
 import { AppScreen, EmptyState } from '@/components/ui';
-import { useCartStore } from '@/features/cart/store/use-cart-store';
+import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useProductDetailsQuery } from '@/features/product/api/product.queries';
 import { trackViewedProduct } from '@/utils/recently-viewed';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
@@ -51,7 +51,7 @@ export function ProductDetailScreen() {
   
   // Queries
   const { data: product, isError, isPending, refetch } = useProductDetailsQuery(idOrSlug);
-  const addItem = useCartStore((state) => state.addItem);
+  const addToCart = useAddToCartMutation();
 
   // States
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
@@ -118,7 +118,12 @@ export function ProductDetailScreen() {
       return;
     }
 
-    addItem(activeProduct, selectedVariant?.name);
+    // Persist to the backend cart; the cart count query refreshes the tab badge
+    // via invalidation and the cart screen re-fetches the authoritative list.
+    const variantId = selectedVariant?.pivotId ?? selectedVariant?.id;
+    if (variantId) {
+      addToCart.mutate({ variantId });
+    }
     Alert.alert(
       'Başarılı',
       `${activeProduct.title}${selectedVariant ? ` (${selectedVariant.name})` : ''} sepetinize eklendi.`,
