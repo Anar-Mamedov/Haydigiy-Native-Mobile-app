@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
-import { CircleX } from '@tamagui/lucide-icons-2';
+import { CircleAlert, CircleX, Undo2 } from '@tamagui/lucide-icons-2';
 import { AppScreen, EmptyState } from '@/components/ui';
+import { BRAND_COLOR } from '@/lib/theme/colors';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useOrderDetailQuery } from '../api/order.queries';
 import { OrdersHeader } from '../components/orders-header';
@@ -40,8 +42,14 @@ export function OrderDetailScreen() {
 
   const openProduct = (slug: string) => router.push(`/product/${slug}` as never);
   const goToCancel = (query = '') => router.push(`/(tabs)/order-cancel/${id}${query}` as never);
+  const goToReturn = (query = '') => router.push(`/(tabs)/return-create/${id}${query}` as never);
 
   const isCancelable = order ? isOrderCancellableStatus(order.status, order.statusId) : false;
+  const canCreateReturn = !isCancelable && (order?.canCreateReturnRequest ?? false);
+  const hasReturnableItems = order?.items.some((item) => !item.isNonReturnable) ?? false;
+  const showReturnEntry = canCreateReturn && hasReturnableItems;
+  const showReturnBlocked =
+    !isCancelable && !order?.canCreateReturnRequest && order?.returnBlockReason != null;
 
   const header = <OrdersHeader onBack={handleBack} title="Siparişim" />;
 
@@ -76,6 +84,14 @@ export function OrderDetailScreen() {
       <YStack backgroundColor="$backgroundHover" flex={1}>
         <ScrollView
           contentContainerStyle={{ padding: 12, gap: 12 }}
+          refreshControl={
+            <RefreshControl
+              colors={[BRAND_COLOR]}
+              onRefresh={() => query.refetch()}
+              refreshing={query.isRefetching}
+              tintColor={BRAND_COLOR}
+            />
+          }
           showsVerticalScrollIndicator={false}
         >
           <OrderDetailSummary order={order} />
@@ -89,10 +105,42 @@ export function OrderDetailScreen() {
           />
           <OrderItemsSection
             cancelable={isCancelable}
+            headerAction={
+              showReturnEntry ? (
+                <XStack
+                  accessibilityLabel="İade oluştur"
+                  accessibilityRole="button"
+                  alignItems="center"
+                  backgroundColor="$orange3"
+                  borderColor="$brand"
+                  borderRadius="$3"
+                  borderWidth={1}
+                  gap="$2"
+                  onPress={() => goToReturn()}
+                  paddingHorizontal="$3"
+                  paddingVertical="$2"
+                  pressStyle={{ opacity: 0.85 }}
+                >
+                  <Undo2 color="$brand" size={16} />
+                  <YStack>
+                    <Paragraph color="$brand" fontSize={13} fontWeight="700" lineHeight={16}>
+                      İade oluştur
+                    </Paragraph>
+                    {order.returnDeadline ? (
+                      <Paragraph color="$brand" fontSize={10} lineHeight={13}>
+                        Son: {order.returnDeadline}
+                      </Paragraph>
+                    ) : null}
+                  </YStack>
+                </XStack>
+              ) : undefined
+            }
             items={order.items}
             onCancelItem={(item) => goToCancel(`?item_id=${item.id}`)}
             onPressProduct={openProduct}
+            onReturnItem={(item) => goToReturn(`?item_id=${item.id}`)}
             onReview={setReviewItem}
+            returnable={canCreateReturn}
             reviewable={REVIEWABLE_STATUSES.includes(order.status)}
             title="Ürünler"
           />
@@ -121,6 +169,27 @@ export function OrderDetailScreen() {
                 </Paragraph>
               </XStack>
             </Button>
+          ) : null}
+
+          {showReturnBlocked ? (
+            <XStack
+              alignItems="center"
+              backgroundColor="$red2"
+              borderColor="$red6"
+              borderRadius="$4"
+              borderWidth={1}
+              gap="$2"
+              padding="$3"
+            >
+              <CircleAlert color="$red10" size={18} />
+              <Paragraph color="$red11" flex={1} fontSize={13} fontWeight="600">
+                {order.returnBlockReason === 'time_expired'
+                  ? 'İade süresi doldu (14 gün).'
+                  : order.returnBlockReason === 'not_delivered'
+                    ? 'Sipariş henüz teslim edilmedi.'
+                    : 'İade talebi oluşturulamıyor.'}
+              </Paragraph>
+            </XStack>
           ) : null}
 
           <OrderAddressCard order={order} />

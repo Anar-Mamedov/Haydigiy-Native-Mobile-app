@@ -63,6 +63,20 @@ export function OrderPaymentCard({ totals }: OrderPaymentCardProps) {
           {totals.paymentFee > 0 ? (
             <Row label="Ödeme Ücreti:" value={formatOrderPrice(totals.paymentFee)} />
           ) : null}
+          {totals.hasInstallmentInfo ? (
+            <>
+              {totals.installmentCount ? (
+                <Row label="Taksit Sayısı:" value={`${totals.installmentCount} Taksit`} />
+              ) : null}
+              <Row label="Peşin Toplam:" value={formatOrderPrice(totals.total)} />
+              {totals.interestAmount > 0 ? (
+                <Row label="Vade Farkı:" value={formatOrderPrice(totals.interestAmount)} />
+              ) : null}
+              {totals.totalWithInterest > 0 && totals.totalWithInterest !== totals.total ? (
+                <Row label="Taksitli Toplam:" value={formatOrderPrice(totals.totalWithInterest)} />
+              ) : null}
+            </>
+          ) : null}
           {totals.returnTotal > 0 ? (
             <Row label="İade Toplamı:" value={formatOrderPrice(totals.returnTotal)} />
           ) : null}
@@ -77,7 +91,7 @@ export function OrderPaymentCard({ totals }: OrderPaymentCardProps) {
               Toplam:
             </Paragraph>
             <Paragraph color="$brand" fontSize={18} fontWeight="800">
-              {formatOrderPrice(totals.total)}
+              {formatOrderPrice(totals.payableTotal)}
             </Paragraph>
           </XStack>
 

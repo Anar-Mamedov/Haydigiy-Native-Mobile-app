@@ -22,6 +22,42 @@ export function formatOrderDate(value: string): string {
   return value;
 }
 
+// Turkish short month names, indexed 0-11 (matches the API's date labels).
+const TR_MONTH_PREFIXES = ['oca', 'şub', 'mar', 'nis', 'may', 'haz', 'tem', 'ağu', 'eyl', 'eki', 'kas', 'ara'];
+
+/** Parses the API's date shapes (ISO or "18 Haz 2026 - HH:mm") into a Date. */
+export function parseOrderDate(value: string): Date | null {
+  if (!value) return null;
+  const trimmed = value.split(' - ')[0].trim();
+  if (trimmed.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+    const iso = new Date(trimmed);
+    return Number.isNaN(iso.getTime()) ? null : iso;
+  }
+  const match = trimmed.match(/(\d{1,2})\s+(\S+)\s+(\d{4})/);
+  if (!match) return null;
+  const day = Number(match[1]);
+  const monthToken = match[2].toLocaleLowerCase('tr-TR').slice(0, 3);
+  const monthIndex = TR_MONTH_PREFIXES.indexOf(monthToken);
+  const year = Number(match[3]);
+  if (monthIndex < 0) return null;
+  const date = new Date(year, monthIndex, day);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Last day a return can be requested: delivery date + 13 days, formatted as
+ * `DD.MM.YYYY` — mirrors the web "Son: …" label on the return button.
+ */
+export function formatReturnDeadline(deliveredAt: string): string | null {
+  const delivered = parseOrderDate(deliveredAt);
+  if (!delivered) return null;
+  const deadline = new Date(delivered);
+  deadline.setDate(deadline.getDate() + 13);
+  const day = String(deadline.getDate()).padStart(2, '0');
+  const month = String(deadline.getMonth() + 1).padStart(2, '0');
+  return `${day}.${month}.${deadline.getFullYear()}`;
+}
+
 /** Formats a numeric amount as "1234.56 TL", matching the web order detail. */
 export function formatOrderPrice(value: number | string | null | undefined): string {
   const num = typeof value === 'number' ? value : Number(value);

@@ -23,6 +23,14 @@ export interface OrderDetailItemDto {
   reviewed?: boolean;
   product_review?: boolean;
   reviews_count?: number;
+  /** When true the line cannot be returned (e.g. hygiene products). */
+  is_non_returnable?: boolean;
+  /** `available` | `gift_product` | other backend label. */
+  return_status?: string | null;
+}
+
+export interface ReturnRequestRefDto {
+  id: number;
 }
 
 export interface ReturnedItemDetailDto {
@@ -58,6 +66,9 @@ export interface OrderTotalsDto {
   cod_service_fee?: number | string;
   payment_fee?: number | string;
   total_price?: number | string;
+  installment_count?: number | string | null;
+  interest_amount?: number | string | null;
+  total_with_interest?: number | string | null;
 }
 
 export interface OrderDetailResponseDto {
@@ -72,6 +83,12 @@ export interface OrderDetailResponseDto {
   cargo_company_name?: string | null;
   invoice_pdf_url?: string | null;
   payment_method?: string;
+  payment_method_id?: number;
+  installment_count?: number | string | null;
+  payment_installment_count?: number | string | null;
+  can_create_return_request?: boolean;
+  return_block_reason?: string | null;
+  return_requests?: ReturnRequestRefDto[] | null;
   coupon_code?: string | null;
   billing_type?: string;
   tc_number?: string | null;

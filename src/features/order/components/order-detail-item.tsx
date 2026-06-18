@@ -1,6 +1,13 @@
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { CircleCheck, CircleX, Image as ImagePlaceholderIcon, Star } from '@tamagui/lucide-icons-2';
+import {
+  CircleCheck,
+  CircleSlash,
+  CircleX,
+  Image as ImagePlaceholderIcon,
+  Star,
+  Undo2,
+} from '@tamagui/lucide-icons-2';
 import { Button, Paragraph, XStack, YStack } from 'tamagui';
 import { OrderDetailItem as OrderDetailItemModel } from '@/types/order.types';
 import { formatOrderPrice } from '../utils/order-status';
@@ -16,6 +23,9 @@ type OrderDetailItemProps = {
   /** Shows the "Ürünü İptal Et" action when the order is still cancellable. */
   cancelable?: boolean;
   onCancel?: () => void;
+  /** Shows the return action: "available" → Ürünü İade Et, "blocked" → İade/Değişim Yok. */
+  returnState?: 'available' | 'blocked';
+  onReturn?: () => void;
 };
 
 /** A single order line (image, name, size, quantity, price) used in detail sections. */
@@ -26,6 +36,8 @@ export function OrderDetailItem({
   onReview,
   cancelable,
   onCancel,
+  returnState,
+  onReturn,
 }: OrderDetailItemProps) {
   const inactive = item.kind !== 'normal';
 
@@ -91,57 +103,107 @@ export function OrderDetailItem({
         </YStack>
       </XStack>
 
-      {cancelable ? (
-        <Button
-          accessibilityLabel="Ürünü iptal et"
-          backgroundColor="$background"
-          borderColor="$red8"
-          borderRadius="$3"
-          borderWidth={1}
-          height={40}
-          onPress={onCancel}
-          pressStyle={{ backgroundColor: '$red2' }}
-        >
-          <XStack alignItems="center" gap="$1.5">
-            <CircleX color="$red10" size={16} />
-            <Paragraph color="$red10" fontSize={13} fontWeight="700">
-              Ürünü İptal Et
-            </Paragraph>
-          </XStack>
-        </Button>
-      ) : null}
+      {cancelable || returnState || reviewState ? (
+        <XStack gap="$2">
+          {cancelable ? (
+            <Button
+              accessibilityLabel="Ürünü iptal et"
+              backgroundColor="transparent"
+              borderColor="$red8"
+              borderRadius="$3"
+              borderWidth={1}
+              flex={1}
+              height={40}
+              onPress={onCancel}
+              paddingHorizontal="$2"
+              pressStyle={{ backgroundColor: '$red2' }}
+            >
+              <XStack alignItems="center" gap="$1.5">
+                <CircleX color="$red10" size={16} />
+                <Paragraph color="$red10" fontSize={13} fontWeight="700">
+                  Ürünü İptal Et
+                </Paragraph>
+              </XStack>
+            </Button>
+          ) : null}
 
-      {reviewState === 'available' ? (
-        <Button
-          accessibilityLabel="Ürünü değerlendir"
-          backgroundColor="$brand"
-          borderRadius="$3"
-          height={40}
-          onPress={onReview}
-          pressStyle={{ backgroundColor: '$brand', opacity: 0.85 }}
-        >
-          <XStack alignItems="center" gap="$1.5">
-            <Star color="white" size={16} />
-            <Paragraph color="white" fontSize={13} fontWeight="700">
-              Değerlendir
-            </Paragraph>
-          </XStack>
-        </Button>
-      ) : reviewState === 'reviewed' ? (
-        <XStack
-          alignItems="center"
-          backgroundColor="$green2"
-          borderColor="$green6"
-          borderRadius="$3"
-          borderWidth={1}
-          gap="$1.5"
-          height={40}
-          justifyContent="center"
-        >
-          <CircleCheck color="$green10" size={16} />
-          <Paragraph color="$green10" fontSize={13} fontWeight="700">
-            Değerlendirildi
-          </Paragraph>
+          {returnState === 'available' ? (
+            <Button
+              accessibilityLabel="Ürünü iade et"
+              backgroundColor="transparent"
+              borderColor="$brand"
+              borderRadius="$3"
+              borderWidth={1}
+              flex={1}
+              height={40}
+              onPress={onReturn}
+              paddingHorizontal="$2"
+              pressStyle={{ backgroundColor: '$orange3' }}
+            >
+              <XStack alignItems="center" gap="$1.5">
+                <Undo2 color="$brand" size={16} />
+                <Paragraph color="$brand" fontSize={13} fontWeight="700">
+                  Ürünü İade Et
+                </Paragraph>
+              </XStack>
+            </Button>
+          ) : returnState === 'blocked' ? (
+            <XStack
+              alignItems="center"
+              backgroundColor="$backgroundHover"
+              borderColor="$borderColor"
+              borderRadius="$3"
+              borderWidth={1}
+              flex={1}
+              gap="$1.5"
+              height={40}
+              justifyContent="center"
+              paddingHorizontal="$2"
+            >
+              <CircleSlash color="$color9" size={16} />
+              <Paragraph color="$color10" fontSize={13} fontWeight="600">
+                İade/Değişim Yok
+              </Paragraph>
+            </XStack>
+          ) : null}
+
+          {reviewState === 'available' ? (
+            <Button
+              accessibilityLabel="Ürünü değerlendir"
+              backgroundColor="$brand"
+              borderRadius="$3"
+              flex={1}
+              height={40}
+              onPress={onReview}
+              paddingHorizontal="$2"
+              pressStyle={{ backgroundColor: '$brand', opacity: 0.85 }}
+            >
+              <XStack alignItems="center" gap="$1.5">
+                <Star color="white" size={16} />
+                <Paragraph color="white" fontSize={13} fontWeight="700">
+                  Değerlendir
+                </Paragraph>
+              </XStack>
+            </Button>
+          ) : reviewState === 'reviewed' ? (
+            <XStack
+              alignItems="center"
+              backgroundColor="$green2"
+              borderColor="$green6"
+              borderRadius="$3"
+              borderWidth={1}
+              flex={1}
+              gap="$1.5"
+              height={40}
+              justifyContent="center"
+              paddingHorizontal="$2"
+            >
+              <CircleCheck color="$green10" size={16} />
+              <Paragraph color="$green10" fontSize={13} fontWeight="700">
+                Değerlendirildi
+              </Paragraph>
+            </XStack>
+          ) : null}
         </XStack>
       ) : null}
     </YStack>

@@ -77,6 +77,10 @@ export type OrderDetailItem = {
   note?: string;
   /** Whether the buyer has already reviewed this delivered item. */
   isReviewed?: boolean;
+  /** When true the line cannot be returned (e.g. hygiene products). */
+  isNonReturnable?: boolean;
+  /** `available` | `gift_product` | other backend label. */
+  returnStatus?: string;
 };
 
 export type OrderTotalsView = {
@@ -89,11 +93,72 @@ export type OrderTotalsView = {
   codFee: number;
   paymentFee: number;
   returnTotal: number;
+  /** Cash/upfront total (peşin toplam). */
   total: number;
   paymentMethod: string;
+  /** Installment count when paid in installments (> 1), else null. */
+  installmentCount: number | null;
+  /** Installment interest amount (vade farkı), 0 when none. */
+  interestAmount: number;
+  /** Total with installment interest (taksitli toplam), 0 when none. */
+  totalWithInterest: number;
+  /** Whether any installment info should be shown. */
+  hasInstallmentInfo: boolean;
+  /** Amount actually charged: installment total when applicable, else `total`. */
+  payableTotal: number;
 };
 
 export type CancellationReason = { id: number; name: string };
+
+export type ReturnReason = { id: number; name: string };
+
+export type ReturnMethod = 'ptt' | 'hepsijet';
+
+/** A return photo selected from the device, as an RN multipart file part. */
+export type ReturnPhoto = { uri: string; name: string; type: string };
+
+/** A single line the user wants to return (one unit per entry, like the web flow). */
+export type ReturnSubmitItem = {
+  orderItemId: number;
+  quantity: number;
+  returnReasonId: number;
+  photo?: ReturnPhoto | null;
+};
+
+/** A saved refund IBAN (shown when the order was paid by bank transfer). */
+export type PaymentMethod = {
+  id: number;
+  iban: string;
+  ibanName: string;
+  isDefault: boolean;
+};
+
+/** A city / district / neighbourhood option for the manual pickup address. */
+export type LocationOption = { id: string; name: string };
+
+/** A user's saved address, used for the scheduled (Hepsijet) return pickup. */
+export type SavedAddress = {
+  id: string;
+  title: string;
+  name: string;
+  surname: string;
+  phone: string;
+  addressLine: string;
+  city: string;
+  district: string;
+  neighbourhood: string;
+};
+
+/** A fully resolved pickup address (saved or manual) ready for a Hepsijet send. */
+export type ResolvedAddress = {
+  city: string;
+  town: string;
+  district: string;
+  addressLine1: string;
+  name: string;
+  surname: string;
+  phone: string;
+};
 
 export type CancelItem = {
   orderItemId: number;
@@ -134,6 +199,16 @@ export type OrderDetail = {
   trackingCode: string | null;
   cargoCompanyName: string | null;
   invoicePdfUrl: string | null;
+  /** Backend payment method id; 2/3 (bank transfer) require an IBAN for refunds. */
+  paymentMethodId: number | null;
+  /** Whether a return request can be created for this order. */
+  canCreateReturnRequest: boolean;
+  /** `time_expired` | `not_delivered` | `already_requested` | other, when blocked. */
+  returnBlockReason: string | null;
+  /** Last return-request date (delivery + 13 days), `DD.MM.YYYY`, or null. */
+  returnDeadline: string | null;
+  /** Existing return request ids (latest used for the PTT re-create fallback). */
+  returnRequestIds: number[];
   shippingAddress: OrderAddress | null;
   billingAddress: OrderAddress | null;
   billingType: string;

@@ -97,6 +97,42 @@ describe('mapOrderDetail', () => {
     expect(notReviewed.items[0]?.isReviewed).toBe(false);
   });
 
+  it('omits installment info for an upfront order', () => {
+    const order = mapOrderDetail(baseDetail());
+    expect(order.totals.hasInstallmentInfo).toBe(false);
+    expect(order.totals.installmentCount).toBeNull();
+    expect(order.totals.payableTotal).toBe(2414.95);
+  });
+
+  it('surfaces installment fields and charges the installment total when paid in installments', () => {
+    const order = mapOrderDetail(
+      baseDetail({
+        installment_count: 6,
+        totals: {
+          subtotal: '2294.97',
+          cargo_service_price: '99.99',
+          cod_service_fee: '0.00',
+          payment_fee: '0.00',
+          total_price: '2414.95',
+          interest_amount: '150.00',
+          total_with_interest: '2564.95',
+        },
+      }),
+    );
+    expect(order.totals.hasInstallmentInfo).toBe(true);
+    expect(order.totals.installmentCount).toBe(6);
+    expect(order.totals.interestAmount).toBe(150);
+    expect(order.totals.totalWithInterest).toBe(2564.95);
+    expect(order.totals.total).toBe(2414.95); // peşin toplam
+    expect(order.totals.payableTotal).toBe(2564.95); // taksitli toplam
+  });
+
+  it('ignores an installment count of 1 (single payment)', () => {
+    const order = mapOrderDetail(baseDetail({ installment_count: 1 }));
+    expect(order.totals.installmentCount).toBeNull();
+    expect(order.totals.hasInstallmentInfo).toBe(false);
+  });
+
   it('tags returned items and surfaces their status note', () => {
     const order = mapOrderDetail(
       baseDetail({

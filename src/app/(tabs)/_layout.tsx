@@ -208,6 +208,12 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="return-create/[id]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

@@ -1,10 +1,26 @@
 import { Truck, CircleX, CircleCheck } from '@tamagui/lucide-icons-2';
 import {
   formatOrderDate,
+  formatReturnDeadline,
   getOrderStatusIcon,
   getOrderStatusText,
   PENDING_PAYMENT_STATUS_TEXT,
 } from './order-status';
+
+describe('formatReturnDeadline', () => {
+  it('adds 13 days to an ISO delivery date and formats DD.MM.YYYY', () => {
+    expect(formatReturnDeadline('2026-06-18T10:00:00')).toBe('01.07.2026');
+  });
+
+  it('parses the Turkish "18 Haz 2026" label', () => {
+    expect(formatReturnDeadline('18 Haz 2026 - 12:00')).toBe('01.07.2026');
+  });
+
+  it('returns null for empty or unparseable input', () => {
+    expect(formatReturnDeadline('')).toBeNull();
+    expect(formatReturnDeadline('belirsiz')).toBeNull();
+  });
+});
 
 describe('getOrderStatusText', () => {
   it('returns the pending-payment text for "Taslak" orders', () => {
