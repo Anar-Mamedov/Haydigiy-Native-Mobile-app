@@ -8,6 +8,9 @@ type OrderItemsSectionProps = {
   items: OrderDetailItemModel[];
   onPressProduct: (slug: string) => void;
   titleColor?: string;
+  /** When true, delivered items show a "Değerlendir / Değerlendirildi" action. */
+  reviewable?: boolean;
+  onReview?: (item: OrderDetailItemModel) => void;
 };
 
 /** Titled card listing order lines; reused for delivered / cancelled / returned. */
@@ -16,6 +19,8 @@ export function OrderItemsSection({
   items,
   onPressProduct,
   titleColor = '$color',
+  reviewable,
+  onReview,
 }: OrderItemsSectionProps) {
   if (items.length === 0) return null;
 
@@ -31,6 +36,8 @@ export function OrderItemsSection({
               item={item}
               key={`${item.id}-${index}`}
               onPressProduct={onPressProduct}
+              onReview={onReview ? () => onReview(item) : undefined}
+              reviewState={reviewable ? (item.isReviewed ? 'reviewed' : 'available') : undefined}
             />
           ))}
         </YStack>

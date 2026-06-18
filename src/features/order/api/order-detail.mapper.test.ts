@@ -79,6 +79,24 @@ describe('mapOrderDetail', () => {
     expect(order.cancelledQty).toBe(2);
   });
 
+  it('maps product/variant ids and the reviewed flag for items', () => {
+    const reviewed = mapOrderDetail(
+      baseDetail({
+        items: [
+          { id: 1, name: 'A', slug: 'a', product_id: 10, variant_id: 20, product_review: true },
+        ],
+      }),
+    );
+    expect(reviewed.items[0]?.productId).toBe(10);
+    expect(reviewed.items[0]?.variantId).toBe(20);
+    expect(reviewed.items[0]?.isReviewed).toBe(true);
+
+    const notReviewed = mapOrderDetail(
+      baseDetail({ items: [{ id: 2, name: 'B', slug: 'b', reviews_count: 0 }] }),
+    );
+    expect(notReviewed.items[0]?.isReviewed).toBe(false);
+  });
+
   it('tags returned items and surfaces their status note', () => {
     const order = mapOrderDetail(
       baseDetail({

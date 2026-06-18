@@ -11,12 +11,17 @@ export interface OrderAddressDto {
 
 export interface OrderDetailItemDto {
   id: number;
+  product_id?: number;
+  variant_id?: number;
   name?: string;
   variant_name?: string;
   slug?: string;
   image?: string | null;
   quantity?: number;
   price?: number | string;
+  reviewed?: boolean;
+  product_review?: boolean;
+  reviews_count?: number;
 }
 
 export interface ReturnedItemDetailDto {

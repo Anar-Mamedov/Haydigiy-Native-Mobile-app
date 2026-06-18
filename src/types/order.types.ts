@@ -63,6 +63,8 @@ export type OrderAddress = {
 
 export type OrderDetailItem = {
   id: number;
+  productId?: number;
+  variantId?: number;
   name: string;
   variantName: string;
   slug: string;
@@ -72,6 +74,8 @@ export type OrderDetailItem = {
   kind: OrderProductKind;
   /** Return status label (returned) or cancellation reason (cancelled). */
   note?: string;
+  /** Whether the buyer has already reviewed this delivered item. */
+  isReviewed?: boolean;
 };
 
 export type OrderTotalsView = {

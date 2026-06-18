@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, Spinner, YStack } from 'tamagui';
 import { AppScreen, EmptyState } from '@/components/ui';
@@ -9,6 +10,10 @@ import { OrderTimeline } from '../components/order-timeline';
 import { OrderItemsSection } from '../components/order-items-section';
 import { OrderAddressCard } from '../components/order-address-card';
 import { OrderPaymentCard } from '../components/order-payment-card';
+import { OrderReviewSheet } from '../components/order-review-sheet';
+import { OrderDetailItem } from '@/types/order.types';
+
+const REVIEWABLE_STATUSES = ['Teslim Edildi', 'Sipariş tamamlandı'];
 
 export function OrderDetailScreen() {
   const router = useRouter();
@@ -18,6 +23,8 @@ export function OrderDetailScreen() {
 
   const query = useOrderDetailQuery(id, isAuthenticated);
   const order = query.data;
+
+  const [reviewItem, setReviewItem] = useState<OrderDetailItem | null>(null);
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -76,6 +83,8 @@ export function OrderDetailScreen() {
           <OrderItemsSection
             items={order.items}
             onPressProduct={openProduct}
+            onReview={setReviewItem}
+            reviewable={REVIEWABLE_STATUSES.includes(order.status)}
             title="Ürünler"
           />
           <OrderItemsSection
@@ -89,6 +98,16 @@ export function OrderDetailScreen() {
           <OrderPaymentCard totals={order.totals} />
         </ScrollView>
       </YStack>
+
+      <OrderReviewSheet
+        item={reviewItem}
+        onOpenChange={(next) => {
+          if (!next) setReviewItem(null);
+        }}
+        onSubmitted={() => query.refetch()}
+        open={reviewItem !== null}
+        orderId={id}
+      />
     </AppScreen>
   );
 }

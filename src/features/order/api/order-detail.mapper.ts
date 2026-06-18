@@ -40,6 +40,8 @@ function mapAddress(dto: OrderAddressDto | null | undefined): OrderAddress | nul
 function mapItem(dto: OrderDetailItemDto): OrderDetailItem {
   return {
     id: dto.id,
+    productId: dto.product_id,
+    variantId: dto.variant_id,
     name: dto.name ?? '',
     variantName: dto.variant_name ?? '',
     slug: dto.slug ?? '',
@@ -47,6 +49,8 @@ function mapItem(dto: OrderDetailItemDto): OrderDetailItem {
     quantity: toNumber(dto.quantity),
     price: toNumber(dto.price),
     kind: 'normal',
+    isReviewed:
+      Boolean(dto.product_review) || Boolean(dto.reviewed) || toNumber(dto.reviews_count) > 0,
   };
 }
 
