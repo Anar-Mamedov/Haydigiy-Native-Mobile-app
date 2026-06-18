@@ -1,6 +1,6 @@
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { CircleCheck, Image as ImagePlaceholderIcon, Star } from '@tamagui/lucide-icons-2';
+import { CircleCheck, CircleX, Image as ImagePlaceholderIcon, Star } from '@tamagui/lucide-icons-2';
 import { Button, Paragraph, XStack, YStack } from 'tamagui';
 import { OrderDetailItem as OrderDetailItemModel } from '@/types/order.types';
 import { formatOrderPrice } from '../utils/order-status';
@@ -13,6 +13,9 @@ type OrderDetailItemProps = {
   /** Shows the review action: "available" → Değerlendir, "reviewed" → Değerlendirildi. */
   reviewState?: 'available' | 'reviewed';
   onReview?: () => void;
+  /** Shows the "Ürünü İptal Et" action when the order is still cancellable. */
+  cancelable?: boolean;
+  onCancel?: () => void;
 };
 
 /** A single order line (image, name, size, quantity, price) used in detail sections. */
@@ -21,6 +24,8 @@ export function OrderDetailItem({
   onPressProduct,
   reviewState,
   onReview,
+  cancelable,
+  onCancel,
 }: OrderDetailItemProps) {
   const inactive = item.kind !== 'normal';
 
@@ -85,6 +90,26 @@ export function OrderDetailItem({
           ) : null}
         </YStack>
       </XStack>
+
+      {cancelable ? (
+        <Button
+          accessibilityLabel="Ürünü iptal et"
+          backgroundColor="$background"
+          borderColor="$red8"
+          borderRadius="$3"
+          borderWidth={1}
+          height={40}
+          onPress={onCancel}
+          pressStyle={{ backgroundColor: '$red2' }}
+        >
+          <XStack alignItems="center" gap="$1.5">
+            <CircleX color="$red10" size={16} />
+            <Paragraph color="$red10" fontSize={13} fontWeight="700">
+              Ürünü İptal Et
+            </Paragraph>
+          </XStack>
+        </Button>
+      ) : null}
 
       {reviewState === 'available' ? (
         <Button

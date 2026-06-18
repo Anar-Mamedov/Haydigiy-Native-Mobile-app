@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Paragraph, ScrollView, Spinner, YStack } from 'tamagui';
+import { Button, Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
+import { CircleX } from '@tamagui/lucide-icons-2';
 import { AppScreen, EmptyState } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useOrderDetailQuery } from '../api/order.queries';
@@ -12,6 +13,7 @@ import { OrderAddressCard } from '../components/order-address-card';
 import { OrderPaymentCard } from '../components/order-payment-card';
 import { OrderReviewSheet } from '../components/order-review-sheet';
 import { AgreementTab, OrderAgreementSheet } from '../components/order-agreement-sheet';
+import { isOrderCancellableStatus } from '../utils/order-status';
 import { OrderDetailItem } from '@/types/order.types';
 
 const REVIEWABLE_STATUSES = ['Teslim Edildi', 'Sipariş tamamlandı'];
@@ -37,6 +39,9 @@ export function OrderDetailScreen() {
   };
 
   const openProduct = (slug: string) => router.push(`/product/${slug}` as never);
+  const goToCancel = (query = '') => router.push(`/(tabs)/order-cancel/${id}${query}` as never);
+
+  const isCancelable = order ? isOrderCancellableStatus(order.status, order.statusId) : false;
 
   const header = <OrdersHeader onBack={handleBack} title="Siparişim" />;
 
@@ -83,7 +88,9 @@ export function OrderDetailScreen() {
             titleColor="$red10"
           />
           <OrderItemsSection
+            cancelable={isCancelable}
             items={order.items}
+            onCancelItem={(item) => goToCancel(`?item_id=${item.id}`)}
             onPressProduct={openProduct}
             onReview={setReviewItem}
             reviewable={REVIEWABLE_STATUSES.includes(order.status)}
@@ -95,6 +102,26 @@ export function OrderDetailScreen() {
             title="İade Edilen Ürünler"
             titleColor="$brand"
           />
+
+          {isCancelable ? (
+            <Button
+              accessibilityLabel="Sipariş İptal Et"
+              backgroundColor="$background"
+              borderColor="$red8"
+              borderRadius="$4"
+              borderWidth={1}
+              height={48}
+              onPress={() => goToCancel('?select_all=1')}
+              pressStyle={{ backgroundColor: '$red2' }}
+            >
+              <XStack alignItems="center" gap="$2">
+                <CircleX color="$red10" size={18} />
+                <Paragraph color="$red10" fontSize={14} fontWeight="700">
+                  Sipariş İptal Et
+                </Paragraph>
+              </XStack>
+            </Button>
+          ) : null}
 
           <OrderAddressCard order={order} />
           <OrderPaymentCard totals={order.totals} />

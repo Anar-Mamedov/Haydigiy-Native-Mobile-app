@@ -93,6 +93,36 @@ export type OrderTotalsView = {
   paymentMethod: string;
 };
 
+export type CancellationReason = { id: number; name: string };
+
+export type CancelItem = {
+  orderItemId: number;
+  quantity: number;
+  cancellationReasonId?: number;
+};
+
+export type BrokenCampaign = {
+  id: number;
+  name: string;
+  type: string;
+  minOrderAmount: number;
+};
+
+export type CancelPreview = {
+  campaignWillBreak: boolean;
+  currentTotal: number;
+  newTotal: number;
+  cancelledAmount: number;
+  currentCargoFee: number;
+  newCargoFee: number;
+  netRefundAmount: number;
+  brokenCampaigns: BrokenCampaign[];
+  wasFreeShipping: boolean;
+  addedCargoFee: number;
+  cancellationBlocked: boolean;
+  blockMessage: string | null;
+};
+
 export type OrderDetail = {
   id: number;
   orderNo: string;

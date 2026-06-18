@@ -47,6 +47,24 @@ export function getOrderTimelineActiveIndex(statusId: number): number {
   return -1;
 }
 
+const CANCELLABLE_STATUS_IDS = new Set([1, 2, 3, 5, 6, 14, 16]);
+const CANCELLABLE_STATUS_LABELS = new Set([
+  'sipariş alındı',
+  'onay bekliyor',
+  'onaylandı',
+  'hazırlanıyor',
+  'paketleniyor',
+  'ödeme kaydı alınamadı',
+  'kontrol',
+]);
+
+/** Whether an order may still be cancelled (before it ships), matching the web rules. */
+export function isOrderCancellableStatus(status: string, statusId: number): boolean {
+  if (CANCELLABLE_STATUS_IDS.has(statusId)) return true;
+  const normalized = status?.trim().toLocaleLowerCase('tr-TR');
+  return normalized ? CANCELLABLE_STATUS_LABELS.has(normalized) : false;
+}
+
 /** Maps an order status to its lucide icon, matching the web order list. */
 export function getOrderStatusIcon(status: string) {
   switch (status) {

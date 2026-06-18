@@ -1,8 +1,18 @@
+import { isAxiosError } from 'axios';
 import { apiClient } from '@/lib/axios';
 import { appEnv } from '@/lib/env';
 import { OrdersResponseDto, ReturnRequestsResponseDto } from '@/features/order/api/order.dtos';
 import { OrderDetailResponseDto } from '@/features/order/api/order-detail.dtos';
-import { OrderCategory, OrderDateFilter } from '@/types/order.types';
+import {
+  CancellationReasonDto,
+  CancellationReasonsResponseDto,
+  CancelErrorPayloadDto,
+  CancelItemPayloadDto,
+  CancelPreviewDto,
+  CancelSubmitResponseDto,
+} from '@/features/order/api/order-cancel.dtos';
+import { mapCancelPreview } from '@/features/order/api/order-cancel.mapper';
+import { CancelPreview, OrderCategory, OrderDateFilter } from '@/types/order.types';
 
 const EMPTY_PAGE = { data: [], meta: { current_page: 1, last_page: 1, per_page: 0, total: 0 } };
 
@@ -53,6 +63,70 @@ export async function getOrderByIdDto(id: number | string): Promise<OrderDetailR
     headers: { Accept: 'application/json' },
   });
   return response.data ?? null;
+}
+
+/** Cancellation reasons (`GET /order/cancellation-reasons`). */
+export async function getCancellationReasonsDto(): Promise<CancellationReasonDto[]> {
+  if (!appEnv.apiBaseUrl) return [];
+  const response = await apiClient.get<CancellationReasonsResponseDto>('/order/cancellation-reasons');
+  return Array.isArray(response.data?.data) ? response.data.data : [];
+}
+
+/** Preview the financial impact of cancelling items (`POST /order/cancel-preview/{id}`). */
+export async function previewOrderCancelDto(
+  id: number | string,
+  items: CancelItemPayloadDto[],
+): Promise<CancelPreviewDto> {
+  const response = await apiClient.post<CancelPreviewDto>(`/order/cancel-preview/${id}`, { items });
+  return response.data;
+}
+
+/** Submit a cancellation (`POST /order/cancel/{id}`). */
+export async function submitOrderCancelDto(
+  id: number | string,
+  items: CancelItemPayloadDto[],
+  acknowledged?: boolean,
+): Promise<CancelSubmitResponseDto> {
+  const body: { items: CancelItemPayloadDto[]; acknowledged?: boolean } = { items };
+  if (acknowledged) body.acknowledged = true;
+  const response = await apiClient.post<CancelSubmitResponseDto>(`/order/cancel/${id}`, body);
+  return response.data;
+}
+
+function extractPreviewFromError(data: CancelErrorPayloadDto | undefined): CancelPreview | null {
+  if (!data) return null;
+  const raw = data.preview ?? data;
+  if (
+    typeof raw.campaign_will_break !== 'boolean' &&
+    typeof raw.cancellation_blocked !== 'boolean'
+  ) {
+    return null;
+  }
+  return mapCancelPreview(raw);
+}
+
+/** Detects the 409 "acknowledgement required" error and returns its preview. */
+export function getAcknowledgementRequiredPreview(error: unknown): CancelPreview | null {
+  if (!isAxiosError(error) || error.response?.status !== 409) return null;
+  const data = error.response.data as CancelErrorPayloadDto | undefined;
+  if (!data?.requires_acknowledgement) return null;
+  return extractPreviewFromError(data);
+}
+
+/** Detects the 422 "cancellation blocked" error and returns its preview. */
+export function getCancellationBlockedPreview(error: unknown): CancelPreview | null {
+  if (!isAxiosError(error) || error.response?.status !== 422) return null;
+  const data = error.response.data as CancelErrorPayloadDto | undefined;
+  if (!data?.cancellation_blocked) return null;
+  return extractPreviewFromError(data);
+}
+
+export function getCancelErrorMessage(error: unknown, fallback = 'Bir hata oluştu'): string {
+  if (isAxiosError(error)) {
+    const data = error.response?.data as { message?: string; error?: string } | undefined;
+    return data?.message ?? data?.error ?? fallback;
+  }
+  return fallback;
 }
 
 export interface OrderPrepareResponseDto {

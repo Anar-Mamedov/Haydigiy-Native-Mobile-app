@@ -11,6 +11,9 @@ type OrderItemsSectionProps = {
   /** When true, delivered items show a "Değerlendir / Değerlendirildi" action. */
   reviewable?: boolean;
   onReview?: (item: OrderDetailItemModel) => void;
+  /** When true, items show an "Ürünü İptal Et" action. */
+  cancelable?: boolean;
+  onCancelItem?: (item: OrderDetailItemModel) => void;
 };
 
 /** Titled card listing order lines; reused for delivered / cancelled / returned. */
@@ -21,6 +24,8 @@ export function OrderItemsSection({
   titleColor = '$color',
   reviewable,
   onReview,
+  cancelable,
+  onCancelItem,
 }: OrderItemsSectionProps) {
   if (items.length === 0) return null;
 
@@ -33,8 +38,10 @@ export function OrderItemsSection({
         <YStack gap="$3">
           {items.map((item, index) => (
             <OrderDetailItem
+              cancelable={cancelable}
               item={item}
               key={`${item.id}-${index}`}
+              onCancel={onCancelItem ? () => onCancelItem(item) : undefined}
               onPressProduct={onPressProduct}
               onReview={onReview ? () => onReview(item) : undefined}
               reviewState={reviewable ? (item.isReviewed ? 'reviewed' : 'available') : undefined}

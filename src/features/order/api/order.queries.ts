@@ -2,8 +2,14 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { orderKeys } from './order.keys';
 import { mapOrdersResponse, mapReturnRequestsResponse } from './order.mapper';
 import { mapOrderDetail } from './order-detail.mapper';
-import { getOrderByIdDto, getOrdersDto, getReturnRequestsDto } from '@/services/order.service';
-import { OrderDetail, OrderFilters, OrdersPage } from '@/types/order.types';
+import { mapCancellationReason } from './order-cancel.mapper';
+import {
+  getCancellationReasonsDto,
+  getOrderByIdDto,
+  getOrdersDto,
+  getReturnRequestsDto,
+} from '@/services/order.service';
+import { CancellationReason, OrderDetail, OrderFilters, OrdersPage } from '@/types/order.types';
 
 /**
  * Single-page orders feed (numbered pagination, like the web order list). The
@@ -39,6 +45,19 @@ export function useOrderDetailQuery(id: string, enabled = true) {
     queryFn: async () => {
       const dto = await getOrderByIdDto(id);
       return dto ? mapOrderDetail(dto) : null;
+    },
+  });
+}
+
+/** Loads cancellation reasons (`GET /order/cancellation-reasons`). */
+export function useCancellationReasonsQuery(enabled = true) {
+  return useQuery<CancellationReason[]>({
+    queryKey: orderKeys.cancellationReasons(),
+    enabled,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const dtos = await getCancellationReasonsDto();
+      return dtos.map(mapCancellationReason);
     },
   });
 }

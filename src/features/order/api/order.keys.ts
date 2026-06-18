@@ -6,4 +6,5 @@ export const orderKeys = {
   list: (filters: OrderFilters, page: number) => [...orderKeys.lists(), filters, page] as const,
   details: () => [...orderKeys.all, 'detail'] as const,
   detail: (id: string) => [...orderKeys.details(), id] as const,
+  cancellationReasons: () => [...orderKeys.all, 'cancellation-reasons'] as const,
 };
