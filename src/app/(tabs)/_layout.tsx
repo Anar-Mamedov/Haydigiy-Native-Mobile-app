@@ -96,6 +96,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         sceneStyle: {
@@ -191,6 +192,12 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="orders"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="order/[id]"
         options={{
           href: null,
         }}

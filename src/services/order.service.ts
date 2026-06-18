@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/axios';
 import { appEnv } from '@/lib/env';
 import { OrdersResponseDto, ReturnRequestsResponseDto } from '@/features/order/api/order.dtos';
+import { OrderDetailResponseDto } from '@/features/order/api/order-detail.dtos';
 import { OrderCategory, OrderDateFilter } from '@/types/order.types';
 
 const EMPTY_PAGE = { data: [], meta: { current_page: 1, last_page: 1, per_page: 0, total: 0 } };
@@ -42,6 +43,16 @@ export async function getReturnRequestsDto(
     headers: { Accept: 'application/json' },
   });
   return response.data ?? EMPTY_PAGE;
+}
+
+/** Single order detail (`GET /order/{id}`). */
+export async function getOrderByIdDto(id: number | string): Promise<OrderDetailResponseDto | null> {
+  if (!appEnv.apiBaseUrl) return null;
+
+  const response = await apiClient.get<OrderDetailResponseDto>(`/order/${id}`, {
+    headers: { Accept: 'application/json' },
+  });
+  return response.data ?? null;
 }
 
 export interface OrderPrepareResponseDto {

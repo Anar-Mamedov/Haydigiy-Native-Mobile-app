@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FlashList, FlashListRef } from '@shopify/flash-list';
 import { Spinner, YStack } from 'tamagui';
@@ -157,7 +156,7 @@ export function OrdersScreen() {
           onRefresh={() => query.refetch()}
           renderItem={({ item }) => (
             <OrderCard
-              onPressDetails={() => Alert.alert('Yakında', 'Sipariş detayı yakında eklenecek.')}
+              onPressDetails={() => router.push(`/(tabs)/order/${item.id}` as never)}
               onPressProduct={(slug) => router.push(`/product/${slug}` as never)}
               order={item}
             />

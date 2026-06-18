@@ -1,8 +1,9 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { orderKeys } from './order.keys';
 import { mapOrdersResponse, mapReturnRequestsResponse } from './order.mapper';
-import { getOrdersDto, getReturnRequestsDto } from '@/services/order.service';
-import { OrderFilters, OrdersPage } from '@/types/order.types';
+import { mapOrderDetail } from './order-detail.mapper';
+import { getOrderByIdDto, getOrdersDto, getReturnRequestsDto } from '@/services/order.service';
+import { OrderDetail, OrderFilters, OrdersPage } from '@/types/order.types';
 
 /**
  * Single-page orders feed (numbered pagination, like the web order list). The
@@ -26,6 +27,18 @@ export function useOrdersQuery(filters: OrderFilters, page: number, enabled = tr
         return mapReturnRequestsResponse(await getReturnRequestsDto(params));
       }
       return mapOrdersResponse(await getOrdersDto(params));
+    },
+  });
+}
+
+/** Loads a single order's detail (`GET /order/{id}`). */
+export function useOrderDetailQuery(id: string, enabled = true) {
+  return useQuery<OrderDetail | null>({
+    queryKey: orderKeys.detail(id),
+    enabled: enabled && Boolean(id),
+    queryFn: async () => {
+      const dto = await getOrderByIdDto(id);
+      return dto ? mapOrderDetail(dto) : null;
     },
   });
 }

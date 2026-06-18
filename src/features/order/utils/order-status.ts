@@ -22,6 +22,31 @@ export function formatOrderDate(value: string): string {
   return value;
 }
 
+/** Formats a numeric amount as "1234.56 TL", matching the web order detail. */
+export function formatOrderPrice(value: number | string | null | undefined): string {
+  const num = typeof value === 'number' ? value : Number(value);
+  return `${Number.isFinite(num) ? num.toFixed(2) : '0.00'} TL`;
+}
+
+/** Ordered timeline steps shown on the order detail screen. */
+export const ORDER_TIMELINE_STEPS = [
+  'Sipariş Alındı',
+  'Onaylandı',
+  'Hazırlanıyor',
+  'Kargoya Verildi',
+  'Teslim Edildi',
+];
+
+/** Active step index for a status id (−1 when none / cancelled). */
+export function getOrderTimelineActiveIndex(statusId: number): number {
+  if ([1, 2, 14, 17, 19].includes(statusId)) return 0;
+  if ([3, 16].includes(statusId)) return 1;
+  if ([5, 6, 12].includes(statusId)) return 2;
+  if ([7, 15, 9, 13, 18].includes(statusId)) return 3;
+  if ([8, 10, 11].includes(statusId)) return 4;
+  return -1;
+}
+
 /** Maps an order status to its lucide icon, matching the web order list. */
 export function getOrderStatusIcon(status: string) {
   switch (status) {
