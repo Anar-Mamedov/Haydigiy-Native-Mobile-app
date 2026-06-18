@@ -2,6 +2,7 @@ export interface OrderAddressDto {
   name?: string;
   surname?: string;
   phone?: string;
+  email?: string | null;
   address_line?: string;
   neighbourhood?: string;
   district?: string;

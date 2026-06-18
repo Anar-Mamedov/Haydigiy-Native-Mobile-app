@@ -54,6 +54,7 @@ export type OrderAddress = {
   name: string;
   surname: string;
   phone: string;
+  email: string | null;
   addressLine: string;
   neighbourhood: string;
   district: string;

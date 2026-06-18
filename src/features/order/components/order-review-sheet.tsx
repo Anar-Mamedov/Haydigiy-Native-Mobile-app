@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Alert, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
-import { ImagePlus, Star } from '@tamagui/lucide-icons-2';
+import { ImagePlus, Star, X } from '@tamagui/lucide-icons-2';
 import { Button, Input, Paragraph, ScrollView, Sheet, Spinner, TextArea, XStack, YStack } from 'tamagui';
 import { AppCheckbox } from '@/components/ui';
 import { WARNING_COLOR } from '@/lib/theme/colors';
@@ -45,6 +46,7 @@ export function OrderReviewSheet({
   const [showCriteria, setShowCriteria] = useState(false);
 
   const submit = useSubmitReviewMutation(orderId);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!open) {
@@ -117,27 +119,37 @@ export function OrderReviewSheet({
 
   return (
     <Sheet
-      dismissOnOverlayPress
-      dismissOnSnapToBottom
+      disableDrag
       modal
       onOpenChange={onOpenChange}
       open={open}
-      snapPoints={[90]}
+      snapPoints={[100]}
       snapPointsMode="percent"
     >
       <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
-      <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
+      <Sheet.Frame backgroundColor="$background">
         <XStack
           alignItems="center"
           borderBottomColor="$borderColor"
           borderBottomWidth={1}
+          gap="$2"
           justifyContent="space-between"
+          paddingBottom="$3"
           paddingHorizontal="$4"
-          paddingVertical="$3"
+          paddingTop={insets.top + 12}
         >
           <Paragraph color="$color" fontSize={16} fontWeight="700">
             {showCriteria ? 'Yorum Yayınlama Kriterleri' : 'Ürünü Değerlendir'}
           </Paragraph>
+          <Pressable
+            accessibilityLabel="Kapat"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => onOpenChange(false)}
+            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
+          >
+            <X color="$color10" size={22} />
+          </Pressable>
         </XStack>
 
         {showCriteria ? (
@@ -152,7 +164,13 @@ export function OrderReviewSheet({
                 </Paragraph>
               ))}
             </ScrollView>
-            <YStack borderTopColor="$borderColor" borderTopWidth={1} padding="$4">
+            <YStack
+              borderTopColor="$borderColor"
+              borderTopWidth={1}
+              paddingBottom={Math.max(insets.bottom, 16)}
+              paddingHorizontal="$4"
+              paddingTop="$4"
+            >
               <Button
                 backgroundColor="$brand"
                 borderRadius="$4"
@@ -336,7 +354,13 @@ export function OrderReviewSheet({
               </Paragraph>
             </ScrollView>
 
-            <YStack borderTopColor="$borderColor" borderTopWidth={1} padding="$4">
+            <YStack
+              borderTopColor="$borderColor"
+              borderTopWidth={1}
+              paddingBottom={Math.max(insets.bottom, 16)}
+              paddingHorizontal="$4"
+              paddingTop="$4"
+            >
               <Button
                 backgroundColor={canSubmit ? '$brand' : '$backgroundHover'}
                 borderRadius="$4"

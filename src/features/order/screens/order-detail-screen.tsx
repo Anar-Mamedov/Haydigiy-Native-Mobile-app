@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, Spinner, YStack } from 'tamagui';
+import { Button, Paragraph, ScrollView, Spinner, YStack } from 'tamagui';
 import { AppScreen, EmptyState } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useOrderDetailQuery } from '../api/order.queries';
@@ -11,6 +11,7 @@ import { OrderItemsSection } from '../components/order-items-section';
 import { OrderAddressCard } from '../components/order-address-card';
 import { OrderPaymentCard } from '../components/order-payment-card';
 import { OrderReviewSheet } from '../components/order-review-sheet';
+import { AgreementTab, OrderAgreementSheet } from '../components/order-agreement-sheet';
 import { OrderDetailItem } from '@/types/order.types';
 
 const REVIEWABLE_STATUSES = ['Teslim Edildi', 'Sipariş tamamlandı'];
@@ -25,6 +26,7 @@ export function OrderDetailScreen() {
   const order = query.data;
 
   const [reviewItem, setReviewItem] = useState<OrderDetailItem | null>(null);
+  const [agreementTab, setAgreementTab] = useState<AgreementTab | null>(null);
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -96,8 +98,37 @@ export function OrderDetailScreen() {
 
           <OrderAddressCard order={order} />
           <OrderPaymentCard totals={order.totals} />
+
+          <YStack gap="$3" paddingTop="$1">
+            {(['mesafeli', 'onbilgi'] as const).map((tab) => (
+              <Button
+                accessibilityLabel={tab === 'mesafeli' ? 'Mesafeli Satış Sözleşmesi' : 'Ön Bilgilendirme Formu'}
+                backgroundColor="$background"
+                borderColor="$brand"
+                borderRadius="$4"
+                borderWidth={1}
+                height={48}
+                key={tab}
+                onPress={() => setAgreementTab(tab)}
+                pressStyle={{ backgroundColor: '$backgroundHover' }}
+              >
+                <Paragraph color="$brand" fontSize={14} fontWeight="700">
+                  {tab === 'mesafeli' ? 'Mesafeli Satış Sözleşmesi' : 'Ön Bilgilendirme Formu'}
+                </Paragraph>
+              </Button>
+            ))}
+          </YStack>
         </ScrollView>
       </YStack>
+
+      <OrderAgreementSheet
+        initialTab={agreementTab ?? 'mesafeli'}
+        onOpenChange={(next) => {
+          if (!next) setAgreementTab(null);
+        }}
+        open={agreementTab !== null}
+        order={order}
+      />
 
       <OrderReviewSheet
         item={reviewItem}

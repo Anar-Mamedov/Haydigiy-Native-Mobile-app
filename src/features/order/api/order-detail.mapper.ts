@@ -29,6 +29,7 @@ function mapAddress(dto: OrderAddressDto | null | undefined): OrderAddress | nul
     name: dto.name ?? '',
     surname: dto.surname ?? '',
     phone: dto.phone ?? '',
+    email: dto.email ?? null,
     addressLine: dto.address_line ?? '',
     neighbourhood: dto.neighbourhood ?? '',
     district: dto.district ?? '',
