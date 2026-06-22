@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useWindowDimensions } from 'react-native';
 import { Check, ChevronDown, Search } from '@tamagui/lucide-icons-2';
 import { Input, Paragraph, ScrollView, Sheet, Spinner, XStack, YStack } from 'tamagui';
 import { matchesSearch } from '@/utils/search';
@@ -48,6 +49,13 @@ export function AppSelect({
     if (!next) setQuery('');
   };
 
+  // Size the options sheet to its content (so a 2-item list isn't a tall sheet),
+  // capped at 85% of the screen for long/searchable lists, which then scroll.
+  const { height: windowHeight } = useWindowDimensions();
+  const sheetHeaderHeight = 64 + (searchable ? 56 : 0);
+  const estimatedHeight = sheetHeaderHeight + options.length * 50 + 32;
+  const sheetHeight = Math.min(Math.round(windowHeight * 0.85), Math.max(estimatedHeight, 140));
+
   return (
     <>
       <XStack
@@ -85,8 +93,8 @@ export function AppSelect({
         modal
         onOpenChange={changeOpen}
         open={open}
-        snapPoints={[70]}
-        snapPointsMode="percent"
+        snapPoints={[sheetHeight]}
+        snapPointsMode="constant"
       >
         <Sheet.Overlay
           backgroundColor="$shadowColor"
@@ -135,7 +143,10 @@ export function AppSelect({
               </XStack>
             ) : null}
           </YStack>
-          <ScrollView contentContainerStyle={{ padding: 8 }} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={{ padding: 8, paddingBottom: 24 }}
+            keyboardShouldPersistTaps="handled"
+          >
             {filteredOptions.length === 0 ? (
               <Paragraph color="$color9" fontSize={14} padding="$4" textAlign="center">
                 Sonuç bulunamadı

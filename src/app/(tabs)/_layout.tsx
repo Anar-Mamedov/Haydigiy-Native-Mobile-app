@@ -209,6 +209,18 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="user-info"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="change-password"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="order/[id]"
         options={{
           href: null,

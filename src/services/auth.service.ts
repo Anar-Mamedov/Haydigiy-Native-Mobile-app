@@ -148,3 +148,14 @@ export async function fastLoginVerifyApi(payload: {
   return { ...response.data, user: normalizeAuthUser(response.data?.user) };
 }
 
+
+/**
+ * Deactivates (deletes) the authenticated user's account (`POST /auth/deactivate`),
+ * mirroring the web "Hesabımı Sil" flow. Callers should clear the session and
+ * navigate away on success.
+ */
+export async function deactivateAccountApi(): Promise<void> {
+  if (!appEnv.apiBaseUrl) return;
+
+  await apiClient.post('/auth/deactivate');
+}

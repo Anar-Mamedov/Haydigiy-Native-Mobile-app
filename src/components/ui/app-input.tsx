@@ -1,4 +1,5 @@
-import { GetProps, Input, Label, Paragraph, YStack, styled } from 'tamagui';
+import { ReactNode } from 'react';
+import { GetProps, Input, Label, Paragraph, XStack, YStack, styled } from 'tamagui';
 
 const StyledInput = styled(Input, {
   name: 'AppInput',
@@ -15,6 +16,8 @@ export type AppInputProps = GetProps<typeof StyledInput> & {
   errorMessage?: string;
   helperText?: string;
   label: string;
+  /** Element pinned to the right edge, vertically centered inside the field (e.g. a password eye). */
+  rightElement?: ReactNode;
 };
 
 export function AppInput({
@@ -23,6 +26,7 @@ export function AppInput({
   id,
   label,
   name,
+  rightElement,
   ...inputProps
 }: AppInputProps) {
   const fieldId = id ?? name ?? label.toLowerCase().replace(/\s+/g, '-');
@@ -30,7 +34,28 @@ export function AppInput({
   return (
     <YStack gap="$2">
       <Label htmlFor={fieldId}>{label}</Label>
-      <StyledInput accessibilityLabel={label} id={fieldId} name={name} {...inputProps} />
+      <XStack alignItems="center" position="relative" width="100%">
+        <StyledInput
+          accessibilityLabel={label}
+          flex={1}
+          id={fieldId}
+          name={name}
+          paddingRight={rightElement ? 44 : undefined}
+          {...inputProps}
+        />
+        {rightElement ? (
+          <XStack
+            alignItems="center"
+            bottom={0}
+            justifyContent="center"
+            position="absolute"
+            right={4}
+            top={0}
+          >
+            {rightElement}
+          </XStack>
+        ) : null}
+      </XStack>
       {errorMessage ? (
         <Paragraph color="$red10" size="$2">
           {errorMessage}

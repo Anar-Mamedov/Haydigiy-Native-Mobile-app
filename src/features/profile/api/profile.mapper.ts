@@ -5,6 +5,8 @@ export interface UserProfile {
   surname: string | null;
   phone: string | null;
   email: string | null;
+  birthDate: string | null;
+  gender: string | null;
   emailVerified: boolean;
 }
 
@@ -28,6 +30,8 @@ export function mapUserProfile(response: UserProfileResponseDto): UserProfile {
     surname: (nested.surname as string) ?? null,
     phone: (nested.phone as string) ?? null,
     email: (nested.email as string) ?? null,
+    birthDate: (nested.birth_date as string) ?? null,
+    gender: (nested.gender as string) ?? null,
     emailVerified,
   };
 }

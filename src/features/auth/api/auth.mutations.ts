@@ -6,6 +6,7 @@ import {
   verifyCodeApi,
   fastLoginInitApi,
   fastLoginVerifyApi,
+  deactivateAccountApi,
 } from '@/services/auth.service';
 
 /**
@@ -36,4 +37,8 @@ export function useVerifyCodeMutation() {
 
 export function useSendCodeMutation() {
   return useMutation({ mutationFn: sendCodeApi });
+}
+
+export function useDeactivateAccountMutation() {
+  return useMutation({ mutationFn: deactivateAccountApi });
 }

@@ -87,12 +87,12 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <UserRound color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Kullanıcı Bilgilerim',
-      onPress: showPending,
+      onPress: () => router.push('/(tabs)/user-info'),
     },
     {
       icon: <ShieldCheck color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Şifre Değişikliği',
-      onPress: showPending,
+      onPress: () => router.push('/(tabs)/change-password'),
     },
     {
       icon: <MapPin color="$purple10" size={MENU_ICON_SIZE} />,
