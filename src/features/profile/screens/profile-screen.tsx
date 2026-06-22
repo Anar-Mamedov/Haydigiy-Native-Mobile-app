@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from '@tamagui/lucide-icons-2';
 import { Paragraph, YStack, XStack, Button, Separator, ScrollView } from 'tamagui';
@@ -23,6 +24,13 @@ export function ProfileScreen() {
   const { isAuthenticated, isLoading: authChecking } = useAuthStatus();
   // Profile holds the authoritative e-mail verification flag (from /user/profile).
   const { data: profile } = useUserProfileQuery(isAuthenticated);
+
+  // Drives the collapsing account header (transparent at top, solid once scrolled).
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = event.nativeEvent.contentOffset.y > 8;
+    setHeaderScrolled((prev) => (prev === next ? prev : next));
+  };
 
   // Navigation states for unauthenticated views
   const [activeView, setActiveView] = useState<ActiveView>('login');
@@ -71,13 +79,16 @@ export function ProfileScreen() {
 
     return (
       <AppScreen
+        backgroundColor="$color3"
+        topBackgroundColor={headerScrolled ? '$color1' : '$color3'}
         header={
           <AccountHeader
-            onBack={handleBackPress}
             onPressName={handleUserInfoPress}
+            scrolled={headerScrolled}
             user={headerUser}
           />
         }
+        onScroll={handleScroll}
       >
         <AccountHub onLogout={handleLogout} />
       </AppScreen>

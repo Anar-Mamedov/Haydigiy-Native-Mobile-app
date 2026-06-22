@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Paragraph, YStack } from 'tamagui';
+import { Paragraph, Separator, YStack } from 'tamagui';
 import { SectionCard } from '@/components/ui';
 import { ProfileMenuRow } from './profile-menu-row';
 
@@ -10,21 +10,28 @@ export type AccountMenuItem = {
 };
 
 type AccountMenuCardProps = {
-  title: string;
+  /** Optional section heading; omit for a single untitled row card. */
+  title?: string;
   items: AccountMenuItem[];
 };
 
 /**
- * Titled card listing navigable account rows. Reused for "Size Özel" and
- * "Hesabım & Yardım" so the two sections stay structurally identical.
+ * Card listing navigable account rows mirroring the web "Hesabım" list. An
+ * optional heading lets the same card render both the titled account section and
+ * the standalone help row.
  */
 export function AccountMenuCard({ title, items }: AccountMenuCardProps) {
   return (
-    <SectionCard>
+    <SectionCard elevated>
       <YStack gap="$1">
-        <Paragraph color="$color" fontSize={17} fontWeight="700" marginBottom="$1">
-          {title}
-        </Paragraph>
+        {title ? (
+          <>
+            <Paragraph color="$color" fontSize={18} fontWeight="700">
+              {title}
+            </Paragraph>
+            <Separator borderColor="$borderColor" marginBottom="$1" marginTop="$2" />
+          </>
+        ) : null}
         {items.map((item) => (
           <ProfileMenuRow
             icon={item.icon}

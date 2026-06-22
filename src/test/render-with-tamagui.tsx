@@ -14,24 +14,28 @@ const testConfig = createTamagui({
   },
 });
 
-function Wrapper({ children }: PropsWithChildren) {
-  // Fresh client per render so query/mutation state never leaks between tests;
-  // retries off so failures surface immediately instead of hanging.
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
+type ThemeName = 'light' | 'dark';
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TamaguiProvider config={testConfig} defaultTheme="light">
-        <Theme name="light">{children}</Theme>
-      </TamaguiProvider>
-    </QueryClientProvider>
-  );
+function makeWrapper(themeName: ThemeName) {
+  return function Wrapper({ children }: PropsWithChildren) {
+    // Fresh client per render so query/mutation state never leaks between tests;
+    // retries off so failures surface immediately instead of hanging.
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TamaguiProvider config={testConfig} defaultTheme={themeName}>
+          <Theme name={themeName}>{children}</Theme>
+        </TamaguiProvider>
+      </QueryClientProvider>
+    );
+  };
 }
 
-export function renderWithTamagui(component: ReactElement) {
+export function renderWithTamagui(component: ReactElement, theme: ThemeName = 'light') {
   return render(component, {
-    wrapper: Wrapper,
+    wrapper: makeWrapper(theme),
   });
 }

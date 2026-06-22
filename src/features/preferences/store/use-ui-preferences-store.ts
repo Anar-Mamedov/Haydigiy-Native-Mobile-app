@@ -14,7 +14,8 @@ export const useUiPreferencesStore = create<UiPreferencesState>()(
       setThemePreference: (themePreference) => {
         set({ themePreference });
       },
-      themePreference: 'system',
+      // Default to light mode until the user explicitly picks another preference.
+      themePreference: 'light',
     }),
     {
       name: 'ui-preferences-storage',

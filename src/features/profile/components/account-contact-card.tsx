@@ -76,7 +76,7 @@ export function AccountContactCard() {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <SectionCard>
+    <SectionCard elevated>
       <YStack gap="$2">
         <Pressable
           accessibilityLabel="Bize Ulaşın"

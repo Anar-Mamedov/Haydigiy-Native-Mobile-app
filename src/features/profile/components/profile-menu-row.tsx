@@ -10,9 +10,9 @@ type ProfileMenuRowProps = {
 };
 
 /**
- * Reusable account menu row: leading icon, label and a trailing chevron. Used by
- * the "Size Özel" and "Hesabım & Yardım" cards so every navigable row shares one
- * theme-aware, accessible implementation.
+ * Reusable account menu row mirroring the web "Hesabım" list: a large bare icon,
+ * the label, and a trailing chevron inside a soft lavender circle. Used by the
+ * "Hesabım" card so every navigable row shares one theme-aware implementation.
  */
 export function ProfileMenuRow({ icon, label, onPress }: ProfileMenuRowProps) {
   return (
@@ -22,14 +22,23 @@ export function ProfileMenuRow({ icon, label, onPress }: ProfileMenuRowProps) {
       onPress={onPress}
       style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
     >
-      <XStack alignItems="center" gap="$3" paddingVertical="$2.5">
-        <XStack alignItems="center" justifyContent="center" width={24}>
+      <XStack alignItems="center" gap="$3" paddingVertical="$3">
+        <XStack alignItems="center" justifyContent="center" width={32}>
           {icon}
         </XStack>
-        <Paragraph color="$color" flex={1} fontSize={14} fontWeight="500">
+        <Paragraph color="$color" flex={1} fontSize={15} fontWeight="400">
           {label}
         </Paragraph>
-        <ChevronRight color="$color9" size={20} />
+        <XStack
+          alignItems="center"
+          backgroundColor="$purple3"
+          borderRadius={100}
+          height={28}
+          justifyContent="center"
+          width={28}
+        >
+          <ChevronRight color="$purple10" size={16} />
+        </XStack>
       </XStack>
     </Pressable>
   );

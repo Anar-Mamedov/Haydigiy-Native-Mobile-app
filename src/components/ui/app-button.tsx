@@ -12,7 +12,14 @@ export const AppButton = forwardRef<any, AppButtonProps>(function AppButton(
   ref,
 ) {
   const theme = useTheme();
-  const textColor = color || theme.color.val;
+  // Resolve theme tokens (e.g. "$red10") to a concrete color so the value works
+  // in the plain `style`/icon `color` props, which don't resolve tokens themselves.
+  // Without this the text falls back to black and becomes unreadable in dark mode.
+  const textColor = color
+    ? color.startsWith('$')
+      ? theme[color.slice(1)]?.val ?? theme.color.val
+      : color
+    : theme.color.val;
 
   const renderIcon = (iconNode: AppButtonProps['icon']) => {
     if (!iconNode) {
