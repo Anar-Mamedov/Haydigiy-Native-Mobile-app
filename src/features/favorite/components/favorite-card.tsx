@@ -88,8 +88,9 @@ export function FavoriteCard({
         >
           <Image
             source={{ uri: product.imageUrl }}
-            style={{ width: '100%', height: '100%', opacity: !hasStock ? 0.4 : 1 }}
+            style={{ width: '100%', height: '100%' }}
             contentFit="contain"
+            blurRadius={hasStock ? 0 : 6}
           />
 
           {pricing.isDiscounted && (

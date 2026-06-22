@@ -56,7 +56,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <Ticket color="$brand" size={26} />,
       label: 'İndirim Kuponlarım',
-      onPress: showPending,
+      onPress: () => router.push('/(tabs)/coupons'),
     },
     {
       icon: <Heart color="$brand" size={26} />,

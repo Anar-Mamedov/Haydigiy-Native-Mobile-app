@@ -197,6 +197,12 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="coupons"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="order/[id]"
         options={{
           href: null,

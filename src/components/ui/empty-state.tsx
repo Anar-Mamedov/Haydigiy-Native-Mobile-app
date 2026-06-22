@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { CircleAlert } from '@tamagui/lucide-icons-2';
 import { ButtonProps, H3, Paragraph, YStack } from 'tamagui';
 import { AppButton } from '@/components/ui/app-button';
@@ -8,6 +9,8 @@ type EmptyStateProps = {
   onActionPress?: ButtonProps['onPress'];
   title: string;
   primary?: boolean;
+  /** Leading illustration; defaults to a neutral alert glyph. */
+  icon?: ReactNode;
 };
 
 export function EmptyState({
@@ -16,6 +19,7 @@ export function EmptyState({
   onActionPress,
   title,
   primary,
+  icon,
 }: EmptyStateProps) {
   return (
     <YStack
@@ -27,7 +31,7 @@ export function EmptyState({
       gap="$3"
       padding="$5"
     >
-      <CircleAlert color="$color9" size={32} />
+      {icon ?? <CircleAlert color="$color9" size={32} />}
       <H3 textAlign="center">{title}</H3>
       <Paragraph color="$color10" textAlign="center">
         {description}

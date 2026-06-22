@@ -32,11 +32,18 @@ describe('AccountHub', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/favorites');
   });
 
+  it('navigates to the coupons screen when İndirim Kuponlarım is pressed', () => {
+    renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
+
+    fireEvent.press(screen.getByLabelText('İndirim Kuponlarım'));
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/coupons');
+  });
+
   it('shows a "coming soon" alert for sections without a mobile screen yet', () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
-    fireEvent.press(screen.getByLabelText('İndirim Kuponlarım'));
+    fireEvent.press(screen.getByLabelText('Ürün Değerlendirme'));
     expect(alertSpy).toHaveBeenCalledWith('Yakında', expect.any(String));
     alertSpy.mockRestore();
   });

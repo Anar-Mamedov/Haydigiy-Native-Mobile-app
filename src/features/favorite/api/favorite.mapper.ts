@@ -18,10 +18,15 @@ function mapFavoriteVariant(v: FavoriteVariantDto): ProductVariant {
 
 export function mapFavoriteItemDto(dto: FavoriteItemDto): FavoriteItem {
   const product = mapSearchProductDto(dto.product);
-  
+
   const variants: ProductVariant[] = Array.isArray(dto.product.variants)
     ? dto.product.variants.map(mapFavoriteVariant)
     : [];
+
+  // The favorites endpoint omits a product-level stock flag, so derive availability
+  // from variant quantities (matching the web). Falling back to the product flag
+  // only when no variants are present avoids falsely marking items out of stock.
+  const hasStock = variants.length > 0 ? variants.some((v) => v.hasStock) : product.hasStock;
 
   return {
     productId: String(dto.product_id),
@@ -29,6 +34,7 @@ export function mapFavoriteItemDto(dto: FavoriteItemDto): FavoriteItem {
     product: {
       ...product,
       variants,
+      hasStock,
       categories: dto.product.categories ?? [],
       categorySlug: dto.product.category_slugs?.[0] ?? '',
       categoryId: dto.product.category_ids?.[0] ?? undefined,

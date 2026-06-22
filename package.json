@@ -35,6 +35,7 @@
     "@tanstack/react-query": "^5.100.11",
     "axios": "^1.16.1",
     "expo": "~55.0.25",
+    "expo-clipboard": "~55.0.13",
     "expo-constants": "~55.0.16",
     "expo-device": "~55.0.17",
     "expo-font": "~55.0.8",
