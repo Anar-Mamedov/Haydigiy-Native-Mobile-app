@@ -7,7 +7,7 @@ import { ImagePlus, Star, X } from '@tamagui/lucide-icons-2';
 import { Button, Input, Paragraph, ScrollView, Sheet, Spinner, TextArea, XStack, YStack } from 'tamagui';
 import { AppCheckbox } from '@/components/ui';
 import { WARNING_COLOR } from '@/lib/theme/colors';
-import { OrderDetailItem } from '@/types/order.types';
+import { ReviewTarget } from '@/types/review.types';
 import { resolveReviewVariantId, ReviewPhoto } from '@/services/review.service';
 import { useSubmitReviewMutation } from '../api/review.mutations';
 
@@ -25,7 +25,7 @@ const CRITERIA = [
 type OrderReviewSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item: OrderDetailItem | null;
+  item: ReviewTarget | null;
   orderId: string;
   onSubmitted?: () => void;
 };

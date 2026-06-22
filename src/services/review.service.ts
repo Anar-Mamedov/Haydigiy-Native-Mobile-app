@@ -1,7 +1,20 @@
 import { apiClient } from '@/lib/axios';
 import { appEnv } from '@/lib/env';
+import { MyReviewsResponseDto } from '@/features/review/api/review.dtos';
+import { ReviewTabKey } from '@/types/review.types';
 
 export type ReviewPhoto = { uri: string; name: string; type: string };
+
+/** The current user's reviewable / reviewed products for a tab (`GET /review/my`). */
+export async function getMyReviewsDto(tab: ReviewTabKey): Promise<MyReviewsResponseDto> {
+  if (!appEnv.apiBaseUrl) return { data: [], tabs: [] };
+
+  const response = await apiClient.get<MyReviewsResponseDto>('/review/my', {
+    params: { tab },
+    headers: { Accept: 'application/json' },
+  });
+  return response.data;
+}
 
 export interface SubmitReviewPayload {
   productId: number;

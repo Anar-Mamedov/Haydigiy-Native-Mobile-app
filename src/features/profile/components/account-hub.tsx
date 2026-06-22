@@ -66,7 +66,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <MessageSquare color="$brand" size={26} />,
       label: 'Ürün Değerlendirme',
-      onPress: showPending,
+      onPress: () => router.push('/(tabs)/reviews'),
     },
   ];
 

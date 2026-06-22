@@ -203,6 +203,12 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="reviews"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="order/[id]"
         options={{
           href: null,
