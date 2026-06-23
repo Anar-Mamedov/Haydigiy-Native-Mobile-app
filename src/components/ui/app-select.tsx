@@ -17,6 +17,8 @@ export interface AppSelectProps {
   loading?: boolean;
   /** Shows a search field in the options sheet (for long lists like city/district). */
   searchable?: boolean;
+  /** Validation message shown below the field; also turns the border red. */
+  errorMessage?: string;
 }
 
 /**
@@ -33,6 +35,7 @@ export function AppSelect({
   disabled,
   loading,
   searchable,
+  errorMessage,
 }: AppSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -64,7 +67,7 @@ export function AppSelect({
         accessibilityState={{ disabled: Boolean(isDisabled), expanded: open }}
         alignItems="center"
         backgroundColor="$background"
-        borderColor="$borderColor"
+        borderColor={errorMessage ? '$red8' : '$borderColor'}
         borderRadius="$4"
         borderWidth={1}
         disabled={isDisabled}
@@ -86,6 +89,12 @@ export function AppSelect({
         </Paragraph>
         {loading ? <Spinner color="$brand" size="small" /> : <ChevronDown color="$color9" size={18} />}
       </XStack>
+
+      {errorMessage ? (
+        <Paragraph color="$red10" fontSize={12} marginTop="$1.5">
+          {errorMessage}
+        </Paragraph>
+      ) : null}
 
       <Sheet
         dismissOnOverlayPress

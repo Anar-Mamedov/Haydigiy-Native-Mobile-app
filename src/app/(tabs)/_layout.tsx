@@ -221,6 +221,18 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="addresses"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="address-form"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="order/[id]"
         options={{
           href: null,

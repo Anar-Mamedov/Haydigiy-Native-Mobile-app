@@ -12,6 +12,7 @@ export * from '@/components/ui/pagination';
 export * from '@/components/ui/quantity-stepper';
 export * from '@/components/ui/screen-header';
 export * from '@/components/ui/section-card';
+export * from '@/components/ui/segmented-control';
 export * from '@/components/ui/theme-toggle';
 export * from '@/components/ui/app-header';
 

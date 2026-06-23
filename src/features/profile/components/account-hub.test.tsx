@@ -60,11 +60,18 @@ describe('AccountHub', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/change-password');
   });
 
+  it('navigates to the addresses screen when Adres Bilgilerim is pressed', () => {
+    renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
+
+    fireEvent.press(screen.getByLabelText('Adres Bilgilerim'));
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/addresses');
+  });
+
   it('shows a "coming soon" alert for sections without a mobile screen yet', () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
-    fireEvent.press(screen.getByLabelText('Adres Bilgilerim'));
+    fireEvent.press(screen.getByLabelText('Ödeme Bilgilerim'));
     expect(alertSpy).toHaveBeenCalledWith('Yakında', expect.any(String));
     alertSpy.mockRestore();
   });

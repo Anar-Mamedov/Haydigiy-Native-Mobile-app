@@ -97,7 +97,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <MapPin color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Adres Bilgilerim',
-      onPress: showPending,
+      onPress: () => router.push('/(tabs)/addresses'),
     },
     {
       icon: <CreditCard color="$purple10" size={MENU_ICON_SIZE} />,

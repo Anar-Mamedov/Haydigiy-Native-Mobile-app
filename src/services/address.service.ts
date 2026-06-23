@@ -85,14 +85,31 @@ export interface NewAddressInput {
   isEFatura?: boolean;
 }
 
-/**
- * Creates a new address (`POST /addresses`). Used by the return pickup flow's
- * "Yeni Adres Ekle" modal — mirrors the web address-add payload, including the
- * optional T.C. number and corporate (invoice) fields.
- */
-export async function addAddressDto(input: NewAddressInput): Promise<void> {
+/** Full address record (`GET /addresses/{id}`) used to prefill the edit form. */
+export interface AddressDetailDto {
+  id: number;
+  title?: string;
+  name?: string;
+  surname?: string;
+  phone?: string;
+  address_line?: string;
+  zip_code?: string;
+  is_invoice?: boolean;
+  tax_number?: string;
+  tax_office?: string;
+  tc_number?: string;
+  company_name?: string;
+  is_e_invoice?: boolean;
+  city?: { id?: number; name?: string } | null;
+  district?: { id?: number; name?: string } | null;
+  neighbourhood?: { id?: number; name?: string } | null;
+  [key: string]: unknown;
+}
+
+/** Maps a domain address input to the backend create/update payload shape. */
+function toAddressPayload(input: NewAddressInput) {
   const isCorporate = input.invoiceType === 'corporate';
-  await apiClient.post('/addresses', {
+  return {
     title: input.title,
     name: input.name,
     surname: input.surname,
@@ -104,11 +121,36 @@ export async function addAddressDto(input: NewAddressInput): Promise<void> {
     address_line: input.addressLine,
     zip_code: '00000',
     is_invoice: isCorporate,
-    tax_number: input.taxNumber,
-    tax_office: input.taxOffice,
+    tax_number: isCorporate ? (input.taxNumber ?? '') : '',
+    tax_office: isCorporate ? (input.taxOffice ?? '') : '',
     billing_type: input.invoiceType,
-    tc_number: input.tcNumber,
+    tc_number: input.tcNumber ?? '',
     company_name: isCorporate ? (input.companyName ?? '') : '',
     is_e_invoice: isCorporate ? (input.isEFatura ?? false) : false,
-  });
+  };
+}
+
+/**
+ * Creates a new address (`POST /addresses`). Mirrors the web address-add
+ * payload, including the optional T.C. number and corporate (invoice) fields.
+ */
+export async function addAddressDto(input: NewAddressInput): Promise<void> {
+  await apiClient.post('/addresses', toAddressPayload(input));
+}
+
+/** Loads a single saved address (`GET /addresses/{id}`) for editing. */
+export async function getAddressByIdDto(id: string): Promise<AddressDetailDto | null> {
+  if (!appEnv.apiBaseUrl || !id) return null;
+  const response = await apiClient.get<AddressDetailDto>(`/addresses/${id}`);
+  return response.data ?? null;
+}
+
+/** Updates an existing address (`PUT /addresses/{id}`). */
+export async function updateAddressDto(id: string, input: NewAddressInput): Promise<void> {
+  await apiClient.put(`/addresses/${id}`, toAddressPayload(input));
+}
+
+/** Deletes a saved address (`DELETE /addresses/{id}`). */
+export async function deleteAddressDto(id: string): Promise<void> {
+  await apiClient.delete(`/addresses/${id}`);
 }
