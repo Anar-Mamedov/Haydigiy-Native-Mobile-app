@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { isValidIban, normalizeIban } from '../utils/iban';
+import { isValidIban, normalizeIban } from '@/utils/iban';
 import { PaymentMethod } from '@/types/order.types';
 
 export type ResolvedIban = { iban: string; ibanName: string };

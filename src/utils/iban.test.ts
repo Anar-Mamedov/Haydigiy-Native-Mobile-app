@@ -1,4 +1,10 @@
-import { formatIbanInput, getIbanDigits, isValidIban, normalizeIban } from './iban';
+import {
+  formatIbanInput,
+  getIbanDigits,
+  isValidIban,
+  isValidTurkishIban,
+  normalizeIban,
+} from './iban';
 
 describe('getIbanDigits', () => {
   it('strips non-digits and caps at 24', () => {
@@ -24,5 +30,18 @@ describe('isValidIban', () => {
   it('requires exactly 24 digits', () => {
     expect(isValidIban('1'.repeat(24))).toBe(true);
     expect(isValidIban('1'.repeat(23))).toBe(false);
+  });
+});
+
+describe('isValidTurkishIban', () => {
+  it('accepts checksum-valid Turkish IBANs', () => {
+    expect(isValidTurkishIban('TR33 0006 1005 1978 6457 8413 26')).toBe(true);
+    expect(isValidTurkishIban('TR320010009999901234567890')).toBe(true);
+  });
+
+  it('rejects wrong length or checksum', () => {
+    expect(isValidTurkishIban('TR00 0000 0000 0000 0000 0000 00')).toBe(false);
+    expect(isValidTurkishIban('1'.repeat(24))).toBe(false); // 24 digits but checksum fails
+    expect(isValidTurkishIban('TR12 3456')).toBe(false); // too short
   });
 });

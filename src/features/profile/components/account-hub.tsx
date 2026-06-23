@@ -102,7 +102,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <CreditCard color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Ödeme Bilgilerim',
-      onPress: showPending,
+      onPress: () => router.push('/(tabs)/payment-methods'),
     },
     {
       icon: <Landmark color="$purple10" size={MENU_ICON_SIZE} />,

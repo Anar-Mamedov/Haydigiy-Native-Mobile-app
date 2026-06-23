@@ -30,14 +30,33 @@ export async function getPaymentMethodsDto(): Promise<PaymentMethodDto[]> {
 }
 
 /** Adds a new refund IBAN (`POST /payment-methods`). */
-export async function addPaymentMethodDto(input: {
+export interface PaymentMethodInput {
   iban: string;
   ibanName: string;
   isDefault?: boolean;
-}): Promise<void> {
-  await apiClient.post('/payment-methods', {
+}
+
+function toPaymentMethodPayload(input: PaymentMethodInput) {
+  return {
     iban: input.iban,
     iban_name: input.ibanName,
     is_default: input.isDefault ?? false,
-  });
+  };
+}
+
+export async function addPaymentMethodDto(input: PaymentMethodInput): Promise<void> {
+  await apiClient.post('/payment-methods', toPaymentMethodPayload(input));
+}
+
+/** Updates a saved refund IBAN (`PUT /payment-methods/{id}`). */
+export async function updatePaymentMethodDto(
+  id: number,
+  input: PaymentMethodInput,
+): Promise<void> {
+  await apiClient.put(`/payment-methods/${id}`, toPaymentMethodPayload(input));
+}
+
+/** Deletes a saved refund IBAN (`DELETE /payment-methods/{id}`). */
+export async function deletePaymentMethodDto(id: number): Promise<void> {
+  await apiClient.delete(`/payment-methods/${id}`);
 }

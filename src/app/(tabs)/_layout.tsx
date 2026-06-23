@@ -233,6 +233,18 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="payment-methods"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="payment-method-form"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="order/[id]"
         options={{
           href: null,

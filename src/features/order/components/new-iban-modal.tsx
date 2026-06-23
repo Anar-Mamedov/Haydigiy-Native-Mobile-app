@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, Paragraph, Sheet, XStack, YStack } from 'tamagui';
 import { AppCheckbox, AppInput } from '@/components/ui';
 import { useAddPaymentMethodMutation } from '../api/return.mutations';
-import { formatIbanInput, getIbanDigits, isValidIban, normalizeIban } from '../utils/iban';
+import { formatIbanInput, getIbanDigits, isValidIban, normalizeIban } from '@/utils/iban';
 import { getReturnErrorMessage } from '@/services/return.service';
 
 type Props = {

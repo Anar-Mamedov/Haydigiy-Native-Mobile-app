@@ -1,6 +1,6 @@
 import { Paragraph, XStack, YStack } from 'tamagui';
 import { AppInput, AppSelect, SectionCard } from '@/components/ui';
-import { formatIbanInput, getIbanDigits } from '../utils/iban';
+import { formatIbanInput, getIbanDigits } from '@/utils/iban';
 import { UseReturnIban } from '../hooks/use-return-iban';
 import { PaymentMethod } from '@/types/order.types';
 
