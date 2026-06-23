@@ -112,7 +112,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <FileText color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Sözleşmeler',
-      onPress: showPending,
+      onPress: () => router.push('/(tabs)/agreements'),
     },
   ];
 

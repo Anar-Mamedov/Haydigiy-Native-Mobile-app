@@ -81,11 +81,18 @@ describe('AccountHub', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/bank-account');
   });
 
+  it('navigates to the agreements screen when Sözleşmeler is pressed', () => {
+    renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
+
+    fireEvent.press(screen.getByLabelText('Sözleşmeler'));
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/agreements');
+  });
+
   it('shows a "coming soon" alert for sections without a mobile screen yet', () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
-    fireEvent.press(screen.getByLabelText('Sözleşmeler'));
+    fireEvent.press(screen.getByLabelText('Yardım & Sıkça Sorulan Sorular'));
     expect(alertSpy).toHaveBeenCalledWith('Yakında', expect.any(String));
     alertSpy.mockRestore();
   });

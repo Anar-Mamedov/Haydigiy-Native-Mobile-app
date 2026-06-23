@@ -1,3 +1,4 @@
+export * from '@/components/ui/accordion-section';
 export * from '@/components/ui/app-alert-dialog';
 export * from '@/components/ui/app-button';
 export * from '@/components/ui/app-checkbox';
