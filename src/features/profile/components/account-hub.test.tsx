@@ -74,11 +74,18 @@ describe('AccountHub', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/payment-methods');
   });
 
+  it('navigates to the bank account screen when Banka Hesabımız is pressed', () => {
+    renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
+
+    fireEvent.press(screen.getByLabelText('Banka Hesabımız'));
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/bank-account');
+  });
+
   it('shows a "coming soon" alert for sections without a mobile screen yet', () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
-    fireEvent.press(screen.getByLabelText('Banka Hesabımız'));
+    fireEvent.press(screen.getByLabelText('Sözleşmeler'));
     expect(alertSpy).toHaveBeenCalledWith('Yakında', expect.any(String));
     alertSpy.mockRestore();
   });

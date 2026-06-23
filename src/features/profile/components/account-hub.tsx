@@ -107,7 +107,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <Landmark color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Banka Hesabımız',
-      onPress: showPending,
+      onPress: () => router.push('/(tabs)/bank-account'),
     },
     {
       icon: <FileText color="$purple10" size={MENU_ICON_SIZE} />,

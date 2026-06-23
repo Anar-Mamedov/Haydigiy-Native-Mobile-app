@@ -245,6 +245,12 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="bank-account"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="order/[id]"
         options={{
           href: null,
