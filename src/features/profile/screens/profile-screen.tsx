@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from '@tamagui/lucide-icons-2';
@@ -70,7 +69,7 @@ export function ProfileScreen() {
   // 1. Authenticated User Profile View
   if (isAuthenticated && user) {
     const handleUserInfoPress = () => {
-      Alert.alert('Yakında', 'Bu bölüm yakında eklenecek.');
+      router.push('/(tabs)/user-info');
     };
 
     // The profile endpoint is authoritative for the verification flag.

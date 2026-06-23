@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Linking } from 'react-native';
-import { useTheme, useThemeName } from 'tamagui';
+import { useTheme } from 'tamagui';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -87,12 +87,11 @@ function ProfileTabIcon({ color, size }: { color: string; size: number }) {
 
 export default function TabsLayout() {
   const theme = useTheme();
-  const themeName = useThemeName();
   const insets = useSafeAreaInsets();
   const cartCount = useCartCount();
 
-  const isDark = themeName === 'dark' || themeName.includes('dark');
-  const inactiveColor = isDark ? '#9ca3af' : '#6b7280';
+  // Muted, theme-aware inactive tab tint (lighter in dark mode automatically).
+  const inactiveColor = theme.color10.val;
 
   return (
     <Tabs
@@ -252,6 +251,12 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="agreements"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="help"
         options={{
           href: null,
         }}

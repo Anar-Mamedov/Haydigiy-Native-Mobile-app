@@ -1,4 +1,3 @@
-import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   CreditCard,
@@ -34,16 +33,11 @@ const MENU_ICON_SIZE = 26;
 /**
  * Authenticated "Hesabım" hub mirroring the web account page: order shortcuts,
  * personalized links, account & help links, contact, appearance and logout.
- * The user identity is shown in the screen header (AccountHeader). Sections
- * without a mobile screen yet surface a "coming soon" notice.
+ * The user identity is shown in the screen header (AccountHeader).
  */
 export function AccountHub({ onLogout }: AccountHubProps) {
   const router = useRouter();
   const { setThemePreference, themePreference } = useAppTheme();
-
-  const showPending = () => {
-    Alert.alert('Yakında', 'Bu bölüm yakında eklenecek.');
-  };
 
   const goToOrders = () => router.push('/(tabs)/orders');
 
@@ -120,7 +114,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <CircleHelp color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Yardım & Sıkça Sorulan Sorular',
-      onPress: showPending,
+      onPress: () => router.push('/(tabs)/help'),
     },
   ];
 

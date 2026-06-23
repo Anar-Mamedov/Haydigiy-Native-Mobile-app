@@ -1,4 +1,3 @@
-import { Alert } from 'react-native';
 import { screen, fireEvent } from '@testing-library/react-native';
 import { AccountHub } from './account-hub';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -88,13 +87,11 @@ describe('AccountHub', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/agreements');
   });
 
-  it('shows a "coming soon" alert for sections without a mobile screen yet', () => {
-    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  it('navigates to the help screen when Yardım & Sıkça Sorulan Sorular is pressed', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('Yardım & Sıkça Sorulan Sorular'));
-    expect(alertSpy).toHaveBeenCalledWith('Yakında', expect.any(String));
-    alertSpy.mockRestore();
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/help');
   });
 
   it('calls onLogout when Çıkış Yap is pressed', () => {

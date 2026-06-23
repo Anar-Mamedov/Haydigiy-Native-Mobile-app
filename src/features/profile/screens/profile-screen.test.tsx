@@ -69,6 +69,28 @@ describe('ProfileScreen', () => {
     expect(screen.getByText('Çıkış Yap')).toBeTruthy();
   });
 
+  it('navigates to the user info screen when the account header is pressed', () => {
+    (useAuthStatus as jest.Mock).mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+    });
+
+    useAuthStore.setState({
+      user: {
+        id: 'user-123',
+        name: 'Anar',
+        surname: 'Mamedov',
+        email: 'anar@example.com',
+        phoneNumber: '5551234567',
+      },
+    });
+
+    renderWithTamagui(<ProfileScreen />);
+
+    fireEvent.press(screen.getByLabelText('Anar Mamedov'));
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/user-info');
+  });
+
   it('calls logout when Çıkış Yap button is pressed', async () => {
     (useAuthStatus as jest.Mock).mockReturnValue({
       isAuthenticated: true,
