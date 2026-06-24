@@ -125,6 +125,8 @@ export type Product = {
   price: number;
   rating: number;
   reviewCount: number;
+  /** Total Q&A count from the API (`questions_count`), not the embedded subset length. */
+  questionsCount?: number;
   sellerName: string;
   shippingLabel: string;
   slug: string;

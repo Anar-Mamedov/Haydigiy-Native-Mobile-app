@@ -361,6 +361,7 @@ export function mapProductDetailDto(dto: any): Product {
     price: parseSafely(dto.price),
     rating: parseSafely(dto.average_rating || (dto.reviews?.length ? dto.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / dto.reviews.length : 0)),
     reviewCount: parseSafely(dto.reviews_count || dto.reviews?.length || 0),
+    questionsCount: parseSafely(dto.questions_count ?? questionsMapped.length),
     sellerName: dto.supplier?.name || 'HaydiGiy',
     shippingLabel: dto.shipping_label || (dto.feature_icons?.[0]?.name ? dto.feature_icons[0].name : ''),
     slug: dto.slug,

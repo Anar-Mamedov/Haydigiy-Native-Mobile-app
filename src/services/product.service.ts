@@ -342,6 +342,64 @@ export async function getProductReviews(slug: string): Promise<any> {
   return response.data;
 }
 
+export interface ProductReviewFilters {
+  star?: number;
+  has_photo?: number;
+  sort?: string;
+  size?: string;
+  height?: string;
+  weight?: string;
+}
+
+/**
+ * Full product-review page payload (`GET /product/{slug}/review`): the product,
+ * a rating summary, the available filter values and the (filtered/sorted) review
+ * list. Mirrors the web `useProductReviews` hook.
+ */
+export async function getProductReviewPageDto(
+  slug: string,
+  filters: ProductReviewFilters = {},
+): Promise<any> {
+  if (!appEnv.apiBaseUrl) {
+    await sleep(50);
+    return {
+      review_summary: { average: 0, total: 0, stars: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, with_photos: 0 },
+      filters: { sizes: [], heights: [], weights: [] },
+      reviews: { data: [], next_page_url: null },
+    };
+  }
+
+  getRequiredApiBaseUrl();
+  const params: Record<string, string | number> = {};
+  if (filters.star) params.star = filters.star;
+  if (filters.has_photo !== undefined && filters.has_photo >= 0) params.has_photo = filters.has_photo;
+  if (filters.sort) params.sort = filters.sort;
+  if (filters.size) params.size = filters.size;
+  if (filters.height) params.height = filters.height;
+  if (filters.weight) params.weight = filters.weight;
+
+  const response = await apiClient.get<any>(`/product/${slug}/review`, { params });
+  return response.data;
+}
+
+/** Product Q&A page payload (`GET /product/{slug}/question?q=`). */
+export async function getProductQuestionsDto(slug: string, q = ''): Promise<any> {
+  if (!appEnv.apiBaseUrl) {
+    await sleep(50);
+    return { filters: { tags: [] }, questions: { data: [], next_page_url: null } };
+  }
+
+  getRequiredApiBaseUrl();
+  const response = await apiClient.get<any>(`/product/${slug}/question`, { params: { q } });
+  return response.data;
+}
+
+/** Submits a new product question (`POST /question`). */
+export async function askProductQuestionDto(productId: number, question: string): Promise<void> {
+  getRequiredApiBaseUrl();
+  await apiClient.post('/question', { product_id: productId, question });
+}
+
 export async function submitProductFeedback(productId: string, slug: string, value: string): Promise<any> {
   if (!appEnv.apiBaseUrl) {
     await sleep(100);

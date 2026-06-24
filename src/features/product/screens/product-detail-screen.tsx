@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, Spinner, YStack, Paragraph, XStack, useThemeName } from 'tamagui';
-import { Alert, Linking, Pressable } from 'react-native';
+import { Linking, Pressable } from 'react-native';
 import { ThumbsUp } from '@tamagui/lucide-icons-2';
 import { AppScreen, EmptyState } from '@/components/ui';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useProductDetailsQuery } from '@/features/product/api/product.queries';
+import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
+import { formatCurrency } from '@/utils/format-currency';
+import { SizeSelectionSheet } from '../components/size-selection-sheet';
+import { AddToCartSuccessDialog } from '../components/add-to-cart-success-dialog';
 import { trackViewedProduct } from '@/utils/recently-viewed';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 import { ProductVariant, Product } from '@/types/product.types';
@@ -52,12 +56,27 @@ export function ProductDetailScreen() {
   // Queries
   const { data: product, isError, isPending, refetch } = useProductDetailsQuery(idOrSlug);
   const addToCart = useAddToCartMutation();
+  const shippingQuery = useShippingEstimateQuery();
 
   // States
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-  
+
+  // Tapping the "Değerlendirme" / "Soru & Cevap" links opens dedicated screens
+  // (mirrors the web /yorum and /soru pages).
+  const reviewSlug = product?.slug ?? params.id ?? '';
+  const openReviews = () =>
+    router.push({ pathname: '/(tabs)/product-reviews', params: { slug: reviewSlug } });
+  const openQuestions = () =>
+    router.push({ pathname: '/(tabs)/product-questions', params: { slug: reviewSlug } });
+
   // Modal states
+  const [showSizeSheet, setShowSizeSheet] = useState(false);
+  const [showAddedDialog, setShowAddedDialog] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
+
+  // Close the size sheet whenever the screen loses focus (e.g. navigating to the
+  // Q&A page from inside it) so it never lingers when the user returns.
+  useFocusEffect(useCallback(() => () => setShowSizeSheet(false), []));
   const [showSizeCalculator, setShowSizeCalculator] = useState(false);
   const [showWashing, setShowWashing] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -108,30 +127,29 @@ export function ProductDetailScreen() {
     if (!activeProduct) return;
 
     const hasVariants = activeProduct.variants && activeProduct.variants.length > 0;
-    
+
+    // No size chosen yet: open the size-selection bottom sheet (mirrors the web).
     if (hasVariants && !selectedVariant) {
-      Alert.alert(
-        'Beden Seçin',
-        'Lütfen ürünü sepetinize eklemeden önce bir beden seçimi yapınız.',
-        [{ text: 'Tamam' }]
-      );
+      setShowSizeSheet(true);
       return;
     }
 
-    // Persist to the backend cart; the cart count query refreshes the tab badge
-    // via invalidation and the cart screen re-fetches the authoritative list.
+    confirmAddToCart();
+  };
+
+  // Adds the selected variant to the cart; shared by the sticky footer button and
+  // the size-selection sheet's confirm. The cart count query refreshes the tab
+  // badge via invalidation and the cart screen re-fetches the authoritative list.
+  const confirmAddToCart = () => {
+    const activeProduct = product || previewProduct;
+    if (!activeProduct) return;
+
     const variantId = selectedVariant?.pivotId ?? selectedVariant?.id;
     if (variantId) {
       addToCart.mutate({ variantId });
     }
-    Alert.alert(
-      'Başarılı',
-      `${activeProduct.title}${selectedVariant ? ` (${selectedVariant.name})` : ''} sepetinize eklendi.`,
-      [
-        { text: 'Alışverişe Devam Et', style: 'cancel' },
-        { text: 'Sepete Git', onPress: () => router.push('/(tabs)/cart') }
-      ]
-    );
+    setShowSizeSheet(false);
+    setShowAddedDialog(true);
   };
 
   // Build preview product if query is still loading but params exist
@@ -219,12 +237,12 @@ export function ProductDetailScreen() {
             title={displayData.title}
             rating={displayData.rating}
             reviewCount={displayData.reviewCount}
-            questionsCount={displayData.questions?.length ?? 0}
+            questionsCount={displayData.questionsCount ?? displayData.questions?.length ?? 0}
             favoritesCount={displayData.favoritesCount}
             cartCount={displayData.cartCount}
             totalQuantity={displayData.totalQuantity}
-            onReviewsPress={() => {}}
-            onQuestionsPress={() => {}}
+            onReviewsPress={openReviews}
+            onQuestionsPress={openQuestions}
           />
 
           {/* Delivery shipment boxes */}
@@ -286,13 +304,13 @@ export function ProductDetailScreen() {
               <ProductReviewsSection
                 reviews={product.reviews}
                 averageRating={product.rating}
-                onReviewsPress={() => {}}
+                onReviewsPress={openReviews}
               />
 
               {/* Questions list */}
               <ProductQuestionsSection
                 questions={product.questions}
-                onQuestionsPress={() => {}}
+                onQuestionsPress={openQuestions}
               />
 
               {/* Product description & specifications table & washing instructions */}
@@ -344,6 +362,32 @@ export function ProductDetailScreen() {
         onWhatsappPress={handleWhatsappPress}
         isApprovedForSale={displayData.isApprovedForSale}
         isLastOne={selectedVariant?.quantity === 1}
+      />
+
+      {/* Size selection bottom sheet (opened from "Sepete Ekle" when no size chosen) */}
+      {showSizeSheet ? (
+        <SizeSelectionSheet
+          imageUrl={displayData.imageUrl}
+          onAskQuestion={openQuestions}
+          onClose={() => setShowSizeSheet(false)}
+          onConfirm={confirmAddToCart}
+          onSelectVariant={(variant) => setSelectedVariant(variant)}
+          open
+          priceLabel={formatCurrency(displayData.price)}
+          productName={displayData.title}
+          selectedVariant={selectedVariant}
+          shippingMessage={shippingQuery.data?.message}
+          variants={product?.variants ?? []}
+        />
+      ) : null}
+
+      <AddToCartSuccessDialog
+        onContinue={() => setShowAddedDialog(false)}
+        onGoToCart={() => {
+          setShowAddedDialog(false);
+          router.push('/(tabs)/cart');
+        }}
+        open={showAddedDialog}
       />
 
       {/* Auxiliary Modals */}

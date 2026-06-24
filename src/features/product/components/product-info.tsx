@@ -88,7 +88,13 @@ export function ProductInfo({
           })}
         </XStack>
 
-        <Pressable onPress={onReviewsPress}>
+        <Pressable
+          accessibilityLabel={`${reviewCount} değerlendirme`}
+          accessibilityRole="button"
+          hitSlop={6}
+          onPress={onReviewsPress}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+        >
           <XStack alignItems="center" gap="$1">
             <Paragraph color="$color10" fontSize={13} style={{ textDecorationLine: 'underline' }}>
               {reviewCount} Değerlendirme
@@ -101,7 +107,13 @@ export function ProductInfo({
           |
         </Paragraph>
 
-        <Pressable onPress={onQuestionsPress}>
+        <Pressable
+          accessibilityLabel={`${questionsCount} soru ve cevap`}
+          accessibilityRole="button"
+          hitSlop={6}
+          onPress={onQuestionsPress}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+        >
           <Paragraph color="$color10" fontSize={13} style={{ textDecorationLine: 'underline' }}>
             {questionsCount} Soru & Cevap
           </Paragraph>
