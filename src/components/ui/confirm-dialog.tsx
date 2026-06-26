@@ -50,13 +50,21 @@ export function ConfirmDialog({
                 <Button
                   flex={1}
                   height={44}
+                  paddingHorizontal={0}
+                  justifyContent="center"
+                  alignItems="center"
                   backgroundColor="$backgroundHover"
                   borderColor="$borderColor"
                   borderWidth={1}
                   borderRadius="$4"
                   accessibilityRole="button"
                 >
-                  <Paragraph color="$color" fontWeight="600">
+                  <Paragraph
+                    color="$color"
+                    fontWeight="600"
+                    numberOfLines={1}
+                    textAlign="center"
+                  >
                     {cancelLabel}
                   </Paragraph>
                 </Button>
@@ -66,6 +74,9 @@ export function ConfirmDialog({
                 <Button
                   flex={1}
                   height={44}
+                  paddingHorizontal={0}
+                  justifyContent="center"
+                  alignItems="center"
                   backgroundColor={destructive ? '$red10' : '$brand'}
                   borderRadius="$4"
                   disabled={isConfirming}
@@ -73,7 +84,12 @@ export function ConfirmDialog({
                   onPress={onConfirm}
                   accessibilityRole="button"
                 >
-                  <Paragraph color="white" fontWeight="600">
+                  <Paragraph
+                    color="white"
+                    fontWeight="600"
+                    numberOfLines={1}
+                    textAlign="center"
+                  >
                     {confirmLabel}
                   </Paragraph>
                 </Button>

@@ -18,6 +18,7 @@ import { ColorVariantsSheet } from '../components/color-variants-sheet';
 import { QuickFilterDropdown } from '../components/quick-filter-dropdown';
 import { ProductListHeader } from '../components/product-list-header';
 import { ProductVideoModal } from '../components/product-video-modal';
+import { resolveColorVariantTarget } from '../utils/color-variant-route';
 
 interface ProductListScreenProps {
   slug: string;
@@ -46,12 +47,14 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [quickFilterSection, setQuickFilterSection] = useState<FilterShortcutSection | null>(null);
 
-  // Quick Filter Sections & Active Color Selection state
-  const [selectedVariantsMap, setSelectedVariantsMap] = useState<Record<string, Product>>({});
+  // Active Color Selection state
   const [activeColorProduct, setActiveColorProduct] = useState<Product | null>(null);
   const [isColorSheetOpen, setIsColorSheetOpen] = useState(false);
   const [activeVideoProduct, setActiveVideoProduct] = useState<Product | null>(null);
 
+  // Selecting a color opens that color's product detail screen, mirroring the web
+  // app and the product detail screen's own color picker. Falls back to the active
+  // product's slug when a variant has no slug of its own.
   const handleSelectColorVariant = (variant: {
     id: string;
     name: string;
@@ -59,22 +62,9 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
     imageUrl: string;
     price: number;
   }) => {
-    if (!activeColorProduct) return;
-
-    const updatedProduct: Product = {
-      ...activeColorProduct,
-      id: variant.id,
-      slug: variant.slug,
-      title: variant.name,
-      imageUrl: variant.imageUrl,
-      price: variant.price,
-      images: [variant.imageUrl], // Display selected variant thumbnail in carousel
-    };
-
-    setSelectedVariantsMap((prev) => ({
-      ...prev,
-      [activeColorProduct.id]: updatedProduct,
-    }));
+    const target = resolveColorVariantTarget(variant, activeColorProduct?.slug);
+    if (!target) return;
+    router.push(`/product/${target}` as any);
   };
 
   // TanStack Infinite Query
@@ -185,7 +175,6 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
     setMaxPrice(undefined);
     setPropertyIds(undefined);
     setProductCategories(undefined);
-    setSelectedVariantsMap({}); // Reset color variant selections
   };
 
   const handleProductPress = (product: Product) => {
@@ -360,22 +349,19 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
                 title="Ürün Bulunamadı"
               />
             }
-            renderItem={({ item }) => {
-              const displayedProduct = selectedVariantsMap[item.id] || item;
-              return (
-                <YStack flex={1} padding="$1.5">
-                  <ProductCard
-                    onOpen={() => handleProductPress(displayedProduct)}
-                    onVideoPress={setActiveVideoProduct}
-                    product={displayedProduct}
-                    onColorPress={() => {
-                      setActiveColorProduct(item);
-                      setIsColorSheetOpen(true);
-                    }}
-                  />
-                </YStack>
-              );
-            }}
+            renderItem={({ item }) => (
+              <YStack flex={1} padding="$1.5">
+                <ProductCard
+                  onOpen={() => handleProductPress(item)}
+                  onVideoPress={setActiveVideoProduct}
+                  product={item}
+                  onColorPress={() => {
+                    setActiveColorProduct(item);
+                    setIsColorSheetOpen(true);
+                  }}
+                />
+              </YStack>
+            )}
             ListFooterComponent={
               isFetchingNextPage ? (
                 <YStack paddingVertical="$4" alignItems="center" justifyContent="center">
@@ -409,7 +395,7 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
         open={isColorSheetOpen}
         onOpenChange={setIsColorSheetOpen}
         product={activeColorProduct}
-        selectedVariantId={activeColorProduct ? (selectedVariantsMap[activeColorProduct.id]?.id || activeColorProduct.id) : null}
+        selectedVariantId={activeColorProduct?.id ?? null}
         onSelectVariant={handleSelectColorVariant}
       />
 

@@ -100,16 +100,26 @@ export function useRemoveCartItemMutation() {
   });
 }
 
+/**
+ * Clears the whole cart by removing every line on the backend (there is no bulk
+ * clear endpoint), mirroring the web cart. The variant ids are captured by the
+ * caller and passed in, because `onMutate` empties the store optimistically and
+ * runs *before* `mutationFn` — reading the store here would see an empty cart and
+ * delete nothing. A single failed removal rejects the mutation so the optimistic
+ * empty is rolled back and the caller can surface the error instead of failing
+ * silently.
+ */
 export function useClearCartMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      const items = useCartStore.getState().items;
-      const variantIds = items
-        .map((item) => item.variantId)
-        .filter((id): id is string => Boolean(id));
-      await Promise.allSettled(variantIds.map((id) => removeCartItemDto(Number(id))));
+    mutationFn: async (variantIds: number[]) => {
+      const results = await Promise.allSettled(
+        variantIds.map((id) => removeCartItemDto(id)),
+      );
+      if (results.some((result) => result.status === 'rejected')) {
+        throw new Error('Sepet temizlenirken bir hata oluştu.');
+      }
     },
     onMutate: () => {
       const previous = useCartStore.getState().items;

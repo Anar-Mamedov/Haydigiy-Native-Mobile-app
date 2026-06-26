@@ -134,9 +134,24 @@ export function useCartController() {
   }, [items.length]);
 
   const confirmClear = useCallback(() => {
-    clearMutation.mutate();
+    // Snapshot the variant ids *before* the optimistic clear empties the store,
+    // so every line is actually removed on the backend (not just hidden locally).
+    const variantIds = items
+      .map((item) => Number(item.variantId))
+      .filter((id) => Number.isFinite(id) && id > 0);
+
     setIsClearDialogOpen(false);
-  }, [clearMutation]);
+    if (variantIds.length === 0) return;
+
+    clearMutation.mutate(variantIds, {
+      onError: () => {
+        Alert.alert(
+          'Hata',
+          'Sepet temizlenirken bir hata oluştu. Lütfen tekrar deneyin.',
+        );
+      },
+    });
+  }, [clearMutation, items]);
 
   const toggleSummary = useCallback(() => {
     setIsSummaryExpanded((prev) => !prev);
