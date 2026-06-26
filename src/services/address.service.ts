@@ -15,6 +15,13 @@ export interface AddressDto {
   city_name?: string;
   district_name?: string;
   neighbourhood_name?: string;
+  email?: string | null;
+  zip_code?: string;
+  city_id?: number | string;
+  district_id?: number | string;
+  neighbourhood_id?: number | string;
+  is_default?: number | boolean | string;
+  is_invoice?: number | boolean | string;
   [key: string]: unknown;
 }
 

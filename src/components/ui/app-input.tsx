@@ -16,6 +16,8 @@ export type AppInputProps = GetProps<typeof StyledInput> & {
   errorMessage?: string;
   helperText?: string;
   label: string;
+  /** Keeps the input accessible by label while letting composite layouts render their own visible label. */
+  hideVisibleLabel?: boolean;
   /** Element pinned to the right edge, vertically centered inside the field (e.g. a password eye). */
   rightElement?: ReactNode;
 };
@@ -23,6 +25,7 @@ export type AppInputProps = GetProps<typeof StyledInput> & {
 export function AppInput({
   errorMessage,
   helperText,
+  hideVisibleLabel,
   id,
   label,
   name,
@@ -33,7 +36,7 @@ export function AppInput({
 
   return (
     <YStack gap="$2">
-      <Label htmlFor={fieldId}>{label}</Label>
+      {hideVisibleLabel ? null : <Label htmlFor={fieldId}>{label}</Label>}
       <XStack alignItems="center" position="relative" width="100%">
         <StyledInput
           accessibilityLabel={label}

@@ -46,6 +46,8 @@ export interface CartCampaignDto {
 export interface CartResponseDto {
   cart: CartItemDto[];
   campaigns?: CartCampaignDto[];
+  /** Account-level discount the backend applies before campaigns/coupons. */
+  user_discount?: number;
   removed_items?: unknown[];
   message?: string;
 }

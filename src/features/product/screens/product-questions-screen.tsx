@@ -3,6 +3,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
 import { AppScreen, AppSelect, EmptyState, ScreenHeader, SearchInput, SectionCard } from '@/components/ui';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
+import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
 import { ProductVariant } from '@/types/product.types';
 import { useProductQuestionsQuery } from '../api/product-questions.queries';
@@ -13,7 +14,6 @@ import { AskQuestionSheet } from '../components/ask-question-sheet';
 import { CriteriaSheet } from '../components/criteria-sheet';
 import { ProductCtaFooter } from '../components/product-cta-footer';
 import { SizeSelectionSheet } from '../components/size-selection-sheet';
-import { AddToCartSuccessDialog } from '../components/add-to-cart-success-dialog';
 
 const SORT_OPTIONS = [
   { label: 'Önerilen Sıralama', value: 'recommended' },
@@ -55,9 +55,9 @@ export function ProductQuestionsScreen() {
   const [criteriaOpen, setCriteriaOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [showSizeSheet, setShowSizeSheet] = useState(false);
-  const [showAddedDialog, setShowAddedDialog] = useState(false);
 
   const addToCart = useAddToCartMutation();
+  const goToCartAfterAdd = useGoToCartAfterAdd();
   const shippingQuery = useShippingEstimateQuery();
   const query = useProductQuestionsQuery(slug);
 
@@ -103,7 +103,8 @@ export function ProductQuestionsScreen() {
     const variantId = selectedVariant?.pivotId ?? selectedVariant?.id;
     if (variantId) addToCart.mutate({ variantId });
     setShowSizeSheet(false);
-    setShowAddedDialog(true);
+    // Skip the success modal and take the user straight to the cart.
+    goToCartAfterAdd();
   };
 
   const header = <ScreenHeader onBack={handleBack} title="Soru & Cevap" />;
@@ -224,15 +225,6 @@ export function ProductQuestionsScreen() {
           variants={query.data.product.variants}
         />
       ) : null}
-
-      <AddToCartSuccessDialog
-        onContinue={() => setShowAddedDialog(false)}
-        onGoToCart={() => {
-          setShowAddedDialog(false);
-          router.push('/(tabs)/cart');
-        }}
-        open={showAddedDialog}
-      />
 
       <CriteriaSheet
         criteria={QUESTION_CRITERIA}

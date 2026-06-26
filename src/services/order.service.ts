@@ -134,7 +134,7 @@ export interface OrderPrepareResponseDto {
   token?: string;
   status?: string;
   data?: { order_token?: string };
-  order?: { token?: string };
+  order?: { token?: string; cargo_id?: number | null };
 }
 
 /**
@@ -158,4 +158,10 @@ export function extractOrderToken(response: OrderPrepareResponseDto | null): str
     response.order?.token ??
     null
   );
+}
+
+/** Default cargo id the backend pre-set on the prepared order (web's `initialCargoId`). */
+export function extractInitialCargoId(response: OrderPrepareResponseDto | null): number | null {
+  const cargoId = response?.order?.cargo_id;
+  return typeof cargoId === 'number' ? cargoId : null;
 }

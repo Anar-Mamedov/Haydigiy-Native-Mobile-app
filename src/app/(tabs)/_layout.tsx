@@ -291,6 +291,18 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="checkout/payment-success"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="checkout/payment-failed"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

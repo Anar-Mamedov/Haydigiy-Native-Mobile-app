@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, Spinner, YStack, Paragraph, XStack, useThemeName } from 'tamagui';
+import { ScrollView, Spinner, YStack, Paragraph, XStack } from 'tamagui';
 import { Linking, Pressable } from 'react-native';
 import { ThumbsUp } from '@tamagui/lucide-icons-2';
 import { AppScreen, EmptyState } from '@/components/ui';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
+import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useProductDetailsQuery } from '@/features/product/api/product.queries';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
 import { formatCurrency } from '@/utils/format-currency';
 import { SizeSelectionSheet } from '../components/size-selection-sheet';
-import { AddToCartSuccessDialog } from '../components/add-to-cart-success-dialog';
 import { trackViewedProduct } from '@/utils/recently-viewed';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 import { ProductVariant, Product } from '@/types/product.types';
@@ -37,8 +37,6 @@ import {
 
 export function ProductDetailScreen() {
   const router = useRouter();
-  const themeName = useThemeName();
-  const isDark = themeName === 'dark' || themeName.includes('dark');
   
   // Read params for immediate rendering preview
   const params = useLocalSearchParams<{
@@ -56,6 +54,7 @@ export function ProductDetailScreen() {
   // Queries
   const { data: product, isError, isPending, refetch } = useProductDetailsQuery(idOrSlug);
   const addToCart = useAddToCartMutation();
+  const goToCartAfterAdd = useGoToCartAfterAdd();
   const shippingQuery = useShippingEstimateQuery();
 
   // States
@@ -71,7 +70,6 @@ export function ProductDetailScreen() {
 
   // Modal states
   const [showSizeSheet, setShowSizeSheet] = useState(false);
-  const [showAddedDialog, setShowAddedDialog] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
 
   // Close the size sheet whenever the screen loses focus (e.g. navigating to the
@@ -149,7 +147,8 @@ export function ProductDetailScreen() {
       addToCart.mutate({ variantId });
     }
     setShowSizeSheet(false);
-    setShowAddedDialog(true);
+    // Skip the success modal and take the user straight to the cart.
+    goToCartAfterAdd();
   };
 
   // Build preview product if query is still loading but params exist
@@ -337,7 +336,7 @@ export function ProductDetailScreen() {
                   justifyContent="center"
                   borderColor="$borderColor"
                   borderWidth={2}
-                  backgroundColor={isDark ? '#1F2937' : 'white'}
+                  backgroundColor="$background"
                   borderRadius={8}
                   paddingHorizontal={12}
                   paddingVertical={10}
@@ -380,15 +379,6 @@ export function ProductDetailScreen() {
           variants={product?.variants ?? []}
         />
       ) : null}
-
-      <AddToCartSuccessDialog
-        onContinue={() => setShowAddedDialog(false)}
-        onGoToCart={() => {
-          setShowAddedDialog(false);
-          router.push('/(tabs)/cart');
-        }}
-        open={showAddedDialog}
-      />
 
       {/* Auxiliary Modals */}
       <SizeChartModal open={showSizeChart} onOpenChange={setShowSizeChart} />

@@ -15,14 +15,15 @@ import { useCartController } from '@/features/cart/hooks/use-cart-controller';
 export function CartScreen() {
   const router = useRouter();
   const controller = useCartController();
-  const { items, refetch } = controller;
+  const { items, syncCart } = controller;
 
-  // Re-fetch the account cart every time the screen gains focus so it always
-  // reflects the latest server-side state (e.g. items added from the web).
+  // Re-sync the account cart every time the screen gains focus so it always shows
+  // a spinner on entry and reflects the latest server-side state (e.g. items added
+  // from the web or just added to the cart).
   useFocusEffect(
     useCallback(() => {
-      refetch();
-    }, [refetch]),
+      syncCart();
+    }, [syncCart]),
   );
 
   const header = (
@@ -42,7 +43,7 @@ export function CartScreen() {
     />
   );
 
-  if (controller.isLoading) {
+  if (controller.isLoading || controller.isSyncing) {
     return (
       <AppScreen gap={0} header={header} padding={0} scrollable={false}>
         <YStack alignItems="center" flex={1} justifyContent="center">
@@ -59,7 +60,7 @@ export function CartScreen() {
           <EmptyState
             actionLabel="Tekrar Dene"
             description="Sepet bilgileri yüklenirken bir hata oluştu."
-            onActionPress={() => refetch()}
+            onActionPress={() => syncCart()}
             primary
             title="Bir Hata Oluştu"
           />

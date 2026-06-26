@@ -12,3 +12,17 @@ export const BRAND_COLOR = '#f27a1a';
  */
 export const DANGER_COLOR = '#ef4444';
 export const WARNING_COLOR = '#f59e0b';
+
+/**
+ * Two-stop brand gradient for the promotional "secure payment" badge. A gradient
+ * has no single Tamagui token, so its stops are centralized here (consumed via
+ * expo-linear-gradient) instead of being hard-coded at the call site.
+ */
+export const BRAND_GRADIENT = ['#ff6c15', '#fe4c7f'] as const;
+
+/**
+ * Dim scrim shown behind expandable panels/overlays (e.g. the checkout summary).
+ * A scrim is a fixed semi-transparent black in both light and dark themes, so it
+ * has no theme token; centralized here instead of being hard-coded per overlay.
+ */
+export const SCRIM_COLOR = 'rgba(0, 0, 0, 0.18)';

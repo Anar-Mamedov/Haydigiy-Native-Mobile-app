@@ -33,6 +33,7 @@ export function useCartQuery() {
       return {
         items,
         campaigns,
+        userDiscount: Number(dto.user_discount ?? 0),
         removedMessage: hasRemoved ? dto.message ?? 'Sepetiniz güncellendi.' : null,
       };
     },

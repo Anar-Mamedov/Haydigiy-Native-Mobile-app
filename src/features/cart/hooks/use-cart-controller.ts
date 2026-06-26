@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { isAxiosError } from 'axios';
@@ -55,6 +55,7 @@ export function useCartController() {
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const [removedMessage, setRemovedMessage] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const isCheckingOut = checkoutMutation.isPending;
 
@@ -66,6 +67,24 @@ export function useCartController() {
       setRemovedMessage(cartQuery.data.removedMessage);
     }
   }, [cartQuery.data?.removedMessage]);
+
+  // Refetch the cart and keep a loading state until the server responds, so the
+  // cart screen always shows a spinner on entry (and after add-to-cart) instead of
+  // briefly rendering a stale list. A `token` tracks the active sync so a newer
+  // entry never gets cleared by an older refetch's completion, and `.finally`
+  // stops the spinner on both success and error (never stuck).
+  const { refetch: refetchCart } = cartQuery;
+  const syncTokenRef = useRef(0);
+  const syncCart = useCallback(() => {
+    const token = syncTokenRef.current + 1;
+    syncTokenRef.current = token;
+    setIsSyncing(true);
+    refetchCart().finally(() => {
+      if (syncTokenRef.current === token) {
+        setIsSyncing(false);
+      }
+    });
+  }, [refetchCart]);
 
   const itemCount = calculateCartItemCount(items);
   const subtotal = calculateCartSubtotal(items);
@@ -193,9 +212,11 @@ export function useCartController() {
     shippingEstimate: shippingQuery.data,
     // Async read state
     isLoading: cartQuery.isPending,
+    isSyncing,
     isFetching: cartQuery.isFetching,
     isError: cartQuery.isError,
     refetch: cartQuery.refetch,
+    syncCart,
     // Removed-items notice
     removedMessage,
     dismissRemovedMessage,

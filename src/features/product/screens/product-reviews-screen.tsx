@@ -4,12 +4,12 @@ import { Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
 import { AppScreen, AppSelect, EmptyState, ScreenHeader, SearchInput } from '@/components/ui';
 import { ProductReviewFilters } from '@/services/product.service';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
+import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
 import { ProductVariant } from '@/types/product.types';
 import { useProductReviewsQuery } from '../api/product-reviews.queries';
 import { ProductReviewItem } from '../api/product-reviews.mapper';
 import { SizeSelectionSheet } from '../components/size-selection-sheet';
-import { AddToCartSuccessDialog } from '../components/add-to-cart-success-dialog';
 import { ReviewProductCard } from '../components/review-product-card';
 import { ReviewFiltersCard } from '../components/review-filters-card';
 import { ReviewPhotoStrip } from '../components/review-photo-strip';
@@ -60,9 +60,9 @@ export function ProductReviewsScreen() {
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [showSizeSheet, setShowSizeSheet] = useState(false);
-  const [showAddedDialog, setShowAddedDialog] = useState(false);
 
   const addToCart = useAddToCartMutation();
+  const goToCartAfterAdd = useGoToCartAfterAdd();
   const shippingQuery = useShippingEstimateQuery();
 
   useFocusEffect(useCallback(() => () => setShowSizeSheet(false), []));
@@ -112,7 +112,8 @@ export function ProductReviewsScreen() {
     const variantId = selectedVariant?.pivotId ?? selectedVariant?.id;
     if (variantId) addToCart.mutate({ variantId });
     setShowSizeSheet(false);
-    setShowAddedDialog(true);
+    // Skip the success modal and take the user straight to the cart.
+    goToCartAfterAdd();
   };
   const openGalleryForReview = (review: ProductReviewItem) => {
     const index = photoReviews.findIndex((item) => item.id === review.id);
@@ -231,15 +232,6 @@ export function ProductReviewsScreen() {
           variants={query.data.product.variants}
         />
       ) : null}
-
-      <AddToCartSuccessDialog
-        onContinue={() => setShowAddedDialog(false)}
-        onGoToCart={() => {
-          setShowAddedDialog(false);
-          router.push('/(tabs)/cart');
-        }}
-        open={showAddedDialog}
-      />
 
       <CriteriaSheet
         criteria={REVIEW_CRITERIA}

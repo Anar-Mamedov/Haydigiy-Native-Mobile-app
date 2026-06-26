@@ -1,6 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
 import { getAddressesDto } from '@/services/address.service';
 import { extractOrderToken, prepareOrderDto } from '@/services/order.service';
+import {
+  CouponValidateResponseDto,
+  removeCouponDto,
+  validateCouponDto,
+} from '@/services/coupon.service';
 
 export type CheckoutPreparation =
   | { status: 'no_address' }
@@ -23,5 +28,30 @@ export function useCheckoutMutation() {
       const prepared = await prepareOrderDto();
       return { status: 'ready', orderToken: extractOrderToken(prepared) };
     },
+  });
+}
+
+export interface ValidateCouponInput {
+  couponCode: string;
+  paymentMethodId: number;
+  shippingPrice: number;
+}
+
+/** Validates and applies a coupon for the active order (`POST /coupon/validate`). */
+export function useValidateCouponMutation() {
+  return useMutation<CouponValidateResponseDto, unknown, ValidateCouponInput>({
+    mutationFn: ({ couponCode, paymentMethodId, shippingPrice }) =>
+      validateCouponDto({
+        coupon_code: couponCode,
+        payment_method_id: paymentMethodId,
+        shipping_price: shippingPrice,
+      }),
+  });
+}
+
+/** Removes the applied coupon from the active order (`POST /coupon/remove`). */
+export function useRemoveCouponMutation() {
+  return useMutation<void, unknown, void>({
+    mutationFn: () => removeCouponDto(),
   });
 }

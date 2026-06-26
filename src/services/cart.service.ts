@@ -37,6 +37,7 @@ export async function getCartDto(): Promise<CartResponseDto> {
   return {
     cart: Array.isArray(response.data?.cart) ? response.data.cart : [],
     campaigns: Array.isArray(response.data?.campaigns) ? response.data.campaigns : [],
+    user_discount: response.data?.user_discount,
     removed_items: response.data?.removed_items,
     message: response.data?.message,
   };
