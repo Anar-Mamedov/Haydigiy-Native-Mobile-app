@@ -10,7 +10,22 @@ type AppStorageAdapter = {
   setItem: (key: string, value: string) => Promise<void> | void;
 };
 
-const isExpoGo = Boolean(Constants.expoGoConfig);
+type ExpoRuntimeConstants = {
+  appOwnership?: string | null;
+  executionEnvironment?: string | null;
+  expoGoConfig?: unknown;
+  expoVersion?: string | null;
+};
+
+export function isExpoGoRuntime(constants: ExpoRuntimeConstants): boolean {
+  return (
+    Boolean(constants.expoGoConfig) ||
+    constants.appOwnership === 'expo' ||
+    (constants.executionEnvironment === 'storeClient' && Boolean(constants.expoVersion))
+  );
+}
+
+const isExpoGo = isExpoGoRuntime(Constants);
 const canUseMmkv = Platform.OS !== 'web' && !isExpoGo;
 
 let mmkvStorage: null | {
@@ -21,6 +36,8 @@ let mmkvStorage: null | {
 } = null;
 
 if (canUseMmkv) {
+  // MMKV is unavailable in Expo Go; keep this import guarded so the fallback can load.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { createMMKV } = require('react-native-mmkv') as typeof import('react-native-mmkv');
 
   mmkvStorage = createMMKV({

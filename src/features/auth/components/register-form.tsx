@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff } from '@tamagui/lucide-icons-2';
-import { YStack, Paragraph, Button, Spinner } from 'tamagui';
-import { AppInput, AppButton, AppCheckbox, DisclosureSheet } from '@/components/ui';
+import { YStack, Paragraph, Spinner } from 'tamagui';
+import {
+  AppInput,
+  AppButton,
+  AppCheckbox,
+  DisclosureSheet,
+  PasswordVisibilityToggle,
+} from '@/components/ui';
 import { registerSchema, RegisterFormData } from '../schemas/auth.schema';
 import { useRegisterMutation } from '../api/auth.mutations';
 import { KVKK_DISCLOSURE_TEXT, COMMERCIAL_CONSENT_TEXT } from '../constants/auth-texts';
@@ -41,7 +46,6 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     setServerError(null);
     try {
       const payload = {
-        token: 'HGSPECIALTK12312!',
         name: data.name.trim(),
         surname: data.surname.trim(),
         country_code: '+90',
@@ -122,37 +126,29 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         )}
       />
 
-      <YStack gap="$1" position="relative">
-        <Controller
-          name="password"
-          control={control}
-          render={({ field: { onChange, onBlur, value } }) => (
-            <AppInput
-              id="register-password"
-              label="Şifre"
-              placeholder="Şifreniz"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              errorMessage={errors.password?.message}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-            />
-          )}
-        />
-        <Button
-          position="absolute"
-          right="$3"
-          top={38}
-          chromeless
-          circular
-          size="$2"
-          icon={showPassword ? <EyeOff size={20} color="$color10" /> : <Eye size={20} color="$color10" />}
-          onPress={() => setShowPassword(!showPassword)}
-          pressStyle={{ opacity: 0.6 }}
-          accessibilityLabel={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
-        />
-      </YStack>
+      <Controller
+        name="password"
+        control={control}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <AppInput
+            id="register-password"
+            label="Şifre"
+            placeholder="Şifreniz"
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            errorMessage={errors.password?.message}
+            rightElement={
+              <PasswordVisibilityToggle
+                onToggle={() => setShowPassword((prev) => !prev)}
+                visible={showPassword}
+              />
+            }
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+          />
+        )}
+      />
 
       {/* Consent Checkboxes */}
       <YStack gap="$3" marginTop="$2">

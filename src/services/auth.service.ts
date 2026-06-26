@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/axios';
-import { appEnv } from '@/lib/env';
+import { appEnv, getRequiredRegisterToken } from '@/lib/env';
 import { User } from '@/types/auth.types';
 
 export interface LoginResponse {
@@ -27,6 +27,17 @@ export interface RegisterResponse {
   token?: string;
   user?: User & { phone?: string };
   message?: string;
+}
+
+export interface RegisterPayload {
+  name: string;
+  surname: string;
+  country_code: string;
+  phone: string;
+  email: string;
+  password: string;
+  kvkk_consent: boolean;
+  communication_consent: boolean;
 }
 
 export interface SendCodeResponse {
@@ -62,7 +73,7 @@ export async function loginApi(payload: any): Promise<LoginResponse> {
   return { ...response.data, user: normalizeAuthUser(response.data?.user) };
 }
 
-export async function registerApi(payload: any): Promise<RegisterResponse> {
+export async function registerApi(payload: RegisterPayload): Promise<RegisterResponse> {
   if (!appEnv.apiBaseUrl) {
     // Mock Mode
     return {
@@ -70,7 +81,10 @@ export async function registerApi(payload: any): Promise<RegisterResponse> {
     };
   }
 
-  const response = await apiClient.post('/auth/register', payload);
+  const response = await apiClient.post('/auth/register', {
+    ...payload,
+    token: getRequiredRegisterToken(),
+  });
   return response.data;
 }
 

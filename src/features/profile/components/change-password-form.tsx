@@ -2,30 +2,13 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff } from '@tamagui/lucide-icons-2';
-import { Button, Spinner, YStack } from 'tamagui';
-import { AppButton, AppInput, SectionCard } from '@/components/ui';
+import { Spinner, YStack } from 'tamagui';
+import { AppButton, AppInput, PasswordVisibilityToggle, SectionCard } from '@/components/ui';
 import { useChangePasswordMutation } from '../api/profile.mutations';
 import {
   changePasswordSchema,
   ChangePasswordFormData,
 } from '../schemas/change-password.schema';
-
-function EyeToggle({ visible, onToggle }: { visible: boolean; onToggle: () => void }) {
-  return (
-    <Button
-      accessibilityLabel={visible ? 'Şifreyi gizle' : 'Şifreyi göster'}
-      chromeless
-      circular
-      icon={
-        visible ? <EyeOff color="$color10" size={20} /> : <Eye color="$color10" size={20} />
-      }
-      onPress={onToggle}
-      pressStyle={{ opacity: 0.6 }}
-      size="$2"
-    />
-  );
-}
 
 /** Password change form mirroring the web flow, with proper RHF + Zod validation. */
 export function ChangePasswordForm() {
@@ -74,7 +57,10 @@ export function ChangePasswordForm() {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 rightElement={
-                  <EyeToggle onToggle={() => setShowNew((prev) => !prev)} visible={showNew} />
+                  <PasswordVisibilityToggle
+                    onToggle={() => setShowNew((prev) => !prev)}
+                    visible={showNew}
+                  />
                 }
                 secureTextEntry={!showNew}
                 value={value}
@@ -95,7 +81,7 @@ export function ChangePasswordForm() {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 rightElement={
-                  <EyeToggle
+                  <PasswordVisibilityToggle
                     onToggle={() => setShowConfirm((prev) => !prev)}
                     visible={showConfirm}
                   />
