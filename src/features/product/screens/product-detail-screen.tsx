@@ -32,6 +32,7 @@ import { ProductQuestionsSection } from '../components/product-questions-section
 import { ProductStickyFooter } from '../components/product-sticky-footer';
 import { MobileProductInformation } from '../components/mobile-product-information';
 import { ProductVideoModal } from '../components/product-video-modal';
+import { ProductImageGalleryModal } from '../components/product-image-gallery-modal';
 import {
   SizeChartModal,
   SizeCalculatorModal,
@@ -102,6 +103,7 @@ export function ProductDetailScreen() {
   const [showWashing, setShowWashing] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [galleryImageIndex, setGalleryImageIndex] = useState<number | null>(null);
 
   // Recently Viewed Tracking
   useEffect(() => {
@@ -118,6 +120,7 @@ export function ProductDetailScreen() {
 
   useEffect(() => {
     setShowVideoModal(false);
+    setGalleryImageIndex(null);
   }, [idOrSlug]);
 
   // Handle color change
@@ -235,6 +238,9 @@ export function ProductDetailScreen() {
   }
 
   const productCode = extractProductCode(displayData.title);
+  const productImages = displayData.images && displayData.images.length > 0
+    ? displayData.images
+    : [displayData.imageUrl].filter(Boolean);
 
   return (
     <AppScreen scrollable={false} padding={0} gap={0}>
@@ -254,9 +260,10 @@ export function ProductDetailScreen() {
         <YStack>
           {/* Images / Carousel */}
           <ProductCarousel
-            images={displayData.images || [displayData.imageUrl]}
+            images={productImages}
             initialIndex={initialImageIndex}
             isFavorite={isFavorite}
+            onImagePress={setGalleryImageIndex}
             onToggleFavorite={toggleFavorite}
             onVideoPress={() => setShowVideoModal(true)}
             videoPath={displayData.videoPath}
@@ -439,6 +446,12 @@ export function ProductDetailScreen() {
         onOpenChange={setShowFeedback}
         productId={displayData.id}
         productSlug={displayData.slug}
+      />
+      <ProductImageGalleryModal
+        images={productImages}
+        initialIndex={galleryImageIndex ?? 0}
+        onClose={() => setGalleryImageIndex(null)}
+        open={galleryImageIndex !== null}
       />
       {displayData.videoPath ? (
         <ProductVideoModal

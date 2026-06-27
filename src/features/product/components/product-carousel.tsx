@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, NativeSyntheticEvent, NativeScrollEvent, Pressable, Share, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { Heart, Share2, Play, ChevronLeft, ChevronRight } from '@tamagui/lucide-icons-2';
 import { XStack, YStack, Paragraph, useThemeName } from 'tamagui';
-import { tokenValues } from '@/lib/theme/token-values';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { FeatureIcon } from '@/types/product.types';
 import { ProductCarouselVideoSlide } from './product-carousel-video-slide';
@@ -22,6 +21,7 @@ interface ProductCarouselProps {
   productTitle?: string;
   productSlug?: string;
   featureIcons?: FeatureIcon[];
+  onImagePress?: (imageIndex: number) => void;
   /** Image index the carousel should open on (e.g. the one shown in the list card). */
   initialIndex?: number;
 }
@@ -30,6 +30,7 @@ type ProductCarouselSlide =
   | {
       key: string;
       type: 'image';
+      imageIndex: number;
       uri: string;
     }
   | {
@@ -65,6 +66,7 @@ function getProductCarouselSlides(images: string[], videoPath?: string | null): 
     .map((uri, index) => ({
       key: `image-${index}-${uri}`,
       type: 'image' as const,
+      imageIndex: index,
       uri,
     }));
 
@@ -114,6 +116,7 @@ export function ProductCarousel({
   productTitle = '',
   productSlug = '',
   featureIcons = [],
+  onImagePress,
   initialIndex = 0,
 }: ProductCarouselProps) {
   const listRef = useRef<FlatList<ProductCarouselSlide>>(null);
@@ -141,9 +144,9 @@ export function ProductCarousel({
     [hasLoop, slideCount, slides],
   );
 
-  const scrollToVirtualIndex = (virtualIndex: number, animated = true) => {
+  const scrollToVirtualIndex = useCallback((virtualIndex: number, animated = true) => {
     listRef.current?.scrollToOffset({ offset: virtualIndex * itemWidth, animated });
-  };
+  }, [itemWidth]);
 
   useEffect(() => {
     if (slideCount === 0) return;
@@ -156,7 +159,7 @@ export function ProductCarousel({
     // list parked on the cloned last slide (the video) at offset 0.
     const raf = requestAnimationFrame(() => scrollToVirtualIndex(initialVirtualIndex, false));
     return () => cancelAnimationFrame(raf);
-  }, [clampedInitialIndex, initialVirtualIndex, itemWidth, slideResetKey]);
+  }, [clampedInitialIndex, initialVirtualIndex, scrollToVirtualIndex, slideCount, slideResetKey]);
 
   const resolveLogicalIndex = (virtualIndex: number) => {
     if (slideCount === 0) {
@@ -287,14 +290,20 @@ export function ProductCarousel({
                   width={itemWidth}
                 />
               ) : (
-                <>
+                <Pressable
+                  accessibilityLabel={`${item.imageIndex + 1}. görseli tam ekranda aç`}
+                  accessibilityRole="button"
+                  disabled={!onImagePress}
+                  onPress={() => onImagePress?.(item.imageIndex)}
+                  style={{ width: itemWidth, height: carouselHeight }}
+                >
                   <Image
                     source={{ uri: item.uri }}
                     style={{ width: itemWidth, height: carouselHeight }}
                     contentFit="contain"
                   />
                   <ProductFeatureIconOverlay featureIcons={featureIcons} />
-                </>
+                </Pressable>
               )}
             </YStack>
           )}

@@ -132,6 +132,24 @@ describe('ProductCarousel', () => {
     expect(screen.getByLabelText('Slayt 2 / 3')).toBeTruthy();
   });
 
+  it('opens the full-screen image viewer from the tapped image index', () => {
+    const onImagePress = jest.fn();
+    renderWithTamagui(
+      <ProductCarousel
+        images={images}
+        isFavorite={false}
+        onImagePress={onImagePress}
+        onToggleFavorite={jest.fn()}
+        productTitle="Test product"
+        productSlug="test-product"
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('2. görseli tam ekranda aç'));
+
+    expect(onImagePress).toHaveBeenCalledWith(1);
+  });
+
   it('clamps an out-of-range initial index to the available images (never the video)', () => {
     renderWithTamagui(
       <ProductCarousel
