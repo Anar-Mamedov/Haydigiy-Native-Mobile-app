@@ -1,21 +1,28 @@
 import React, { useState } from 'react';
 import { WashingMachine } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, Button, Theme, useThemeName } from 'tamagui';
+import { XStack, YStack, Paragraph, Button, useThemeName } from 'tamagui';
 import { Image } from 'expo-image';
 import { Pressable } from 'react-native';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 
-interface Property {
+type Property = Readonly<{
   name: string;
   value: string;
-}
+}>;
 
-interface MobileProductInformationProps {
-  productData: {
+type MobileProductInformationProps = Readonly<{
+  productData: Readonly<{
     description: string;
     imageUrl: string;
-  };
-  properties?: Property[];
+  }>;
+  properties?: readonly Property[];
   onWashingInstructionsPress?: () => void;
+}>;
+
+const DESCRIPTION_PREVIEW_HEIGHT = 72;
+
+function getPropertyKey(property: Property) {
+  return `${property.name}:${property.value}`;
 }
 
 export function MobileProductInformation({
@@ -25,11 +32,11 @@ export function MobileProductInformation({
 }: MobileProductInformationProps) {
   const [showMore, setShowMore] = useState(false);
   const themeName = useThemeName();
-  const isDark = themeName === 'dark' || themeName.includes('dark');
+  const isDark = String(themeName).includes('dark');
 
-  const description = productData?.description?.trim();
-  const hasDescription = description && description.length > 0;
-  const hasProperties = properties && properties.length > 0;
+  const description = productData.description.trim();
+  const hasDescription = description.length > 0;
+  const hasProperties = properties.length > 0;
 
   if (!hasDescription && !hasProperties) {
     return null;
@@ -46,7 +53,7 @@ export function MobileProductInformation({
 
           <YStack gap="$3">
             {/* Product Thumbnail */}
-            {productData.imageUrl && (
+            {productData.imageUrl ? (
               <XStack>
                 <Image
                   source={{ uri: productData.imageUrl }}
@@ -54,7 +61,7 @@ export function MobileProductInformation({
                   contentFit="cover"
                 />
               </XStack>
-            )}
+            ) : null}
 
             {/* Expand / Collapse Button for Description */}
             <Pressable onPress={() => setShowMore(!showMore)}>
@@ -70,15 +77,9 @@ export function MobileProductInformation({
           </YStack>
 
           {/* Description Text */}
-          <Paragraph
-            fontSize={12}
-            color="$color11"
-            lineHeight={18}
-            numberOfLines={showMore ? undefined : 4}
-            marginTop="$1"
-          >
-            {description}
-          </Paragraph>
+          <YStack maxHeight={showMore ? undefined : DESCRIPTION_PREVIEW_HEIGHT} overflow="hidden" marginTop="$1">
+            <MarkdownContent>{description}</MarkdownContent>
+          </YStack>
         </YStack>
       )}
 
@@ -90,9 +91,9 @@ export function MobileProductInformation({
           </Paragraph>
 
           <YStack gap="$2">
-            {properties.slice(0, showMore ? undefined : 6).map((property, index) => (
+            {properties.slice(0, showMore ? undefined : 6).map((property) => (
               <XStack
-                key={index}
+                key={getPropertyKey(property)}
                 justifyContent="space-between"
                 alignItems="center"
                 paddingVertical="$3"
