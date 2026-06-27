@@ -24,8 +24,11 @@ describe('ProductImageCarousel', () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
-  it('advances the indicator as the images are scrolled', () => {
-    renderWithTamagui(<ProductImageCarousel images={images} onOpen={jest.fn()} title="Test" />);
+  it('advances the indicator and reports the index as the images are scrolled', () => {
+    const onIndexChange = jest.fn();
+    renderWithTamagui(
+      <ProductImageCarousel images={images} onOpen={jest.fn()} onIndexChange={onIndexChange} title="Test" />,
+    );
 
     // The pager only renders once the container has a measured width
     layout(200);
@@ -40,6 +43,7 @@ describe('ProductImageCarousel', () => {
     });
 
     expect(screen.getByLabelText('Görsel 3 / 3')).toBeTruthy();
+    expect(onIndexChange).toHaveBeenLastCalledWith(2);
   });
 
   it('renders a single tappable image without a pager when there is one image', () => {

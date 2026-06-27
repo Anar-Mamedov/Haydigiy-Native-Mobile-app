@@ -13,9 +13,11 @@ interface ProductImageCarouselProps {
   images: string[];
   onOpen: () => void;
   title: string;
+  /** Notifies the parent of the currently visible image index (for deep-linking). */
+  onIndexChange?: (index: number) => void;
 }
 
-export function ProductImageCarousel({ images, onOpen, title }: ProductImageCarouselProps) {
+export function ProductImageCarousel({ images, onOpen, title, onIndexChange }: ProductImageCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -32,7 +34,9 @@ export function ProductImageCarousel({ images, onOpen, title }: ProductImageCaro
     const { contentOffset, layoutMeasurement } = event.nativeEvent;
     const viewportWidth = layoutMeasurement?.width || containerWidth;
     if (viewportWidth <= 0) return;
-    setActiveIndex(Math.round(contentOffset.x / viewportWidth));
+    const index = Math.round(contentOffset.x / viewportWidth);
+    setActiveIndex(index);
+    onIndexChange?.(index);
   };
 
   return (

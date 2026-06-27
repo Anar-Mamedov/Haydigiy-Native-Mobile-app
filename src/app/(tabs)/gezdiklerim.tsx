@@ -9,6 +9,7 @@ import { AppScreen, EmptyState } from '@/components/ui';
 import { ProductCard } from '@/features/product/components/product-card';
 import { ViewedProduct, getViewedProducts, clearViewedProducts } from '@/utils/recently-viewed';
 import { Product } from '@/types/product.types';
+import { buildProductDetailRoute } from '@/features/product/utils/product-detail-route';
 
 export default function GezdiklerimRoute() {
   const router = useRouter();
@@ -38,8 +39,8 @@ export default function GezdiklerimRoute() {
     }
   };
 
-  const handleProductPress = (product: Product) => {
-    router.push(`/product/${product.id}` as any);
+  const handleProductPress = (product: Product, imageIndex = 0) => {
+    router.push(buildProductDetailRoute(product, imageIndex));
   };
 
   // Map ViewedProduct stored format back into full Product type for <ProductCard /> compat
@@ -115,7 +116,7 @@ export default function GezdiklerimRoute() {
               return (
                 <YStack flex={1} padding="$1.5">
                   <ProductCard
-                    onOpen={() => handleProductPress(product)}
+                    onOpen={(imageIndex) => handleProductPress(product, imageIndex)}
                     product={product}
                     onColorPress={() => {
                       // Color selection not required for simple history list, falls back to detail click

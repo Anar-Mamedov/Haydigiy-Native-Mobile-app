@@ -22,6 +22,8 @@ interface ProductCarouselProps {
   productTitle?: string;
   productSlug?: string;
   featureIcons?: FeatureIcon[];
+  /** Image index the carousel should open on (e.g. the one shown in the list card). */
+  initialIndex?: number;
 }
 
 type ProductCarouselSlide =
@@ -112,6 +114,7 @@ export function ProductCarousel({
   productTitle = '',
   productSlug = '',
   featureIcons = [],
+  initialIndex = 0,
 }: ProductCarouselProps) {
   const listRef = useRef<FlatList<ProductCarouselSlide>>(null);
   const { width: screenWidth } = useWindowDimensions();
@@ -122,9 +125,13 @@ export function ProductCarousel({
   const videoSlideIndex = slides.findIndex((slide) => slide.type === 'video');
   const hasVideoSlide = videoSlideIndex >= 0;
   const hasLoop = slideCount > 1;
-  const initialVirtualIndex = hasLoop ? 1 : 0;
+  // Clamp the requested initial index to the available image slides so we never
+  // try to open on (or past) the trailing video slide.
+  const imageSlideCount = slides.filter((slide) => slide.type === 'image').length;
+  const clampedInitialIndex = Math.min(Math.max(initialIndex, 0), Math.max(imageSlideCount - 1, 0));
+  const initialVirtualIndex = hasLoop ? clampedInitialIndex + 1 : clampedInitialIndex;
   const slideResetKey = `${slides[0]?.key ?? ''}|${slides[slideCount - 1]?.key ?? ''}|${slideCount}`;
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(clampedInitialIndex);
   const [activeVirtualIndex, setActiveVirtualIndex] = useState(initialVirtualIndex);
   const [videoAutoplayRequest, setVideoAutoplayRequest] = useState(0);
   const itemWidth = getCarouselItemWidth(screenWidth);
@@ -141,10 +148,15 @@ export function ProductCarousel({
   useEffect(() => {
     if (slideCount === 0) return;
 
-    setActiveIndex(0);
+    setActiveIndex(clampedInitialIndex);
     setActiveVirtualIndex(initialVirtualIndex);
-    scrollToVirtualIndex(initialVirtualIndex, false);
-  }, [initialVirtualIndex, itemWidth, slideResetKey]);
+    // Defer the scroll until after the FlatList has committed the new slide
+    // data. A synchronous scrollToOffset right after the slide set changes
+    // (e.g. preview image → full images + video) can be dropped, leaving the
+    // list parked on the cloned last slide (the video) at offset 0.
+    const raf = requestAnimationFrame(() => scrollToVirtualIndex(initialVirtualIndex, false));
+    return () => cancelAnimationFrame(raf);
+  }, [clampedInitialIndex, initialVirtualIndex, itemWidth, slideResetKey]);
 
   const resolveLogicalIndex = (virtualIndex: number) => {
     if (slideCount === 0) {
@@ -240,11 +252,16 @@ export function ProductCarousel({
       <YStack width="100%" height={carouselHeight} position="relative">
         {/* Horizontal Paged List with Snap Interval */}
         <FlatList
+          // Remount when the slide set changes (e.g. preview image → full images
+          // + video) so `initialScrollIndex` re-applies on a fresh list. Without
+          // this, an imperative re-scroll after the data change can be dropped and
+          // the list stays at offset 0, i.e. the cloned last slide.
+          key={slideResetKey}
           testID="product-carousel-list"
           ref={listRef}
           data={carouselSlides}
           horizontal
-          initialScrollIndex={hasLoop ? 1 : undefined}
+          initialScrollIndex={hasLoop ? initialVirtualIndex : undefined}
           snapToInterval={itemWidth}
           decelerationRate="fast"
           snapToAlignment="center"

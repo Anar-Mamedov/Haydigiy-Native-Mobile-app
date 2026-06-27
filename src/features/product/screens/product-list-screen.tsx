@@ -19,6 +19,7 @@ import { QuickFilterDropdown } from '../components/quick-filter-dropdown';
 import { ProductListHeader } from '../components/product-list-header';
 import { ProductVideoModal } from '../components/product-video-modal';
 import { resolveColorVariantTarget } from '../utils/color-variant-route';
+import { buildProductDetailRoute } from '../utils/product-detail-route';
 
 interface ProductListScreenProps {
   slug: string;
@@ -177,8 +178,8 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
     setProductCategories(undefined);
   };
 
-  const handleProductPress = (product: Product) => {
-    router.push(`/product/${product.id}` as any);
+  const handleProductPress = (product: Product, imageIndex = 0) => {
+    router.push(buildProductDetailRoute(product, imageIndex));
   };
 
   const handleVideoModalOpenChange = (open: boolean) => {
@@ -352,7 +353,7 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
             renderItem={({ item }) => (
               <YStack flex={1} padding="$1.5">
                 <ProductCard
-                  onOpen={() => handleProductPress(item)}
+                  onOpen={(imageIndex) => handleProductPress(item, imageIndex)}
                   onVideoPress={setActiveVideoProduct}
                   product={item}
                   onColorPress={() => {

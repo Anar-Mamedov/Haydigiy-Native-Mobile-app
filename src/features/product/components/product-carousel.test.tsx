@@ -116,4 +116,36 @@ describe('ProductCarousel', () => {
     expect(screen.queryByLabelText('Sonraki görsel')).toBeNull();
     expect(screen.queryByLabelText('Önceki görsel')).toBeNull();
   });
+
+  it('opens on the provided initial image index', () => {
+    renderWithTamagui(
+      <ProductCarousel
+        images={images}
+        initialIndex={1}
+        isFavorite={false}
+        onToggleFavorite={jest.fn()}
+        productTitle="Test product"
+        productSlug="test-product"
+      />,
+    );
+
+    expect(screen.getByLabelText('Slayt 2 / 3')).toBeTruthy();
+  });
+
+  it('clamps an out-of-range initial index to the available images (never the video)', () => {
+    renderWithTamagui(
+      <ProductCarousel
+        images={images}
+        initialIndex={99}
+        isFavorite={false}
+        onToggleFavorite={jest.fn()}
+        productTitle="Test product"
+        productSlug="test-product"
+        videoPath="https://example.com/product-video.mp4"
+      />,
+    );
+
+    // 3 images + 1 video = 4 slides; index clamps to the last image, not the video.
+    expect(screen.getByLabelText('Slayt 3 / 4')).toBeTruthy();
+  });
 });

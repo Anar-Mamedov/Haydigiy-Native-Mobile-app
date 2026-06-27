@@ -51,9 +51,12 @@ export function ProductDetailScreen() {
     brand?: string;
     sellerName?: string;
     shippingLabel?: string;
+    imageIndex?: string;
   }>();
 
   const idOrSlug = params.id ?? '';
+  // Image index the list card was showing, so the carousel opens on the same one.
+  const initialImageIndex = params.imageIndex ? Math.max(0, parseInt(params.imageIndex, 10) || 0) : 0;
   
   // Queries
   const { data: product, isError, isPending, refetch } = useProductDetailsQuery(idOrSlug);
@@ -252,6 +255,7 @@ export function ProductDetailScreen() {
           {/* Images / Carousel */}
           <ProductCarousel
             images={displayData.images || [displayData.imageUrl]}
+            initialIndex={initialImageIndex}
             isFavorite={isFavorite}
             onToggleFavorite={toggleFavorite}
             onVideoPress={() => setShowVideoModal(true)}

@@ -75,6 +75,31 @@ describe('ProductCard', () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
+  it('opens on the image currently shown in the card carousel', () => {
+    const onOpen = jest.fn();
+    const multiImage: Product = {
+      ...product,
+      images: ['https://example.com/a.png', 'https://example.com/b.png', 'https://example.com/c.png'],
+    };
+    renderWithTamagui(<ProductCard onOpen={onOpen} product={multiImage} />);
+
+    // Measure the inner carousel so the pager renders, then swipe to image 2.
+    fireEvent(screen.getByTestId('product-image-carousel'), 'layout', {
+      nativeEvent: { layout: { width: 200, height: 300, x: 0, y: 0 } },
+    });
+    fireEvent.scroll(screen.getByTestId('product-image-carousel-scroll'), {
+      nativeEvent: {
+        contentOffset: { x: 200, y: 0 },
+        layoutMeasurement: { width: 200, height: 300 },
+        contentSize: { width: 600, height: 300 },
+      },
+    });
+
+    fireEvent.press(screen.getByLabelText('Ürün detayını aç: Test Product'));
+
+    expect(onOpen).toHaveBeenCalledWith(1);
+  });
+
   it('keeps the favorite control accessible after toggling', () => {
     renderWithTamagui(<ProductCard onOpen={jest.fn()} product={product} />);
 

@@ -220,7 +220,14 @@ describe('ProductListScreen', () => {
     renderWithTamagui(<ProductListScreen slug="elbise" categoryId={40} />);
 
     fireEvent.press(screen.getByText('Test Product 1'));
-    expect(mockPush).toHaveBeenCalledWith('/product/product-1');
+    // Navigates by slug (skips the id→slug round-trip) and passes preview
+    // params so the detail screen renders immediately.
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathname: '/product/[id]',
+        params: expect.objectContaining({ id: 'test-product-1', title: 'Test Product 1' }),
+      }),
+    );
   });
 
   it('opens product video inside a modal from the product card video button', () => {

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { GestureResponderEvent, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { Heart, Play } from '@tamagui/lucide-icons-2';
@@ -10,7 +11,8 @@ import { ProductImageCarousel } from './product-image-carousel';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 
 type ProductCardProps = {
-  onOpen: () => void;
+  /** Opens the product detail; receives the image index currently shown in the card. */
+  onOpen: (imageIndex?: number) => void;
   onVideoPress?: (product: Product) => void;
   product: Product;
   onColorPress?: (product: Product) => void;
@@ -133,6 +135,9 @@ function RatingStars({
 
 export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: ProductCardProps) {
   const { isFavorite, toggleFavorite: handleToggleFavorite } = useToggleFavorite(product);
+  // Track the image currently shown in the card so the detail screen can open
+  // on the same one.
+  const [imageIndex, setImageIndex] = useState(0);
 
   const ratingValue = product.rating ?? 0;
   const fullStars = Math.floor(ratingValue);
@@ -155,7 +160,7 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
       return;
     }
 
-    onOpen();
+    onOpen(imageIndex);
   };
 
   return (
@@ -171,7 +176,12 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
     >
       <YStack width="100%">
         <YStack width="100%" aspectRatio={2 / 3} backgroundColor="$color3" position="relative">
-          <ProductImageCarousel images={images} onOpen={onOpen} title={product.title} />
+          <ProductImageCarousel
+            images={images}
+            onOpen={() => onOpen(imageIndex)}
+            onIndexChange={setImageIndex}
+            title={product.title}
+          />
 
           {/* Overlaid Feature Icons */}
           {product.featureIcons && product.featureIcons.length > 0 && (
@@ -304,7 +314,7 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
         <Pressable
           accessibilityLabel={`Ürün detayını aç: ${product.title}`}
           accessibilityRole="button"
-          onPress={onOpen}
+          onPress={() => onOpen(imageIndex)}
         >
           <YStack padding={6} width="100%">
           {featureDescriptions ? (
