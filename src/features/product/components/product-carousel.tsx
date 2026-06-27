@@ -7,14 +7,17 @@ import { tokenValues } from '@/lib/theme/token-values';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { FeatureIcon } from '@/types/product.types';
 import { ProductCarouselVideoSlide } from './product-carousel-video-slide';
+import {
+  CAROUSEL_HORIZONTAL_PADDING,
+  getCarouselImageHeight,
+  getCarouselItemWidth,
+} from '../utils/product-carousel-geometry';
 
 interface ProductCarouselProps {
   images: string[];
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onVideoPress?: (videoUri: string) => void;
-  /** Product code shown on the image badge — kept in sync with the title code. */
-  productCode?: string;
   videoPath?: string | null;
   productTitle?: string;
   productSlug?: string;
@@ -105,7 +108,6 @@ export function ProductCarousel({
   isFavorite,
   onToggleFavorite,
   onVideoPress,
-  productCode,
   videoPath,
   productTitle = '',
   productSlug = '',
@@ -125,8 +127,8 @@ export function ProductCarousel({
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeVirtualIndex, setActiveVirtualIndex] = useState(initialVirtualIndex);
   const [videoAutoplayRequest, setVideoAutoplayRequest] = useState(0);
-  const itemWidth = Math.max(screenWidth - 64, 1);
-  const carouselHeight = itemWidth * 1.5; // Exactly 2:3 aspect ratio
+  const itemWidth = getCarouselItemWidth(screenWidth);
+  const carouselHeight = getCarouselImageHeight(screenWidth); // Exactly 2:3 aspect ratio
   const carouselSlides = useMemo(
     () => (hasLoop ? [slides[slideCount - 1], ...slides, slides[0]] : slides),
     [hasLoop, slideCount, slides],
@@ -233,7 +235,7 @@ export function ProductCarousel({
   };
 
   return (
-    <YStack width="100%" position="relative" backgroundColor={isDark ? '#111827' : 'white'} paddingHorizontal={32}>
+    <YStack width="100%" position="relative" backgroundColor={isDark ? '#111827' : 'white'} paddingHorizontal={CAROUSEL_HORIZONTAL_PADDING}>
       {/* Slide Carousel Container (fixed 2:3 height) */}
       <YStack width="100%" height={carouselHeight} position="relative">
         {/* Horizontal Paged List with Snap Interval */}
@@ -280,24 +282,6 @@ export function ProductCarousel({
             </YStack>
           )}
         />
-
-        {/* Code tag (top right) */}
-        {productCode ? (
-          <XStack
-            position="absolute"
-            top={12}
-            right={12}
-            backgroundColor={isDark ? 'rgba(0,0,0,0.7)' : 'rgba(31, 41, 55, 0.8)'}
-            paddingHorizontal={8}
-            paddingVertical={4}
-            borderRadius={4}
-            zIndex={10}
-          >
-            <Paragraph color="white" fontSize={11} fontWeight="700">
-              {productCode}
-            </Paragraph>
-          </XStack>
-        ) : null}
 
         {/* Floating actions: Favorite (heart) and Share */}
         <YStack position="absolute" top={60} right={12} gap="$3" zIndex={10}>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, Spinner, YStack, Paragraph, XStack } from 'tamagui';
-import { Linking, Pressable } from 'react-native';
+import { Spinner, YStack, Paragraph, XStack } from 'tamagui';
+import { Linking, Pressable, ScrollView, NativeScrollEvent, NativeSyntheticEvent, useWindowDimensions } from 'react-native';
 import { ThumbsUp } from '@tamagui/lucide-icons-2';
 import { AppScreen, EmptyState } from '@/components/ui';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
@@ -12,6 +12,9 @@ import { formatCurrency } from '@/utils/format-currency';
 import { SizeSelectionSheet } from '../components/size-selection-sheet';
 import { trackViewedProduct } from '@/utils/recently-viewed';
 import { extractProductCode } from '../utils/extract-product-code';
+import { ProductCodeBadge } from '../components/product-code-badge';
+import { isProductCodeBadgeVisible, PRODUCT_CODE_BADGE_OFFSET } from '../utils/product-code-badge';
+import { getCarouselImageHeight } from '../utils/product-carousel-geometry';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 import { ProductVariant, Product } from '@/types/product.types';
 
@@ -60,6 +63,22 @@ export function ProductDetailScreen() {
 
   // States
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+
+  // Pinned product-code badge: stays fixed under the header while the product
+  // image is on screen, then disappears the moment the image scrolls off the
+  // top (mirrors the web `isCarouselVisible` behaviour). The image height is
+  // derived from the screen width (same formula as the carousel) so it does not
+  // depend on an onLayout pass that may not fire. Visibility is only flipped
+  // when it actually changes, so scrolling does not re-render per frame.
+  const { width: windowWidth } = useWindowDimensions();
+  const carouselImageHeight = getCarouselImageHeight(windowWidth);
+  const [showProductCode, setShowProductCode] = useState(true);
+  const [headerHeight, setHeaderHeight] = useState(56);
+
+  const handleProductScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const visible = isProductCodeBadgeVisible(carouselImageHeight, e.nativeEvent.contentOffset.y);
+    setShowProductCode((prev) => (prev === visible ? prev : visible));
+  };
 
   // Tapping the "Değerlendirme" / "Soru & Cevap" links opens dedicated screens
   // (mirrors the web /yorum and /soru pages).
@@ -212,11 +231,23 @@ export function ProductDetailScreen() {
     );
   }
 
+  const productCode = extractProductCode(displayData.title);
+
   return (
     <AppScreen scrollable={false} padding={0} gap={0}>
-      <ProductDetailHeader />
+      <YStack onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+        <ProductDetailHeader />
+      </YStack>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 90 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 90 }}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleProductScroll}
+        onScrollEndDrag={handleProductScroll}
+        onMomentumScrollEnd={handleProductScroll}
+        scrollEventThrottle={16}
+      >
         <YStack>
           {/* Images / Carousel */}
           <ProductCarousel
@@ -224,7 +255,6 @@ export function ProductDetailScreen() {
             isFavorite={isFavorite}
             onToggleFavorite={toggleFavorite}
             onVideoPress={() => setShowVideoModal(true)}
-            productCode={extractProductCode(displayData.title)}
             videoPath={displayData.videoPath}
             productTitle={displayData.title}
             productSlug={displayData.slug}
@@ -417,6 +447,11 @@ export function ProductDetailScreen() {
             handleAddToCart();
           }}
         />
+      ) : null}
+
+      {/* Product code badge pinned under the header while the carousel is visible */}
+      {showProductCode && productCode ? (
+        <ProductCodeBadge code={productCode} top={headerHeight + PRODUCT_CODE_BADGE_OFFSET} />
       ) : null}
     </AppScreen>
   );
