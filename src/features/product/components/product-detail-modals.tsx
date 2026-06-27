@@ -274,11 +274,41 @@ export function SizeCalculatorModal({
           {error && <Paragraph color="$red10" fontSize={13} textAlign="center">{error}</Paragraph>}
 
           {result && (
-            <YStack gap="$2" alignItems="center" marginTop="$3" padding="$4" backgroundColor="$orange3" borderRadius={12}>
-              <Paragraph color="$color" fontSize={14} fontWeight="600">Sizin İçin Önerilen Beden:</Paragraph>
-              <XStack backgroundColor="white" borderRadius={30} width={60} height={60} alignItems="center" justifyContent="center" borderWidth={2} borderColor="$brand">
-                <Paragraph color="$brand" fontSize={24} fontWeight="900">{result}</Paragraph>
-              </XStack>
+            <YStack
+              gap="$2.5"
+              marginTop="$3"
+              padding="$4"
+              backgroundColor="$orange3"
+              borderRadius={12}
+              accessible
+              accessibilityRole="text"
+              accessibilityLiveRegion="polite"
+              accessibilityLabel={`Sizin için önerilen beden: ${result}`}
+            >
+              <Paragraph color="$color" fontSize={14} fontWeight="600" textAlign="center">Sizin İçin Önerilen Beden:</Paragraph>
+              <YStack
+                alignSelf="stretch"
+                alignItems="center"
+                justifyContent="center"
+                backgroundColor="$background"
+                borderColor="$brand"
+                borderWidth={1}
+                borderRadius={14}
+                paddingVertical="$3"
+                paddingHorizontal="$4"
+                minHeight={56}
+              >
+                <Paragraph
+                  color="$brand"
+                  fontSize={24}
+                  fontWeight="900"
+                  textAlign="center"
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {result}
+                </Paragraph>
+              </YStack>
             </YStack>
           )}
         </ScrollView>
