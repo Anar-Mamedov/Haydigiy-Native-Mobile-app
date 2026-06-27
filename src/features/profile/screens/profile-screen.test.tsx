@@ -65,7 +65,7 @@ describe('ProfileScreen', () => {
 
     // Name is shown in the account header; account hub sections + actions below.
     expect(screen.getByText('Anar Mamedov')).toBeTruthy();
-    expect(screen.getByText('Görünüm')).toBeTruthy();
+    expect(screen.queryByText('Görünüm')).toBeNull();
     expect(screen.getByText('Çıkış Yap')).toBeTruthy();
   });
 

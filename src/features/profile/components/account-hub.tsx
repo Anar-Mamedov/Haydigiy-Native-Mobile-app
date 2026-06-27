@@ -10,15 +10,18 @@ import {
   MapPin,
   MessageSquare,
   Package,
-  Palette,
   RotateCcw,
   ShieldCheck,
   Ticket,
   UserRound,
 } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
-import { AppButton, SectionCard, ThemeToggle } from '@/components/ui';
-import { useAppTheme } from '@/lib/theme/use-app-theme';
+import { YStack } from 'tamagui';
+import { AppButton } from '@/components/ui';
+// Temporarily disabled with the appearance card below.
+// import { Paragraph, XStack } from 'tamagui';
+// import { Palette } from '@tamagui/lucide-icons-2';
+// import { SectionCard, ThemeToggle } from '@/components/ui';
+// import { useAppTheme } from '@/lib/theme/use-app-theme';
 import { AccountOrdersCard } from './account-orders-card';
 import { AccountMenuCard } from './account-menu-card';
 import { AccountContactCard } from './account-contact-card';
@@ -32,12 +35,13 @@ const MENU_ICON_SIZE = 26;
 
 /**
  * Authenticated "Hesabım" hub mirroring the web account page: order shortcuts,
- * personalized links, account & help links, contact, appearance and logout.
+ * personalized links, account & help links, contact and logout.
  * The user identity is shown in the screen header (AccountHeader).
  */
 export function AccountHub({ onLogout }: AccountHubProps) {
   const router = useRouter();
-  const { setThemePreference, themePreference } = useAppTheme();
+  // Temporarily disabled with the appearance card below.
+  // const { setThemePreference, themePreference } = useAppTheme();
 
   const goToOrders = () => router.push('/(tabs)/orders');
 
@@ -126,7 +130,10 @@ export function AccountHub({ onLogout }: AccountHubProps) {
       <AccountMenuCard items={helpItems} />
       <AccountContactCard />
 
-      {/* Appearance / Theme */}
+      {/*
+      Temporarily hidden. Keep this code here so the appearance selector can be
+      restored later without rebuilding the section from scratch.
+
       <SectionCard elevated>
         <YStack gap="$3.5">
           <XStack alignItems="center" gap="$3">
@@ -152,6 +159,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
           <ThemeToggle onValueChange={setThemePreference} value={themePreference} />
         </YStack>
       </SectionCard>
+      */}
 
       {/* Logout */}
       <AppButton

@@ -20,7 +20,7 @@ describe('AccountHub', () => {
     expect(screen.getByText('Favorilerim')).toBeTruthy();
     expect(screen.getByText('Hesabım')).toBeTruthy();
     expect(screen.getByText('Bize Ulaşın')).toBeTruthy();
-    expect(screen.getByText('Görünüm')).toBeTruthy();
+    expect(screen.queryByText('Görünüm')).toBeNull();
     expect(screen.getByText('Çıkış Yap')).toBeTruthy();
   });
 
