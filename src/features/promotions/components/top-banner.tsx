@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Linking, Pressable } from 'react-native';
 import { Button, Paragraph, XStack, YStack } from 'tamagui';
 import { X } from '@tamagui/lucide-icons-2';
@@ -7,26 +7,13 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useActiveTopBannersQuery } from '../api/top-banner.queries';
 import { useTopBanner } from '../hooks/use-top-banner';
-import { getRequiredApiBaseUrl } from '@/lib/env';
+import { getTopBannerImageUrl } from '../utils/top-banner-image';
 import { TimeLeft } from '../types/top-banner.types';
 
-function getImageUrl(path: string) {
-  if (path.startsWith('http')) return path;
-  try {
-    let baseUrl = getRequiredApiBaseUrl();
-    // Strip trailing slashes and /api if present
-    baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
-    const cleanPath = path.startsWith('/') ? path : `/storage/${path}`;
-    const storagePath = path.startsWith('storage/')
-      ? `/${path}`
-      : path.startsWith('/storage/')
-      ? path
-      : `/storage/${path}`;
-    return `${baseUrl}${storagePath}`;
-  } catch {
-    return '';
-  }
-}
+const IMAGE_BANNER_ASPECT_RATIO = 12;
+const IMAGE_BANNER_DISMISS_SIZE = 20;
+const IMAGE_BANNER_DISMISS_ICON_SIZE = 10;
+const IMAGE_BANNER_DISMISS_HIT_SLOP = 10;
 
 function CountdownUnit({ value, label, color }: { value: number; label: string; color: string }) {
   return (
@@ -133,7 +120,7 @@ export function TopBanner() {
   const hasMultiple = visibleBanners.length > 1;
 
   if (currentBanner.type === 'image') {
-    const imageUrl = currentBanner.image_mobile ? getImageUrl(currentBanner.image_mobile) : null;
+    const imageUrl = currentBanner.image_mobile ? getTopBannerImageUrl(currentBanner.image_mobile) : null;
     if (!imageUrl) return null;
 
     return (
@@ -146,29 +133,32 @@ export function TopBanner() {
         <Pressable onPress={handlePress} disabled={!currentBanner.link} style={{ width: '100%' }}>
           <Image
             source={{ uri: imageUrl }}
-            style={{ width: '100%', height: 50 }}
+            style={{ width: '100%', aspectRatio: IMAGE_BANNER_ASPECT_RATIO }}
             contentFit="cover"
           />
         </Pressable>
         {currentBanner.dismissible && (
-          <Button
+          <Pressable
             accessibilityLabel="Kampanyayı kapat"
             accessibilityRole="button"
-            position="absolute"
-            right={8}
-            top="50%"
-            y="-50%"
-            backgroundColor="rgba(0,0,0,0.4)"
-            chromeless
-            circular
-            padding={0}
-            width={32}
-            height={32}
-            alignItems="center"
-            justifyContent="center"
             onPress={handleDismiss}
-            icon={<X color="white" size={14} />}
-          />
+            hitSlop={IMAGE_BANNER_DISMISS_HIT_SLOP}
+            style={{
+              position: 'absolute',
+              right: 6,
+              top: '50%',
+              width: IMAGE_BANNER_DISMISS_SIZE,
+              height: IMAGE_BANNER_DISMISS_SIZE,
+              borderRadius: IMAGE_BANNER_DISMISS_SIZE / 2,
+              backgroundColor: 'rgba(0,0,0,0.38)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transform: [{ translateY: -IMAGE_BANNER_DISMISS_SIZE / 2 }],
+              zIndex: 20,
+            }}
+          >
+            <X color="white" size={IMAGE_BANNER_DISMISS_ICON_SIZE} />
+          </Pressable>
         )}
       </YStack>
     );
