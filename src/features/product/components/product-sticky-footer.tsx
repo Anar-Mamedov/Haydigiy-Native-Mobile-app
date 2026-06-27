@@ -1,9 +1,17 @@
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { ShoppingCart, TrendingDown } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, Button, Theme, useTheme, useThemeName } from 'tamagui';
+import { XStack, YStack, Paragraph, Button, useTheme } from 'tamagui';
 import { Pressable } from 'react-native';
-import { formatCurrency } from '@/utils/format-currency';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const FOOTER_TOP_PADDING = 14;
+const FOOTER_BOTTOM_PADDING = 14;
+const FOOTER_ACTION_HEIGHT = 46;
+const FOOTER_SCROLL_GAP = 18;
+
+export const PRODUCT_STICKY_FOOTER_SCROLL_PADDING =
+  FOOTER_TOP_PADDING + FOOTER_ACTION_HEIGHT + FOOTER_BOTTOM_PADDING + FOOTER_SCROLL_GAP;
 
 interface ProductStickyFooterProps {
   price: number;
@@ -31,31 +39,30 @@ export function ProductStickyFooter({
   isLastOne = false,
 }: ProductStickyFooterProps) {
   const theme = useTheme();
-  const themeName = useThemeName();
-  const isDark = themeName === 'dark' || themeName.includes('dark');
-
-  const containerBg = isDark ? theme.background.val : 'white';
-  const borderTopColor = isDark ? theme.borderColor.val : '#E5E7EB';
+  const insets = useSafeAreaInsets();
+  const shadowColor = theme.shadowColor?.val ?? theme.color.val;
 
   const showDiscount = originalPrice && originalPrice > price;
 
   return (
     <XStack
+      testID="product-sticky-footer"
       position="absolute"
       bottom={0}
       left={0}
       right={0}
-      backgroundColor={containerBg as any}
-      borderTopColor={borderTopColor as any}
+      backgroundColor="$background"
+      borderTopColor="$borderColor"
       borderTopWidth={1}
       paddingHorizontal="$3.5"
-      paddingVertical="$3.5"
+      paddingTop={FOOTER_TOP_PADDING}
+      paddingBottom={insets.bottom + FOOTER_BOTTOM_PADDING}
       justifyContent="space-between"
       alignItems="center"
       gap="$3.5"
       zIndex={100}
       elevation={15}
-      shadowColor="#000"
+      shadowColor={shadowColor as any}
       shadowOffset={{ width: 0, height: -4 }}
       shadowOpacity={0.08}
       shadowRadius={6}
@@ -64,9 +71,9 @@ export function ProductStickyFooter({
       <XStack
         position="relative"
         alignItems="center"
-        borderColor={isDark ? 'rgba(242, 122, 26, 0.2)' : '#fde8d7'}
+        borderColor="$orange5"
         borderWidth={1}
-        backgroundColor="rgba(242, 122, 26, 0.05)"
+        backgroundColor="$orange2"
         borderRadius={8}
         paddingHorizontal={12}
         paddingVertical={8}
@@ -94,7 +101,7 @@ export function ProductStickyFooter({
             backgroundColor="$brand"
             alignItems="center"
             justifyContent="center"
-            shadowColor="#000"
+            shadowColor={shadowColor as any}
             shadowOffset={{ width: 0, height: 1 }}
             shadowOpacity={0.2}
             shadowRadius={1.5}

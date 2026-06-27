@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Spinner, YStack, Paragraph, XStack } from 'tamagui';
 import { Linking, Pressable, ScrollView, NativeScrollEvent, NativeSyntheticEvent, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThumbsUp } from '@tamagui/lucide-icons-2';
 import { AppScreen, EmptyState } from '@/components/ui';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
@@ -29,7 +30,10 @@ import { ProductSpecifications } from '../components/product-specifications';
 import { SimilarProductsSection } from '../components/similar-products-section';
 import { ProductReviewsSection } from '../components/product-reviews-section';
 import { ProductQuestionsSection } from '../components/product-questions-section';
-import { ProductStickyFooter } from '../components/product-sticky-footer';
+import {
+  PRODUCT_STICKY_FOOTER_SCROLL_PADDING,
+  ProductStickyFooter,
+} from '../components/product-sticky-footer';
 import { MobileProductInformation } from '../components/mobile-product-information';
 import { ProductVideoModal } from '../components/product-video-modal';
 import { ProductImageGalleryModal } from '../components/product-image-gallery-modal';
@@ -42,6 +46,7 @@ import {
 
 export function ProductDetailScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   
   // Read params for immediate rendering preview
   const params = useLocalSearchParams<{
@@ -241,6 +246,7 @@ export function ProductDetailScreen() {
   const productImages = displayData.images && displayData.images.length > 0
     ? displayData.images
     : [displayData.imageUrl].filter(Boolean);
+  const contentBottomPadding = PRODUCT_STICKY_FOOTER_SCROLL_PADDING + insets.bottom;
 
   return (
     <AppScreen scrollable={false} padding={0} gap={0}>
@@ -250,7 +256,7 @@ export function ProductDetailScreen() {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 90 }}
+        contentContainerStyle={{ paddingBottom: contentBottomPadding }}
         showsVerticalScrollIndicator={false}
         onScroll={handleProductScroll}
         onScrollEndDrag={handleProductScroll}

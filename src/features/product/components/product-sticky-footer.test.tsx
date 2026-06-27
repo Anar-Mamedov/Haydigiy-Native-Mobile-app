@@ -37,6 +37,14 @@ describe('ProductStickyFooter', () => {
     expect(onWhatsappPress).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps footer actions above the device bottom safe area', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} />);
+
+    expect(screen.getByTestId('product-sticky-footer')).toHaveStyle({
+      paddingBottom: 34,
+    });
+  });
+
   it('shows the last-one hint only when isLastOne is set', () => {
     const { queryByText, rerender } = renderWithTamagui(
       <ProductStickyFooter {...baseProps} isLastOne={false} />,
