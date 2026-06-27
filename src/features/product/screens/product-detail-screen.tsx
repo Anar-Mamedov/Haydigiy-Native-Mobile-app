@@ -388,13 +388,14 @@ export function ProductDetailScreen() {
         open={showSizeCalculator}
         onOpenChange={setShowSizeCalculator}
         onCalculateComplete={(sizeName) => {
+          // Pre-select the matching size in the background, but keep the sheet
+          // open so the user can see the recommended size result.
           if (product?.variants) {
             const matched = product.variants.find(
               (v) => v.name.toLowerCase() === sizeName.toLowerCase()
             );
             if (matched) setSelectedVariant(matched);
           }
-          setShowSizeCalculator(false);
         }}
       />
       <WashingInstructionsModal open={showWashing} onOpenChange={setShowWashing} />
