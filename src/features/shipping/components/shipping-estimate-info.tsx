@@ -3,16 +3,24 @@ import { Package } from '@tamagui/lucide-icons-2';
 import { Paragraph, XStack, YStack } from 'tamagui';
 import { ShippingEstimate } from '@/types/shipping.types';
 
+type ShippingEstimateInfoVariant = 'product' | 'cart';
+
 type ShippingEstimateInfoProps = {
   estimate: ShippingEstimate | null | undefined;
+  /** `cart` (default) renders slightly larger; `product` matches the product detail box. */
+  variant?: ShippingEstimateInfoVariant;
 };
 
 /**
- * Cart variant of the web `ShippingEstimateInfo`: top line shows the dispatch
+ * Mirrors the web `ShippingEstimateInfo`: top line shows the dispatch
  * ("kargoya teslim") sentence; when an estimated delivery day is available a
  * second row highlights it, plus any holiday/deadline warning.
+ *
+ * The estimate is always supplied by the caller from the `/shipping-estimate`
+ * API (`useShippingEstimateQuery`); a missing estimate renders the "Yükleniyor..."
+ * placeholder rather than any static fallback text.
  */
-export function ShippingEstimateInfo({ estimate }: ShippingEstimateInfoProps) {
+export function ShippingEstimateInfo({ estimate, variant = 'cart' }: ShippingEstimateInfoProps) {
   const warning = estimate?.deliveryWarning;
   const hasWarning = Boolean(warning?.show);
   const deliveryDay = estimate?.estimatedDeliveryDayHuman?.trim() || null;
@@ -22,6 +30,9 @@ export function ShippingEstimateInfo({ estimate }: ShippingEstimateInfoProps) {
       ? 'Tahmini teslimat (bayram sonrası)'
       : 'Tahmini Teslim';
 
+  const fontSize = variant === 'cart' ? 13 : 12.5;
+  const padding = variant === 'cart' ? '$3' : '$2.5';
+
   return (
     <YStack
       backgroundColor="$backgroundHover"
@@ -29,14 +40,14 @@ export function ShippingEstimateInfo({ estimate }: ShippingEstimateInfoProps) {
       borderRadius="$4"
       borderWidth={1}
       gap={deliveryDay ? '$2.5' : 0}
-      padding="$3"
+      padding={padding}
       width="100%"
     >
       <XStack alignItems="center" gap="$2">
         <Package color="$color10" size={16} />
-        <Paragraph color="$color10" flex={1} fontSize={13} lineHeight={18}>
+        <Paragraph color="$color10" flex={1} fontSize={fontSize} lineHeight={18}>
           Tahmini Kargoya Teslim:{' '}
-          <Paragraph color="$color" fontSize={13} fontWeight="700">
+          <Paragraph color="$color" fontSize={fontSize} fontWeight="700">
             {dispatchText}
           </Paragraph>
         </Paragraph>
@@ -63,16 +74,16 @@ export function ShippingEstimateInfo({ estimate }: ShippingEstimateInfoProps) {
               />
             </XStack>
             <YStack flex={1} gap="$1">
-              <Paragraph color="$color" fontSize={13} lineHeight={18}>
-                <Paragraph color="$color" fontSize={13} fontWeight="700">
+              <Paragraph color="$color" fontSize={fontSize} lineHeight={18}>
+                <Paragraph color="$color" fontSize={fontSize} fontWeight="700">
                   {teslimLabel}:{' '}
                 </Paragraph>
-                <Paragraph color="$color" fontSize={13} fontWeight="800">
+                <Paragraph color="$color" fontSize={fontSize} fontWeight="800">
                   {deliveryDay} kapında!
                 </Paragraph>
               </Paragraph>
               {hasWarning && warning?.message ? (
-                <Paragraph color="$yellow11" fontSize={12} lineHeight={16}>
+                <Paragraph color="$yellow11" fontSize={fontSize - 1} lineHeight={16}>
                   {warning.message}
                 </Paragraph>
               ) : null}

@@ -18,7 +18,7 @@ import { ProductVariant, Product } from '@/types/product.types';
 import { ProductDetailHeader } from '../components/product-detail-header';
 import { ProductCarousel } from '../components/product-carousel';
 import { ProductInfo } from '../components/product-info';
-import { ProductDeliveryInfo } from '../components/product-delivery-info';
+import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-estimate-info';
 import { ProductColorSelector } from '../components/product-color-selector';
 import { ProductSizeSelector } from '../components/product-size-selector';
 import { ProductSpecifications } from '../components/product-specifications';
@@ -244,8 +244,10 @@ export function ProductDetailScreen() {
             onQuestionsPress={openQuestions}
           />
 
-          {/* Delivery shipment boxes */}
-          <ProductDeliveryInfo />
+          {/* Delivery shipment box — driven by the /shipping-estimate API */}
+          <YStack marginHorizontal="$4" marginVertical="$2">
+            <ShippingEstimateInfo estimate={shippingQuery.data} variant="product" />
+          </YStack>
 
           {/* Background Loading Spinner for full properties */}
           {isPending && (
