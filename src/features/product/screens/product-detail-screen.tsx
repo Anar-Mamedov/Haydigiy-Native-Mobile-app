@@ -11,6 +11,7 @@ import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queri
 import { formatCurrency } from '@/utils/format-currency';
 import { SizeSelectionSheet } from '../components/size-selection-sheet';
 import { trackViewedProduct } from '@/utils/recently-viewed';
+import { extractProductCode } from '../utils/extract-product-code';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 import { ProductVariant, Product } from '@/types/product.types';
 
@@ -223,7 +224,7 @@ export function ProductDetailScreen() {
             isFavorite={isFavorite}
             onToggleFavorite={toggleFavorite}
             onVideoPress={() => setShowVideoModal(true)}
-            stockCode={displayData.stockCode}
+            productCode={extractProductCode(displayData.title)}
             videoPath={displayData.videoPath}
             productTitle={displayData.title}
             productSlug={displayData.slug}

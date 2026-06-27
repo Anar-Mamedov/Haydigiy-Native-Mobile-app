@@ -13,7 +13,8 @@ interface ProductCarouselProps {
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onVideoPress?: (videoUri: string) => void;
-  stockCode?: string;
+  /** Product code shown on the image badge — kept in sync with the title code. */
+  productCode?: string;
   videoPath?: string | null;
   productTitle?: string;
   productSlug?: string;
@@ -104,7 +105,7 @@ export function ProductCarousel({
   isFavorite,
   onToggleFavorite,
   onVideoPress,
-  stockCode,
+  productCode,
   videoPath,
   productTitle = '',
   productSlug = '',
@@ -281,7 +282,7 @@ export function ProductCarousel({
         />
 
         {/* Code tag (top right) */}
-        {stockCode ? (
+        {productCode ? (
           <XStack
             position="absolute"
             top={12}
@@ -293,7 +294,7 @@ export function ProductCarousel({
             zIndex={10}
           >
             <Paragraph color="white" fontSize={11} fontWeight="700">
-              {stockCode}
+              {productCode}
             </Paragraph>
           </XStack>
         ) : null}
