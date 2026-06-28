@@ -201,6 +201,8 @@ describe('ProductListScreen', () => {
     // Check if Sort Sheet elements render
     expect(screen.getByText('Sıralama')).toBeTruthy();
     expect(screen.getByText('Fiyata Göre Azalan')).toBeTruthy();
+    expect(screen.getByText('En çok satanlar')).toBeTruthy();
+    expect(screen.getByText('En çok favoriye eklenenler')).toBeTruthy();
   });
 
   it('opens filter sheet when filter button is pressed', () => {

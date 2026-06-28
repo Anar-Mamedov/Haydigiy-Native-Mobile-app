@@ -12,6 +12,8 @@ export const SORT_OPTIONS: SortOption[] = [
   { label: 'Fiyata Göre Artan', value: '4' },
   { label: 'Yeniden Eskiye', value: '5' },
   { label: 'Eskiden Yeniye', value: '6' },
+  { label: 'En çok satanlar', value: '9' },
+  { label: 'En çok favoriye eklenenler', value: '8' },
   { label: 'Önerilen Sıralama', value: '' },
 ];
 
