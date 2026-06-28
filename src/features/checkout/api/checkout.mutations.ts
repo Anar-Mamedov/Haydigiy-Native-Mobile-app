@@ -43,7 +43,7 @@ export function useValidateCouponMutation() {
     mutationFn: ({ couponCode, paymentMethodId, shippingPrice }) =>
       validateCouponDto({
         coupon_code: couponCode,
-        payment_method_id: paymentMethodId,
+        payment_method_id: String(paymentMethodId),
         shipping_price: shippingPrice,
       }),
   });

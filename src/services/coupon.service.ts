@@ -17,7 +17,7 @@ export async function getCouponsDto(): Promise<CouponListResponseDto> {
 export interface CouponValidateRequestDto {
   coupon_code: string;
   platform_id: 'mobile';
-  payment_method_id: string | number;
+  payment_method_id: string;
   shipping_price: number;
 }
 
