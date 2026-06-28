@@ -1,6 +1,12 @@
 import { useQuery, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { productKeys } from '@/features/product/api/product.keys';
-import { mapAvailableFilters, mapProductDto, mapSearchProductDto, mapProductDetailDto } from '@/features/product/api/product.mapper';
+import {
+  mapAvailableFilters,
+  mapProductDetailDto,
+  mapProductDto,
+  mapSearchProductDto,
+  mergeProductDetailReviewPage,
+} from '@/features/product/api/product.mapper';
 import {
   getProductByIdDto,
   listFeaturedProductDtos,
@@ -10,7 +16,9 @@ import {
   getProductDetailBySlug,
   getCurrentSlugById,
   getProductReviews,
+  getProductReviewPageDto,
 } from '@/services/product.service';
+import { Product } from '@/types/product.types';
 
 export function useFeaturedProductsQuery() {
   return useQuery({
@@ -94,9 +102,23 @@ export function useProductDetailsQuery(idOrSlug: string) {
       }
       
       const rawDetail = await getProductDetailBySlug(slug);
-      return mapProductDetailDto(rawDetail);
+      const product = mapProductDetailDto(rawDetail);
+      return hydrateProductDetailReviews(slug, product);
     },
   });
+}
+
+async function hydrateProductDetailReviews(slug: string, product: Product): Promise<Product> {
+  const hasReviews = product.reviewCount > 0 || (product.reviews?.length ?? 0) > 0;
+  if (!hasReviews) return product;
+
+  try {
+    const reviewPage = await getProductReviewPageDto(slug);
+    return mergeProductDetailReviewPage(product, reviewPage);
+  } catch (error) {
+    console.warn('Failed to hydrate product detail reviews:', error);
+    return product;
+  }
 }
 
 export function useProductReviewsQuery(slug: string) {

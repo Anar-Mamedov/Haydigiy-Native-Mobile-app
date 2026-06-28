@@ -119,6 +119,10 @@ export function ProductReviewsScreen() {
     const index = photoReviews.findIndex((item) => item.id === review.id);
     setGalleryIndex(index >= 0 ? index : 0);
   };
+  const handleGalleryAddToCartPress = () => {
+    setGalleryIndex(null);
+    handleAddToCartPress();
+  };
 
   const total = query.data?.summary.total ?? 0;
   const title = total > 0 ? `Ürün Değerlendirmeleri (${total})` : 'Ürün Değerlendirmeleri';
@@ -243,9 +247,11 @@ export function ProductReviewsScreen() {
       {galleryIndex !== null ? (
         <ReviewPhotoGallery
           initialIndex={galleryIndex}
+          onAddToCartPress={handleGalleryAddToCartPress}
           onClose={() => setGalleryIndex(null)}
           open
           photos={photoReviews}
+          product={query.data.product}
         />
       ) : null}
     </AppScreen>

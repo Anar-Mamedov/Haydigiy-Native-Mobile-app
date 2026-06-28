@@ -1,4 +1,5 @@
 import React from 'react';
+import { Image } from 'expo-image';
 import { Star, Camera, ChevronDown } from '@tamagui/lucide-icons-2';
 import { XStack, YStack, Paragraph, Button, useThemeName } from 'tamagui';
 import { ScrollView, Dimensions, Pressable } from 'react-native';
@@ -152,6 +153,31 @@ export function ProductReviewsSection({
                   <Paragraph fontSize={13} color="$color11" lineHeight={18} numberOfLines={5}>
                     {review.comment}
                   </Paragraph>
+
+                  {review.photo ? (
+                    <Pressable
+                      accessibilityLabel="Degerlendirme fotografini ac"
+                      accessibilityRole="button"
+                      disabled={!onReviewsPress}
+                      onPress={onReviewsPress}
+                    >
+                      <YStack
+                        borderColor="$borderColor"
+                        borderRadius={8}
+                        borderWidth={1}
+                        height={64}
+                        overflow="hidden"
+                        width={64}
+                      >
+                        <Image
+                          contentFit="cover"
+                          source={{ uri: review.photo }}
+                          style={{ height: '100%', width: '100%' }}
+                          testID={`product-review-photo-${review.id}`}
+                        />
+                      </YStack>
+                    </Pressable>
+                  ) : null}
                 </YStack>
 
                 {/* Card Footer Metadata */}

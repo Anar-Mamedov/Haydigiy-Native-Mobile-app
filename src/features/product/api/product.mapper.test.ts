@@ -1,4 +1,9 @@
-import { mapAvailableFilters, mapSearchProductDto } from './product.mapper';
+import {
+  mapAvailableFilters,
+  mapProductDetailDto,
+  mapSearchProductDto,
+  mergeProductDetailReviewPage,
+} from './product.mapper';
 import { SearchProductDto } from './product.dtos';
 
 const baseProductDto: SearchProductDto = {
@@ -69,6 +74,78 @@ describe('mapSearchProductDto', () => {
         imageUrl: 'https://cdn.example.com/storage/products/medium/navy.webp',
       }),
     ]);
+  });
+});
+
+describe('mapProductDetailDto', () => {
+  it('maps review photos for the product detail comments carousel', () => {
+    const product = mapProductDetailDto({
+      id: 80872,
+      name: 'Keten Gorunumlu Etek Pantolon Siyah',
+      slug: 'keten-gorunumlu-etek-pantolon-siyah-80872',
+      price: 219.99,
+      reviews: [
+        {
+          id: 1,
+          user_name: 'T***e U***r',
+          rating: 3,
+          comment: 'Urun gercekten guzel',
+          photo: 'https://cdn.example.com/storage/reviews/photo.webp',
+          created_at: '2026-05-24T00:00:00Z',
+        },
+      ],
+    });
+
+    expect(product.reviews?.[0]).toMatchObject({
+      id: '1',
+      rating: 3,
+      comment: 'Urun gercekten guzel',
+      photo: 'https://cdn.example.com/storage/reviews/photo.webp',
+      userName: 'T***e U***r',
+      createdAt: '2026-05-24T00:00:00Z',
+    });
+  });
+
+  it('replaces embedded detail reviews with photo-capable review page data', () => {
+    const product = mapProductDetailDto({
+      id: 80872,
+      name: 'Keten Gorunumlu Etek Pantolon Siyah',
+      slug: 'keten-gorunumlu-etek-pantolon-siyah-80872',
+      price: 219.99,
+      reviews: [
+        {
+          id: 1,
+          user_name: 'T***e U***r',
+          rating: 3,
+          comment: 'Urun gercekten guzel',
+          created_at: '2026-05-24T00:00:00Z',
+        },
+      ],
+    });
+
+    const hydrated = mergeProductDetailReviewPage(product, {
+      review_summary: { average: 4.3, total: 3, stars: { 1: 0, 2: 0, 3: 1, 4: 1, 5: 1 }, with_photos: 1 },
+      reviews: {
+        data: [
+          {
+            id: 1,
+            user_name: 'T***e U***r',
+            rating: 3,
+            comment: 'Urun gercekten guzel',
+            photo: 'https://cdn.example.com/storage/reviews/photo.webp',
+            created_at: '2026-05-24T00:00:00Z',
+            height: null,
+            weight: null,
+            size: null,
+            like_count: null,
+          },
+        ],
+      },
+    });
+
+    expect(hydrated.rating).toBe(4.3);
+    expect(hydrated.reviewCount).toBe(3);
+    expect(hydrated.reviews?.[0].photo).toBe('https://cdn.example.com/storage/reviews/photo.webp');
   });
 });
 

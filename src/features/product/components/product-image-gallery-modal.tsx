@@ -19,7 +19,11 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { Image } from 'expo-image';
 import { X } from '@tamagui/lucide-icons-2';
 import { Button, Paragraph, useTheme, XStack, YStack } from 'tamagui';
-import { clampGalleryZoomValue, getFocusedZoomTranslate } from '../utils/product-image-gallery-zoom';
+import {
+  clampGalleryZoomValue,
+  getFocusedZoomTranslate,
+  getPinchZoomTranslate,
+} from '../utils/product-image-gallery-zoom';
 
 const MAX_ZOOM_SCALE = 4;
 const DOUBLE_TAP_SCALE = 2.4;
@@ -120,7 +124,22 @@ function ZoomableProductImage({
   const pinchGesture = Gesture.Pinch()
     .enabled(isActive)
     .onUpdate((event) => {
-      scale.value = clampGalleryZoomValue(savedScale.value * event.scale, 1, MAX_ZOOM_SCALE);
+      const nextScale = clampGalleryZoomValue(savedScale.value * event.scale, 1, MAX_ZOOM_SCALE);
+      scale.value = nextScale;
+      translateX.value = getPinchZoomTranslate(
+        width,
+        event.focalX,
+        savedScale.value,
+        nextScale,
+        savedTranslateX.value,
+      );
+      translateY.value = getPinchZoomTranslate(
+        height,
+        event.focalY,
+        savedScale.value,
+        nextScale,
+        savedTranslateY.value,
+      );
     })
     .onEnd(() => {
       if (scale.value <= ZOOMED_THRESHOLD) {
@@ -135,6 +154,8 @@ function ZoomableProductImage({
       }
 
       savedScale.value = scale.value;
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
       runOnJS(onZoomChange)(true);
     });
 

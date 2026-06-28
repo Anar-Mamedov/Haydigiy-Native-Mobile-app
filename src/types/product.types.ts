@@ -64,6 +64,7 @@ export type ProductReview = {
   id: string;
   rating: number;
   comment: string;
+  photo?: string | null;
   userName: string;
   userSurname?: string;
   createdAt: string;

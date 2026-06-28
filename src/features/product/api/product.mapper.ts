@@ -1,6 +1,7 @@
 import { ProductDto, SearchProductColorDto, SearchProductDto, SearchProductsResponseDto } from '@/features/product/api/product.dtos';
 import { getRequiredApiBaseUrl } from '@/lib/env';
-import { Product, ProductAvailableFilters, ProductSize, FeatureIcon } from '@/types/product.types';
+import { Product, ProductAvailableFilters, ProductReview, ProductSize, FeatureIcon } from '@/types/product.types';
+import { ProductReviewDto, ProductReviewPageDto } from './product-reviews.dtos';
 
 function getImageUrl(path: string | null | undefined): string {
   if (!path) return '';
@@ -18,6 +19,11 @@ function getImageUrl(path: string | null | undefined): string {
   } catch {
     return '';
   }
+}
+
+function getOptionalImageUrl(path: string | null | undefined): string | null {
+  const imageUrl = getImageUrl(path);
+  return imageUrl || null;
 }
 
 function parseSafely(value: any, fallback = 0): number {
@@ -135,6 +141,35 @@ export function mapProductDto(dto: ProductDto): Product {
     shippingLabel: dto.shipping_label,
     slug: dto.slug,
     title: dto.title,
+  };
+}
+
+export function mapProductDetailReviewDto(review: Partial<ProductReviewDto> & {
+  user?: { name?: string; surname?: string };
+}): ProductReview {
+  return {
+    id: String(review.id),
+    rating: parseSafely(review.rating, 5),
+    comment: review.comment || '',
+    photo: getOptionalImageUrl(review.photo),
+    userName: review.user_name || review.user?.name || 'Kullanıcı',
+    userSurname: review.user?.surname,
+    createdAt: review.created_at || '',
+  };
+}
+
+export function mergeProductDetailReviewPage(
+  product: Product,
+  reviewPage: ProductReviewPageDto | null | undefined,
+): Product {
+  const reviewDtos = reviewPage?.reviews?.data;
+  if (!Array.isArray(reviewDtos) || reviewDtos.length === 0) return product;
+
+  return {
+    ...product,
+    rating: parseSafely(reviewPage?.review_summary?.average, product.rating),
+    reviewCount: parseSafely(reviewPage?.review_summary?.total, product.reviewCount),
+    reviews: reviewDtos.map(mapProductDetailReviewDto),
   };
 }
 
@@ -295,14 +330,7 @@ export function mapProductDetailDto(dto: any): Product {
     : [];
 
   const reviewsMapped = Array.isArray(dto.reviews)
-    ? dto.reviews.map((r: any) => ({
-        id: String(r.id),
-        rating: parseSafely(r.rating, 5),
-        comment: r.comment || '',
-        userName: r.user_name || r.user?.name || 'Kullanıcı',
-        userSurname: r.user?.surname,
-        createdAt: r.created_at || '',
-      }))
+    ? dto.reviews.map(mapProductDetailReviewDto)
     : [];
 
   const questionsMapped = Array.isArray(dto.questions)
