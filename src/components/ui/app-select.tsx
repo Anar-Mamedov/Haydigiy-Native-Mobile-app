@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useWindowDimensions } from 'react-native';
+import { Keyboard, useWindowDimensions } from 'react-native';
 import { Check, ChevronDown, Search } from '@tamagui/lucide-icons-2';
 import { Input, Paragraph, ScrollView, Sheet, Spinner, XStack, YStack } from 'tamagui';
 import { matchesSearch } from '@/utils/search';
@@ -48,6 +48,7 @@ export function AppSelect({
   }, [searchable, query, options]);
 
   const changeOpen = (next: boolean) => {
+    if (next) Keyboard.dismiss();
     setOpen(next);
     if (!next) setQuery('');
   };
