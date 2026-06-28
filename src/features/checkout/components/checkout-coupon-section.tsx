@@ -1,10 +1,12 @@
 import { Pressable } from 'react-native';
 import { Input, Paragraph, XStack, YStack } from 'tamagui';
 import { CheckoutSection } from './checkout-section';
-import { AppButton } from '@/components/ui';
+import { AppButton } from '@/components/ui/app-button';
 import { formatCurrency } from '@/utils/format-currency';
 import { AppliedCoupon } from '@/types/checkout.types';
 import { Coupon } from '@/types/coupon.types';
+
+const COUPON_INPUT_PLACEHOLDER = 'Kupon Kodu (Zorunlu Değildir)';
 
 interface CheckoutCouponSectionProps {
   couponInput: string;
@@ -17,6 +19,49 @@ interface CheckoutCouponSectionProps {
   isRemovingCoupon: boolean;
   coupons: Coupon[];
   isCouponsLoading: boolean;
+}
+
+interface CouponCodeInputProps {
+  value: string;
+  onChangeText: (value: string) => void;
+}
+
+function CouponCodeInput({ value, onChangeText }: CouponCodeInputProps) {
+  return (
+    <XStack flex={1} position="relative">
+      <Input
+        accessibilityLabel="Kupon kodu"
+        autoCapitalize="characters"
+        backgroundColor="$background"
+        borderColor="$borderColor"
+        flex={1}
+        height={44}
+        multiline={false}
+        numberOfLines={1}
+        onChangeText={onChangeText}
+        placeholder=""
+        value={value}
+      />
+      {!value ? (
+        <XStack
+          accessibilityElementsHidden
+          accessible={false}
+          alignItems="center"
+          bottom={0}
+          importantForAccessibility="no-hide-descendants"
+          left="$3"
+          pointerEvents="none"
+          position="absolute"
+          right="$3"
+          top={0}
+        >
+          <Paragraph color="$color10" ellipsizeMode="tail" fontSize="$4" numberOfLines={1}>
+            {COUPON_INPUT_PLACEHOLDER}
+          </Paragraph>
+        </XStack>
+      ) : null}
+    </XStack>
+  );
 }
 
 function discountTypeText(coupon: AppliedCoupon): string {
@@ -73,17 +118,7 @@ export function CheckoutCouponSection({
           </XStack>
         ) : (
           <XStack gap="$2">
-            <Input
-              accessibilityLabel="Kupon kodu"
-              autoCapitalize="characters"
-              backgroundColor="$background"
-              borderColor="$borderColor"
-              flex={1}
-              height={44}
-              onChangeText={onCouponInputChange}
-              placeholder="Kupon Kodu (Zorunlu Değildir)"
-              value={couponInput}
-            />
+            <CouponCodeInput onChangeText={onCouponInputChange} value={couponInput} />
             <AppButton
               backgroundColor="$brand"
               color="white"

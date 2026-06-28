@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Paragraph, Separator, XStack, YStack } from 'tamagui';
-import { SectionCard } from '@/components/ui';
+import { SectionCard } from '@/components/ui/section-card';
 
 interface CheckoutSectionProps {
   title: string;
