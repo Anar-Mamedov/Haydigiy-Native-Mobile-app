@@ -87,6 +87,14 @@ export type SimilarProduct = {
   hasStock: boolean;
 };
 
+export type PopularProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+  price: number | null;
+};
+
 export type ProductVariant = {
   id: string;
   name: string;
@@ -137,14 +145,14 @@ export type Product = {
   sizes?: ProductSize[];
   hasStock?: boolean;
   images?: string[];
-  otherColors?: Array<{
+  otherColors?: {
     id: string;
     name: string;
     slug: string;
     imageUrl: string;
     price: number;
     isStock?: boolean;
-  }>;
+  }[];
   videoPath?: string | null;
   featureIcons?: FeatureIcon[];
   variants?: ProductVariant[];
@@ -156,8 +164,7 @@ export type Product = {
   favoritesCount?: number;
   totalQuantity?: number;
   isApprovedForSale?: boolean;
-  properties?: Array<{ name: string; value: string }>;
+  properties?: { name: string; value: string }[];
   model?: ProductModel | null;
   variantOnModel?: ProductVariantOnModel | null;
 };
-

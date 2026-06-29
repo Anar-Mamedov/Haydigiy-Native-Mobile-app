@@ -6,7 +6,8 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 
 import { AppScreen } from '@/components/ui';
-import { useSearchSuggestionsQuery } from '@/features/product/api/product.queries';
+import { usePopularProductsQuery, useSearchSuggestionsQuery } from '@/features/product/api/product.queries';
+import { PopularProductsSection } from '@/features/product/components/popular-products-section';
 import { formatCurrency } from '@/utils/format-currency';
 import {
   getSearchHistory,
@@ -27,6 +28,7 @@ export function SearchSuggestionsScreen() {
   // Local storage states
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [viewedProducts, setViewedProducts] = useState<ViewedProduct[]>([]);
+  const showSuggestions = query.trim().length >= 3;
 
   // Debounce the query for mobile (500ms debounce feels snappier than web's 1500ms but still prevents server overload)
   useEffect(() => {
@@ -50,6 +52,13 @@ export function SearchSuggestionsScreen() {
   );
 
   const { data: suggestions, isPending: isSuggestionsLoading } = useSearchSuggestionsQuery(debouncedQuery);
+  const {
+    data: popularProducts = [],
+    isError: isPopularProductsError,
+    isPending: isPopularProductsLoading,
+    isSuccess: isPopularProductsSuccess,
+    refetch: refetchPopularProducts,
+  } = usePopularProductsQuery(!showSuggestions);
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -97,8 +106,6 @@ export function SearchSuggestionsScreen() {
       params: { c: String(id) },
     } as any);
   };
-
-  const showSuggestions = query.trim().length >= 3;
 
   // Custom Navigation Header containing the Input box
   const customHeader = (
@@ -329,6 +336,17 @@ export function SearchSuggestionsScreen() {
                 </Paragraph>
               )}
             </YStack>
+
+            <PopularProductsSection
+              isEmpty={isPopularProductsSuccess && popularProducts.length === 0}
+              isError={isPopularProductsError}
+              isLoading={isPopularProductsLoading}
+              onProductPress={(product) => handleProductPress(product.slug)}
+              onRetry={() => {
+                void refetchPopularProducts();
+              }}
+              products={popularProducts}
+            />
 
             {/* Recently Viewed Products Section */}
             <YStack paddingTop="$5" gap="$2">

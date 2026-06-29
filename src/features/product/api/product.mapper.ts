@@ -1,6 +1,13 @@
-import { ProductDto, SearchProductColorDto, SearchProductDto, SearchProductsResponseDto } from '@/features/product/api/product.dtos';
+import {
+  PopularProductDto,
+  ProductDto,
+  SearchProductColorDto,
+  SearchProductDto,
+  SearchProductsResponseDto,
+} from '@/features/product/api/product.dtos';
 import { getRequiredApiBaseUrl } from '@/lib/env';
-import { Product, ProductAvailableFilters, ProductReview, ProductSize, FeatureIcon } from '@/types/product.types';
+import { Product, ProductAvailableFilters, ProductReview, ProductSize, FeatureIcon, PopularProduct } from '@/types/product.types';
+import { resolveCdnUrl } from '@/utils/cdn';
 import { ProductReviewDto, ProductReviewPageDto } from './product-reviews.dtos';
 
 function getImageUrl(path: string | null | undefined): string {
@@ -39,7 +46,7 @@ function toMediumImagePath(path: string | null | undefined): string | null {
   return path.replace(/\/(large|thumb)\//, '/medium/');
 }
 
-function resolveMediumImagePath(...paths: Array<string | null | undefined>): string | null {
+function resolveMediumImagePath(...paths: (string | null | undefined)[]): string | null {
   for (const path of paths) {
     const mediumPath = toMediumImagePath(path);
     if (mediumPath) return mediumPath;
@@ -141,6 +148,16 @@ export function mapProductDto(dto: ProductDto): Product {
     shippingLabel: dto.shipping_label,
     slug: dto.slug,
     title: dto.title,
+  };
+}
+
+export function mapPopularProductDto(dto: PopularProductDto): PopularProduct {
+  return {
+    id: String(dto.id),
+    name: dto.name,
+    slug: dto.slug,
+    imageUrl: resolveCdnUrl(dto.image),
+    price: dto.price,
   };
 }
 
@@ -423,4 +440,3 @@ export function mapProductDetailDto(dto: any): Product {
     } : null,
   };
 }
-

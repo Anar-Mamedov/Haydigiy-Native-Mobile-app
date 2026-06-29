@@ -2,6 +2,7 @@ import { useQuery, useInfiniteQuery, keepPreviousData } from '@tanstack/react-qu
 import { productKeys } from '@/features/product/api/product.keys';
 import {
   mapAvailableFilters,
+  mapPopularProductDto,
   mapProductDetailDto,
   mapProductDto,
   mapSearchProductDto,
@@ -18,6 +19,7 @@ import {
   getProductReviews,
   getProductReviewPageDto,
 } from '@/services/product.service';
+import { listPopularProductDtos } from '@/services/popular-products.service';
 import { Product } from '@/types/product.types';
 
 export function useFeaturedProductsQuery() {
@@ -82,6 +84,18 @@ export function useSearchSuggestionsQuery(query: string) {
   });
 }
 
+export function usePopularProductsQuery(enabled = true) {
+  return useQuery({
+    enabled,
+    queryFn: async () => {
+      const dtos = await listPopularProductDtos();
+      return dtos.map(mapPopularProductDto);
+    },
+    queryKey: productKeys.popular(),
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
 export function useProductDetailsQuery(idOrSlug: string) {
   return useQuery({
     enabled: Boolean(idOrSlug),
@@ -131,4 +145,3 @@ export function useProductReviewsQuery(slug: string) {
     },
   });
 }
-

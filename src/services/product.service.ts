@@ -1,4 +1,4 @@
-import { ProductDto, SearchProductDto, SearchProductsResponseDto, SearchSuggestionsResponseDto } from '@/features/product/api/product.dtos';
+import { ProductDto, SearchProductsResponseDto, SearchSuggestionsResponseDto } from '@/features/product/api/product.dtos';
 import { mockProductDtos } from '@/features/product/data/mock-product-dtos';
 import { apiClient } from '@/lib/axios';
 import { appEnv, getRequiredApiBaseUrl } from '@/lib/env';

@@ -3,6 +3,6 @@ export const productKeys = {
   detail: (productId: string) => [...productKeys.all, 'detail', productId] as const,
   featured: () => [...productKeys.all, 'featured'] as const,
   list: (filters: Record<string, any>) => [...productKeys.all, 'list', filters] as const,
+  popular: () => [...productKeys.all, 'popular'] as const,
   suggestions: (query: string) => [...productKeys.all, 'suggestions', query] as const,
 };
-

@@ -77,27 +77,27 @@ export interface SearchProductDto {
   badge?: string;
   seller_name?: string;
   description_text?: string;
-  stock_variants?: Array<{
+  stock_variants?: {
     id: number;
     name: string;
     quantity: string | number;
     price: number;
-  }>;
+  }[];
   variant_names?: string[];
-  variants?: Array<{
+  variants?: {
     id: number;
     name: string;
     parent_id?: number;
     name_2?: string | null;
-  }>;
-  medias?: Array<{
+  }[];
+  medias?: {
     id: number;
     thumb?: string;
     medium?: string;
     large?: string;
-  }>;
-  other_colors?: Array<SearchProductColorDto> | {
-    data?: Array<SearchProductColorDto>;
+  }[];
+  other_colors?: SearchProductColorDto[] | {
+    data?: SearchProductColorDto[];
     total_count?: number;
   };
   video_path?: string | null;
@@ -119,15 +119,15 @@ export interface SearchProductsResponseDto {
     description: string;
     seo_title: string;
     seo_description: string;
-    children?: Array<{
+    children?: {
       id: number;
       parent_id: number;
       name: string;
       slug: string;
-    }>;
+    }[];
   };
   available_filters?: {
-    colors?: Array<{
+    colors?: {
       id: number;
       name: string;
       hex: string | null;
@@ -137,25 +137,25 @@ export interface SearchProductsResponseDto {
         medium?: string;
         large?: string;
       };
-    }>;
-    variants?: Array<{ id: number; name: string; parent_id: number; product_count?: number }>;
-    properties?: Array<{
+    }[];
+    variants?: { id: number; name: string; parent_id: number; product_count?: number }[];
+    properties?: {
       id: number;
       name: string;
       parent_id: number | null;
       parent_name: string | null;
       product_count?: number;
-    }>;
+    }[];
     price_range?: { min: number; max: number };
-    price_ranges?: Array<{ label: string; min: number; max: number | null }>;
-    product_categories?: Array<{
+    price_ranges?: { label: string; min: number; max: number | null }[];
+    product_categories?: {
       id: number;
       name: string;
       slug: string;
       product_count?: number;
       parent_id?: number | null;
-    }>;
-    category_children?: Array<{ id: number; name: string; slug: string; parent_id?: number | null }>;
+    }[];
+    category_children?: { id: number; name: string; slug: string; parent_id?: number | null }[];
     use_product_category_filters?: boolean;
   };
   total?: number;
@@ -180,4 +180,12 @@ export interface SearchSuggestionCategoryDto {
 export interface SearchSuggestionsResponseDto {
   products: SearchSuggestionProductDto[];
   categories: SearchSuggestionCategoryDto[];
+}
+
+export interface PopularProductDto {
+  id: number;
+  name: string;
+  slug: string;
+  image: string | null;
+  price: number | null;
 }

@@ -1,5 +1,6 @@
 import {
   mapAvailableFilters,
+  mapPopularProductDto,
   mapProductDetailDto,
   mapSearchProductDto,
   mergeProductDetailReviewPage,
@@ -74,6 +75,26 @@ describe('mapSearchProductDto', () => {
         imageUrl: 'https://cdn.example.com/storage/products/medium/navy.webp',
       }),
     ]);
+  });
+});
+
+describe('mapPopularProductDto', () => {
+  it('maps popular product DTOs into the mobile search card model', () => {
+    expect(
+      mapPopularProductDto({
+        id: 89651,
+        name: 'Penye Tasli Tisort Siyah',
+        slug: 'penye-tasli-tisort-siyah-75201701',
+        image: 'https://cdn.example.com/product.webp',
+        price: 129.99,
+      }),
+    ).toEqual({
+      id: '89651',
+      name: 'Penye Tasli Tisort Siyah',
+      slug: 'penye-tasli-tisort-siyah-75201701',
+      imageUrl: 'https://cdn.example.com/product.webp',
+      price: 129.99,
+    });
   });
 });
 
