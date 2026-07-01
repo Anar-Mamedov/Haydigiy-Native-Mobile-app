@@ -1,3 +1,4 @@
+import '@tamagui/native/setup-keyboard-controller';
 import { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';

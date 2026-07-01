@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { useSavedAddressesQuery } from '../api/return.queries';
 import {
   useCancelHepsijetDeliveryMutation,
@@ -36,8 +37,8 @@ export function formatPickupDate(iso: string): string {
 /**
  * Orchestrates the Hepsijet scheduled-return (home pickup) flow: choosing a saved
  * address, fetching bookable days for it, and creating / cancelling the courier
- * pickup. New addresses are added via the full-screen AddressAddModal, then the
- * saved list is refetched here.
+ * pickup. New addresses are added via the shared full-screen address form route;
+ * this hook refetches the saved list when the return screen regains focus.
  */
 export function useScheduledReturn(order: OrderDetail | null, enabled: boolean) {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -62,6 +63,15 @@ export function useScheduledReturn(order: OrderDetail | null, enabled: boolean) 
   const cancelMutation = useCancelHepsijetDeliveryMutation();
 
   const savedAddresses = useMemo(() => addressesQuery.data ?? [], [addressesQuery.data]);
+
+  const refetchAddresses = addressesQuery.refetch;
+  useFocusEffect(
+    useCallback(() => {
+      if (enabled) {
+        refetchAddresses();
+      }
+    }, [enabled, refetchAddresses]),
+  );
 
   const dateOptions = useMemo(() => {
     const options: { label: string; value: string }[] = [];
@@ -196,7 +206,7 @@ export function useScheduledReturn(order: OrderDetail | null, enabled: boolean) 
     cancelPickup,
     pickupSubmitting: sendMutation.isPending,
     canSchedule: Boolean(resolvedAddress) && Boolean(selectedDate),
-    refetchAddresses: addressesQuery.refetch,
+    refetchAddresses,
   };
 }
 

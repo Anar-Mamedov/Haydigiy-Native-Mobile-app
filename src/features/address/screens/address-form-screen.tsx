@@ -1,13 +1,15 @@
 import { useCallback, useMemo } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Spinner, YStack } from 'tamagui';
-import { AppScreen, EmptyState, ScreenHeader } from '@/components/ui';
+import { AppScreen, EmptyState, KeyboardAwareFormScrollView, ScreenHeader } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { extractTurkishNationalNumber } from '@/utils/turkish-phone';
 import { AddressFormValues } from '@/types/address.types';
 import { useAddressQuery } from '../api/address.queries';
 import { AddressForm, EMPTY_ADDRESS_VALUES } from '../components/address-form';
+
+const ADDRESS_FORM_KEYBOARD_BOTTOM_OFFSET = 96;
 
 /** Add/edit address screen. Edit mode is selected by the `id` route param. */
 export function AddressFormScreen() {
@@ -97,13 +99,19 @@ export function AddressFormScreen() {
   }
 
   return (
-    <AppScreen header={header}>
-      <AddressForm
-        addressId={id}
-        initialValues={isEdit ? (detailQuery.data ?? undefined) : createDefaults}
-        mode={isEdit ? 'edit' : 'create'}
-        onSuccess={handleBack}
-      />
+    <AppScreen gap={0} header={header} padding={0} scrollable={false}>
+      <KeyboardAwareFormScrollView
+        bottomOffset={ADDRESS_FORM_KEYBOARD_BOTTOM_OFFSET}
+        contentContainerStyle={{ flexGrow: 1, padding: 16 }}
+        testID="address-form-keyboard-aware-scroll"
+      >
+        <AddressForm
+          addressId={id}
+          initialValues={isEdit ? (detailQuery.data ?? undefined) : createDefaults}
+          mode={isEdit ? 'edit' : 'create'}
+          onSuccess={handleBack}
+        />
+      </KeyboardAwareFormScrollView>
     </AppScreen>
   );
 }

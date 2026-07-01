@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Paragraph, Sheet, XStack, YStack } from 'tamagui';
-import { AppCheckbox, AppInput } from '@/components/ui';
+import { AppCheckbox, AppInput, KeyboardAwareSheetScrollView } from '@/components/ui';
 import { useAddPaymentMethodMutation } from '../api/return.mutations';
 import { formatIbanInput, getIbanDigits, isValidIban, normalizeIban } from '@/utils/iban';
 import { getReturnErrorMessage } from '@/services/return.service';
@@ -11,13 +12,17 @@ type Props = {
   onSuccess: () => void;
 };
 
+const BOTTOM_TAB_BAR_COVER_HEIGHT = 64;
+
 /** Adds a new refund IBAN (`POST /payment-methods`) from within the return flow. */
 export function NewIbanModal({ open, onClose, onSuccess }: Props) {
+  const insets = useSafeAreaInsets();
   const [iban, setIban] = useState('');
   const [ibanName, setIbanName] = useState('');
   const [isDefault, setIsDefault] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const addMutation = useAddPaymentMethodMutation();
+  const bottomCoverHeight = BOTTOM_TAB_BAR_COVER_HEIGHT + insets.bottom;
 
   const reset = () => {
     setIban('');
@@ -61,82 +66,108 @@ export function NewIbanModal({ open, onClose, onSuccess }: Props) {
       modal
       onOpenChange={(next: boolean) => !next && handleClose()}
       open={open}
+      moveOnKeyboardChange
       snapPointsMode="fit"
     >
-      <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
-      <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
-        <YStack gap="$3" padding="$5">
-          <Paragraph color="$color" fontSize={17} fontWeight="800">
-            Yeni IBAN Ekle
-          </Paragraph>
-          <AppInput
-            autoCapitalize="characters"
-            helperText="Boşluklar otomatik olarak eklenecektir."
-            keyboardType="number-pad"
-            label="IBAN *"
-            onChangeText={(text) => {
-              setIban(getIbanDigits(text));
-              setError(null);
-            }}
-            placeholder="TR00 0000 0000 0000 0000 0000 00"
-            value={formatIbanInput(iban)}
-          />
-          <AppInput
-            label="IBAN Sahibi Adı *"
-            maxLength={100}
-            onChangeText={(text) => {
-              setIbanName(text);
-              setError(null);
-            }}
-            placeholder="Ad Soyad"
-            value={ibanName}
-          />
-          <AppCheckbox
-            accessibilityLabel="Varsayılan IBAN yap"
-            checked={isDefault}
-            onChange={() => setIsDefault((prev) => !prev)}
-          >
-            <Paragraph color="$color" fontSize={13}>
-              Varsayılan IBAN yap
+      <Sheet.Overlay
+        backgroundColor="rgba(0, 0, 0, 0.48)"
+        enterStyle={{ opacity: 0 }}
+        exitStyle={{ opacity: 0 }}
+      />
+      <Sheet.Frame
+        adjustPaddingForOffscreenContent
+        backgroundColor="$background"
+        borderBottomLeftRadius={0}
+        borderBottomRightRadius={0}
+        borderTopLeftRadius="$6"
+        borderTopRightRadius="$6"
+        maxHeight="92%"
+        overflow="visible"
+      >
+        <YStack
+          backgroundColor="$background"
+          bottom={-bottomCoverHeight}
+          height={bottomCoverHeight}
+          left={0}
+          pointerEvents="none"
+          position="absolute"
+          right={0}
+          testID="new-iban-sheet-bottom-cover"
+        />
+        <KeyboardAwareSheetScrollView testID="new-iban-keyboard-aware-scroll">
+          <YStack gap="$3" padding="$5">
+            <Paragraph color="$color" fontSize={17} fontWeight="800">
+              Yeni IBAN Ekle
             </Paragraph>
-          </AppCheckbox>
-          {error ? (
-            <Paragraph color="$red10" fontSize={12}>
-              {error}
-            </Paragraph>
-          ) : null}
-          <XStack gap="$3" paddingTop="$1">
-            <Button
-              backgroundColor="$background"
-              borderColor="$borderColor"
-              borderRadius="$4"
-              borderWidth={1}
-              disabled={addMutation.isPending}
-              flex={1}
-              height={46}
-              onPress={handleClose}
-              pressStyle={{ backgroundColor: '$backgroundHover' }}
+            <AppInput
+              autoCapitalize="characters"
+              helperText="Boşluklar otomatik olarak eklenecektir."
+              keyboardType="number-pad"
+              label="IBAN *"
+              onChangeText={(text) => {
+                setIban(getIbanDigits(text));
+                setError(null);
+              }}
+              placeholder="TR00 0000 0000 0000 0000 0000 00"
+              value={formatIbanInput(iban)}
+            />
+            <AppInput
+              label="IBAN Sahibi Adı *"
+              maxLength={100}
+              onChangeText={(text) => {
+                setIbanName(text);
+                setError(null);
+              }}
+              placeholder="Ad Soyad"
+              value={ibanName}
+            />
+            <AppCheckbox
+              accessibilityLabel="Varsayılan IBAN yap"
+              checked={isDefault}
+              onChange={() => setIsDefault((prev) => !prev)}
             >
-              <Paragraph color="$color" fontWeight="600">
-                Vazgeç
+              <Paragraph color="$color" fontSize={13}>
+                Varsayılan IBAN yap
               </Paragraph>
-            </Button>
-            <Button
-              backgroundColor="$brand"
-              borderRadius="$4"
-              disabled={addMutation.isPending}
-              flex={1}
-              height={46}
-              onPress={handleSubmit}
-              opacity={addMutation.isPending ? 0.7 : 1}
-              pressStyle={{ opacity: 0.85 }}
-            >
-              <Paragraph color="white" fontWeight="700">
-                {addMutation.isPending ? 'Ekleniyor...' : 'Kaydet'}
+            </AppCheckbox>
+            {error ? (
+              <Paragraph color="$red10" fontSize={12}>
+                {error}
               </Paragraph>
-            </Button>
-          </XStack>
-        </YStack>
+            ) : null}
+            <XStack gap="$3" paddingTop="$1">
+              <Button
+                backgroundColor="$background"
+                borderColor="$borderColor"
+                borderRadius="$4"
+                borderWidth={1}
+                disabled={addMutation.isPending}
+                flex={1}
+                height={46}
+                onPress={handleClose}
+                pressStyle={{ backgroundColor: '$backgroundHover' }}
+              >
+                <Paragraph color="$color" fontWeight="600">
+                  Vazgeç
+                </Paragraph>
+              </Button>
+              <Button
+                backgroundColor="$brand"
+                borderRadius="$4"
+                disabled={addMutation.isPending}
+                flex={1}
+                height={46}
+                onPress={handleSubmit}
+                opacity={addMutation.isPending ? 0.7 : 1}
+                pressStyle={{ opacity: 0.85 }}
+              >
+                <Paragraph color="white" fontWeight="700">
+                  {addMutation.isPending ? 'Ekleniyor...' : 'Kaydet'}
+                </Paragraph>
+              </Button>
+            </XStack>
+          </YStack>
+        </KeyboardAwareSheetScrollView>
       </Sheet.Frame>
     </Sheet>
   );

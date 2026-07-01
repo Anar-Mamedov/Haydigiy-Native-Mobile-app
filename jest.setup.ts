@@ -78,6 +78,46 @@ jest.mock('expo-video', () => {
   };
 });
 
+jest.mock('react-native-keyboard-controller', () => {
+  const React = require('react');
+  const { ScrollView, View } = require('react-native');
+
+  return {
+    __esModule: true,
+    KeyboardAwareScrollView: ({ children, ...props }: any) =>
+      React.createElement(ScrollView, props, children),
+    KeyboardController: {
+      dismiss: jest.fn(),
+      isVisible: jest.fn(() => false),
+      preload: jest.fn(),
+      setDefaultMode: jest.fn(),
+      setFocusTo: jest.fn(),
+      setInputMode: jest.fn(),
+    },
+    KeyboardProvider: ({ children }: any) => children,
+    KeyboardToolbar: ({ children, ...props }: any) =>
+      React.createElement(View, props, children),
+    useKeyboardAnimation: () => ({
+      height: { value: 0 },
+      progress: { value: 0 },
+    }),
+    useKeyboardHandler: jest.fn(),
+    useKeyboardState: (selector?: (state: unknown) => unknown) => {
+      const state = {
+        appearance: 'light',
+        height: 0,
+        isVisible: false,
+      };
+
+      return selector ? selector(state) : state;
+    },
+    useReanimatedKeyboardAnimation: () => ({
+      height: { value: 0 },
+      progress: { value: 0 },
+    }),
+  };
+});
+
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 40, bottom: 20, left: 0, right: 0 }),
   useSafeAreaFrame: () => ({ x: 0, y: 0, width: 375, height: 812 }),

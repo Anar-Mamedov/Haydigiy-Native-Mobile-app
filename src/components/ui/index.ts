@@ -9,6 +9,8 @@ export * from '@/components/ui/confirm-dialog';
 export * from '@/components/ui/disclosure-sheet';
 export * from '@/components/ui/empty-state';
 export * from '@/components/ui/filter-checkbox';
+export * from '@/components/ui/keyboard-aware-form-scroll-view';
+export * from '@/components/ui/keyboard-aware-sheet-scroll-view';
 export * from '@/components/ui/markdown-content';
 export * from '@/components/ui/pagination';
 export * from '@/components/ui/password-visibility-toggle';

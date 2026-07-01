@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { CalendarDays, Check } from '@tamagui/lucide-icons-2';
 import { Paragraph, Spinner, XStack, YStack } from 'tamagui';
 import { AppSelect } from '@/components/ui';
-import { AddressAddModal } from './address-add-modal';
 import { formatPickupDate, UseScheduledReturn } from '../hooks/use-scheduled-return';
 import { SavedAddress } from '@/types/order.types';
 
@@ -60,12 +59,16 @@ function SavedAddressCard({
 
 /**
  * Address + date picker for the Hepsijet scheduled return (home pickup). Lists the
- * user's saved addresses, opens the full-screen "Yeni Adres Ekle" modal to add a
- * new one, then lets them query bookable days and pick a pickup day — mirroring the
+ * user's saved addresses, opens the shared full-screen address form to add a new
+ * one, then lets them query bookable days and pick a pickup day — mirroring the
  * web ScheduledReturnPicker.
  */
 export function ScheduledReturnPicker({ sr }: Props) {
-  const [addModalOpen, setAddModalOpen] = useState(false);
+  const router = useRouter();
+
+  const goToAddAddress = () => {
+    router.push('/(tabs)/address-form');
+  };
 
   return (
     <YStack gap="$3">
@@ -79,7 +82,7 @@ export function ScheduledReturnPicker({ sr }: Props) {
           color="$brand"
           fontSize={13}
           fontWeight="700"
-          onPress={() => setAddModalOpen(true)}
+          onPress={goToAddAddress}
           pressStyle={{ opacity: 0.7 }}
         >
           + Yeni Adres Ekle
@@ -206,15 +209,6 @@ export function ScheduledReturnPicker({ sr }: Props) {
           </XStack>
         </YStack>
       ) : null}
-
-      <AddressAddModal
-        onClose={() => setAddModalOpen(false)}
-        onSuccess={() => {
-          setAddModalOpen(false);
-          sr.refetchAddresses();
-        }}
-        open={addModalOpen}
-      />
     </YStack>
   );
 }

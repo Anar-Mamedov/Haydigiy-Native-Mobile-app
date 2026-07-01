@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
+import { Button, Paragraph, Spinner, XStack, YStack } from 'tamagui';
 import { CircleAlert } from '@tamagui/lucide-icons-2';
-import { AppInput, AppScreen, EmptyState, SectionCard } from '@/components/ui';
+import { AppInput, AppScreen, EmptyState, KeyboardAwareFormScrollView, SectionCard } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { OrdersHeader } from '../components/orders-header';
 import { ReturnItemRow } from '../components/return-item-row';
@@ -17,6 +17,7 @@ const BLOCK_MESSAGES: Record<string, string> = {
   not_delivered: 'Sipariş henüz teslim edilmedi.',
   already_requested: 'Bu sipariş için iade talebi zaten oluşturuldu.',
 };
+const RETURN_FORM_KEYBOARD_BOTTOM_OFFSET = 120;
 
 export function ReturnCreateScreen() {
   const router = useRouter();
@@ -97,7 +98,13 @@ export function ReturnCreateScreen() {
   return (
     <AppScreen gap={0} header={header} padding={0} scrollable={false}>
       <YStack backgroundColor="$backgroundHover" flex={1}>
-        <ScrollView contentContainerStyle={{ padding: 12, gap: 12 }} showsVerticalScrollIndicator={false}>
+        <KeyboardAwareFormScrollView
+          bounces={false}
+          bottomOffset={RETURN_FORM_KEYBOARD_BOTTOM_OFFSET}
+          contentContainerStyle={{ padding: 12, gap: 12 }}
+          overScrollMode="never"
+          testID="return-create-keyboard-aware-scroll"
+        >
           <SectionCard padding="$3">
             <XStack justifyContent="space-between">
               <YStack>
@@ -213,7 +220,7 @@ export function ReturnCreateScreen() {
               </Paragraph>
             </XStack>
           </Button>
-        </ScrollView>
+        </KeyboardAwareFormScrollView>
       </YStack>
 
       <NewIbanModal
