@@ -2,6 +2,7 @@ import { Sheet, YStack, XStack, Paragraph, ScrollView } from 'tamagui';
 import { X } from '@tamagui/lucide-icons-2';
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { Product } from '@/types/product.types';
 
 type ColorVariantOption = {
@@ -57,11 +58,7 @@ export function ColorVariantsSheet({
       dismissOnOverlayPress
       modal
     >
-      <Sheet.Overlay
-        backgroundColor="rgba(0,0,0,0.5)"
-        enterStyle={{ opacity: 0 }}
-        exitStyle={{ opacity: 0 }}
-      />
+      <AppSheetOverlay />
       <Sheet.Frame
         backgroundColor="$background"
         borderTopLeftRadius={12}

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Keyboard, useWindowDimensions } from 'react-native';
 import { Check, ChevronDown, Search } from '@tamagui/lucide-icons-2';
 import { Input, Paragraph, ScrollView, Sheet, Spinner, XStack, YStack } from 'tamagui';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { matchesSearch } from '@/utils/search';
 
 export type AppSelectOption = { label: string; value: string | number };
@@ -106,12 +107,7 @@ export function AppSelect({
         snapPoints={[sheetHeight]}
         snapPointsMode="constant"
       >
-        <Sheet.Overlay
-          backgroundColor="$shadowColor"
-          enterStyle={{ opacity: 0 }}
-          exitStyle={{ opacity: 0 }}
-          opacity={0.5}
-        />
+        <AppSheetOverlay />
         <Sheet.Frame
           backgroundColor="$background"
           borderTopLeftRadius="$6"

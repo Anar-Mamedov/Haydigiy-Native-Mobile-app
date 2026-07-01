@@ -3,6 +3,7 @@ import { Sheet, YStack, XStack, Paragraph, Button, Input } from 'tamagui';
 import { X, Table, Calculator, WashingMachine, MessageSquare, Check } from '@tamagui/lucide-icons-2';
 import { Pressable, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { calculateSize, submitProductFeedback } from '@/services/product.service';
 import {
@@ -74,7 +75,7 @@ export function SizeChartModal({ open, onOpenChange }: { open: boolean; onOpenCh
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[80]} dismissOnSnapToBottom modal>
-      <Sheet.Overlay backgroundColor="rgba(0,0,0,0.5)" />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={16} borderTopRightRadius={16} overflow="hidden">
         {/* Header */}
         <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={16} paddingVertical={12} borderBottomWidth={1} borderBottomColor="$borderColor">
@@ -193,7 +194,7 @@ export function SizeCalculatorModal({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[48]} dismissOnSnapToBottom modal>
-      <Sheet.Overlay backgroundColor="rgba(0,0,0,0.5)" />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={16} borderTopRightRadius={16} overflow="hidden">
         <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={16} paddingVertical={12} borderBottomWidth={1} borderBottomColor="$borderColor">
           <XStack alignItems="center" gap="$2">
@@ -321,7 +322,7 @@ export function SizeCalculatorModal({
 export function WashingInstructionsModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[80]} dismissOnSnapToBottom modal>
-      <Sheet.Overlay backgroundColor="rgba(0,0,0,0.5)" />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={16} borderTopRightRadius={16} overflow="hidden">
         <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={16} paddingVertical={12} borderBottomWidth={1} borderBottomColor="$borderColor">
           <XStack alignItems="center" gap="$2">
@@ -392,7 +393,7 @@ export function FeedbackModal({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[85]} dismissOnSnapToBottom modal>
-      <Sheet.Overlay backgroundColor="rgba(0,0,0,0.5)" />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={16} borderTopRightRadius={16} overflow="hidden">
         <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={16} paddingVertical={12} borderBottomWidth={1} borderBottomColor="$borderColor">
           <XStack alignItems="center" gap="$2">

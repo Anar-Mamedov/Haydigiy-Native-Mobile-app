@@ -1,5 +1,6 @@
 import { TriangleAlert } from '@tamagui/lucide-icons-2';
 import { Button, Paragraph, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { CancelPreview } from '@/types/order.types';
 
 function currency(value: number): string {
@@ -75,7 +76,7 @@ export function CampaignBreakWarningSheet({
       open={open}
       snapPointsMode="fit"
     >
-      <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
         <XStack
           alignItems="center"

@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
 import { Sheet, YStack, XStack, Paragraph, ScrollView } from 'tamagui';
 import { X, Check } from '@tamagui/lucide-icons-2';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { ProductVariant } from '@/types/product.types';
 
 interface SizeSelectorSheetProps {
@@ -31,11 +32,7 @@ export function SizeSelectorSheet({
       dismissOnSnapToBottom
       modal
     >
-      <Sheet.Overlay
-        backgroundColor="rgba(0,0,0,0.5)"
-        enterStyle={{ opacity: 0 }}
-        exitStyle={{ opacity: 0 }}
-      />
+      <AppSheetOverlay />
       <Sheet.Frame
         backgroundColor="$background"
         borderTopLeftRadius={16}

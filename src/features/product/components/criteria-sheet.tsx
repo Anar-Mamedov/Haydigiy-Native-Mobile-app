@@ -1,7 +1,7 @@
 import { Pressable } from 'react-native';
 import { X } from '@tamagui/lucide-icons-2';
 import { Paragraph, Sheet, XStack, YStack } from 'tamagui';
-import { AppButton } from '@/components/ui';
+import { AppButton, AppSheetOverlay } from '@/components/ui';
 
 type CriteriaSheetProps = {
   open: boolean;
@@ -23,7 +23,7 @@ export function CriteriaSheet({ open, onClose, title, intro, criteria }: Criteri
       snapPoints={[60]}
       snapPointsMode="percent"
     >
-      <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
         <XStack
           alignItems="center"

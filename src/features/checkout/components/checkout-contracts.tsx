@@ -1,6 +1,7 @@
 import { useWindowDimensions } from 'react-native';
 import { Paragraph, ScrollView, Sheet, YStack } from 'tamagui';
 import { AppCheckbox } from '@/components/ui/app-checkbox';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { SectionCard } from '@/components/ui/section-card';
 import {
   buildDistanceSalesText,
@@ -220,12 +221,7 @@ export function CheckoutContractSheet({
       snapPoints={[Math.round(height * 0.85)]}
       snapPointsMode="constant"
     >
-      <Sheet.Overlay
-        backgroundColor="$shadowColor"
-        enterStyle={{ opacity: 0 }}
-        exitStyle={{ opacity: 0 }}
-        opacity={0.5}
-      />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
         <YStack borderBottomColor="$borderColor" borderBottomWidth={1} padding="$4">
           <Paragraph color="$color" fontSize={16} fontWeight="700">

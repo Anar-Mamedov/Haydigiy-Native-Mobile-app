@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from '@tamagui/lucide-icons-2';
 import { Paragraph, ScrollView, Sheet, Spinner, TextArea, XStack, YStack } from 'tamagui';
-import { AppButton, AppCheckbox } from '@/components/ui';
+import { AppButton, AppCheckbox, AppSheetOverlay, KeyboardAwareSheetScrollView } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useAskProductQuestionMutation } from '../api/product-questions.queries';
 
@@ -98,12 +98,13 @@ export function AskQuestionSheet({ open, onClose, slug, productId }: AskQuestion
     <Sheet
       disableDrag
       modal
+      moveOnKeyboardChange
       onOpenChange={(next: boolean) => !next && handleClose()}
       open={open}
       snapPointsMode="fit"
     >
-      <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
-      <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
+      <AppSheetOverlay />
+      <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6" maxHeight="92%">
         <XStack
           alignItems="center"
           borderBottomColor="$borderColor"
@@ -176,98 +177,100 @@ export function AskQuestionSheet({ open, onClose, slug, productId }: AskQuestion
             </YStack>
           </YStack>
         ) : (
-          <YStack gap="$2.5" padding="$4" paddingBottom={Math.max(insets.bottom, 16)}>
-            <Paragraph color="$brand" fontSize={13} fontWeight="700">
-              Ürün özellikleriyle ilgili sorularınızı buradan sorabilirsiniz.
-            </Paragraph>
-
-            <XStack alignItems="center" justifyContent="space-between">
-              <Paragraph color="$color" fontSize={13}>
-                Sorunuz
+          <KeyboardAwareSheetScrollView testID="ask-question-keyboard-aware-scroll">
+            <YStack gap="$2.5" padding="$4">
+              <Paragraph color="$brand" fontSize={13} fontWeight="700">
+                Ürün özellikleriyle ilgili sorularınızı buradan sorabilirsiniz.
               </Paragraph>
-              <Paragraph
-                accessibilityRole="button"
-                color="$color"
-                fontSize={13}
-                onPress={() => setShowCriteria(true)}
-                pressStyle={{ opacity: 0.6 }}
-                textDecorationLine="underline"
-              >
-                Soru Yayınlama Kriterlerimiz
-              </Paragraph>
-            </XStack>
 
-            <TextArea
-              backgroundColor="$background"
-              borderColor="$borderColor"
-              focusStyle={{ borderColor: '$brand' }}
-              fontSize={15}
-              height={96}
-              maxLength={MAX_LENGTH}
-              onChangeText={(text) => {
-                setQuestion(text);
-                setError(null);
-              }}
-              placeholder="Sorunuzu yazın..."
-              placeholderTextColor="$color9"
-              value={question}
-            />
-            <Paragraph color={length < MIN_LENGTH ? '$red10' : '$color10'} fontSize={11} textAlign="right">
-              {counterText}
-            </Paragraph>
-
-            {error ? (
-              <Paragraph color="$red10" fontSize={12}>
-                {error}
-              </Paragraph>
-            ) : null}
-
-            <AppCheckbox
-              accessibilityLabel="Ad soyad bilgimin görünmesine izin veriyorum"
-              checked={showNameConsent}
-              onChange={() => setShowNameConsent((prev) => !prev)}
-            >
-              <Paragraph color="$color11" fontSize={12} flex={1}>
-                Sorularımda Ad Soyad bilgimin gözükmesine izin veriyorum.
-              </Paragraph>
-            </AppCheckbox>
-
-            <AppCheckbox
-              accessibilityLabel="Kullanıcı Sözleşmesi’ni kabul ediyorum"
-              checked={agreedToTerms}
-              onChange={() => setAgreedToTerms((prev) => !prev)}
-            >
-              <Paragraph color="$color11" fontSize={12} flex={1}>
-                Soru sormak için{' '}
+              <XStack alignItems="center" justifyContent="space-between">
+                <Paragraph color="$color" fontSize={13}>
+                  Sorunuz
+                </Paragraph>
                 <Paragraph
                   accessibilityRole="button"
-                  color="$brand"
-                  fontSize={12}
-                  fontWeight="600"
-                  onPress={() => {
-                    onClose();
-                    router.push('/(tabs)/agreements');
-                  }}
+                  color="$color"
+                  fontSize={13}
+                  onPress={() => setShowCriteria(true)}
+                  pressStyle={{ opacity: 0.6 }}
                   textDecorationLine="underline"
                 >
-                  Kullanıcı Sözleşmesi
-                </Paragraph>{' '}
-                kabul ediyorum.
-              </Paragraph>
-            </AppCheckbox>
+                  Soru Yayınlama Kriterlerimiz
+                </Paragraph>
+              </XStack>
 
-            <AppButton
-              backgroundColor="$brand"
-              borderColor="transparent"
-              color="white"
-              disabled={!canSubmit}
-              opacity={canSubmit ? 1 : 0.5}
-              onPress={handleSubmit}
-              pressStyle={{ opacity: 0.85 }}
-            >
-              {askQuestion.isPending ? <Spinner color="white" /> : 'Gönder'}
-            </AppButton>
-          </YStack>
+              <TextArea
+                backgroundColor="$background"
+                borderColor="$borderColor"
+                focusStyle={{ borderColor: '$brand' }}
+                fontSize={15}
+                height={96}
+                maxLength={MAX_LENGTH}
+                onChangeText={(text) => {
+                  setQuestion(text);
+                  setError(null);
+                }}
+                placeholder="Sorunuzu yazın..."
+                placeholderTextColor="$color9"
+                value={question}
+              />
+              <Paragraph color={length < MIN_LENGTH ? '$red10' : '$color10'} fontSize={11} textAlign="right">
+                {counterText}
+              </Paragraph>
+
+              {error ? (
+                <Paragraph color="$red10" fontSize={12}>
+                  {error}
+                </Paragraph>
+              ) : null}
+
+              <AppCheckbox
+                accessibilityLabel="Ad soyad bilgimin görünmesine izin veriyorum"
+                checked={showNameConsent}
+                onChange={() => setShowNameConsent((prev) => !prev)}
+              >
+                <Paragraph color="$color11" fontSize={12} flex={1}>
+                  Sorularımda Ad Soyad bilgimin gözükmesine izin veriyorum.
+                </Paragraph>
+              </AppCheckbox>
+
+              <AppCheckbox
+                accessibilityLabel="Kullanıcı Sözleşmesi’ni kabul ediyorum"
+                checked={agreedToTerms}
+                onChange={() => setAgreedToTerms((prev) => !prev)}
+              >
+                <Paragraph color="$color11" fontSize={12} flex={1}>
+                  Soru sormak için{' '}
+                  <Paragraph
+                    accessibilityRole="button"
+                    color="$brand"
+                    fontSize={12}
+                    fontWeight="600"
+                    onPress={() => {
+                      onClose();
+                      router.push('/(tabs)/agreements');
+                    }}
+                    textDecorationLine="underline"
+                  >
+                    Kullanıcı Sözleşmesi
+                  </Paragraph>{' '}
+                  kabul ediyorum.
+                </Paragraph>
+              </AppCheckbox>
+
+              <AppButton
+                backgroundColor="$brand"
+                borderColor="transparent"
+                color="white"
+                disabled={!canSubmit}
+                opacity={canSubmit ? 1 : 0.5}
+                onPress={handleSubmit}
+                pressStyle={{ opacity: 0.85 }}
+              >
+                {askQuestion.isPending ? <Spinner color="white" /> : 'Gönder'}
+              </AppButton>
+            </YStack>
+          </KeyboardAwareSheetScrollView>
         )}
       </Sheet.Frame>
     </Sheet>

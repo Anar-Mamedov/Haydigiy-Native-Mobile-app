@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, Search, X } from '@tamagui/lucide-icons-2';
 import { FilterProperty, ProductAvailableFilters } from '@/types/product.types';
 import { CategoryFilterTree } from './category-filter-tree';
 import { FilterCheckbox } from '@/components/ui/filter-checkbox';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 
 export type FilterShortcutSection = 'categories' | 'variants' | 'colors' | 'price' | `property:${string}`;
 
@@ -250,7 +251,7 @@ export function FilterSheet({ open, onOpenChange, availableFilters, activeFilter
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} snapPoints={[70]} dismissOnSnapToBottom dismissOnOverlayPress modal>
-      <Sheet.Overlay backgroundColor="rgba(0,0,0,0.5)" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={12} borderTopRightRadius={12}>
         <XStack alignItems="center" borderBottomColor="$borderColor" borderBottomWidth={1} justifyContent="space-between" paddingHorizontal={20} paddingVertical={18}>
           <Paragraph fontSize={20} fontWeight="700" color="$color">Filtrele</Paragraph>

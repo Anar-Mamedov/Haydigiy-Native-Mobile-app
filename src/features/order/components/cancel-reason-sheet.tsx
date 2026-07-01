@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
 import { Check } from '@tamagui/lucide-icons-2';
 import { Paragraph, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { CancellationReason } from '@/types/order.types';
 
 type CancelReasonSheetProps = {
@@ -28,7 +29,7 @@ export function CancelReasonSheet({
       open={open}
       snapPointsMode="fit"
     >
-      <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6" paddingBottom="$6">
         <YStack padding="$4" gap="$1">
           <Paragraph color="$color" fontSize={16} fontWeight="700" marginBottom="$2">

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Paragraph, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { OrderDetail } from '@/types/order.types';
 import {
   AGREEMENT_LAST_UPDATE,
@@ -49,7 +50,7 @@ export function OrderAgreementSheet({
       snapPoints={[100]}
       snapPointsMode="percent"
     >
-      <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background">
         <XStack
           borderBottomColor="$borderColor"

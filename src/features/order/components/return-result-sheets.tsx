@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { CircleAlert, CircleCheck } from '@tamagui/lucide-icons-2';
 import { Button, Paragraph, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { ReturnMethod } from '@/types/order.types';
 
 const PTT_LOGO_URL = 'https://cdn.haydigiy.com/uploads/cargo-logos/ptt.png';
@@ -94,7 +95,7 @@ export function ReturnResultSheets({
         open={successMessage !== null}
         snapPointsMode="fit"
       >
-        <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
+        <AppSheetOverlay />
         <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
           <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }} style={{ maxHeight: 480 }}>
             <YStack alignItems="center" gap="$2">
@@ -143,7 +144,7 @@ export function ReturnResultSheets({
         open={errorMessage !== null}
         snapPointsMode="fit"
       >
-        <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
+        <AppSheetOverlay />
         <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
           <YStack gap="$3" padding="$5">
             <XStack alignItems="center" gap="$2">

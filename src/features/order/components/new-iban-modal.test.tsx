@@ -26,17 +26,6 @@ jest.mock('tamagui', () => {
   return { ...jest.requireActual('tamagui'), Sheet: SheetRoot };
 });
 
-jest.mock('react-native-keyboard-controller', () => {
-  const React = jest.requireActual('react');
-  const { View } = jest.requireActual('react-native');
-
-  return {
-    KeyboardAwareScrollView: ({ children, ...props }: any) =>
-      React.createElement(View, props, children),
-    KeyboardProvider: ({ children }: any) => children,
-  };
-});
-
 jest.mock('../api/return.mutations', () => ({
   useAddPaymentMethodMutation: () => ({ isPending: false, mutateAsync: jest.fn() }),
 }));
@@ -53,10 +42,10 @@ describe('NewIbanModal', () => {
     expect(screen.getByLabelText('IBAN Sahibi Adı *')).toBeTruthy();
   });
 
-  it('renders a distinct dimmed backdrop and anchors the sheet surface to the bottom', () => {
+  it('renders the theme-token dimmed backdrop and anchors the sheet surface to the bottom', () => {
     renderWithTamagui(<NewIbanModal onClose={jest.fn()} onSuccess={jest.fn()} open />);
 
-    expect(screen.getByTestId('new-iban-sheet-overlay').props.backgroundColor).toBe('rgba(0, 0, 0, 0.48)');
+    expect(screen.getByTestId('new-iban-sheet-overlay').props.backgroundColor).toBe('$overlay');
     expect(screen.getByTestId('new-iban-sheet-frame').props.adjustPaddingForOffscreenContent).toBe(true);
     expect(screen.getByTestId('new-iban-sheet-frame').props.overflow).toBe('visible');
     expect(screen.getByTestId('new-iban-sheet-frame').props.borderBottomLeftRadius).toBe(0);

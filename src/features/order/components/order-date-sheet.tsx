@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
 import { Check } from '@tamagui/lucide-icons-2';
 import { Paragraph, Sheet, XStack, YStack } from 'tamagui';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { OrderDateFilter } from '@/types/order.types';
 
 export const ORDER_DATE_OPTIONS: { label: string; value: OrderDateFilter }[] = [
@@ -32,12 +33,7 @@ export function OrderDateSheet({ open, value, onOpenChange, onSelect }: OrderDat
       open={open}
       snapPointsMode="fit"
     >
-      <Sheet.Overlay
-        backgroundColor="$shadowColor"
-        enterStyle={{ opacity: 0 }}
-        exitStyle={{ opacity: 0 }}
-        opacity={0.5}
-      />
+      <AppSheetOverlay />
       <Sheet.Frame
         backgroundColor="$background"
         borderTopLeftRadius="$6"

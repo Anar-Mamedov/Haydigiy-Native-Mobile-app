@@ -26,3 +26,10 @@ export const BRAND_GRADIENT = ['#ff6c15', '#fe4c7f'] as const;
  * has no theme token; centralized here instead of being hard-coded per overlay.
  */
 export const SCRIM_COLOR = 'rgba(0, 0, 0, 0.18)';
+
+/**
+ * Backdrop behind bottom sheets. Exposed as the `$overlay` theme color in
+ * `tamagui.config.ts`; in Tamagui props prefer `$overlay` (via `AppSheetOverlay`)
+ * and use this constant only where theme tokens do not resolve.
+ */
+export const SHEET_OVERLAY_COLOR = 'rgba(0, 0, 0, 0.5)';

@@ -1,6 +1,7 @@
 import { Pressable, useWindowDimensions } from 'react-native';
 import { Pencil, X } from '@tamagui/lucide-icons-2';
 import { Paragraph, ScrollView, Separator, Sheet, XStack, YStack } from 'tamagui';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { CheckoutAddress } from '@/types/checkout.types';
 import { formatCheckoutAddressLine } from '../utils/format-checkout-address';
 
@@ -150,12 +151,7 @@ export function CheckoutAddressPicker({
       snapPoints={[sheetHeight]}
       snapPointsMode="constant"
     >
-      <Sheet.Overlay
-        backgroundColor="$shadowColor"
-        enterStyle={{ opacity: 0 }}
-        exitStyle={{ opacity: 0 }}
-        opacity={0.45}
-      />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$5" borderTopRightRadius="$5">
         <YStack alignItems="center" paddingTop="$2">
           <YStack backgroundColor="$borderColor" borderRadius="$10" height={4} width={48} />

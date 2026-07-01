@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { ImagePlus, Star, X } from '@tamagui/lucide-icons-2';
 import { Button, Input, Paragraph, ScrollView, Sheet, Spinner, TextArea, XStack, YStack } from 'tamagui';
-import { AppCheckbox } from '@/components/ui';
+import { AppCheckbox, AppSheetOverlay, KeyboardAwareSheetScrollView } from '@/components/ui';
 import { WARNING_COLOR } from '@/lib/theme/colors';
 import { ReviewTarget } from '@/types/review.types';
 import { resolveReviewVariantId, ReviewPhoto } from '@/services/review.service';
@@ -121,12 +121,13 @@ export function OrderReviewSheet({
     <Sheet
       disableDrag
       modal
+      moveOnKeyboardChange
       onOpenChange={onOpenChange}
       open={open}
       snapPoints={[100]}
       snapPointsMode="percent"
     >
-      <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background">
         <XStack
           alignItems="center"
@@ -186,7 +187,10 @@ export function OrderReviewSheet({
           </YStack>
         ) : (
           <YStack flex={1} justifyContent="space-between">
-            <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }} keyboardShouldPersistTaps="handled">
+            <KeyboardAwareSheetScrollView
+              contentContainerStyle={{ gap: 16, padding: 16 }}
+              testID="order-review-keyboard-aware-scroll"
+            >
               {item ? (
                 <XStack
                   alignItems="center"
@@ -352,7 +356,7 @@ export function OrderReviewSheet({
                 Sağlık beyanı veya tıbbi öneri içeren değerlendirmelerinizi ilgili mevzuata aykırı
                 olduğundan yayınlamamaktayız.
               </Paragraph>
-            </ScrollView>
+            </KeyboardAwareSheetScrollView>
 
             <YStack
               borderTopColor="$borderColor"

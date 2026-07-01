@@ -3,7 +3,7 @@ import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Truck } from '@tamagui/lucide-icons-2';
 import { Paragraph, Sheet, XStack, YStack } from 'tamagui';
-import { AppButton } from '@/components/ui';
+import { AppButton, AppSheetOverlay } from '@/components/ui';
 import { ProductVariant } from '@/types/product.types';
 
 type SizeSelectionSheetProps = {
@@ -51,7 +51,7 @@ export function SizeSelectionSheet({
       open={open}
       snapPointsMode="fit"
     >
-      <Sheet.Overlay backgroundColor="$shadowColor" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} opacity={0.5} />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
         <YStack gap="$3" padding="$4" paddingBottom={Math.max(insets.bottom, 16)}>
           {/* Product + price + shipping */}

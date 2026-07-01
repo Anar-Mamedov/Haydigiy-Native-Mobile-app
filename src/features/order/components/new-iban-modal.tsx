@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Paragraph, Sheet, XStack, YStack } from 'tamagui';
-import { AppCheckbox, AppInput, KeyboardAwareSheetScrollView } from '@/components/ui';
+import { AppCheckbox, AppInput, AppSheetOverlay, KeyboardAwareSheetScrollView } from '@/components/ui';
 import { useAddPaymentMethodMutation } from '../api/return.mutations';
 import { formatIbanInput, getIbanDigits, isValidIban, normalizeIban } from '@/utils/iban';
 import { getReturnErrorMessage } from '@/services/return.service';
@@ -69,11 +69,7 @@ export function NewIbanModal({ open, onClose, onSuccess }: Props) {
       moveOnKeyboardChange
       snapPointsMode="fit"
     >
-      <Sheet.Overlay
-        backgroundColor="rgba(0, 0, 0, 0.48)"
-        enterStyle={{ opacity: 0 }}
-        exitStyle={{ opacity: 0 }}
-      />
+      <AppSheetOverlay />
       <Sheet.Frame
         adjustPaddingForOffscreenContent
         backgroundColor="$background"

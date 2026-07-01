@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
 import { Paragraph, ScrollView, Sheet, XStack } from 'tamagui';
 import { X } from '@tamagui/lucide-icons-2';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 
 export interface DisclosureSheetProps {
   open: boolean;
@@ -25,11 +26,7 @@ export function DisclosureSheet({ open, onOpenChange, title, text }: DisclosureS
       dismissOnOverlayPress
       modal
     >
-      <Sheet.Overlay
-        backgroundColor="rgba(0,0,0,0.5)"
-        enterStyle={{ opacity: 0 }}
-        exitStyle={{ opacity: 0 }}
-      />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
         <XStack
           alignItems="center"

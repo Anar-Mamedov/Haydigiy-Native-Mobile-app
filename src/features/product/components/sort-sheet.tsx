@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
 import { Sheet, XStack, YStack, Paragraph } from 'tamagui';
 import { Check, X } from '@tamagui/lucide-icons-2';
+import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 
 export interface SortOption {
   label: string;
@@ -34,11 +35,7 @@ export function SortSheet({ open, onOpenChange, selectedValue, onSelect }: SortS
       dismissOnOverlayPress
       modal
     >
-      <Sheet.Overlay
-        backgroundColor="rgba(0,0,0,0.5)"
-        enterStyle={{ opacity: 0 }}
-        exitStyle={{ opacity: 0 }}
-      />
+      <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={12} borderTopRightRadius={12}>
         <XStack
           alignItems="center"
