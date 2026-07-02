@@ -43,7 +43,11 @@ export function AccountHub({ onLogout }: AccountHubProps) {
   // Temporarily disabled with the appearance card below.
   // const { setThemePreference, themePreference } = useAppTheme();
 
-  const goToOrders = () => router.push('/(tabs)/orders');
+  // Both entries pass the category explicitly so each press forces its own
+  // chip, regardless of which chip the user last left the orders screen on.
+  const goToOrders = () => router.push({ pathname: '/(tabs)/orders', params: { category: 'all' } });
+  const goToCancellations = () =>
+    router.push({ pathname: '/(tabs)/orders', params: { category: 'cancelled' } });
 
   const quickActions = [
     {
@@ -77,7 +81,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <RotateCcw color="$brand" size={24} />,
       label: 'İptal ve İadeler',
-      onPress: goToOrders,
+      onPress: goToCancellations,
     },
   ];
 

@@ -1,11 +1,18 @@
 import { useMemo, useState } from 'react';
 import { Keyboard, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, ChevronDown, Search } from '@tamagui/lucide-icons-2';
-import { Input, Paragraph, ScrollView, Sheet, Spinner, XStack, YStack } from 'tamagui';
+import { Input, Paragraph, Sheet, Spinner, XStack, YStack } from 'tamagui';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
+import { KeyboardAwareSheetScrollView } from '@/components/ui/keyboard-aware-sheet-scroll-view';
 import { matchesSearch } from '@/utils/search';
 
-export type AppSelectOption = { label: string; value: string | number };
+export type AppSelectOption = {
+  label: string;
+  value: string | number;
+  /** Optional second row line (e.g. the IBAN under the holder name). */
+  description?: string;
+};
 
 export interface AppSelectProps {
   value?: string | number | null;
@@ -41,11 +48,20 @@ export function AppSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const selected = options.find((option) => option.value === value);
+  const selectedDisplayLabel = selected
+    ? selected.description
+      ? `${selected.label} - ${selected.description}`
+      : selected.label
+    : undefined;
   const isDisabled = disabled || loading;
 
   const filteredOptions = useMemo(() => {
     if (!searchable || !query.trim()) return options;
-    return options.filter((option) => matchesSearch(option.label, query));
+    return options.filter(
+      (option) =>
+        matchesSearch(option.label, query) ||
+        (option.description ? matchesSearch(option.description, query) : false),
+    );
   }, [searchable, query, options]);
 
   const changeOpen = (next: boolean) => {
@@ -57,8 +73,22 @@ export function AppSelect({
   // Size the options sheet to its content (so a 2-item list isn't a tall sheet),
   // capped at 85% of the screen for long/searchable lists, which then scroll.
   const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // The sheet reaches the physical bottom of the screen (edge-to-edge), so the
+  // list needs the safe-area inset to keep the last option above the system
+  // navigation bar / home indicator.
+  const listBottomPadding = Math.max(insets.bottom, 16) + 16;
   const sheetHeaderHeight = 64 + (searchable ? 56 : 0);
-  const estimatedHeight = sheetHeaderHeight + options.length * 50 + 32;
+  // Row heights are deterministic on every device: each text line is a single
+  // ellipsized line, so a row is 50pt — or 68pt when it has a description
+  // line — with no text-wrap guessing.
+  const describedOptionCount = options.filter((option) => option.description).length;
+  const estimatedHeight =
+    sheetHeaderHeight +
+    (options.length - describedOptionCount) * 50 +
+    describedOptionCount * 68 +
+    8 +
+    listBottomPadding;
   const sheetHeight = Math.min(Math.round(windowHeight * 0.85), Math.max(estimatedHeight, 140));
 
   return (
@@ -87,7 +117,7 @@ export function AppSelect({
           fontSize={14}
           numberOfLines={1}
         >
-          {loading ? 'Yükleniyor...' : (selected?.label ?? placeholder)}
+          {loading ? 'Yükleniyor...' : (selectedDisplayLabel ?? placeholder)}
         </Paragraph>
         {loading ? <Spinner color="$brand" size="small" /> : <ChevronDown color="$color9" size={18} />}
       </XStack>
@@ -102,6 +132,7 @@ export function AppSelect({
         dismissOnOverlayPress
         dismissOnSnapToBottom
         modal
+        moveOnKeyboardChange
         onOpenChange={changeOpen}
         open={open}
         snapPoints={[sheetHeight]}
@@ -149,9 +180,9 @@ export function AppSelect({
               </XStack>
             ) : null}
           </YStack>
-          <ScrollView
-            contentContainerStyle={{ padding: 8, paddingBottom: 24 }}
-            keyboardShouldPersistTaps="handled"
+          <KeyboardAwareSheetScrollView
+            contentContainerStyle={{ padding: 8, paddingBottom: listBottomPadding }}
+            testID="app-select-options-scroll"
           >
             {filteredOptions.length === 0 ? (
               <Paragraph color="$color9" fontSize={14} padding="$4" textAlign="center">
@@ -162,7 +193,9 @@ export function AppSelect({
               const isSelected = option.value === value;
               return (
                 <XStack
-                  accessibilityLabel={option.label}
+                  accessibilityLabel={
+                    option.description ? `${option.label} - ${option.description}` : option.label
+                  }
                   accessibilityRole="button"
                   accessibilityState={{ selected: isSelected }}
                   alignItems="center"
@@ -178,19 +211,30 @@ export function AppSelect({
                   padding="$3"
                   pressStyle={{ backgroundColor: '$backgroundHover' }}
                 >
-                  <Paragraph
-                    color={isSelected ? '$brand' : '$color'}
-                    flex={1}
-                    fontSize={14}
-                    fontWeight={isSelected ? '700' : '400'}
-                  >
-                    {option.label}
-                  </Paragraph>
+                  <YStack flex={1}>
+                    <Paragraph
+                      color={isSelected ? '$brand' : '$color'}
+                      fontSize={14}
+                      fontWeight={isSelected ? '700' : '400'}
+                      numberOfLines={1}
+                    >
+                      {option.label}
+                    </Paragraph>
+                    {option.description ? (
+                      <Paragraph
+                        color={isSelected ? '$brand' : '$color10'}
+                        fontSize={13}
+                        numberOfLines={1}
+                      >
+                        {option.description}
+                      </Paragraph>
+                    ) : null}
+                  </YStack>
                   {isSelected ? <Check color="$brand" size={18} /> : null}
                 </XStack>
               );
             })}
-          </ScrollView>
+          </KeyboardAwareSheetScrollView>
         </Sheet.Frame>
       </Sheet>
     </>

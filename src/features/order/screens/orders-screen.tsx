@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlashList, FlashListRef } from '@shopify/flash-list';
 import { Spinner, YStack } from 'tamagui';
 import { AppScreen, EmptyState, Pagination } from '@/components/ui';
@@ -9,20 +9,28 @@ import { OrdersHeader } from '../components/orders-header';
 import { OrdersToolbar } from '../components/orders-toolbar';
 import { OrderFilterChips } from '../components/order-filter-chips';
 import { OrderCard } from '../components/order-card';
+import { parseOrderCategory } from '../utils/order-category';
 import { Order, OrderCategory, OrderDateFilter, OrderFilters } from '@/types/order.types';
 
 const HIDDEN_STATUS = 'Ödeme Kaydı Alınamadı';
 
 export function OrdersScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ category?: string }>();
   const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
   const listRef = useRef<FlashListRef<Order>>(null);
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [category, setCategory] = useState<OrderCategory>('all');
   const [dateFilter, setDateFilter] = useState<OrderDateFilter>('all');
   const [currentPage, setCurrentPage] = useState(1);
+
+  // The `category` route param is the single source of truth for the active
+  // chip: entry points (profile → "İptal ve İadeler" → ?category=cancelled)
+  // set it on every navigation, and manual chip changes write it back via
+  // setParams. No local copy exists, so re-entering with a param always wins.
+  const category: OrderCategory = parseOrderCategory(params.category) ?? 'all';
+  const setCategory = (next: OrderCategory) => router.setParams({ category: next });
 
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search), 450);

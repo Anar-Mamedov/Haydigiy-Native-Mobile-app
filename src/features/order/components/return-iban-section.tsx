@@ -51,7 +51,8 @@ export function ReturnIbanSection({
                 iban.setIbanError(null);
               }}
               options={paymentMethods.map((method) => ({
-                label: `${method.ibanName} - ${method.iban}`,
+                description: method.iban,
+                label: method.ibanName,
                 value: method.id,
               }))}
               placeholder="İade için IBAN seçin"
