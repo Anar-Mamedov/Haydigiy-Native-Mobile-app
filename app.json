@@ -54,6 +54,12 @@
         }
       ],
       "expo-image",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false
+        }
+      ],
       "expo-web-browser"
     ],
     "experiments": {
