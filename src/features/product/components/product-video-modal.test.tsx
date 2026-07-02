@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react-native';
+import { useVideoPlayer } from 'expo-video';
 import { ProductVideoModal } from './product-video-modal';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { Product } from '@/types/product.types';
@@ -52,6 +53,12 @@ describe('ProductVideoModal', () => {
 
     expect(screen.queryByTestId('product-carousel-video')).toBeNull();
     expect(screen.queryByText('Test Product')).toBeNull();
+  });
+
+  it('does not create a video player while closed, so visiting a video product stays cheap', () => {
+    renderWithTamagui(<ProductVideoModal {...baseProps} open={false} />);
+
+    expect(jest.mocked(useVideoPlayer)).not.toHaveBeenCalled();
   });
 
   it('calls onOpenChange with false when back button is pressed', () => {

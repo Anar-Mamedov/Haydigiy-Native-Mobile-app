@@ -4,7 +4,7 @@ import { Spinner, YStack, Paragraph, XStack } from 'tamagui';
 import { Linking, Pressable, ScrollView, NativeScrollEvent, NativeSyntheticEvent, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThumbsUp } from '@tamagui/lucide-icons-2';
-import { AppScreen, EmptyState } from '@/components/ui';
+import { AppScreen, DeferredMount, EmptyState } from '@/components/ui';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useProductDetailsQuery } from '@/features/product/api/product.queries';
@@ -17,7 +17,8 @@ import { ProductCodeBadge } from '../components/product-code-badge';
 import { isProductCodeBadgeVisible, PRODUCT_CODE_BADGE_OFFSET } from '../utils/product-code-badge';
 import { getCarouselImageHeight } from '../utils/product-carousel-geometry';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
-import { ProductVariant, Product } from '@/types/product.types';
+import { ProductVariant, Product, ProductColorOption, SimilarProduct } from '@/types/product.types';
+import { buildProductDetailRoute } from '../utils/product-detail-route';
 
 // Subcomponents
 import { ProductDetailHeader } from '../components/product-detail-header';
@@ -128,9 +129,33 @@ export function ProductDetailScreen() {
     setGalleryImageIndex(null);
   }, [idOrSlug]);
 
-  // Handle color change
-  const handleColorSelect = (slug: string) => {
-    router.replace(`/product/${slug}` as any);
+  // Color variants and similar products replace the current PDP (so back still
+  // returns to the origin list) with preview params, so the target renders
+  // instantly instead of showing a spinner until its detail request lands.
+  const replaceWithPreview = (target: Pick<Product, 'id' | 'slug' | 'title' | 'price' | 'imageUrl'>) => {
+    router.replace(buildProductDetailRoute(target));
+  };
+
+  const handleColorSelect = (color: ProductColorOption) => {
+    replaceWithPreview({
+      id: color.id,
+      slug: color.slug,
+      title: color.name,
+      // Sibling colors of the same model share the price when the option
+      // itself does not carry one.
+      price: color.price || displayData?.price || 0,
+      imageUrl: color.imageUrl,
+    });
+  };
+
+  const handleSimilarProductPress = (similar: SimilarProduct) => {
+    replaceWithPreview({
+      id: similar.id,
+      slug: similar.slug,
+      title: similar.name,
+      price: similar.price,
+      imageUrl: similar.imageUrl,
+    });
   };
 
   // Handle whatsapp action
@@ -298,16 +323,14 @@ export function ProductDetailScreen() {
           </YStack>
 
           {/* Background Loading Spinner for full properties */}
-          {isPending && (
-            <XStack alignItems="center" gap="$2" justifyContent="center" padding="$4">
-              <Spinner size="small" color="$brand" />
-              <Paragraph fontSize={12} color="$color10">Seçenekler yükleniyor...</Paragraph>
-            </XStack>
-          )}
+          {isPending && <OptionsLoadingIndicator />}
 
-          {/* Variant selections (only show when fully loaded) */}
+          {/* Variant selections (only show when fully loaded). Mounted through
+              DeferredMount so this heavy subtree does not commit in the same
+              frame as the preview→full data swap while the push transition may
+              still be running. */}
           {product && (
-            <>
+            <DeferredMount placeholder={<OptionsLoadingIndicator />}>
               {/* Color variants thumbnails & Category redirect */}
               <ProductColorSelector
                 otherColors={product.otherColors}
@@ -346,7 +369,7 @@ export function ProductDetailScreen() {
               {/* Similar Products widget */}
               <SimilarProductsSection
                 products={product.similarProducts}
-                onProductPress={handleColorSelect}
+                onProductPress={handleSimilarProductPress}
               />
 
               {/* Reviews score and horizontal list */}
@@ -398,7 +421,7 @@ export function ProductDetailScreen() {
                   </Paragraph>
                 </XStack>
               </Pressable>
-            </>
+            </DeferredMount>
           )}
         </YStack>
       </ScrollView>
@@ -477,5 +500,17 @@ export function ProductDetailScreen() {
         <ProductCodeBadge code={productCode} top={headerHeight + PRODUCT_CODE_BADGE_OFFSET} />
       ) : null}
     </AppScreen>
+  );
+}
+
+/** Inline status row shown while the full product options are on the way. */
+function OptionsLoadingIndicator() {
+  return (
+    <XStack alignItems="center" gap="$2" justifyContent="center" padding="$4">
+      <Spinner size="small" color="$brand" />
+      <Paragraph fontSize={12} color="$color10">
+        Seçenekler yükleniyor...
+      </Paragraph>
+    </XStack>
   );
 }

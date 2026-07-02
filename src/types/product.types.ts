@@ -87,6 +87,16 @@ export type SimilarProduct = {
   hasStock: boolean;
 };
 
+/** A sibling color variant of a product (each color is its own product). */
+export type ProductColorOption = {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl: string;
+  price: number;
+  isStock?: boolean;
+};
+
 export type PopularProduct = {
   id: string;
   name: string;
@@ -145,14 +155,7 @@ export type Product = {
   sizes?: ProductSize[];
   hasStock?: boolean;
   images?: string[];
-  otherColors?: {
-    id: string;
-    name: string;
-    slug: string;
-    imageUrl: string;
-    price: number;
-    isStock?: boolean;
-  }[];
+  otherColors?: ProductColorOption[];
   videoPath?: string | null;
   featureIcons?: FeatureIcon[];
   variants?: ProductVariant[];

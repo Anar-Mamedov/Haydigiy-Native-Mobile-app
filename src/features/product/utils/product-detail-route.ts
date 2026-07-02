@@ -1,10 +1,13 @@
 import { Product } from '@/types/product.types';
 
-/** Fields required to open the product detail screen with an instant preview. */
-type ProductRouteSource = Pick<
-  Product,
-  'id' | 'slug' | 'title' | 'price' | 'imageUrl' | 'brand' | 'sellerName' | 'shippingLabel' | 'images'
->;
+/**
+ * Fields required to open the product detail screen with an instant preview.
+ * Brand/seller/shipping/images are optional so slimmer sources (similar
+ * products, color options) can build a route too — the detail screen's preview
+ * fills the missing ones with its defaults.
+ */
+type ProductRouteSource = Pick<Product, 'id' | 'slug' | 'title' | 'price' | 'imageUrl'> &
+  Partial<Pick<Product, 'brand' | 'images' | 'sellerName' | 'shippingLabel'>>;
 
 /**
  * Builds the product detail route with preview params.

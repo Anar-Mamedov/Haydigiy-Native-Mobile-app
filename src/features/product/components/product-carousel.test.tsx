@@ -13,10 +13,12 @@ function renderCarousel(
   carouselImages = images,
   videoPath?: string,
   onVideoPress?: (videoUri: string) => void,
+  initialIndex?: number,
 ) {
   return renderWithTamagui(
     <ProductCarousel
       images={carouselImages}
+      initialIndex={initialIndex}
       isFavorite={false}
       onToggleFavorite={jest.fn()}
       onVideoPress={onVideoPress}
@@ -75,7 +77,8 @@ describe('ProductCarousel', () => {
   });
 
   it('uses the product video as the final slide and plays it in app', () => {
-    renderCarousel(images, 'https://example.com/product-video.mp4');
+    // Open on the last image so the windowed list has the video cell mounted.
+    renderCarousel(images, 'https://example.com/product-video.mp4', undefined, 2);
 
     fireEvent.press(screen.getByLabelText('Ürün videosunu oynat'));
 
@@ -98,16 +101,24 @@ describe('ProductCarousel', () => {
 
   it('opens the provided video handler from the carousel video slide preview', () => {
     const onVideoPress = jest.fn();
-    renderCarousel(images, 'https://example.com/product-video.mp4', onVideoPress);
+    // Open on the last image so the windowed list has the video cell mounted.
+    renderCarousel(images, 'https://example.com/product-video.mp4', onVideoPress, 2);
 
-    fireEvent.press(screen.getByLabelText('Sonraki görsel'));
-    fireEvent.press(screen.getByLabelText('Sonraki görsel'));
     fireEvent.press(screen.getByLabelText('Sonraki görsel'));
     expect(screen.getByLabelText('Slayt 4 / 4')).toBeTruthy();
 
     fireEvent.press(screen.getAllByLabelText('Ürün videosunu modalda aç')[0]);
 
     expect(onVideoPress).toHaveBeenCalledWith('https://example.com/product-video.mp4');
+  });
+
+  it('bounds the initial render window so all images do not mount at screen open', () => {
+    renderCarousel();
+
+    const list = screen.getByTestId('product-carousel-list');
+    expect(list.props.initialNumToRender).toBe(2);
+    expect(list.props.maxToRenderPerBatch).toBe(3);
+    expect(list.props.windowSize).toBe(5);
   });
 
   it('does not render loop controls for a single image', () => {

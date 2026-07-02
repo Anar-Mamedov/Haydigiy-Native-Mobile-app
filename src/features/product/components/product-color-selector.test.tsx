@@ -33,7 +33,8 @@ describe('ProductColorSelector', () => {
     expect(onColorSelect).not.toHaveBeenCalled();
 
     fireEvent.press(screen.getByLabelText('Mavi renk seçeneği'));
-    expect(onColorSelect).toHaveBeenCalledWith('blue-product');
+    // The full option is passed so the target screen can render an instant preview.
+    expect(onColorSelect).toHaveBeenCalledWith(otherColors[1]);
   });
 
   it('renders the category redirect and triggers it on press', () => {

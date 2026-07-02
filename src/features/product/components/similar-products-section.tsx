@@ -7,7 +7,8 @@ import { SimilarProduct } from '@/types/product.types';
 
 interface SimilarProductsSectionProps {
   products?: SimilarProduct[];
-  onProductPress: (slug: string) => void;
+  /** Receives the full product so the target screen can render an instant preview. */
+  onProductPress: (product: SimilarProduct) => void;
 }
 
 export function SimilarProductsSection({
@@ -33,7 +34,7 @@ export function SimilarProductsSection({
         {products.map((similarProduct) => (
           <Pressable
             key={similarProduct.id}
-            onPress={() => onProductPress(similarProduct.slug)}
+            onPress={() => onProductPress(similarProduct)}
             style={{
               width: 130,
               borderWidth: 1,

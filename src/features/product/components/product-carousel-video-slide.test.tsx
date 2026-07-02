@@ -59,6 +59,32 @@ describe('ProductCarouselVideoSlide', () => {
     expect(screen.getByTestId('product-carousel-video').props.surfaceType).toBe('textureView');
   });
 
+  it('does not create a player until the slide is first activated', () => {
+    const { rerender } = renderWithTamagui(
+      <ProductCarouselVideoSlide
+        autoplayRequest={0}
+        height={320}
+        isActive={false}
+        uri="https://cdn.example.com/product-video.mp4"
+        width={180}
+      />,
+    );
+
+    expect(mockedUseVideoPlayer).not.toHaveBeenCalled();
+
+    rerender(
+      <ProductCarouselVideoSlide
+        autoplayRequest={0}
+        height={320}
+        isActive
+        uri="https://cdn.example.com/product-video.mp4"
+        width={180}
+      />,
+    );
+
+    expect(mockedUseVideoPlayer).toHaveBeenCalled();
+  });
+
   it('renders a modal-opening preview instead of inline video when a handler is provided', () => {
     const onOpenPress = jest.fn();
 

@@ -3,22 +3,15 @@ import { ChevronRight } from '@tamagui/lucide-icons-2';
 import { XStack, YStack, Paragraph, ScrollView, useThemeName } from 'tamagui';
 import { Image } from 'expo-image';
 import { Pressable } from 'react-native';
-
-interface ColorOption {
-  id: string;
-  name: string;
-  slug: string;
-  imageUrl: string;
-  price: number;
-  isStock?: boolean;
-}
+import { ProductColorOption } from '@/types/product.types';
 
 interface ProductColorSelectorProps {
-  otherColors?: ColorOption[];
+  otherColors?: ProductColorOption[];
   currentProductId: string;
   currentProductSlug: string;
   currentProductImage: string;
-  onColorSelect: (slug: string) => void;
+  /** Receives the full option so the target screen can render an instant preview. */
+  onColorSelect: (color: ProductColorOption) => void;
   categoryName?: string;
   categorySlug?: string;
   categoryId?: number;
@@ -82,7 +75,7 @@ export function ProductColorSelector({
               return (
                 <Pressable
                   key={color.id}
-                  onPress={() => !isSelected && onColorSelect(color.slug)}
+                  onPress={() => !isSelected && onColorSelect(color)}
                   accessibilityRole="button"
                   accessibilityLabel={`${color.name} renk seçeneği`}
                 >

@@ -74,7 +74,7 @@ export function SizeChartModal({ open, onOpenChange }: { open: boolean; onOpenCh
   const chartImageSource = getSizeChartImageSource(activeGender, activeSection);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[80]} dismissOnSnapToBottom modal>
+    <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[80]} dismissOnSnapToBottom modal unmountChildrenWhenHidden>
       <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={16} borderTopRightRadius={16} overflow="hidden">
         {/* Header */}
@@ -193,7 +193,7 @@ export function SizeCalculatorModal({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[48]} dismissOnSnapToBottom modal>
+    <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[48]} dismissOnSnapToBottom modal unmountChildrenWhenHidden>
       <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={16} borderTopRightRadius={16} overflow="hidden">
         <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={16} paddingVertical={12} borderBottomWidth={1} borderBottomColor="$borderColor">
@@ -321,7 +321,7 @@ export function SizeCalculatorModal({
 // --- 3. WASHING INSTRUCTIONS MODAL ---
 export function WashingInstructionsModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[80]} dismissOnSnapToBottom modal>
+    <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[80]} dismissOnSnapToBottom modal unmountChildrenWhenHidden>
       <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={16} borderTopRightRadius={16} overflow="hidden">
         <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={16} paddingVertical={12} borderBottomWidth={1} borderBottomColor="$borderColor">
@@ -392,7 +392,7 @@ export function FeedbackModal({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[85]} dismissOnSnapToBottom modal>
+    <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[85]} dismissOnSnapToBottom modal unmountChildrenWhenHidden>
       <AppSheetOverlay />
       <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={16} borderTopRightRadius={16} overflow="hidden">
         <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={16} paddingVertical={12} borderBottomWidth={1} borderBottomColor="$borderColor">

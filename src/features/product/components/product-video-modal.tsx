@@ -77,7 +77,21 @@ function useFullscreenVideoPlayer(videoUri: string | null | undefined, open: boo
   return { player, errorMessage };
 }
 
-export function ProductVideoModal({
+/**
+ * Full-screen product video modal (Reels-style overlay). The content — and with
+ * it the native expo-video player — mounts only while the modal is open, so
+ * merely visiting a product that has a video does not create a player or start
+ * buffering it in the background.
+ */
+export function ProductVideoModal({ open, videoUri, ...props }: ProductVideoModalProps) {
+  if (!open || !videoUri) {
+    return null;
+  }
+
+  return <ProductVideoModalContent open={open} videoUri={videoUri} {...props} />;
+}
+
+function ProductVideoModalContent({
   onOpenChange,
   open,
   videoUri,
@@ -119,10 +133,6 @@ export function ProductVideoModal({
     setIsFavorite((prev) => !prev);
     onToggleFavorite?.();
   }, [onToggleFavorite]);
-
-  if (!open || !videoUri) {
-    return null;
-  }
 
   return (
     <Modal

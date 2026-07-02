@@ -272,6 +272,13 @@ export function ProductCarousel({
           onScroll={handleScroll}
           onMomentumScrollEnd={handleMomentumScrollEnd}
           scrollEventThrottle={16}
+          // Bound the initial mount to the visible slide and its neighbors;
+          // without these every image (and the video slide) mounts and starts
+          // downloading the moment the screen opens, competing with the
+          // detail API request for bandwidth.
+          initialNumToRender={2}
+          maxToRenderPerBatch={3}
+          windowSize={5}
           keyExtractor={(item, index) => `${item}-${index}`}
           getItemLayout={(_, index) => ({
             length: itemWidth,

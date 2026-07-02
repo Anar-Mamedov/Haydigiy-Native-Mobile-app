@@ -8,6 +8,7 @@ import { AppScreen, EmptyState, ConfirmDialog } from '@/components/ui';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useFavoritesQuery, useRemoveFavoriteMutation } from '../api/favorite.queries';
+import { buildProductDetailRoute } from '@/features/product/utils/product-detail-route';
 import { getFavoritePricing } from '../utils/favorite-pricing';
 import { FavoriteCard } from '../components/favorite-card';
 import { FavoritesHeader } from '../components/favorites-header';
@@ -256,7 +257,7 @@ export function FavoritesScreen() {
                     onAddToCartPress={handleAddToCart}
                     onOpenSizeSelector={handleOpenSizeSelector}
                     selectedSize={selectedSizes[item.product.id] || null}
-                    onProductPress={(prod) => router.push(`/product/${prod.slug}` as any)}
+                    onProductPress={(prod) => router.push(buildProductDetailRoute(prod))}
                   />
                 </YStack>
               )}

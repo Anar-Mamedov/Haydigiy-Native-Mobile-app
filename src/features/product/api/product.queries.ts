@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { productKeys } from '@/features/product/api/product.keys';
 import {
@@ -96,14 +97,31 @@ export function usePopularProductsQuery(enabled = true) {
   });
 }
 
+/**
+ * Browsing back and forth between the list and the same product within this
+ * window reuses the cached detail instead of re-running the request chain;
+ * after it, a background refetch still refreshes price/stock without blanking
+ * the screen.
+ */
+const PRODUCT_DETAIL_STALE_TIME = 60 * 1000;
+
+/**
+ * Product detail for the PDP. The base detail request resolves on its own so
+ * variants, colors and sizes render as soon as it lands; the review page is
+ * fetched by a separate dependent query and merged in when available.
+ * (Previously the review request was awaited inside the detail queryFn, which
+ * delayed the entire detail — including the variant selectors — by a full
+ * round-trip even though reviews render far below the fold.)
+ */
 export function useProductDetailsQuery(idOrSlug: string) {
-  return useQuery({
+  const detailQuery = useQuery({
     enabled: Boolean(idOrSlug),
     queryKey: productKeys.detail(idOrSlug),
+    staleTime: PRODUCT_DETAIL_STALE_TIME,
     queryFn: async () => {
       let slug = idOrSlug;
       const isNumeric = /^\d+$/.test(idOrSlug);
-      
+
       if (isNumeric) {
         try {
           const res = await getCurrentSlugById(idOrSlug);
@@ -114,25 +132,36 @@ export function useProductDetailsQuery(idOrSlug: string) {
           console.warn('Failed to resolve slug by id, falling back to direct slug fetch:', error);
         }
       }
-      
+
       const rawDetail = await getProductDetailBySlug(slug);
-      const product = mapProductDetailDto(rawDetail);
-      return hydrateProductDetailReviews(slug, product);
+      return mapProductDetailDto(rawDetail);
     },
   });
-}
 
-async function hydrateProductDetailReviews(slug: string, product: Product): Promise<Product> {
-  const hasReviews = product.reviewCount > 0 || (product.reviews?.length ?? 0) > 0;
-  if (!hasReviews) return product;
+  const detail = detailQuery.data;
+  const reviewSlug = detail?.slug ?? '';
+  const hasReviews = Boolean(detail && (detail.reviewCount > 0 || (detail.reviews?.length ?? 0) > 0));
 
-  try {
-    const reviewPage = await getProductReviewPageDto(slug);
-    return mergeProductDetailReviewPage(product, reviewPage);
-  } catch (error) {
-    console.warn('Failed to hydrate product detail reviews:', error);
-    return product;
-  }
+  // Failure here degrades gracefully: the detail payload's own review summary
+  // stays on screen and the query retries per the client defaults.
+  const reviewPageQuery = useQuery({
+    enabled: Boolean(reviewSlug) && hasReviews,
+    queryKey: productKeys.detailReviews(reviewSlug),
+    staleTime: PRODUCT_DETAIL_STALE_TIME,
+    queryFn: () => getProductReviewPageDto(reviewSlug),
+  });
+
+  const data = useMemo<Product | undefined>(() => {
+    if (!detail || !reviewPageQuery.data) return detail;
+    return mergeProductDetailReviewPage(detail, reviewPageQuery.data);
+  }, [detail, reviewPageQuery.data]);
+
+  return {
+    data,
+    isError: detailQuery.isError,
+    isPending: detailQuery.isPending,
+    refetch: detailQuery.refetch,
+  };
 }
 
 export function useProductReviewsQuery(slug: string) {

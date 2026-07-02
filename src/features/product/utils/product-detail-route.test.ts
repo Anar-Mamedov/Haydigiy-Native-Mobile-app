@@ -60,4 +60,24 @@ describe('buildProductDetailRoute', () => {
     expect(route.params.imageIndex).toBe('0');
     expect(route.params.imageUrl).toBe('img-0.png');
   });
+
+  it('builds a preview route from slim sources (similar products / color options)', () => {
+    const route = buildProductDetailRoute({
+      id: '42',
+      slug: 'mavi-elbise',
+      title: 'Mavi Elbise',
+      price: 249.9,
+      imageUrl: 'https://example.com/mavi.png',
+    });
+
+    expect(route.params).toMatchObject({
+      id: 'mavi-elbise',
+      title: 'Mavi Elbise',
+      price: '249.9',
+      imageUrl: 'https://example.com/mavi.png',
+      shippingLabel: '',
+    });
+    expect(route.params.brand).toBeUndefined();
+    expect(route.params.sellerName).toBeUndefined();
+  });
 });

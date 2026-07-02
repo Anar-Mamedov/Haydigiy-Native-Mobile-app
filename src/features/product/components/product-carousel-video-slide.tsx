@@ -18,11 +18,43 @@ export function ProductCarouselVideoSlide({
   onOpenPress,
   ...props
 }: ProductCarouselVideoSlideProps) {
+  // Latch: flips on first activation and stays on, so the player survives
+  // swiping away (paused) but is never created for a slide the user has not
+  // reached — list windowing alone would otherwise spin it up early.
+  const [hasActivated, setHasActivated] = useState(props.isActive);
+
+  useEffect(() => {
+    if (props.isActive) {
+      setHasActivated(true);
+    }
+  }, [props.isActive]);
+
   if (onOpenPress) {
     return <ProductCarouselVideoPreview {...props} onOpenPress={onOpenPress} />;
   }
 
+  if (!hasActivated && !props.isActive) {
+    return <InactiveVideoSlide height={props.height} width={props.width} />;
+  }
+
   return <PlayableProductCarouselVideoSlide {...props} />;
+}
+
+function InactiveVideoSlide({ height, width }: Pick<ProductCarouselVideoSlideProps, 'height' | 'width'>) {
+  return (
+    <YStack
+      alignItems="center"
+      backgroundColor="#111827"
+      height={height}
+      justifyContent="center"
+      width={width}
+    >
+      <Play size={48} color="white" fill="white" />
+      <Paragraph color="white" fontSize={14} fontWeight="800" marginTop="$2">
+        VİDEO
+      </Paragraph>
+    </YStack>
+  );
 }
 
 function ProductCarouselVideoPreview({
@@ -102,20 +134,7 @@ function PlayableProductCarouselVideoSlide({
   }, [autoplayRequest, isActive, player]);
 
   if (!isActive) {
-    return (
-      <YStack
-        alignItems="center"
-        backgroundColor="#111827"
-        height={height}
-        justifyContent="center"
-        width={width}
-      >
-        <Play size={48} color="white" fill="white" />
-        <Paragraph color="white" fontSize={14} fontWeight="800" marginTop="$2">
-          VİDEO
-        </Paragraph>
-      </YStack>
-    );
+    return <InactiveVideoSlide height={height} width={width} />;
   }
 
   return (
