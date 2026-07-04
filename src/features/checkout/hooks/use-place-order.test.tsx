@@ -54,6 +54,8 @@ function makeController(overrides: Partial<CheckoutController> = {}): CheckoutCo
     items: [{ title: 'Ürün', unitPrice: 1454.96, quantity: 2 }],
     appliedCoupon: null,
     setSubmitError: jest.fn(),
+    markOrderSubmitted: jest.fn(),
+    resumeOrderTokenSync: jest.fn(),
     ...overrides,
   } as unknown as CheckoutController;
 }
@@ -117,6 +119,9 @@ describe('usePlaceOrder order-token sync', () => {
     expect(updateOrderTokenDto.mock.invocationCallOrder[0]).toBeLessThan(
       confirmOrderDto.mock.invocationCallOrder[0],
     );
+    // Onaydan sonra token senkronu durur; sepet boşalınca işlenmiş siparişe
+    // gereksiz /order/token atılmaz.
+    expect(controller.markOrderSubmitted).toHaveBeenCalled();
   });
 
   it('stops before charging when the backend total no longer matches the shown total', async () => {

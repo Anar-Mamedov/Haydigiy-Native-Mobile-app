@@ -73,6 +73,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
       totals,
       items,
       appliedCoupon,
+      markOrderSubmitted,
     } = controller;
 
     if (!shippingAddress) return fail('Lütfen teslimat adresi seçin.');
@@ -128,6 +129,9 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
         });
         if (!res.message) throw new Error('Sipariş oluşturulurken bir hata oluştu.');
 
+        // Sepet boşalınca değişen toplam, işlenmiş siparişe boş yere /order/token
+        // attırmasın (web `orderSubmittedRef` paritesi).
+        markOrderSubmitted();
         await queryClient.invalidateQueries({ queryKey: cartKeys.all });
         const token = res.order_token ?? res.order?.secure_token ?? '';
         router.replace({
@@ -165,6 +169,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
           init.data?.threeDSHtmlContent ??
           init.data?.checkoutFormContent;
         if (html) {
+          markOrderSubmitted();
           setThreeDS({ kind: 'iyzico-html', html: String(html) });
           return;
         }
@@ -177,6 +182,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
           init.data?.callbackUrl ??
           init.data?.url;
         if (url) {
+          markOrderSubmitted();
           setThreeDS({ kind: 'url', url: String(url) });
           return;
         }
@@ -230,6 +236,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
         garanti.customerIpAddress && IP_REGEX.test(garanti.customerIpAddress)
           ? garanti.customerIpAddress
           : ip;
+      markOrderSubmitted();
       setThreeDS({
         kind: 'garanti-form',
         html: buildGarantiFormHtml(garanti, card.values, shippingAddress.email, ipForForm),
@@ -245,6 +252,10 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
     submit,
     isSubmitting,
     threeDS,
-    closeThreeDS: () => setThreeDS(null),
+    closeThreeDS: () => {
+      // 3DS iptal edildi; kullanıcı seçim değiştirebilir, senkron kaldığı yerden sürsün.
+      controller.resumeOrderTokenSync();
+      setThreeDS(null);
+    },
   };
 }

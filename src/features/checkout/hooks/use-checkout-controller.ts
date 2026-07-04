@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useCardForm } from './use-card-form';
+import { useOrderTokenSync } from './use-order-token-sync';
 import { getApiErrorMessage } from '../utils/error-message';
 import {
   extractInitialCargoId,
@@ -81,6 +82,16 @@ export function useCheckoutController() {
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const [isCartExpanded, setIsCartExpanded] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Sipariş gönderildikten sonra token senkronunu durduran bayrak (web
+  // `orderSubmittedRef` paritesi). 3DS iptalinde senkron kaldığı yerden sürer.
+  const isOrderSubmittedRef = useRef(false);
+  const markOrderSubmitted = useCallback(() => {
+    isOrderSubmittedRef.current = true;
+  }, []);
+  const resumeOrderTokenSync = useCallback(() => {
+    isOrderSubmittedRef.current = false;
+  }, []);
 
   // ---- Coupon state ----
   const [couponInput, setCouponInput] = useState('');
@@ -212,6 +223,43 @@ export function useCheckoutController() {
     isFreeShippingCoupon,
     cargoPrice,
   );
+
+  // Taslak siparişi bu ekranın durumuyla senkron tut (web ödeme sayfası paritesi):
+  // ekrana girişte ve kargo/yöntem/taksit/tutar/kupon değiştikçe /order/token yazılır,
+  // böylece başka bir platformun (ör. web) bıraktığı sipariş durumu onarılır ve
+  // submit'teki tutar koruması bu ekranın ürettiği satırla karşılaştırır.
+  useOrderTokenSync({
+    orderToken,
+    selectedCargo,
+    selectedMethod,
+    shippingAddress,
+    billingAddressId: sendInvoiceToSameAddress
+      ? (shippingAddress?.id ?? null)
+      : (billingAddress?.id ?? shippingAddress?.id ?? null),
+    finalTotal: totals.finalTotal,
+    installmentCount:
+      card.selectedPlan && card.selectedPlan.installment > 1 ? card.selectedPlan.installment : 1,
+    appliedCoupon,
+    isPaused: useCallback(() => isOrderSubmittedRef.current, []),
+    onCouponError: useCallback((message: string) => {
+      setAppliedCoupon(null);
+      setCouponError(message);
+    }, []),
+    onCouponRefresh: useCallback((coupon: { code: string; discount_type: 'percentage' | 'fixed' | 'free_shipping'; discount: number; is_free_shipping: boolean }) => {
+      setAppliedCoupon((previous) => ({
+        code: coupon.code || previous?.code || '',
+        discountType: coupon.discount_type || previous?.discountType || 'fixed',
+        discountValue: previous?.discountValue ?? 0,
+        discount: Number(coupon.discount ?? 0),
+        isFreeShipping: Boolean(coupon.is_free_shipping),
+        isCombinable: previous?.isCombinable,
+      }));
+      setCouponError(null);
+    }, []),
+    onSyncError: useCallback((message: string) => {
+      setSubmitError(message);
+    }, []),
+  });
 
   // Auto-select the first non-blocked payment method once methods + total are ready.
   useEffect(() => {
@@ -389,6 +437,8 @@ export function useCheckoutController() {
     goBack,
     // order token + raw context for place-order
     orderToken,
+    markOrderSubmitted,
+    resumeOrderTokenSync,
   };
 }
 
