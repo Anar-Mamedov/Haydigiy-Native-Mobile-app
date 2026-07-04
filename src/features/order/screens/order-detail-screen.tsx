@@ -16,6 +16,7 @@ import { OrderPaymentCard } from '../components/order-payment-card';
 import { OrderReviewSheet } from '../components/order-review-sheet';
 import { AgreementTab, OrderAgreementSheet } from '../components/order-agreement-sheet';
 import { isOrderCancellableStatus } from '../utils/order-status';
+import { getReturnBlockBannerMessage } from '../utils/return-block';
 import { OrderDetailItem } from '@/types/order.types';
 
 const REVIEWABLE_STATUSES = ['Teslim Edildi', 'Sipariş tamamlandı'];
@@ -48,8 +49,7 @@ export function OrderDetailScreen() {
   const canCreateReturn = !isCancelable && (order?.canCreateReturnRequest ?? false);
   const hasReturnableItems = order?.items.some((item) => !item.isNonReturnable) ?? false;
   const showReturnEntry = canCreateReturn && hasReturnableItems;
-  const showReturnBlocked =
-    !isCancelable && !order?.canCreateReturnRequest && order?.returnBlockReason != null;
+  const returnBlockMessage = order ? getReturnBlockBannerMessage(order, isCancelable) : null;
 
   const header = <OrdersHeader onBack={handleBack} title="Siparişim" />;
 
@@ -171,7 +171,7 @@ export function OrderDetailScreen() {
             </Button>
           ) : null}
 
-          {showReturnBlocked ? (
+          {returnBlockMessage ? (
             <XStack
               alignItems="center"
               backgroundColor="$red2"
@@ -183,11 +183,7 @@ export function OrderDetailScreen() {
             >
               <CircleAlert color="$red10" size={18} />
               <Paragraph color="$red11" flex={1} fontSize={13} fontWeight="600">
-                {order.returnBlockReason === 'time_expired'
-                  ? 'İade süresi doldu (14 gün).'
-                  : order.returnBlockReason === 'not_delivered'
-                    ? 'Sipariş henüz teslim edilmedi.'
-                    : 'İade talebi oluşturulamıyor.'}
+                {returnBlockMessage}
               </Paragraph>
             </XStack>
           ) : null}

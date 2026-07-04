@@ -79,6 +79,9 @@ export async function recreateReturnAsPttDto(
   if (returnRequestId) {
     const response = await apiClient.post<ReturnSubmitResponseDto>(
       `/return-requests/${returnRequestId}/recreate-ptt`,
+      undefined,
+      // PTT SOAP servisi de global 15 sn zaman aşımını aşabilir.
+      { timeout: UPLOAD_TIMEOUT },
     );
     return response.data ?? {};
   }

@@ -37,8 +37,14 @@ jest.mock('../components/return-result-sheets', () => ({
   ReturnResultSheets: () => null,
 }));
 
+let mockController: Record<string, unknown>;
+
 jest.mock('../hooks/use-return-create-controller', () => ({
-  useReturnCreateController: () => ({
+  useReturnCreateController: () => mockController,
+}));
+
+function makeController(overrides: Record<string, unknown> = {}) {
+  return {
     canCreateReturn: true,
     canSubmit: false,
     clearError: jest.fn(),
@@ -82,12 +88,14 @@ jest.mock('../hooks/use-return-create-controller', () => ({
     successMessage: null,
     toggleItem: jest.fn(),
     note: '',
-  }),
-}));
+    ...overrides,
+  };
+}
 
 describe('ReturnCreateScreen', () => {
   beforeEach(() => {
     mockSetNote.mockClear();
+    mockController = makeController();
   });
 
   it('keeps the note field inside a keyboard-aware form scroller', () => {
@@ -99,5 +107,34 @@ describe('ReturnCreateScreen', () => {
     expect(scroller.props.overScrollMode).toBe('never');
     expect(StyleSheet.flatten(scroller.props.contentContainerStyle)?.paddingBottom).toBeUndefined();
     expect(screen.getByLabelText('Not (opsiyonel)')).toBeTruthy();
+  });
+
+  // Regression: iade başarıyla oluşunca sipariş yeniden çekilir ve ekran
+  // "zaten oluşturuldu" durumuna geçerdi; engel dalı sheet'leri render etmediği
+  // için başarı sheet'i sönüyor ve başarı hata gibi görünüyordu.
+  it('stays on the form flow while the success sheet is showing, even if the order became blocked', () => {
+    mockController = makeController({
+      canCreateReturn: false,
+      returnBlockReason: 'already_requested',
+      successMessage: 'İade talebiniz alındı.',
+    });
+
+    renderWithTamagui(<ReturnCreateScreen />);
+
+    expect(screen.getByTestId('return-create-keyboard-aware-scroll')).toBeTruthy();
+    expect(screen.queryByText('Bu sipariş için zaten iade talebi oluşturulmuştur.')).toBeNull();
+  });
+
+  it('renders the web-parity blocked screen with a back-to-orders action', () => {
+    mockController = makeController({
+      canCreateReturn: false,
+      returnBlockReason: 'already_requested',
+    });
+
+    renderWithTamagui(<ReturnCreateScreen />);
+
+    expect(screen.getByText('İade Talebi Oluşturulamıyor')).toBeTruthy();
+    expect(screen.getByText('Bu sipariş için zaten iade talebi oluşturulmuştur.')).toBeTruthy();
+    expect(screen.getByLabelText('Siparişlerime Dön')).toBeTruthy();
   });
 });

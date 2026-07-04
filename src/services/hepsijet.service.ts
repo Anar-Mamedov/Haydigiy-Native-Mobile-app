@@ -6,6 +6,12 @@ import { ResolvedAddress } from '@/types/order.types';
 // available-dates: returns the bookable days for an address (city/town) and range.
 // send: creates a scheduled pickup. cancel: cancels a previously created pickup.
 
+// Hepsijet'e proxy'lenen çağrılar kurye API'si yüzünden global 15 sn zaman
+// aşımını aşabilir; web istemcisi 60 sn bekler (frontend/src/lib/http.ts).
+// İstemci erken vazgeçerse backend işlemi yine de tamamlar ve sonraki deneme
+// "Gönderi numarası sistemde kayıtlı" çakışmasına düşer.
+const HEPSIJET_TIMEOUT = 60000;
+
 export type HepsijetDay = {
   date: string;
   returnedLimit: number;
@@ -41,6 +47,7 @@ export const getHepsijetAvailableDates = async (
 ): Promise<string[]> => {
   const res = await apiClient.get<AvailableDatesResponse>('/hepsijet/delivery/available-dates', {
     params,
+    timeout: HEPSIJET_TIMEOUT,
   });
 
   const cities = res?.data?.data?.data;
@@ -137,7 +144,9 @@ export const buildHepsijetSendPayload = ({
 export type HepsijetSendPayload = ReturnType<typeof buildHepsijetSendPayload>;
 
 export const sendHepsijetDelivery = async (payload: HepsijetSendPayload) => {
-  const res = await apiClient.post('/hepsijet/delivery/send', payload);
+  const res = await apiClient.post('/hepsijet/delivery/send', payload, {
+    timeout: HEPSIJET_TIMEOUT,
+  });
   return res.data;
 };
 
@@ -153,6 +162,7 @@ export const cancelHepsijetDelivery = async (
 ): Promise<CancelHepsijetDeliveryResponse> => {
   const res = await apiClient.delete<CancelHepsijetDeliveryResponse>(
     `/hepsijet/delivery/${encodeURIComponent(deliveryNo)}`,
+    { timeout: HEPSIJET_TIMEOUT },
   );
   return res.data;
 };

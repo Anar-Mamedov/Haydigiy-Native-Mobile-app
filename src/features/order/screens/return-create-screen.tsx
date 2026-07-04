@@ -12,10 +12,11 @@ import { ReturnResultSheets } from '../components/return-result-sheets';
 import { NewIbanModal } from '../components/new-iban-modal';
 import { useReturnCreateController } from '../hooks/use-return-create-controller';
 
+// Web `iade-olustur` sayfasındaki engel metinleriyle birebir aynı.
 const BLOCK_MESSAGES: Record<string, string> = {
-  time_expired: 'İade süresi (14 gün) doldu.',
-  not_delivered: 'Sipariş henüz teslim edilmedi.',
-  already_requested: 'Bu sipariş için iade talebi zaten oluşturuldu.',
+  time_expired: 'İade süresi (14 gün) dolmuştur.',
+  not_delivered: 'Sipariş henüz teslim edilmemiştir.',
+  already_requested: 'Bu sipariş için zaten iade talebi oluşturulmuştur.',
 };
 const RETURN_FORM_KEYBOARD_BOTTOM_OFFSET = 120;
 
@@ -72,7 +73,10 @@ export function ReturnCreateScreen() {
   const order = ctrl.order;
   const totalUnits = order.items.reduce((sum, item) => sum + item.quantity, 0);
 
-  if (!ctrl.canCreateReturn) {
+  // Başarı sheet'i açıkken engel ekranına düşme: iade oluşunca sipariş yeniden
+  // çekilir ve "zaten oluşturuldu" durumuna geçer; erken dönüş sheet'i söndürüp
+  // başarıyı hata gibi gösterir. Web'de sayfa durumu değişmediği için modal kalır.
+  if (!ctrl.canCreateReturn && !ctrl.successMessage) {
     return (
       <AppScreen gap={0} header={header} padding={0} scrollable={false}>
         <YStack flex={1} padding="$4">
@@ -82,13 +86,30 @@ export function ReturnCreateScreen() {
             borderColor="$red6"
             borderRadius="$4"
             borderWidth={1}
-            gap="$2"
+            gap="$3"
             padding="$4"
           >
             <CircleAlert color="$red10" size={28} />
-            <Paragraph color="$red11" fontSize={14} fontWeight="600" textAlign="center">
-              {BLOCK_MESSAGES[ctrl.returnBlockReason ?? ''] ?? 'İade talebi oluşturulamıyor.'}
+            <Paragraph color="$red11" fontSize={16} fontWeight="700" textAlign="center">
+              İade Talebi Oluşturulamıyor
             </Paragraph>
+            <Paragraph color="$red11" fontSize={14} fontWeight="600" textAlign="center">
+              {BLOCK_MESSAGES[ctrl.returnBlockReason ?? ''] ??
+                'Bu sipariş için iade talebi oluşturulamaz.'}
+            </Paragraph>
+            <Button
+              accessibilityLabel="Siparişlerime Dön"
+              backgroundColor="$red10"
+              borderRadius="$4"
+              height={44}
+              onPress={() => router.replace('/(tabs)/orders')}
+              pressStyle={{ opacity: 0.85 }}
+              width="100%"
+            >
+              <Paragraph color="white" fontWeight="700">
+                Siparişlerime Dön
+              </Paragraph>
+            </Button>
           </YStack>
         </YStack>
       </AppScreen>

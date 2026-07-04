@@ -181,7 +181,10 @@ export function useReturnCreateController(orderId: string, options: Options) {
     returnableItems.length > 0 &&
     missingPhotoIds.length === 0 &&
     !submitMutation.isPending &&
-    !paymentMethodsQuery.isPending &&
+    // IBAN listesi yalnızca kapıda ödeme siparişlerinde yüklenir; kartlı
+    // siparişlerde sorgu devre dışıdır ve devre dışı sorgu sonsuza dek
+    // `isPending` kalır — koşulsuz beklemek kartlı iadeleri tamamen kilitler.
+    (!shouldShowIbanSelect || !paymentMethodsQuery.isPending) &&
     iban.hasValidForSubmit &&
     isScheduleReady &&
     !scheduled.pickupSubmitting;
