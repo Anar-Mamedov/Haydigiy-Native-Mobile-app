@@ -44,6 +44,31 @@ describe('mapCartItemDto', () => {
     expect(item.originalPrice).toBeUndefined();
   });
 
+  // Regression: the backend charges `discounted_price > 0 ? discounted_price : price`
+  // at /order/token; pricing lines from the undiscounted product price made checkout
+  // totals drift and the place-order total guard rejected the payment.
+  it('prefers the current discounted price so totals match the charged amount', () => {
+    const item = mapCartItemDto(
+      makeDto({ current_price: '100.00', current_discounted_price: '80.00' }),
+    );
+    expect(item.unitPrice).toBe(80);
+    expect(item.originalPrice).toBe(120);
+  });
+
+  it('ignores a non-positive discounted price like the backend charge guard does', () => {
+    const item = mapCartItemDto(
+      makeDto({ current_price: '100.00', current_discounted_price: '0.00' }),
+    );
+    expect(item.unitPrice).toBe(100);
+  });
+
+  it('falls back to the cart row price when the current prices are missing', () => {
+    const item = mapCartItemDto(
+      makeDto({ current_price: '', current_discounted_price: null, price: '75.00' }),
+    );
+    expect(item.unitPrice).toBe(75);
+  });
+
   it('falls back to the variant id when the product id is missing', () => {
     const item = mapCartItemDto(makeDto({ product: { name: 'X', slug: 'x' } }));
     expect(item.productId).toBe('555');

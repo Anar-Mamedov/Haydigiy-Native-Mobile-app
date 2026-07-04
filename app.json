@@ -3,6 +3,7 @@
     "name": "Haydigiy",
     "slug": "haydigiy-webview-app",
     "version": "2.2.0",
+    "platforms": ["ios", "android"],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "haydigiywebviewapp",
