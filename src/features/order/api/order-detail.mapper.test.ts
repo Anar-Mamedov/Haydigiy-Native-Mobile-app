@@ -59,6 +59,72 @@ describe('mapOrderDetail', () => {
     expect(order.shippingAddress?.city).toBe('Niğde');
   });
 
+  // Web sipariş detayı paritesi: iade kartları kod/tarih/durum taşır ve
+  // beklemedeki (henüz depoya ulaşmamış) talep iptal edilebilir olarak işaretlenir.
+  it('maps return metadata and picks the cancellable pending return request', () => {
+    const order = mapOrderDetail(
+      baseDetail({
+        returned_items: [
+          {
+            order_item_id: 5,
+            name: 'İade Ürünü',
+            quantity: 1,
+            price: '139.99',
+            return_request_id: 42,
+            return_code: 'HG1-R',
+            requested_at: '04 Tem 2026 - 23:26',
+            status: 'pending',
+            status_name: '',
+            is_hepsijet: true,
+          },
+          {
+            order_item_id: 6,
+            name: 'Kargodaki İade',
+            quantity: 1,
+            price: '89.99',
+            return_request_id: 43,
+            status: 4,
+            received_at: null,
+          },
+        ],
+      }),
+    );
+
+    const [pending, shipped] = order.returnedItems;
+    expect(pending?.returnCode).toBe('HG1-R');
+    expect(pending?.returnRequestedAt).toBe('04 Tem 2026 - 23:26');
+    expect(pending?.returnStatusCode).toBe(1);
+    expect(shipped?.returnStatusCode).toBe(4);
+    expect(order.cancellableReturnRequestId).toBe(42);
+    expect(order.hasHepsijetReturn).toBe(true);
+  });
+
+  it('leaves no cancellable return when all requests shipped or were received', () => {
+    const order = mapOrderDetail(
+      baseDetail({
+        returned_items: [
+          { order_item_id: 5, return_request_id: 42, status: 1, received_at: '2026-07-05' },
+          { order_item_id: 6, return_request_id: 43, status: 4 },
+        ],
+      }),
+    );
+
+    expect(order.cancellableReturnRequestId).toBeNull();
+    expect(order.hasHepsijetReturn).toBe(false);
+  });
+
+  it('maps the cancellation date onto cancelled items', () => {
+    const order = mapOrderDetail(
+      baseDetail({
+        cancelled_items: [
+          { order_item_id: 9, name: 'İptal Ürünü', cancelled_at: '04 Tem 2026 - 14:49' },
+        ],
+      }),
+    );
+
+    expect(order.cancelledItems[0]?.cancelledAt).toBe('04 Tem 2026 - 14:49');
+  });
+
   it('normalizes a keyed-object items map into an array', () => {
     const order = mapOrderDetail(
       baseDetail({ items: { 0: { id: 1, name: 'A', slug: 'a' }, 1: { id: 2, name: 'B', slug: 'b' } } }),

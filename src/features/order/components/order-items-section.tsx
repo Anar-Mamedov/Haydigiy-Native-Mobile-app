@@ -20,6 +20,9 @@ type OrderItemsSectionProps = {
   /** When true, items show a return action (or an "İade/Değişim Yok" chip). */
   returnable?: boolean;
   onReturnItem?: (item: OrderDetailItemModel) => void;
+  /** Web paritesi: iptal/iade mümkün değilse "Tekrar Satın Al" gösterilir. */
+  repurchasable?: boolean;
+  onRepurchaseItem?: (item: OrderDetailItemModel) => void;
 };
 
 /** Titled card listing order lines; reused for delivered / cancelled / returned. */
@@ -35,6 +38,8 @@ export function OrderItemsSection({
   onCancelItem,
   returnable,
   onReturnItem,
+  repurchasable,
+  onRepurchaseItem,
 }: OrderItemsSectionProps) {
   if (items.length === 0) return null;
 
@@ -55,8 +60,10 @@ export function OrderItemsSection({
               key={`${item.id}-${index}`}
               onCancel={onCancelItem ? () => onCancelItem(item) : undefined}
               onPressProduct={onPressProduct}
+              onRepurchase={onRepurchaseItem ? () => onRepurchaseItem(item) : undefined}
               onReturn={onReturnItem ? () => onReturnItem(item) : undefined}
               onReview={onReview ? () => onReview(item) : undefined}
+              repurchasable={repurchasable}
               returnState={
                 returnable ? (item.isNonReturnable ? 'blocked' : 'available') : undefined
               }

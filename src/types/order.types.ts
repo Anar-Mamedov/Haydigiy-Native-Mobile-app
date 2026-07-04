@@ -81,6 +81,17 @@ export type OrderDetailItem = {
   isNonReturnable?: boolean;
   /** `available` | `gift_product` | other backend label. */
   returnStatus?: string;
+  // ---- Return metadata (kind === 'returned', web order-detail parity) ----
+  returnRequestId?: number | null;
+  returnCode?: string | null;
+  returnRequestedAt?: string | null;
+  returnReceivedAt?: string | null;
+  /** Normalized return status code (1 beklemede … 7 ödeme iadesi), null when unknown. */
+  returnStatusCode?: number | null;
+  /** Backend status label for the chip; empty → "İşlem Bekliyor". */
+  returnStatusName?: string | null;
+  // ---- Cancellation metadata (kind === 'cancelled') ----
+  cancelledAt?: string | null;
 };
 
 export type OrderTotalsView = {
@@ -209,6 +220,10 @@ export type OrderDetail = {
   returnDeadline: string | null;
   /** Existing return request ids (latest used for the PTT re-create fallback). */
   returnRequestIds: number[];
+  /** Pending return request that can still be cancelled (web parity), else null. */
+  cancellableReturnRequestId: number | null;
+  /** True when any return line was created as a Hepsijet home pickup. */
+  hasHepsijetReturn: boolean;
   shippingAddress: OrderAddress | null;
   billingAddress: OrderAddress | null;
   billingType: string;

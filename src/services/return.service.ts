@@ -88,6 +88,16 @@ export async function recreateReturnAsPttDto(
   return submitReturnRequestDto({ ...payload, cargoCompany: 'ptt' });
 }
 
+/** Cancels a pending return request (`DELETE /return-requests/{id}`), web parity. */
+export async function cancelReturnRequestDto(
+  returnRequestId: number,
+): Promise<{ message?: string }> {
+  const response = await apiClient.delete<{ message?: string }>(
+    `/return-requests/${returnRequestId}`,
+  );
+  return response.data ?? {};
+}
+
 export function getReturnErrorMessage(error: unknown, fallback = 'İade talebi gönderilemedi.'): string {
   if (isAxiosError(error)) {
     const data = error.response?.data as { message?: string; error?: string } | undefined;

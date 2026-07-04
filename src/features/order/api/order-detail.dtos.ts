@@ -43,6 +43,12 @@ export interface ReturnedItemDetailDto {
   price?: number | string;
   status_name?: string | null;
   return_reason?: string | null;
+  return_request_id?: number;
+  return_code?: string | null;
+  requested_at?: string | null;
+  received_at?: string | null;
+  status?: number | string | null;
+  is_hepsijet?: boolean;
 }
 
 export interface CancelledItemDetailDto {
@@ -54,6 +60,7 @@ export interface CancelledItemDetailDto {
   quantity?: number;
   price?: number | string;
   cancellation_reason?: string | null;
+  cancelled_at?: string | null;
 }
 
 export interface OrderTotalsDto {

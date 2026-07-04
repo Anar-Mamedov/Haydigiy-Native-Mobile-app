@@ -23,12 +23,26 @@ function Connector({ active, hidden }: { active: boolean; hidden?: boolean }) {
 export function OrderTimeline({ statusId }: OrderTimelineProps) {
   if (statusId === 4) {
     return (
-      <SectionCard padding="$3">
-        <XStack alignItems="center" gap="$2" justifyContent="center">
-          <XCircle color="$red10" size={20} />
-          <Paragraph color="$red10" fontSize={14} fontWeight="700">
-            Sipariş İptal Edildi
-          </Paragraph>
+      <SectionCard borderColor="$red6" padding="$3">
+        <XStack alignItems="center" gap="$3">
+          <XStack
+            alignItems="center"
+            backgroundColor="$red2"
+            borderRadius={100}
+            height={32}
+            justifyContent="center"
+            width={32}
+          >
+            <XCircle color="$red10" size={16} />
+          </XStack>
+          <YStack>
+            <Paragraph color="$red10" fontSize={13} fontWeight="700">
+              Sipariş İptal Edildi
+            </Paragraph>
+            <Paragraph color="$red10" fontSize={11}>
+              Bu sipariş iptal edilmiştir.
+            </Paragraph>
+          </YStack>
         </XStack>
       </SectionCard>
     );

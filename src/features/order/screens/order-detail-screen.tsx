@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { RefreshControl } from 'react-native';
+import { Alert, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
 import { CircleAlert, CircleX, Undo2 } from '@tamagui/lucide-icons-2';
 import { AppScreen, EmptyState } from '@/components/ui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
+import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useOrderDetailQuery } from '../api/order.queries';
 import { OrdersHeader } from '../components/orders-header';
 import { OrderDetailSummary } from '../components/order-detail-summary';
 import { OrderTimeline } from '../components/order-timeline';
 import { OrderItemsSection } from '../components/order-items-section';
+import { OrderReturnSection } from '../components/order-return-section';
 import { OrderAddressCard } from '../components/order-address-card';
 import { OrderPaymentCard } from '../components/order-payment-card';
 import { OrderReviewSheet } from '../components/order-review-sheet';
@@ -50,6 +52,21 @@ export function OrderDetailScreen() {
   const hasReturnableItems = order?.items.some((item) => !item.isNonReturnable) ?? false;
   const showReturnEntry = canCreateReturn && hasReturnableItems;
   const returnBlockMessage = order ? getReturnBlockBannerMessage(order, isCancelable) : null;
+  // Web paritesi: satır iptal de iade de edilemiyorsa "Tekrar Satın Al" gösterilir.
+  const isRepurchasable = Boolean(order) && !isCancelable && !canCreateReturn;
+
+  const addToCart = useAddToCartMutation();
+  const handleRepurchase = (item: OrderDetailItem) => {
+    if (!item.variantId) {
+      Alert.alert('Hata', 'Ürün sepete eklenemedi. Lütfen ürün sayfasından ekleyin.');
+      return;
+    }
+    addToCart.mutate({ variantId: String(item.variantId), quantity: item.quantity || 1 });
+    Alert.alert('Başarılı', `${item.name} sepetinize eklendi.`, [
+      { text: 'Alışverişe Devam Et', style: 'cancel' },
+      { text: 'Sepete Git', onPress: () => router.push('/(tabs)/cart' as never) },
+    ]);
+  };
 
   const header = <OrdersHeader onBack={handleBack} title="Siparişim" />;
 
@@ -138,18 +155,15 @@ export function OrderDetailScreen() {
             items={order.items}
             onCancelItem={(item) => goToCancel(`?item_id=${item.id}`)}
             onPressProduct={openProduct}
+            onRepurchaseItem={handleRepurchase}
             onReturnItem={(item) => goToReturn(`?item_id=${item.id}`)}
             onReview={setReviewItem}
+            repurchasable={isRepurchasable}
             returnable={canCreateReturn}
             reviewable={REVIEWABLE_STATUSES.includes(order.status)}
             title="Ürünler"
           />
-          <OrderItemsSection
-            items={order.returnedItems}
-            onPressProduct={openProduct}
-            title="İade Edilen Ürünler"
-            titleColor="$brand"
-          />
+          <OrderReturnSection onPressProduct={openProduct} order={order} />
 
           {isCancelable ? (
             <Button

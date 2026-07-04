@@ -5,6 +5,7 @@ import {
   CircleSlash,
   CircleX,
   Image as ImagePlaceholderIcon,
+  ShoppingBag,
   Star,
   Undo2,
 } from '@tamagui/lucide-icons-2';
@@ -26,6 +27,9 @@ type OrderDetailItemProps = {
   /** Shows the return action: "available" → Ürünü İade Et, "blocked" → İade/Değişim Yok. */
   returnState?: 'available' | 'blocked';
   onReturn?: () => void;
+  /** Web paritesi: iptal/iade artık mümkün değilse "Tekrar Satın Al" gösterilir. */
+  repurchasable?: boolean;
+  onRepurchase?: () => void;
 };
 
 /** A single order line (image, name, size, quantity, price) used in detail sections. */
@@ -38,11 +42,23 @@ export function OrderDetailItem({
   onCancel,
   returnState,
   onReturn,
+  repurchasable,
+  onRepurchase,
 }: OrderDetailItemProps) {
   const inactive = item.kind !== 'normal';
+  // İptal edilen satırlar web'deki gibi işaretlenir: görsel üzerinde çapraz
+  // kırmızı çizgi, üstü çizili isim ve sağda iptal tarihi.
+  const isCancelled = item.kind === 'cancelled';
 
   return (
-    <YStack borderColor="$borderColor" borderRadius="$4" borderWidth={1} gap="$3" padding="$3">
+    <YStack
+      backgroundColor={isCancelled ? '$red2' : '$background'}
+      borderColor={isCancelled ? '$red6' : '$borderColor'}
+      borderRadius="$4"
+      borderWidth={1}
+      gap="$3"
+      padding="$3"
+    >
       <XStack gap="$3">
         <Pressable
           accessibilityLabel={item.name || 'Ürün'}
@@ -71,16 +87,37 @@ export function OrderDetailItem({
             ) : (
               <ImagePlaceholderIcon color="$color9" size={28} />
             )}
+            {isCancelled ? (
+              <YStack
+                alignItems="center"
+                bottom={0}
+                justifyContent="center"
+                left={0}
+                pointerEvents="none"
+                position="absolute"
+                right={0}
+                top={0}
+              >
+                <YStack
+                  backgroundColor="$red10"
+                  height={2}
+                  rotate="-20deg"
+                  testID="cancelled-strike-line"
+                  width="100%"
+                />
+              </YStack>
+            ) : null}
           </YStack>
         </Pressable>
 
         <YStack flex={1} gap="$1">
           <Paragraph
-            color="$color"
+            color={isCancelled ? '$color10' : '$color'}
             fontSize={14}
             fontWeight="600"
             numberOfLines={2}
             onPress={() => item.slug && onPressProduct(item.slug)}
+            textDecorationLine={isCancelled ? 'line-through' : 'none'}
           >
             {item.name}
           </Paragraph>
@@ -92,19 +129,52 @@ export function OrderDetailItem({
           <Paragraph color="$color10" fontSize={12}>
             Adet: <Paragraph color="$color" fontSize={12} fontWeight="600">{item.quantity}</Paragraph>
           </Paragraph>
-          <Paragraph color="$brand" fontSize={14} fontWeight="800">
+          <Paragraph color={isCancelled ? '$color' : '$brand'} fontSize={14} fontWeight="800">
             {formatOrderPrice(item.price)}
           </Paragraph>
           {item.note ? (
-            <Paragraph color="$color10" fontSize={12}>
-              {item.note}
+            <Paragraph color="$color10" fontSize={12} fontStyle={isCancelled ? 'italic' : 'normal'}>
+              {isCancelled ? `“${item.note}”` : item.note}
             </Paragraph>
           ) : null}
         </YStack>
+
+        {isCancelled && item.cancelledAt ? (
+          <YStack alignItems="flex-end">
+            <Paragraph color="$color9" fontSize={11}>
+              İptal Tarihi
+            </Paragraph>
+            <Paragraph color="$color" fontSize={11} fontWeight="700">
+              {item.cancelledAt}
+            </Paragraph>
+          </YStack>
+        ) : null}
       </XStack>
 
-      {cancelable || returnState || reviewState ? (
+      {cancelable || returnState || reviewState || repurchasable ? (
         <XStack gap="$2">
+          {repurchasable ? (
+            <Button
+              accessibilityLabel="Tekrar satın al"
+              backgroundColor="transparent"
+              borderColor="$brand"
+              borderRadius="$3"
+              borderWidth={1}
+              flex={1}
+              height={40}
+              onPress={onRepurchase}
+              paddingHorizontal="$2"
+              pressStyle={{ backgroundColor: '$orange3' }}
+            >
+              <XStack alignItems="center" gap="$1.5">
+                <ShoppingBag color="$brand" size={16} />
+                <Paragraph color="$brand" fontSize={13} fontWeight="700">
+                  Tekrar Satın Al
+                </Paragraph>
+              </XStack>
+            </Button>
+          ) : null}
+
           {cancelable ? (
             <Button
               accessibilityLabel="Ürünü iptal et"

@@ -5,6 +5,7 @@ function makeOrder(overrides: Partial<Parameters<typeof getReturnBlockBannerMess
     canCreateReturnRequest: false,
     returnBlockReason: 'already_requested',
     statusId: 3,
+    returnedQty: 0,
     ...overrides,
   };
 }
@@ -22,6 +23,12 @@ describe('getReturnBlockBannerMessage', () => {
     expect(
       getReturnBlockBannerMessage(makeOrder({ returnBlockReason: 'time_expired' }), false),
     ).toBe('İade süresi doldu (14 gün)');
+  });
+
+  // Web bu çipi yalnızca iade listesi boşken gösterir; "İade Edildi" bölümü
+  // görünürken aynı bilgi kırmızı uyarı olarak tekrarlanmaz.
+  it('hides the banner when returned items are already listed on the screen', () => {
+    expect(getReturnBlockBannerMessage(makeOrder({ returnedQty: 2 }), false)).toBeNull();
   });
 
   it('hides the banner for not-delivered orders like the web', () => {
