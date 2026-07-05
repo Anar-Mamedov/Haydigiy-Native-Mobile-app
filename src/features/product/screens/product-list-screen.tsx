@@ -9,6 +9,7 @@ import { AppScreen, EmptyState } from '@/components/ui';
 import { ProductCard } from '@/features/product/components/product-card';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { useInfiniteSearchProductsQuery } from '@/features/product/api/product.queries';
+import { useQuickFiltersQuery } from '@/features/product/api/quick-filter.queries';
 import { useStableCategoryOptions } from '@/features/product/hooks/use-stable-category-options';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
@@ -100,6 +101,12 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
   const availableFilters = useStableCategoryOptions(firstPage?.availableFilters, Boolean(productCategories));
   const categoryFilterOptions =
     (availableFilters?.productCategories.length ?? 0) + (availableFilters?.categoryChildren.length ?? 0);
+
+  // Curated shortcut groups (web parity). Deep links may omit `c`, so fall back
+  // to the id resolved by the search response. The row is a non-blocking
+  // enhancement: while loading or on error it simply stays hidden.
+  const quickFiltersQuery = useQuickFiltersQuery(categoryId ?? categoryDetails?.id);
+  const quickFilterGroups = quickFiltersQuery.data ?? [];
 
   // Active filters count
   const activeFiltersCount =
@@ -258,6 +265,7 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
         availableFilters={availableFilters}
         onChange={handleApplyPartialFilters}
         onClose={() => setQuickFilterSection(null)}
+        quickFilterGroups={quickFilterGroups}
         section={quickFilterSection}
       />
 
@@ -326,6 +334,8 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
                 colors={colors}
                 variants={variants}
                 priceRange={priceRange}
+                propertyIds={propertyIds}
+                quickFilterGroups={quickFilterGroups}
                 quickFilterSection={quickFilterSection}
                 onSortPress={() => {
                   setQuickFilterSection(null);

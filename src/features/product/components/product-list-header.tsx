@@ -1,5 +1,6 @@
 import { ScrollView, Button, Paragraph, XStack, YStack } from 'tamagui';
 import { ArrowUpDown, SlidersHorizontal } from '@tamagui/lucide-icons-2';
+import { QuickFilterGroup } from '@/types/product.types';
 import { FilterPill } from './filter-pill';
 import { FilterShortcutSection } from './filter-sheet';
 
@@ -11,10 +12,21 @@ interface ProductListHeaderProps {
   colors: string | undefined;
   variants: string | undefined;
   priceRange: string | undefined;
+  propertyIds: string | undefined;
+  quickFilterGroups: QuickFilterGroup[];
   quickFilterSection: FilterShortcutSection | null;
   onSortPress: () => void;
   onFilterPress: () => void;
   onToggleQuickFilter: (section: FilterShortcutSection) => void;
+}
+
+function parsePropertyIds(value: string | undefined): number[] {
+  return value
+    ? value
+        .split(',')
+        .map((id) => Number.parseInt(id, 10))
+        .filter(Boolean)
+    : [];
 }
 
 export function ProductListHeader({
@@ -25,11 +37,15 @@ export function ProductListHeader({
   colors,
   variants,
   priceRange,
+  propertyIds,
+  quickFilterGroups,
   quickFilterSection,
   onSortPress,
   onFilterPress,
   onToggleQuickFilter,
 }: ProductListHeaderProps) {
+  const selectedPropertyIds = parsePropertyIds(propertyIds);
+
   return (
     <YStack backgroundColor="$background" marginHorizontal={-8}>
       {/* Filters and Sorting Toolbar */}
@@ -120,6 +136,18 @@ export function ProductListHeader({
             isOpen={quickFilterSection === 'price'}
             onPress={() => onToggleQuickFilter('price')}
           />
+
+          {/* Curated per-category shortcut groups (web parity), e.g. Model,
+              Yaka Tipi. Values share the property_ids filter. */}
+          {quickFilterGroups.map((group) => (
+            <FilterPill
+              key={group.id}
+              label={group.name}
+              isActive={group.values.some((value) => selectedPropertyIds.includes(value.id))}
+              isOpen={quickFilterSection === `quick:${group.id}`}
+              onPress={() => onToggleQuickFilter(`quick:${group.id}`)}
+            />
+          ))}
         </XStack>
       </ScrollView>
     </YStack>

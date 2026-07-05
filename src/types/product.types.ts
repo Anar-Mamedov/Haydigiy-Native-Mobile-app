@@ -60,6 +60,22 @@ export type ProductAvailableFilters = {
   useProductCategoryFilters: boolean;
 };
 
+export type QuickFilterValue = {
+  id: number;
+  name: string;
+};
+
+/**
+ * Curated per-category filter shortcut group (`/quick-filter/{categoryId}`),
+ * e.g. "Yaka Tipi" with its values. Value ids are property ids and toggle the
+ * same `property_ids` list as the full filter sheet.
+ */
+export type QuickFilterGroup = {
+  id: number;
+  name: string;
+  values: QuickFilterValue[];
+};
+
 export type ProductReview = {
   id: string;
   rating: number;

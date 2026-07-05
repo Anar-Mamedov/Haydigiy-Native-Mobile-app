@@ -7,7 +7,13 @@ import { CategoryFilterTree } from './category-filter-tree';
 import { FilterCheckbox } from '@/components/ui/filter-checkbox';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 
-export type FilterShortcutSection = 'categories' | 'variants' | 'colors' | 'price' | `property:${string}`;
+export type FilterShortcutSection =
+  | 'categories'
+  | 'variants'
+  | 'colors'
+  | 'price'
+  | `property:${string}`
+  | `quick:${string}`;
 
 type ActiveFilters = {
   colors?: string;

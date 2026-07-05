@@ -13,7 +13,12 @@ export function FilterPill({ label, isActive, isOpen, onPress }: FilterPillProps
   const highlighted = isActive || isOpen;
 
   return (
-    <Pressable onPress={onPress}>
+    <Pressable
+      accessibilityLabel={`${label} filtresi`}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: isOpen, selected: isActive }}
+      onPress={onPress}
+    >
       {({ pressed }) => (
         <XStack
           alignItems="center"

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable } from 'react-native';
 import { Input, Paragraph, ScrollView, XStack, YStack } from 'tamagui';
 import { Search } from '@tamagui/lucide-icons-2';
-import { FilterProperty, ProductAvailableFilters } from '@/types/product.types';
+import { FilterProperty, ProductAvailableFilters, QuickFilterGroup } from '@/types/product.types';
 import { FilterShortcutSection } from './filter-sheet';
 import { CategoryFilterTree } from './category-filter-tree';
 import { FilterCheckbox } from '@/components/ui/filter-checkbox';
@@ -22,6 +22,7 @@ interface QuickFilterDropdownProps {
   availableFilters: ProductAvailableFilters | undefined;
   onChange: (filters: ActiveFilters) => void;
   onClose: () => void;
+  quickFilterGroups: QuickFilterGroup[];
   section: FilterShortcutSection | null;
 }
 
@@ -48,6 +49,14 @@ function getPropertyGroupKey(property: Pick<FilterProperty, 'parentId' | 'parent
 
 function getPropertySectionKey(section: FilterShortcutSection | null) {
   return section?.startsWith('property:') ? section.replace('property:', '') : null;
+}
+
+function findQuickFilterGroup(
+  section: FilterShortcutSection | null,
+  groups: QuickFilterGroup[],
+): QuickFilterGroup | null {
+  if (!section?.startsWith('quick:')) return null;
+  return groups.find((group) => `quick:${group.id}` === section) ?? null;
 }
 
 function SearchField({ onChangeText, placeholder, value }: {
@@ -108,6 +117,7 @@ export function QuickFilterDropdown({
   availableFilters,
   onChange,
   onClose,
+  quickFilterGroups,
   section,
 }: QuickFilterDropdownProps) {
   const [search, setSearch] = useState('');
@@ -122,6 +132,8 @@ export function QuickFilterDropdown({
 
   if (!section) return null;
 
+  const activeQuickFilterGroup = findQuickFilterGroup(section, quickFilterGroups);
+
   const handleClear = () => {
     if (section === 'colors') onChange({ colors: undefined });
     if (section === 'variants') onChange({ variants: undefined });
@@ -131,6 +143,12 @@ export function QuickFilterDropdown({
       const groupIds = (availableFilters?.properties ?? [])
         .filter((property) => getPropertyGroupKey(property) === groupKey)
         .map((property) => property.id);
+      onChange({ property_ids: stringifyIdList(propertyIds.filter((id) => !groupIds.includes(id))) });
+    }
+    if (section.startsWith('quick:')) {
+      const groupIds = (findQuickFilterGroup(section, quickFilterGroups)?.values ?? []).map(
+        (value) => value.id,
+      );
       onChange({ property_ids: stringifyIdList(propertyIds.filter((id) => !groupIds.includes(id))) });
     }
     if (section === 'price') onChange({ price_range: undefined, min_price: undefined, max_price: undefined });
@@ -173,6 +191,15 @@ export function QuickFilterDropdown({
           activeIds={propertyIds}
           availableFilters={availableFilters}
           groupKey={getPropertySectionKey(section)}
+          onChange={onChange}
+          search={search}
+          setSearch={setSearch}
+        />
+      ) : null}
+      {activeQuickFilterGroup ? (
+        <QuickFilterGroupContent
+          activeIds={propertyIds}
+          group={activeQuickFilterGroup}
           onChange={onChange}
           search={search}
           setSearch={setSearch}
@@ -381,6 +408,45 @@ function CategoryContent({
   );
 }
 
+function FilterOptionGrid({
+  accessibilitySuffix,
+  activeIds,
+  onToggle,
+  options,
+}: {
+  accessibilitySuffix: string;
+  activeIds: number[];
+  onToggle: (id: number) => void;
+  options: { id: number; name: string }[];
+}) {
+  return (
+    <ScrollView maxHeight={376} showsVerticalScrollIndicator>
+      <XStack flexWrap="wrap" paddingHorizontal={28} paddingVertical={18} rowGap={20}>
+        {options.map((option) => {
+          const checked = activeIds.includes(option.id);
+          return (
+            <Pressable
+              accessibilityLabel={`${option.name} ${accessibilitySuffix}`}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked }}
+              key={option.id}
+              onPress={() => onToggle(option.id)}
+              style={{ width: '50%' }}
+            >
+              <XStack alignItems="center" gap={12} minHeight={44}>
+                <FilterCheckbox checked={checked} />
+                <Paragraph color="$color10" flex={1} fontSize={14} fontWeight="500" numberOfLines={2}>
+                  {option.name}
+                </Paragraph>
+              </XStack>
+            </Pressable>
+          );
+        })}
+      </XStack>
+    </ScrollView>
+  );
+}
+
 function PropertyContent({
   activeIds,
   availableFilters,
@@ -407,29 +473,48 @@ function PropertyContent({
       <YStack borderBottomColor="$borderColor" borderBottomWidth={1} padding={16}>
         <SearchField onChangeText={setSearch} placeholder={`${groupName} Ara`} value={search} />
       </YStack>
-      <ScrollView maxHeight={376} showsVerticalScrollIndicator>
-        <XStack flexWrap="wrap" paddingHorizontal={28} paddingVertical={18} rowGap={20}>
-          {properties.map((property) => {
-            const checked = activeIds.includes(property.id);
-            return (
-              <Pressable
-                accessibilityLabel={`${property.name} özellik filtresi`}
-                accessibilityRole="checkbox"
-                key={property.id}
-                onPress={() => onChange({ property_ids: stringifyIdList(toggleId(activeIds, property.id)) })}
-                style={{ width: '50%' }}
-              >
-                <XStack alignItems="center" gap={12} minHeight={44}>
-                  <FilterCheckbox checked={checked} />
-                  <Paragraph color="$color10" flex={1} fontSize={14} fontWeight="500" numberOfLines={2}>
-                    {property.name}
-                  </Paragraph>
-                </XStack>
-              </Pressable>
-            );
-          })}
-        </XStack>
-      </ScrollView>
+      <FilterOptionGrid
+        accessibilitySuffix="özellik filtresi"
+        activeIds={activeIds}
+        onToggle={(id) => onChange({ property_ids: stringifyIdList(toggleId(activeIds, id)) })}
+        options={properties}
+      />
+    </>
+  );
+}
+
+/**
+ * Values of one curated quick-filter group (`/quick-filter/{categoryId}`).
+ * Toggles the shared `property_ids` list, exactly like the web shortcut row.
+ */
+function QuickFilterGroupContent({
+  activeIds,
+  group,
+  onChange,
+  search,
+  setSearch,
+}: {
+  activeIds: number[];
+  group: QuickFilterGroup;
+  onChange: (filters: ActiveFilters) => void;
+  search: string;
+  setSearch: (value: string) => void;
+}) {
+  const values = group.values.filter((value) =>
+    value.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  return (
+    <>
+      <YStack borderBottomColor="$borderColor" borderBottomWidth={1} padding={16}>
+        <SearchField onChangeText={setSearch} placeholder={`${group.name} Ara`} value={search} />
+      </YStack>
+      <FilterOptionGrid
+        accessibilitySuffix="hızlı filtresi"
+        activeIds={activeIds}
+        onToggle={(id) => onChange({ property_ids: stringifyIdList(toggleId(activeIds, id)) })}
+        options={values}
+      />
     </>
   );
 }
