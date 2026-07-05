@@ -195,12 +195,14 @@ export function useCartController() {
       const result = await checkoutMutation.mutateAsync();
 
       if (result.status === 'no_address') {
+        // Push the add-address form directly; its save handler calls
+        // `router.back()`, so the user lands back on the cart to continue.
         Alert.alert(
           'Adres Gerekli',
           'Siparişi tamamlamak için önce bir teslimat adresi eklemelisiniz.',
           [
             { text: 'Vazgeç', style: 'cancel' },
-            { text: 'Profilime Git', onPress: () => router.push('/(tabs)/profile') },
+            { text: 'Adres Ekle', onPress: () => router.push('/(tabs)/address-form') },
           ],
         );
         return;
