@@ -6,12 +6,15 @@ function baseDetail(overrides: Partial<OrderDetailResponseDto> = {}): OrderDetai
     id: 758933,
     order_no: 'HG050626758933',
     created_at: '2026-06-05T14:16:16.000000Z',
+    confirmed_at: '05 Haz 2026 - 14:18',
+    shipped_at: '06 Haz 2026 - 09:30',
     delivered_at: '2026-06-05T14:42:27.000000Z',
     status: 'Teslim Edildi',
     status_color: '#10b981',
     status_id: 8,
     tracking_code: 'TRK123',
     cargo_company_name: 'Yurtiçi',
+    cargo_company_logo: 'https://cdn/cargo-logo.png',
     invoice_pdf_url: 'https://cdn/invoice.pdf',
     payment_method: 'Kapıda Ödeme',
     billing_type: 'individual',
@@ -48,8 +51,16 @@ describe('mapOrderDetail', () => {
 
     expect(order.orderNo).toBe('HG050626758933');
     expect(order.createdAt).toBe('2026-06-05'); // ISO trimmed
+    expect(order.timelineDates).toEqual({
+      orderedAt: '2026-06-05',
+      confirmedAt: '05 Haz 2026 - 14:18',
+      preparedAt: '06 Haz 2026 - 09:30',
+      shippedAt: '06 Haz 2026 - 09:30',
+      deliveredAt: '2026-06-05',
+    });
     expect(order.statusId).toBe(8);
     expect(order.trackingCode).toBe('TRK123');
+    expect(order.cargoCompanyLogo).toBe('https://cdn/cargo-logo.png');
     expect(order.items).toHaveLength(1);
     expect(order.items[0]?.kind).toBe('normal');
     expect(order.totals.subtotal).toBe(2294.97);

@@ -1,5 +1,6 @@
 import { Linking } from 'react-native';
-import { FileText, Truck } from '@tamagui/lucide-icons-2';
+import { Image } from 'expo-image';
+import { ChevronRight, FileText, Truck } from '@tamagui/lucide-icons-2';
 import { Button, Paragraph, XStack, YStack } from 'tamagui';
 import { SectionCard } from '@/components/ui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
@@ -7,11 +8,12 @@ import { OrderDetail } from '@/types/order.types';
 
 type OrderDetailSummaryProps = {
   order: OrderDetail;
+  onPressCargoTracking?: () => void;
 };
 
 const DELIVERED_STATUSES = ['Teslim Edildi', 'Sipariş tamamlandı'];
 
-export function OrderDetailSummary({ order }: OrderDetailSummaryProps) {
+export function OrderDetailSummary({ order, onPressCargoTracking }: OrderDetailSummaryProps) {
   const statusColor = order.statusColor || BRAND_COLOR;
   const isDelivered =
     DELIVERED_STATUSES.includes(order.status) || order.statusId === 8;
@@ -91,23 +93,53 @@ export function OrderDetailSummary({ order }: OrderDetailSummaryProps) {
             alignItems="center"
             borderTopColor="$borderColor"
             borderTopWidth={1}
-            gap="$2"
+            gap="$3"
             justifyContent="space-between"
             paddingTop="$3"
           >
-            <XStack alignItems="center" flex={1} gap="$2">
-              <Truck color="$brand" size={16} />
-              <Paragraph color="$color10" flex={1} fontSize={12} numberOfLines={1}>
-                Takip:{' '}
-                <Paragraph color="$blue10" fontSize={12} fontWeight="700">
-                  {order.trackingCode}
+            <XStack alignItems="center" flex={1} gap="$2" minWidth={0}>
+              {order.cargoCompanyLogo ? (
+                <Image
+                  accessibilityLabel={order.cargoCompanyName ?? 'Kargo'}
+                  contentFit="contain"
+                  source={{ uri: order.cargoCompanyLogo }}
+                  style={{ width: 54, height: 22 }}
+                />
+              ) : (
+                <Truck color="$brand" size={17} />
+              )}
+              <YStack flex={1} gap="$0.5" minWidth={0}>
+                {order.cargoCompanyName ? (
+                  <Paragraph color="$color" fontSize={12} fontWeight="700" numberOfLines={1}>
+                    {order.cargoCompanyName}
+                  </Paragraph>
+                ) : null}
+                <Paragraph color="$color10" fontSize={12} numberOfLines={1}>
+                  Takip:{' '}
+                  <Paragraph color="$blue10" fontSize={12} fontWeight="700">
+                    {order.trackingCode}
+                  </Paragraph>
                 </Paragraph>
-              </Paragraph>
+              </YStack>
             </XStack>
-            {order.cargoCompanyName ? (
-              <Paragraph color="$color10" fontSize={12}>
-                {order.cargoCompanyName}
-              </Paragraph>
+            {onPressCargoTracking ? (
+              <Button
+                accessibilityLabel="Kargo Takip"
+                backgroundColor="$brand"
+                borderRadius="$4"
+                height={34}
+                onPress={onPressCargoTracking}
+                paddingHorizontal="$3"
+                pressStyle={{ backgroundColor: '$brand', opacity: 0.85 }}
+              >
+                <XStack alignItems="center" gap="$1">
+                  <Truck color="white" size={14} />
+                  <Paragraph color="white" fontSize={12} fontWeight="800" numberOfLines={1}>
+                    Kargo Takip
+                  </Paragraph>
+                  <ChevronRight color="white" size={13} />
+                </XStack>
+              </Button>
             ) : null}
           </XStack>
         ) : null}

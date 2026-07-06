@@ -82,12 +82,15 @@ export interface OrderDetailResponseDto {
   id: number;
   order_no?: string;
   created_at?: string;
+  confirmed_at?: string | null;
+  shipped_at?: string | null;
   status?: string;
   status_color?: string;
   status_id?: number;
   delivered_at?: string;
   tracking_code?: string | null;
   cargo_company_name?: string | null;
+  cargo_company_logo?: string | null;
   invoice_pdf_url?: string | null;
   payment_method?: string;
   payment_method_id?: number;

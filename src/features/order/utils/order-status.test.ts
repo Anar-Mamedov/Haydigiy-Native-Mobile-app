@@ -1,6 +1,7 @@
 import { Truck, CircleX, CircleCheck } from '@tamagui/lucide-icons-2';
 import {
   formatOrderDate,
+  formatOrderTimelineDate,
   formatReturnDeadline,
   getOrderStatusIcon,
   getOrderStatusText,
@@ -52,5 +53,16 @@ describe('formatOrderDate', () => {
 
   it('returns "-" for an empty value', () => {
     expect(formatOrderDate('')).toBe('-');
+  });
+});
+
+describe('formatOrderTimelineDate', () => {
+  it('keeps frontend date-time labels intact for the order timeline', () => {
+    expect(formatOrderTimelineDate('04 Tem 2026 - 16:09')).toBe('04 Tem 2026 - 16:09');
+  });
+
+  it('normalizes empty and ISO values for timeline display', () => {
+    expect(formatOrderTimelineDate(null)).toBeNull();
+    expect(formatOrderTimelineDate('2026-06-10T17:31:50.000000Z')).toBe('2026-06-10');
   });
 });

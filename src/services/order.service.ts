@@ -4,6 +4,10 @@ import { appEnv } from '@/lib/env';
 import { OrdersResponseDto, ReturnRequestsResponseDto } from '@/features/order/api/order.dtos';
 import { OrderDetailResponseDto } from '@/features/order/api/order-detail.dtos';
 import {
+  OrderCargoTrackingDataDto,
+  OrderCargoTrackingResponseDto,
+} from '@/features/order/api/order-tracking.dtos';
+import {
   CancellationReasonDto,
   CancellationReasonsResponseDto,
   CancelErrorPayloadDto,
@@ -63,6 +67,34 @@ export async function getOrderByIdDto(id: number | string): Promise<OrderDetailR
     headers: { Accept: 'application/json' },
   });
   return response.data ?? null;
+}
+
+/** Cargo tracking details (`GET /order/{id}/cargo-tracking`). */
+export async function getOrderCargoTrackingDto(
+  id: number | string,
+): Promise<OrderCargoTrackingDataDto | null> {
+  if (!appEnv.apiBaseUrl) return null;
+
+  const response = await apiClient.get<OrderCargoTrackingResponseDto | OrderCargoTrackingDataDto>(
+    `/order/${id}/cargo-tracking`,
+    {
+      headers: { Accept: 'application/json' },
+    },
+  );
+  const body = response.data;
+  if (!body) return null;
+
+  const wrappedBody = body as OrderCargoTrackingResponseDto;
+  const directBody = body as OrderCargoTrackingDataDto;
+  const data =
+    wrappedBody.data ??
+    (directBody.order || directBody.cargo_movements || directBody.cargo_status ? directBody : null);
+
+  if (wrappedBody.success === false || (!data && 'success' in wrappedBody)) {
+    throw new Error(wrappedBody.message || 'Kargo bilgisi alınamadı.');
+  }
+
+  return data;
 }
 
 /** Cancellation reasons (`GET /order/cancellation-reasons`). */

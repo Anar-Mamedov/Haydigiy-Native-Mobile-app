@@ -16,6 +16,7 @@ import { OrderReturnSection } from '../components/order-return-section';
 import { OrderAddressCard } from '../components/order-address-card';
 import { OrderPaymentCard } from '../components/order-payment-card';
 import { OrderReviewSheet } from '../components/order-review-sheet';
+import { CargoTrackingSheet } from '../components/cargo-tracking-sheet';
 import { AgreementTab, OrderAgreementSheet } from '../components/order-agreement-sheet';
 import { isOrderCancellableStatus } from '../utils/order-status';
 import { getReturnBlockBannerMessage } from '../utils/return-block';
@@ -34,6 +35,7 @@ export function OrderDetailScreen() {
 
   const [reviewItem, setReviewItem] = useState<OrderDetailItem | null>(null);
   const [agreementTab, setAgreementTab] = useState<AgreementTab | null>(null);
+  const [cargoTrackingOpen, setCargoTrackingOpen] = useState(false);
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -111,8 +113,8 @@ export function OrderDetailScreen() {
           }
           showsVerticalScrollIndicator={false}
         >
-          <OrderDetailSummary order={order} />
-          <OrderTimeline statusId={order.statusId} />
+          <OrderDetailSummary order={order} onPressCargoTracking={() => setCargoTrackingOpen(true)} />
+          <OrderTimeline statusId={order.statusId} timelineDates={order.timelineDates} />
 
           <OrderItemsSection
             items={order.cancelledItems}
@@ -244,6 +246,12 @@ export function OrderDetailScreen() {
         onSubmitted={() => query.refetch()}
         open={reviewItem !== null}
         orderId={id}
+      />
+
+      <CargoTrackingSheet
+        onOpenChange={setCargoTrackingOpen}
+        open={cargoTrackingOpen}
+        order={order}
       />
     </AppScreen>
   );

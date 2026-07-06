@@ -1,26 +1,40 @@
-import { ClipboardCheck, Home, Package, ShoppingBag, Truck, XCircle } from '@tamagui/lucide-icons-2';
+import { Check, ClipboardCheck, Home, Package, ShoppingBag, Truck, XCircle } from '@tamagui/lucide-icons-2';
 import { Paragraph, XStack, YStack } from 'tamagui';
 import { SectionCard } from '@/components/ui';
+import { OrderTimelineDates } from '@/types/order.types';
 import { getOrderTimelineActiveIndex, ORDER_TIMELINE_STEPS } from '../utils/order-status';
 
 const STEP_ICONS = [ShoppingBag, ClipboardCheck, Package, Truck, Home];
 
 type OrderTimelineProps = {
   statusId: number;
+  timelineDates?: OrderTimelineDates;
 };
 
-function Connector({ active, hidden }: { active: boolean; hidden?: boolean }) {
+function getTimelineDateByIndex(dates: OrderTimelineDates | undefined, index: number): string | null {
+  if (!dates) return null;
+  return [
+    dates.orderedAt,
+    dates.confirmedAt,
+    dates.preparedAt,
+    dates.shippedAt,
+    dates.deliveredAt,
+  ][index] ?? null;
+}
+
+function VerticalConnector({ active, hidden }: { active: boolean; hidden?: boolean }) {
   return (
     <YStack
       backgroundColor={hidden ? 'transparent' : active ? '$brand' : '$borderColor'}
       flex={1}
-      height={2}
+      minHeight={24}
+      width={1}
     />
   );
 }
 
 /** Order progress stepper (Sipariş Alındı → … → Teslim Edildi), or a cancelled state. */
-export function OrderTimeline({ statusId }: OrderTimelineProps) {
+export function OrderTimeline({ statusId, timelineDates }: OrderTimelineProps) {
   if (statusId === 4) {
     return (
       <SectionCard borderColor="$red6" padding="$3">
@@ -52,44 +66,55 @@ export function OrderTimeline({ statusId }: OrderTimelineProps) {
   const lastIndex = ORDER_TIMELINE_STEPS.length - 1;
 
   return (
-    <SectionCard padding="$3">
-      <XStack>
+    <SectionCard padding="$4">
+      <YStack gap={0}>
         {ORDER_TIMELINE_STEPS.map((label, index) => {
           const Icon = STEP_ICONS[index];
-          const reached = index <= activeIndex;
+          const isCompleted = index < activeIndex;
+          const isActive = index === activeIndex;
+          const isPending = index > activeIndex;
+          const date = getTimelineDateByIndex(timelineDates, index);
 
           return (
-            <YStack alignItems="center" flex={1} gap="$2" key={label}>
-              <XStack alignItems="center" width="100%">
-                <Connector active={index <= activeIndex} hidden={index === 0} />
+            <XStack alignItems="stretch" gap="$3" key={label}>
+              <YStack alignItems="center" width={40}>
                 <XStack
                   alignItems="center"
-                  backgroundColor={reached ? '$brand' : '$backgroundHover'}
-                  borderColor={reached ? '$brand' : '$borderColor'}
+                  backgroundColor={isCompleted ? '$brand' : '$background'}
+                  borderColor={isCompleted || isActive ? '$brand' : '$borderColor'}
                   borderRadius={100}
-                  borderWidth={1}
-                  height={32}
+                  borderWidth={isActive ? 2 : 1}
+                  height={34}
                   justifyContent="center"
-                  width={32}
+                  width={34}
                 >
-                  <Icon color={reached ? 'white' : '$color9'} size={16} />
+                  {isCompleted ? (
+                    <Check color="white" size={15} />
+                  ) : (
+                    <Icon color={isActive ? '$brand' : '$color9'} size={16} />
+                  )}
                 </XStack>
-                <Connector active={index < activeIndex} hidden={index === lastIndex} />
-              </XStack>
-              <Paragraph
-                color={reached ? '$color' : '$color10'}
-                fontSize={10}
-                fontWeight={reached ? '700' : '500'}
-                lineHeight={13}
-                numberOfLines={2}
-                textAlign="center"
-              >
-                {label}
-              </Paragraph>
-            </YStack>
+                <VerticalConnector active={index < activeIndex} hidden={index === lastIndex} />
+              </YStack>
+              <YStack flex={1} gap="$1" paddingBottom={index === lastIndex ? 0 : '$4'} paddingTop="$1">
+                <Paragraph
+                  color={isCompleted ? '$brand' : isActive ? '$color' : '$color10'}
+                  fontSize={13}
+                  fontWeight="700"
+                  lineHeight={18}
+                >
+                  {label}
+                </Paragraph>
+                {date && !isPending ? (
+                  <Paragraph color="$color10" fontSize={11} lineHeight={16}>
+                    {date}
+                  </Paragraph>
+                ) : null}
+              </YStack>
+            </XStack>
           );
         })}
-      </XStack>
+      </YStack>
     </SectionCard>
   );
 }

@@ -2,14 +2,22 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { orderKeys } from './order.keys';
 import { mapOrdersResponse, mapReturnRequestsResponse } from './order.mapper';
 import { mapOrderDetail } from './order-detail.mapper';
+import { mapOrderCargoTracking } from './order-tracking.mapper';
 import { mapCancellationReason } from './order-cancel.mapper';
 import {
   getCancellationReasonsDto,
+  getOrderCargoTrackingDto,
   getOrderByIdDto,
   getOrdersDto,
   getReturnRequestsDto,
 } from '@/services/order.service';
-import { CancellationReason, OrderDetail, OrderFilters, OrdersPage } from '@/types/order.types';
+import {
+  CancellationReason,
+  OrderCargoTracking,
+  OrderDetail,
+  OrderFilters,
+  OrdersPage,
+} from '@/types/order.types';
 
 /**
  * Single-page orders feed (numbered pagination, like the web order list). The
@@ -45,6 +53,19 @@ export function useOrderDetailQuery(id: string, enabled = true) {
     queryFn: async () => {
       const dto = await getOrderByIdDto(id);
       return dto ? mapOrderDetail(dto) : null;
+    },
+  });
+}
+
+/** Loads cargo tracking movements for a single order (`GET /order/{id}/cargo-tracking`). */
+export function useOrderCargoTrackingQuery(id: string, enabled = true) {
+  return useQuery<OrderCargoTracking | null>({
+    queryKey: orderKeys.cargoTracking(id),
+    enabled: enabled && Boolean(id),
+    staleTime: 60_000,
+    queryFn: async () => {
+      const dto = await getOrderCargoTrackingDto(id);
+      return dto ? mapOrderCargoTracking(dto) : null;
     },
   });
 }

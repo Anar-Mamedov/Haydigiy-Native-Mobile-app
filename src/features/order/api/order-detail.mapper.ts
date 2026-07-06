@@ -7,7 +7,7 @@ import {
   ReturnedItemDetailDto,
 } from './order-detail.dtos';
 import { OrderAddress, OrderDetail, OrderDetailItem } from '@/types/order.types';
-import { formatOrderDate, formatReturnDeadline } from '../utils/order-status';
+import { formatOrderDate, formatOrderTimelineDate, formatReturnDeadline } from '../utils/order-status';
 import { isPendingReturn, normalizeReturnStatus } from '../utils/return-status';
 
 function toNumber(value: number | string | null | undefined): number {
@@ -130,17 +130,26 @@ export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
   const hasInstallmentInfo =
     interestAmount > 0 || hasTotalWithInterest || installmentCount !== null;
   const payableTotal = hasInstallmentInfo && hasTotalWithInterest ? totalWithInterest : totalPrice;
+  const shippedAt = formatOrderTimelineDate(dto.shipped_at);
 
   return {
     id: dto.id,
     orderNo: dto.order_no ?? '-',
     createdAt: formatOrderDate(dto.created_at ?? ''),
     deliveredAt: formatOrderDate(dto.delivered_at ?? ''),
+    timelineDates: {
+      orderedAt: formatOrderTimelineDate(dto.created_at),
+      confirmedAt: formatOrderTimelineDate(dto.confirmed_at),
+      preparedAt: shippedAt,
+      shippedAt,
+      deliveredAt: formatOrderTimelineDate(dto.delivered_at),
+    },
     status: dto.status ?? '',
     statusColor: dto.status_color,
     statusId,
     trackingCode: dto.tracking_code ?? null,
     cargoCompanyName: dto.cargo_company_name ?? null,
+    cargoCompanyLogo: dto.cargo_company_logo ?? null,
     invoicePdfUrl: dto.invoice_pdf_url ?? null,
     paymentMethodId: typeof dto.payment_method_id === 'number' ? dto.payment_method_id : null,
     canCreateReturnRequest: dto.can_create_return_request ?? true,

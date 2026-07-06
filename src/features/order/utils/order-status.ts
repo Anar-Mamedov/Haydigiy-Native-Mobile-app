@@ -22,6 +22,14 @@ export function formatOrderDate(value: string): string {
   return value;
 }
 
+/** Keeps frontend-style timeline labels such as "04 Tem 2026 - 16:09" intact. */
+export function formatOrderTimelineDate(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) return trimmed.split('T')[0];
+  return trimmed;
+}
+
 // Turkish short month names, indexed 0-11 (matches the API's date labels).
 const TR_MONTH_PREFIXES = ['oca', 'şub', 'mar', 'nis', 'may', 'haz', 'tem', 'ağu', 'eyl', 'eki', 'kas', 'ara'];
 

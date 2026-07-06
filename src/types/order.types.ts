@@ -204,11 +204,13 @@ export type OrderDetail = {
   orderNo: string;
   createdAt: string;
   deliveredAt: string;
+  timelineDates?: OrderTimelineDates;
   status: string;
   statusColor?: string;
   statusId: number;
   trackingCode: string | null;
   cargoCompanyName: string | null;
+  cargoCompanyLogo: string | null;
   invoicePdfUrl: string | null;
   /** Backend payment method id; 2/3 (bank transfer) require an IBAN for refunds. */
   paymentMethodId: number | null;
@@ -238,4 +240,42 @@ export type OrderDetail = {
   returnedQty: number;
   cancelledQty: number;
   isFullyCancelled: boolean;
+};
+
+export type OrderTimelineDates = {
+  orderedAt: string | null;
+  confirmedAt: string | null;
+  preparedAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+};
+
+export type OrderCargoTrackingStageKey = 'handed' | 'transfer' | 'branch' | 'courier' | 'done';
+
+export type OrderCargoTrackingStage = {
+  key: OrderCargoTrackingStageKey;
+  label: string;
+  completed: boolean;
+};
+
+export type OrderCargoMovement = {
+  id: number | string;
+  code: string | null;
+  description: string | null;
+  location: string | null;
+  dateLabel: string;
+  delivered: boolean;
+  stageKey: OrderCargoTrackingStageKey | null;
+};
+
+export type OrderCargoTracking = {
+  orderNo: string | null;
+  trackingCode: string | null;
+  statusName: string | null;
+  cargoCompanyName: string | null;
+  cargoStatus: string | null;
+  stages: OrderCargoTrackingStage[];
+  movements: OrderCargoMovement[];
+  lastMovement: OrderCargoMovement | null;
+  delivered: boolean;
 };
