@@ -118,6 +118,47 @@ jest.mock('react-native-keyboard-controller', () => {
   };
 });
 
+// Manual mock: the real entry (and the official `react-native-reanimated/mock`,
+// which re-imports it) instantiates the `react-native-worklets` native module at
+// import time and crashes under Jest. Kept to the API surface this app uses;
+// test files may override with their own richer mocks.
+jest.mock('react-native-reanimated', () => {
+  const React = require('react');
+  const { ScrollView, View } = require('react-native');
+
+  return {
+    __esModule: true,
+    createAnimatedComponent: (component: unknown) => component,
+    default: {
+      createAnimatedComponent: (component: unknown) => component,
+      ScrollView,
+      View,
+    },
+    Easing: {
+      cubic: (value: number) => value,
+      out: (easing: unknown) => easing,
+    },
+    runOnJS: (callback: (...args: unknown[]) => void) => callback,
+    scrollTo: jest.fn(),
+    useAnimatedRef: () => React.useRef(null),
+    // Adapts the worklet to a regular onScroll prop: animated handlers receive
+    // the event payload (`event.contentOffset`), not the synthetic event.
+    useAnimatedScrollHandler: (
+      handlerOrConfig:
+        | ((event: unknown, context: Record<string, unknown>) => void)
+        | { onScroll?: (event: unknown, context: Record<string, unknown>) => void },
+    ) => {
+      const onScroll =
+        typeof handlerOrConfig === 'function' ? handlerOrConfig : handlerOrConfig?.onScroll;
+      return (event: { nativeEvent: unknown }) => onScroll?.(event.nativeEvent, {});
+    },
+    useAnimatedStyle: (factory: () => Record<string, unknown>) => factory(),
+    useSharedValue: (initial: unknown) => React.useRef({ value: initial }).current,
+    withSpring: (value: unknown) => value,
+    withTiming: (value: unknown) => value,
+  };
+});
+
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 40, bottom: 20, left: 0, right: 0 }),
   useSafeAreaFrame: () => ({ x: 0, y: 0, width: 375, height: 812 }),

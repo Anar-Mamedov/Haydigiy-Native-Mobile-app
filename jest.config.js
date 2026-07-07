@@ -3,6 +3,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   preset: 'jest-expo',
+  setupFiles: ['./node_modules/react-native-gesture-handler/jestSetup.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/example/'],
   transformIgnorePatterns: [

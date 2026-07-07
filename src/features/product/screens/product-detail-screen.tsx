@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Spinner, YStack, Paragraph, XStack } from 'tamagui';
-import { Linking, Pressable, ScrollView, NativeScrollEvent, NativeSyntheticEvent, useWindowDimensions } from 'react-native';
+import { Linking, Pressable, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThumbsUp } from '@tamagui/lucide-icons-2';
-import { AppScreen, DeferredMount, EmptyState } from '@/components/ui';
+import { AppScreen, DeferredMount, EmptyState, PullToDismissScrollView } from '@/components/ui';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useProductDetailsQuery } from '@/features/product/api/product.queries';
@@ -85,9 +85,19 @@ export function ProductDetailScreen() {
   const [showProductCode, setShowProductCode] = useState(true);
   const [headerHeight, setHeaderHeight] = useState(56);
 
-  const handleProductScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const visible = isProductCodeBadgeVisible(carouselImageHeight, e.nativeEvent.contentOffset.y);
+  const handleProductScrollOffset = (offsetY: number) => {
+    const visible = isProductCodeBadgeVisible(carouselImageHeight, offsetY);
     setShowProductCode((prev) => (prev === visible ? prev : visible));
+  };
+
+  // Pulling the content down while it rests at the top closes the screen
+  // (falls back to home when the PDP was opened directly, e.g. via deep link).
+  const handlePullDismiss = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
   };
 
   // Tapping the "Değerlendirme" / "Soru & Cevap" links opens dedicated screens
@@ -279,14 +289,12 @@ export function ProductDetailScreen() {
         <ProductDetailHeader />
       </YStack>
 
-      <ScrollView
+      <PullToDismissScrollView
+        onDismiss={handlePullDismiss}
+        onScrollOffsetChange={handleProductScrollOffset}
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: contentBottomPadding }}
         showsVerticalScrollIndicator={false}
-        onScroll={handleProductScroll}
-        onScrollEndDrag={handleProductScroll}
-        onMomentumScrollEnd={handleProductScroll}
-        scrollEventThrottle={16}
       >
         <YStack>
           {/* Images / Carousel */}
@@ -424,7 +432,7 @@ export function ProductDetailScreen() {
             </DeferredMount>
           )}
         </YStack>
-      </ScrollView>
+      </PullToDismissScrollView>
 
       {/* Sticky footer price & CTA buttons */}
       <ProductStickyFooter
