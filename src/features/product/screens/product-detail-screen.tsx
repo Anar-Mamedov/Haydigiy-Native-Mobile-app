@@ -190,6 +190,11 @@ export function ProductDetailScreen() {
     const activeProduct = product || previewProduct;
     if (!activeProduct) return;
 
+    if (isPending && !product) {
+      setShowSizeSheet(true);
+      return;
+    }
+
     const hasVariants = activeProduct.variants && activeProduct.variants.length > 0;
 
     // No size chosen yet: open the size-selection bottom sheet (mirrors the web).
@@ -238,6 +243,7 @@ export function ProductDetailScreen() {
 
   const displayData = product || previewProduct;
   const { isFavorite, toggleFavorite } = useToggleFavorite(displayData);
+  const areProductOptionsLoading = isPending && !product;
 
   if (isPending && !previewProduct) {
     return (
@@ -330,15 +336,32 @@ export function ProductDetailScreen() {
             <ShippingEstimateInfo estimate={shippingQuery.data} variant="product" />
           </YStack>
 
-          {/* Background Loading Spinner for full properties */}
-          {isPending && <OptionsLoadingIndicator />}
+          {areProductOptionsLoading ? (
+            <ProductSizeSelector
+              isLoading
+              selectedVariant={selectedVariant}
+              onSelectVariant={(v) => setSelectedVariant(v)}
+              onSizeChartPress={() => setShowSizeChart(true)}
+              onSizeCalculatorPress={() => setShowSizeCalculator(true)}
+            />
+          ) : null}
 
           {/* Variant selections (only show when fully loaded). Mounted through
               DeferredMount so this heavy subtree does not commit in the same
               frame as the preview→full data swap while the push transition may
               still be running. */}
           {product && (
-            <DeferredMount placeholder={<OptionsLoadingIndicator />}>
+            <DeferredMount
+              placeholder={
+                <ProductSizeSelector
+                  isLoading
+                  selectedVariant={selectedVariant}
+                  onSelectVariant={(v) => setSelectedVariant(v)}
+                  onSizeChartPress={() => setShowSizeChart(true)}
+                  onSizeCalculatorPress={() => setShowSizeCalculator(true)}
+                />
+              }
+            >
               {/* Color variants thumbnails & Category redirect */}
               <ProductColorSelector
                 otherColors={product.otherColors}
@@ -448,6 +471,7 @@ export function ProductDetailScreen() {
       {showSizeSheet ? (
         <SizeSelectionSheet
           imageUrl={displayData.imageUrl}
+          isLoadingVariants={areProductOptionsLoading}
           onAskQuestion={openQuestions}
           onClose={() => setShowSizeSheet(false)}
           onConfirm={confirmAddToCart}
@@ -508,17 +532,5 @@ export function ProductDetailScreen() {
         <ProductCodeBadge code={productCode} top={headerHeight + PRODUCT_CODE_BADGE_OFFSET} />
       ) : null}
     </AppScreen>
-  );
-}
-
-/** Inline status row shown while the full product options are on the way. */
-function OptionsLoadingIndicator() {
-  return (
-    <XStack alignItems="center" gap="$2" justifyContent="center" padding="$4">
-      <Spinner size="small" color="$brand" />
-      <Paragraph fontSize={12} color="$color10">
-        Seçenekler yükleniyor...
-      </Paragraph>
-    </XStack>
   );
 }

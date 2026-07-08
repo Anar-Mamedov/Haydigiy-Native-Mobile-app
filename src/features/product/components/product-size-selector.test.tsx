@@ -17,6 +17,15 @@ describe('ProductSizeSelector', () => {
     expect(toJSON()).toBeNull();
   });
 
+  it('renders a skeleton while variants are loading', () => {
+    renderWithTamagui(
+      <ProductSizeSelector isLoading variants={[]} selectedVariant={null} onSelectVariant={jest.fn()} />,
+    );
+
+    expect(screen.getByLabelText('Beden alanı yükleniyor')).toBeTruthy();
+    expect(screen.getByLabelText('Beden seçenekleri yükleniyor')).toBeTruthy();
+  });
+
   it('selects an in-stock variant on press', () => {
     const onSelectVariant = jest.fn();
 

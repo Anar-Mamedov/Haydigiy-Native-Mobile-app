@@ -1,11 +1,13 @@
 import React from 'react';
 import { Table, Calculator, Bell } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, ScrollView, useThemeName } from 'tamagui';
+import { XStack, YStack, Paragraph, useThemeName } from 'tamagui';
 import { Pressable } from 'react-native';
 import { ProductVariant } from '@/types/product.types';
+import { ProductSizeSelectorSkeleton } from './product-size-skeleton';
 
 interface ProductSizeSelectorProps {
   variants?: ProductVariant[];
+  isLoading?: boolean;
   selectedVariant: ProductVariant | null;
   onSelectVariant: (variant: ProductVariant) => void;
   onSizeChartPress?: () => void;
@@ -14,6 +16,7 @@ interface ProductSizeSelectorProps {
 
 export function ProductSizeSelector({
   variants = [],
+  isLoading = false,
   selectedVariant,
   onSelectVariant,
   onSizeChartPress,
@@ -21,6 +24,8 @@ export function ProductSizeSelector({
 }: ProductSizeSelectorProps) {
   const themeName = useThemeName();
   const isDark = themeName === 'dark' || themeName.includes('dark');
+
+  if (isLoading) return <ProductSizeSelectorSkeleton />;
 
   if (!variants || variants.length === 0) return null;
 
