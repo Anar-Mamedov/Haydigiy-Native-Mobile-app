@@ -28,6 +28,7 @@ export function mapPaymentMethod(dto: PaymentTypeDto): PaymentMethod {
     commissionRate: Number(dto.commission_rate) || 0,
     serviceFee: Number(dto.service_fee) || 0,
     sortOrder: Number(dto.sort_order) || 0,
+    description: typeof dto.description === 'string' && dto.description.trim() !== '' ? dto.description.trim() : null,
     maxOrderTotal: capValue !== null && Number.isFinite(capValue) && capValue > 0 ? capValue : null,
   };
 }

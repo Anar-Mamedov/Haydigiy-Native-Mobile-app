@@ -14,6 +14,7 @@ export type PaymentMethod = {
   commissionRate: number;
   serviceFee: number;
   sortOrder: number;
+  description: string | null;
   /** Orders at/above this total may only pay by card; null means no cap. */
   maxOrderTotal: number | null;
 };

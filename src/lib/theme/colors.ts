@@ -21,6 +21,12 @@ export const WARNING_COLOR = '#f59e0b';
 export const BRAND_GRADIENT = ['#ff6c15', '#fe4c7f'] as const;
 
 /**
+ * Checkout payment description badge color, used for texts such as
+ * "Peşin fiyatına 3 taksit" under the secure payment badge.
+ */
+export const PAYMENT_DESCRIPTION_BADGE_COLOR = '#18b85f';
+
+/**
  * Dim scrim shown behind expandable panels/overlays (e.g. the checkout summary).
  * A scrim is a fixed semi-transparent black in both light and dark themes, so it
  * has no theme token; centralized here instead of being hard-coded per overlay.

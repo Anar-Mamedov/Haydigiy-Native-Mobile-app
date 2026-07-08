@@ -76,6 +76,38 @@ describe('mapSearchProductDto', () => {
       }),
     ]);
   });
+
+  it('maps feature icon assets, descriptions and backend colors', () => {
+    const product = mapSearchProductDto({
+      ...baseProductDto,
+      feature_icons: [
+        {
+          id: 20,
+          name: 'Peşin Fiyatına 3 Taksit',
+          slug: 'pesin-fiyatina-3-taksit',
+          description: 'Peşin Fiyatına 3 Taksit',
+          description_bg_color: '#FF8800',
+          asset_url: 'https://cdn.example.com/tags/installment.png',
+          position_hint: 'center',
+          display_order: 3,
+          sort_order: 4,
+          pivot: {
+            display_order: 2,
+            position: null,
+          },
+        },
+      ],
+    });
+
+    expect(product.featureIcons?.[0]).toMatchObject({
+      id: 20,
+      description: 'Peşin Fiyatına 3 Taksit',
+      descriptionBgColor: '#FF8800',
+      assetUrl: 'https://cdn.example.com/tags/installment.png',
+      displayOrder: 2,
+      sortOrder: 4,
+    });
+  });
 });
 
 describe('mapPopularProductDto', () => {
@@ -124,6 +156,34 @@ describe('mapProductDetailDto', () => {
       photo: 'https://cdn.example.com/storage/reviews/photo.webp',
       userName: 'T***e U***r',
       createdAt: '2026-05-24T00:00:00Z',
+    });
+  });
+
+  it('maps detail feature icon colors and asset paths', () => {
+    const product = mapProductDetailDto({
+      id: 80872,
+      name: 'Keten Gorunumlu Etek Pantolon Siyah',
+      slug: 'keten-gorunumlu-etek-pantolon-siyah-80872',
+      price: 219.99,
+      feature_icons: [
+        {
+          id: 15,
+          name: 'Butik Kontrol',
+          slug: 'butik-kontrol',
+          description: null,
+          description_bg_color: '#FF8800',
+          asset_url: 'https://cdn.example.com/tags/butik.png',
+          display_order: 1,
+        },
+      ],
+    });
+
+    expect(product.featureIcons?.[0]).toMatchObject({
+      id: 15,
+      assetUrl: 'https://cdn.example.com/tags/butik.png',
+      description: null,
+      descriptionBgColor: '#FF8800',
+      displayOrder: 1,
     });
   });
 

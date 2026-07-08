@@ -21,6 +21,7 @@ function makeInput(overrides: Partial<OrderTokenSyncInput> = {}): OrderTokenSync
       commissionRate: 0,
       serviceFee: 0,
       sortOrder: 0,
+      description: null,
       maxOrderTotal: null,
     },
     shippingAddress: { id: 11 } as OrderTokenSyncInput['shippingAddress'],

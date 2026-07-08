@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { GestureResponderEvent, Pressable } from 'react-native';
-import { Image } from 'expo-image';
 import { Heart, Play } from '@tamagui/lucide-icons-2';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { Paragraph, ScrollView, XStack, YStack } from 'tamagui';
 import { SectionCard } from '@/components/ui/section-card';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
+import { ProductFeatureAssetTicker, ProductFeatureDescriptionTicker } from './product-feature-tags';
 import { ProductImageCarousel } from './product-image-carousel';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 
@@ -32,21 +32,6 @@ const CARD_SHADOW = '0 1px 2px rgba(0, 0, 0, 0.05)';
 const FLOATING_SHADOW = '0 1px 4px rgba(0, 0, 0, 0.18)';
 const CAMPAIGN_SHADOW = '0 3px 8px rgba(204, 4, 7, 0.22)';
 const FEATURE_ICON_SIZE = 60;
-
-const getFeatureIconStyle = (positionHint?: string, position?: string | null) => {
-  const pos = positionHint || position || 'top-left';
-  switch (pos) {
-    case 'top-left':
-      return { top: 3, left: 4, position: 'absolute' as const };
-    case 'top-right':
-      return { top: 8, right: 8, position: 'absolute' as const };
-    case 'bottom-right':
-      return { bottom: 8, right: 8, position: 'absolute' as const };
-    case 'bottom-left':
-    default:
-      return { bottom: 8, left: 8, position: 'absolute' as const };
-  }
-};
 
 function formatProductCardPrice(price: number) {
   return `${Number(price).toLocaleString('tr-TR', {
@@ -146,11 +131,6 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
 
   const images = product.images && product.images.length > 0 ? product.images : [product.imageUrl];
   const hasCarousel = images.length > 1;
-  const featureDescriptions =
-    product.featureIcons
-      ?.filter((icon) => icon.description)
-      .map((icon) => icon.description)
-      .join(' • ') || '';
   const colorOptionsCount = product.otherColors?.length ?? 0;
 
   const handleVideoPress = (event?: GestureResponderEvent) => {
@@ -183,23 +163,13 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
             title={product.title}
           />
 
-          {/* Overlaid Feature Icons */}
-          {product.featureIcons && product.featureIcons.length > 0 && (
-            <YStack position="absolute" top={0} left={0} right={0} bottom={0} pointerEvents="none" zIndex={10}>
-              {product.featureIcons
-                .filter((icon) => icon.assetUrl)
-                .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
-                .map((icon) => (
-                  <YStack key={icon.id} style={getFeatureIconStyle(icon.positionHint, icon.position)}>
-                    <Image
-                      source={{ uri: icon.assetUrl }}
-                      style={{ width: FEATURE_ICON_SIZE, height: FEATURE_ICON_SIZE }}
-                      contentFit="contain"
-                    />
-                  </YStack>
-                ))}
-            </YStack>
-          )}
+          <ProductFeatureAssetTicker
+            featureIcons={product.featureIcons}
+            height={FEATURE_ICON_SIZE}
+            left={4}
+            top={3}
+            width={FEATURE_ICON_SIZE}
+          />
 
           {/* Sold Out (Tükendi) Overlay Badge */}
           {product.hasStock === false && (
@@ -317,117 +287,112 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
           onPress={() => onOpen(imageIndex)}
         >
           <YStack padding={6} width="100%">
-          {featureDescriptions ? (
-            <YStack
-              backgroundColor={PRODUCT_CARD_COLORS.accent}
+            <ProductFeatureDescriptionTicker
+              featureIcons={product.featureIcons}
+              fontSize={11}
+              lineHeight={15}
+              marginBottom={6}
               marginHorizontal={-6}
               marginTop={-6}
-              marginBottom={6}
-              paddingVertical={6}
+              numberOfLines={1}
               paddingHorizontal={8}
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Paragraph color={PRODUCT_CARD_COLORS.white} fontSize={11} fontWeight="700" textAlign="center" numberOfLines={1}>
-                {featureDescriptions}
-              </Paragraph>
-            </YStack>
-          ) : null}
+              paddingVertical={6}
+            />
 
-          <Paragraph color="$color10" fontSize={12} numberOfLines={1} marginBottom={2}>
-            {product.category || product.brand || 'HaydiGiy'}
-          </Paragraph>
-
-          {/* Title */}
-          <Paragraph fontWeight="500" fontSize={14} numberOfLines={2} minHeight={40} lineHeight={20} color="$color">
-            {product.title}
-          </Paragraph>
-
-          {/* Star Rating & Review Count */}
-          <XStack alignItems="center" marginTop={4} marginBottom={4}>
-            <RatingStars fullStars={fullStars} hasHalfStar={hasHalfStar} emptyStars={emptyStars} />
-            <Paragraph fontSize={12} color="$color10" marginLeft={4}>
-              ({product.reviewCount ?? 0})
+            <Paragraph color="$color10" fontSize={12} numberOfLines={1} marginBottom={2}>
+              {product.category || product.brand || 'HaydiGiy'}
             </Paragraph>
-          </XStack>
 
-          {/* Sizes Row (Horizontal Scroll with stock availability checking) */}
-          {product.sizes && product.sizes.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              marginVertical={4}
-              contentContainerStyle={{ gap: 4, alignItems: 'center' }}
-              style={{ flexGrow: 0 }}
-            >
-              {product.sizes.map((size, idx) => (
-                <YStack
-                  key={idx}
-                  borderWidth={1}
-                  borderColor={size.hasStock ? '$borderColor' : '$color4'}
-                  borderRadius={4}
-                  paddingHorizontal={6}
-                  paddingVertical={2}
-                  backgroundColor={size.hasStock ? PRODUCT_CARD_COLORS.white : '$color2'}
-                  opacity={size.hasStock ? 1 : 0.6}
-                >
-                  <Paragraph
-                    fontSize={12}
-                    color={size.hasStock ? PRODUCT_CARD_COLORS.textStrong : '$color8'}
-                    fontWeight="400"
-                    style={{ textDecorationLine: size.hasStock ? 'none' : 'line-through' }}
+            {/* Title */}
+            <Paragraph fontWeight="500" fontSize={14} numberOfLines={2} minHeight={40} lineHeight={20} color="$color">
+              {product.title}
+            </Paragraph>
+
+            {/* Star Rating & Review Count */}
+            <XStack alignItems="center" marginTop={4} marginBottom={4}>
+              <RatingStars fullStars={fullStars} hasHalfStar={hasHalfStar} emptyStars={emptyStars} />
+              <Paragraph fontSize={12} color="$color10" marginLeft={4}>
+                ({product.reviewCount ?? 0})
+              </Paragraph>
+            </XStack>
+
+            {/* Sizes Row (Horizontal Scroll with stock availability checking) */}
+            {product.sizes && product.sizes.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                marginVertical={4}
+                contentContainerStyle={{ gap: 4, alignItems: 'center' }}
+                style={{ flexGrow: 0 }}
+              >
+                {product.sizes.map((size, idx) => (
+                  <YStack
+                    key={idx}
+                    borderWidth={1}
+                    borderColor={size.hasStock ? '$borderColor' : '$color4'}
+                    borderRadius={4}
+                    paddingHorizontal={6}
+                    paddingVertical={2}
+                    backgroundColor={size.hasStock ? PRODUCT_CARD_COLORS.white : '$color2'}
+                    opacity={size.hasStock ? 1 : 0.6}
                   >
-                    {size.name}
+                    <Paragraph
+                      fontSize={12}
+                      color={size.hasStock ? PRODUCT_CARD_COLORS.textStrong : '$color8'}
+                      fontWeight="400"
+                      style={{ textDecorationLine: size.hasStock ? 'none' : 'line-through' }}
+                    >
+                      {size.name}
+                    </Paragraph>
+                  </YStack>
+                ))}
+              </ScrollView>
+            ) : (
+              <YStack marginVertical={4} />
+            )}
+
+            {/* Kampanya Fiyatı Badge */}
+            <YStack marginTop={6} width="100%" boxShadow={CAMPAIGN_SHADOW} borderRadius={8}>
+              <XStack
+                backgroundColor={PRODUCT_CARD_COLORS.campaign}
+                borderRadius={8}
+                overflow="hidden"
+                width="100%"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <YStack flex={1} minWidth={0} justifyContent="center" paddingHorizontal={4} paddingVertical={4}>
+                  <Paragraph
+                    color={PRODUCT_CARD_COLORS.white}
+                    fontSize={11}
+                    fontWeight="600"
+                    lineHeight={14}
+                    numberOfLines={1}
+                  >
+                    Kampanya Fiyatı:
                   </Paragraph>
                 </YStack>
-              ))}
-            </ScrollView>
-          ) : (
-            <YStack marginVertical={4} />
-          )}
-
-          {/* Kampanya Fiyatı Badge */}
-          <YStack marginTop={6} width="100%" boxShadow={CAMPAIGN_SHADOW} borderRadius={8}>
-            <XStack
-              backgroundColor={PRODUCT_CARD_COLORS.campaign}
-              borderRadius={8}
-              overflow="hidden"
-              width="100%"
-              alignItems="center"
-              justifyContent="center"
-            >
-              <YStack flex={1} minWidth={0} justifyContent="center" paddingHorizontal={4} paddingVertical={4}>
-                <Paragraph
-                  color={PRODUCT_CARD_COLORS.white}
-                  fontSize={11}
-                  fontWeight="600"
-                  lineHeight={14}
-                  numberOfLines={1}
+                <YStack
+                  backgroundColor={PRODUCT_CARD_COLORS.white}
+                  borderBottomRightRadius={8}
+                  borderTopRightRadius={8}
+                  flexShrink={0}
+                  justifyContent="center"
+                  paddingHorizontal={4}
+                  paddingVertical={4}
                 >
-                  Kampanya Fiyatı:
-                </Paragraph>
-              </YStack>
-              <YStack
-                backgroundColor={PRODUCT_CARD_COLORS.white}
-                borderBottomRightRadius={8}
-                borderTopRightRadius={8}
-                flexShrink={0}
-                justifyContent="center"
-                paddingHorizontal={4}
-                paddingVertical={4}
-              >
-                <Paragraph
-                  color={PRODUCT_CARD_COLORS.campaign}
-                  fontSize={11}
-                  fontWeight="700"
-                  lineHeight={14}
-                  textAlign="right"
-                >
-                  {formatProductCardPrice(product.price)}
-                </Paragraph>
-              </YStack>
-            </XStack>
-          </YStack>
+                  <Paragraph
+                    color={PRODUCT_CARD_COLORS.campaign}
+                    fontSize={11}
+                    fontWeight="700"
+                    lineHeight={14}
+                    textAlign="right"
+                  >
+                    {formatProductCardPrice(product.price)}
+                  </Paragraph>
+                </YStack>
+              </XStack>
+            </YStack>
           </YStack>
         </Pressable>
       </YStack>

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ComponentProps, ReactNode } from 'react';
 import { Pressable } from 'react-native';
 import { XStack, YStack } from 'tamagui';
 
@@ -11,6 +11,7 @@ interface CheckoutOptionRowProps {
   children: ReactNode;
   /** Optional trailing content (price, badge). */
   right?: ReactNode;
+  paddingVertical?: ComponentProps<typeof XStack>['paddingVertical'];
 }
 
 /** A theme-aware radio circle that stays visible/contrasted in light and dark. */
@@ -44,6 +45,7 @@ export function CheckoutOptionRow({
   accessibilityLabel,
   children,
   right,
+  paddingVertical = '$3',
 }: CheckoutOptionRowProps) {
   return (
     <Pressable
@@ -58,7 +60,7 @@ export function CheckoutOptionRow({
         gap="$3"
         opacity={disabled ? 0.6 : 1}
         paddingHorizontal="$3.5"
-        paddingVertical="$3"
+        paddingVertical={paddingVertical}
       >
         <RadioMark disabled={disabled} selected={selected} />
         <XStack alignItems="center" flex={1} gap="$2" justifyContent="space-between">

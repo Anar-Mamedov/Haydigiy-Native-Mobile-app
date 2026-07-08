@@ -9,6 +9,7 @@ export interface PaymentTypeDto {
   commission_rate: number;
   service_fee: number;
   sort_order: number;
+  description?: string | null;
   max_order_total?: number | string | null;
 }
 

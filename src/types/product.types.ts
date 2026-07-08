@@ -7,10 +7,12 @@ export type FeatureIcon = {
   id: number;
   name: string;
   slug: string;
-  description?: string;
+  description?: string | null;
+  descriptionBgColor?: string | null;
   assetUrl: string;
-  positionHint?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  displayOrder?: number;
+  positionHint?: string | null;
+  displayOrder?: number | null;
+  sortOrder?: number | null;
   position?: string | null;
 };
 

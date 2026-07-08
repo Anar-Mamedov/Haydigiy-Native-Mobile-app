@@ -1,4 +1,5 @@
 import {
+  ProductFeatureIconDto,
   PopularProductDto,
   ProductDto,
   SearchProductColorDto,
@@ -77,6 +78,21 @@ function getColorImagePath(color: SearchProductColorDto): string | null {
     color.media?.thumb,
     color.media?.large,
   );
+}
+
+function mapFeatureIconDto(icon: ProductFeatureIconDto): FeatureIcon {
+  return {
+    id: icon.id,
+    name: icon.name || '',
+    slug: icon.slug || '',
+    description: icon.description ?? null,
+    descriptionBgColor: icon.description_bg_color ?? null,
+    assetUrl: getImageUrl(icon.asset_url ?? icon.asset_path),
+    positionHint: icon.position_hint ?? null,
+    displayOrder: icon.pivot?.display_order ?? icon.display_order ?? null,
+    sortOrder: icon.sort_order ?? null,
+    position: icon.pivot?.position ?? icon.position ?? null,
+  };
 }
 
 type AvailableFiltersDto = NonNullable<SearchProductsResponseDto['available_filters']>;
@@ -218,19 +234,9 @@ export function mapSearchProductDto(dto: SearchProductDto): Product {
     };
   });
 
-  let featureIconsMapped: FeatureIcon[] = [];
-  if (Array.isArray((dto as any).feature_icons)) {
-    featureIconsMapped = (dto as any).feature_icons.map((icon: any) => ({
-      id: icon.id,
-      name: icon.name || '',
-      slug: icon.slug || '',
-      description: icon.description,
-      assetUrl: getImageUrl(icon.asset_url),
-      positionHint: icon.position_hint,
-      displayOrder: icon.pivot?.display_order,
-      position: icon.pivot?.position,
-    }));
-  }
+  const featureIconsMapped = Array.isArray(dto.feature_icons)
+    ? dto.feature_icons.map(mapFeatureIconDto)
+    : [];
 
   return {
     badge: dto.badge,
@@ -378,19 +384,9 @@ export function mapProductDetailDto(dto: any): Product {
       }))
     : [];
 
-  let featureIconsMapped: FeatureIcon[] = [];
-  if (Array.isArray(dto.feature_icons)) {
-    featureIconsMapped = dto.feature_icons.map((icon: any) => ({
-      id: icon.id,
-      name: icon.name || '',
-      slug: icon.slug || '',
-      description: icon.description,
-      assetUrl: getImageUrl(icon.asset_url),
-      positionHint: icon.position_hint,
-      displayOrder: icon.pivot?.display_order,
-      position: icon.pivot?.position,
-    }));
-  }
+  const featureIconsMapped = Array.isArray(dto.feature_icons)
+    ? dto.feature_icons.map(mapFeatureIconDto)
+    : [];
 
   return {
     badge: dto.badge,

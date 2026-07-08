@@ -40,6 +40,26 @@ export type SearchProductColorDto = {
   };
 };
 
+export type ProductFeatureIconDto = {
+  id: number;
+  name?: string | null;
+  slug?: string | null;
+  description?: string | null;
+  description_bg_color?: string | null;
+  asset_path?: string | null;
+  asset_url?: string | null;
+  asset_type?: string | null;
+  display_group?: string | null;
+  position_hint?: string | null;
+  position?: string | null;
+  display_order?: number | null;
+  sort_order?: number | null;
+  pivot?: {
+    position?: string | null;
+    display_order?: number | null;
+  } | null;
+};
+
 export interface SearchProductDto {
   id: number;
   name: string;
@@ -101,6 +121,7 @@ export interface SearchProductDto {
     total_count?: number;
   };
   video_path?: string | null;
+  feature_icons?: ProductFeatureIconDto[];
 }
 
 export interface SearchProductsResponseDto {

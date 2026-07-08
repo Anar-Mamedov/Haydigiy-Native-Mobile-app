@@ -3,7 +3,7 @@ import { Paragraph, Separator, Spinner, YStack } from 'tamagui';
 import { CheckoutSection } from './checkout-section';
 import { CheckoutOptionRow } from './checkout-option-row';
 import { formatCurrency } from '@/utils/format-currency';
-import { BRAND_GRADIENT } from '@/lib/theme/colors';
+import { BRAND_GRADIENT, PAYMENT_DESCRIPTION_BADGE_COLOR } from '@/lib/theme/colors';
 import { PaymentMethod } from '@/types/checkout.types';
 
 interface CheckoutPaymentOptionsProps {
@@ -50,20 +50,37 @@ export function CheckoutPaymentOptions({
                 accessibilityLabel={method.name}
                 disabled={blocked}
                 onPress={() => onSelect(method)}
+                paddingVertical={15}
                 right={
                   method.slug === 'credit_card' ? (
-                    <LinearGradient
-                      colors={BRAND_GRADIENT}
-                      end={{ x: 1, y: 0 }}
-                      start={{ x: 0, y: 0 }}
-                      style={{ borderRadius: 15, paddingHorizontal: 10, paddingVertical: 3 }}
-                    >
-                      <Paragraph color="white" fontSize={11} fontWeight="700">
-                        %100 Güvenli Ödeme
-                      </Paragraph>
-                    </LinearGradient>
+                    <YStack alignItems="flex-end" gap={method.description ? 6 : 0} justifyContent="center" maxWidth={170}>
+                      <LinearGradient
+                        colors={BRAND_GRADIENT}
+                        end={{ x: 1, y: 0 }}
+                        start={{ x: 0, y: 0 }}
+                        style={{ borderRadius: 15, paddingHorizontal: 10, paddingVertical: 3 }}
+                      >
+                        <Paragraph color="white" fontSize={11} fontWeight="700">
+                          %100 Güvenli Ödeme
+                        </Paragraph>
+                      </LinearGradient>
+                      {method.description ? (
+                        <YStack
+                          alignItems="center"
+                          backgroundColor={PAYMENT_DESCRIPTION_BADGE_COLOR}
+                          borderRadius={15}
+                          justifyContent="center"
+                          paddingHorizontal={10}
+                          paddingVertical={2}
+                        >
+                          <Paragraph color="white" fontSize={11} fontWeight="700" lineHeight={14} textAlign="center">
+                            {method.description}
+                          </Paragraph>
+                        </YStack>
+                      ) : null}
+                    </YStack>
                   ) : method.serviceFee > 0 ? (
-                    <Paragraph color="$color" fontSize={13} fontWeight="700">
+                    <Paragraph color="$color" fontSize={13} fontWeight="700" lineHeight={16}>
                       +{formatCurrency(method.serviceFee)}
                     </Paragraph>
                   ) : null

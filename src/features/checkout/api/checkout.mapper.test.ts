@@ -20,7 +20,23 @@ describe('mapPaymentMethod', () => {
     });
     expect(method.commissionRate).toBe(2);
     expect(method.serviceFee).toBe(5);
+    expect(method.description).toBeNull();
     expect(method.maxOrderTotal).toBeNull();
+  });
+
+  it('maps and trims the payment description', () => {
+    const method = mapPaymentMethod({
+      id: 1,
+      name: 'Kredi Kartı',
+      slug: 'credit_card',
+      commission_rate: 0,
+      service_fee: 0,
+      sort_order: 1,
+      description: '  Peşin fiyatına 3 taksit  ',
+      max_order_total: null,
+    });
+
+    expect(method.description).toBe('Peşin fiyatına 3 taksit');
   });
 
   it('keeps a positive cap', () => {

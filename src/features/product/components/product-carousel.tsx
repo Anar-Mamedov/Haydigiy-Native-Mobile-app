@@ -6,6 +6,7 @@ import { XStack, YStack, Paragraph, useThemeName } from 'tamagui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { FeatureIcon } from '@/types/product.types';
 import { ProductCarouselVideoSlide } from './product-carousel-video-slide';
+import { ProductFeatureAssetTicker, ProductFeatureDescriptionTicker } from './product-feature-tags';
 import {
   CAROUSEL_HORIZONTAL_PADDING,
   getCarouselImageHeight,
@@ -39,21 +40,6 @@ type ProductCarouselSlide =
       uri: string;
     };
 
-function getFeatureIconPosition(positionHint?: string) {
-  switch (positionHint) {
-    case 'top-left':
-      return { top: 12, left: 12 };
-    case 'top-right':
-      return { top: 12, right: 12 };
-    case 'bottom-left':
-      return { bottom: 12, left: 12 };
-    case 'bottom-right':
-      return { bottom: 12, right: 12 };
-    default:
-      return { top: 12, left: 12 };
-  }
-}
-
 function getLoopedIndex(index: number, total: number) {
   if (total <= 0) return 0;
 
@@ -82,29 +68,6 @@ function getProductCarouselSlides(images: string[], videoPath?: string | null): 
       uri: videoPath,
     },
   ];
-}
-
-function ProductFeatureIconOverlay({ featureIcons }: { featureIcons?: FeatureIcon[] }) {
-  if (!featureIcons || featureIcons.length === 0) return null;
-
-  return (
-    <XStack position="absolute" top={0} left={0} right={0} bottom={0} pointerEvents="none" zIndex={10}>
-      {[...featureIcons]
-        .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
-        .map((icon) => {
-          const positionStyle = getFeatureIconPosition(icon.positionHint || (icon.position as any));
-          return (
-            <XStack key={icon.id} position="absolute" style={positionStyle}>
-              <Image
-                source={{ uri: icon.assetUrl }}
-                style={{ width: 76, height: 56 }}
-                contentFit="contain"
-              />
-            </XStack>
-          );
-        })}
-    </XStack>
-  );
 }
 
 export function ProductCarousel({
@@ -309,7 +272,7 @@ export function ProductCarousel({
                     style={{ width: itemWidth, height: carouselHeight }}
                     contentFit="contain"
                   />
-                  <ProductFeatureIconOverlay featureIcons={featureIcons} />
+                  <ProductFeatureAssetTicker featureIcons={featureIcons} />
                 </Pressable>
               )}
             </YStack>
@@ -470,26 +433,11 @@ export function ProductCarousel({
         )}
       </YStack>
 
-      {/* Orange feature icon descriptions bar - stretched to full screen width */}
-      {featureIcons && featureIcons.some((icon) => icon.description) && (
-        <XStack
-          backgroundColor="$brand"
-          paddingVertical={10}
-          paddingHorizontal={16}
-          justifyContent="center"
-          alignItems="center"
-          width={screenWidth}
-          marginHorizontal={-32}
-          alignSelf="center"
-        >
-          <Paragraph color="white" fontSize={13} fontWeight="700" textAlign="center" lineHeight={18}>
-            {featureIcons
-              .filter((icon) => icon.description)
-              .map((icon) => icon.description)
-              .join(' • ')}
-          </Paragraph>
-        </XStack>
-      )}
+      <ProductFeatureDescriptionTicker
+        featureIcons={featureIcons}
+        marginHorizontal={-32}
+        width={screenWidth}
+      />
     </YStack>
   );
 }
