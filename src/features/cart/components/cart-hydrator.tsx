@@ -33,6 +33,10 @@ export function CartHydrator() {
     const mergeGuestCart = async () => {
       try {
         await mergeCartDto();
+      } catch {
+        // Guest-cart merge is a best-effort background sync. If it fails (for
+        // example while the app is navigating or the connection drops), keep the
+        // app stable and let the cart query below continue with the current cart.
       } finally {
         if (!cancelled) {
           queryClient.invalidateQueries({ queryKey: cartKeys.all });

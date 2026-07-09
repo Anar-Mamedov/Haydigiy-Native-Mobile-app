@@ -121,7 +121,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="(home)"
         options={{
           tabBarIcon: ({ color, size }) => <HomeTabIcon color={color} size={size} />,
           title: 'Anasayfa',
@@ -175,12 +175,6 @@ export default function TabsLayout() {
         options={{
           tabBarIcon: ({ color, size }) => <ProfileTabIcon color={color} size={size} />,
           title: 'Hesabım',
-        }}
-      />
-      <Tabs.Screen
-        name="kategori/[slug]"
-        options={{
-          href: null,
         }}
       />
       <Tabs.Screen

@@ -1,6 +1,6 @@
 {
   "name": "haydigiy-webview-app",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "version": "2.3.1",
   "scripts": {
     "start": "expo start",

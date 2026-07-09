@@ -4,6 +4,7 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, YStack } from 'tamagui';
 import { TopBanner } from '@/features/promotions/components/top-banner';
+import { IosEdgeSwipeBack } from '@/components/ui/ios-edge-swipe-back';
 
 type AppScreenProps = PropsWithChildren<{
   scrollable?: boolean;
@@ -56,6 +57,7 @@ export function AppScreen({
           content
         )}
       </YStack>
+      <IosEdgeSwipeBack />
     </SafeAreaView>
   );
 }

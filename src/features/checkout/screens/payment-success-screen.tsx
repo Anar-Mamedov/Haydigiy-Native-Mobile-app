@@ -8,7 +8,7 @@ import { usePaymentSuccess } from '../hooks/use-payment-success';
 export function PaymentSuccessScreen() {
   const router = useRouter();
   const { orderDetails, isProcessing } = usePaymentSuccess();
-  const header = <ScreenHeader onBack={() => router.replace('/(tabs)')} title="Güvenli Ödeme" />;
+  const header = <ScreenHeader onBack={() => router.replace('/')} title="Güvenli Ödeme" />;
 
   if (isProcessing) {
     return (
@@ -89,7 +89,7 @@ export function PaymentSuccessScreen() {
               borderRadius="$4"
               borderWidth={1}
               height={48}
-              onPress={() => router.replace('/(tabs)')}
+              onPress={() => router.replace('/')}
               pressStyle={{ opacity: 0.7 }}
             >
               <Paragraph color="$color" fontSize={15} fontWeight="700">

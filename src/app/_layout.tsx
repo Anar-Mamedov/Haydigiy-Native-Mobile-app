@@ -36,6 +36,8 @@ export default function RootLayout() {
         <CartHydrator />
         <Stack
           screenOptions={{
+            fullScreenGestureEnabled: true,
+            gestureEnabled: true,
             headerShown: false,
           }}
         />

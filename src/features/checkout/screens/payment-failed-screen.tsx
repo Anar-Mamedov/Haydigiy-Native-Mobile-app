@@ -17,7 +17,7 @@ function firstValue(value: string | string[] | undefined): string {
 export function PaymentFailedScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ url?: string; message?: string; status?: string }>();
-  const header = <ScreenHeader onBack={() => router.replace('/(tabs)')} title="Güvenli Ödeme" />;
+  const header = <ScreenHeader onBack={() => router.replace('/')} title="Güvenli Ödeme" />;
 
   const query = parseQuery(firstValue(params.url));
   const pick = (...keys: string[]): string => {
@@ -97,7 +97,7 @@ export function PaymentFailedScreen() {
                 borderRadius="$4"
                 borderWidth={1}
                 height={48}
-                onPress={() => router.replace('/(tabs)')}
+                onPress={() => router.replace('/')}
                 pressStyle={{ opacity: 0.7 }}
               >
                 <Paragraph color="$color" fontSize={15} fontWeight="700">
@@ -127,7 +127,7 @@ export function PaymentFailedScreen() {
               backgroundColor="$brand"
               borderRadius="$4"
               height={48}
-              onPress={() => router.replace('/(tabs)')}
+              onPress={() => router.replace('/')}
               pressStyle={{ opacity: 0.85 }}
             >
               <Paragraph color="white" fontSize={15} fontWeight="700">

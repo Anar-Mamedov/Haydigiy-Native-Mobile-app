@@ -78,7 +78,7 @@ export function CartScreen() {
             <EmptyState
               actionLabel="Alışverişe Başla"
               description="Sepetinizde henüz ürün bulunmamaktadır."
-              onActionPress={() => router.push('/(tabs)')}
+              onActionPress={() => router.push('/')}
               primary
               title="Sepetiniz Boş"
             />

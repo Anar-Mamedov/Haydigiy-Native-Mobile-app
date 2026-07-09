@@ -227,7 +227,7 @@ export function FavoritesScreen() {
               title="Henüz favoriniz yok"
               description="Beğendiğiniz ürünleri favorilerinize ekleyin ve kolayca erişin."
               actionLabel="Alışverişe Başla"
-              onActionPress={() => router.push('/(tabs)')}
+              onActionPress={() => router.push('/')}
               primary
             />
           </YStack>

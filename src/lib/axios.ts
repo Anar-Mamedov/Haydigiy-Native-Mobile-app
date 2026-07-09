@@ -2,6 +2,12 @@ import axios from 'axios';
 import { getRequiredApiBaseUrl } from '@/lib/env';
 import { clearAccessToken, getAccessToken } from '@/lib/storage/secure-storage';
 
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    skipNetworkErrorLog?: boolean;
+  }
+}
+
 export const apiClient = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
   timeout: 15000,
@@ -54,7 +60,10 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     // Detaylı network error logging (Xiaomi/Oppo debug için)
-    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+    if (
+      (error.code === 'ERR_NETWORK' || error.message === 'Network Error') &&
+      !error.config?.skipNetworkErrorLog
+    ) {
       console.error('Network Error Details:', {
         message: error.message,
         code: error.code,

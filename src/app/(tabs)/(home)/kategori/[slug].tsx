@@ -7,11 +7,9 @@ export default function CategoryRoute() {
   const categoryId = c ? parseInt(c, 10) : undefined;
   const parsedCategoryId = categoryId && !isNaN(categoryId) ? categoryId : undefined;
 
-  // kategori/[slug] is a single Tabs.Screen, so React Navigation reuses one
-  // ProductListScreen instance across categories and only swaps the param. That
-  // leaks the previous category's FlashList layout (intermittent top gap) and its
-  // filter/sort state. Key by the category identity to force a fresh mount per
-  // category, exactly as a stack push would.
+  // kategori/[slug] can be replaced with a new category while the route stays
+  // mounted, so key by category identity to reset FlashList layout and filter
+  // state between category/search transitions.
   return (
     <ProductListScreen
       key={`${slug ?? ''}-${parsedCategoryId ?? ''}-${q ?? ''}`}

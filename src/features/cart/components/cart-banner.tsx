@@ -17,7 +17,7 @@ export function CartBanner() {
     <Pressable
       accessibilityLabel="100 TL altı tüm ürünler"
       accessibilityRole="button"
-      onPress={() => router.push(`/(tabs)/kategori/${BANNER_CATEGORY_SLUG}` as never)}
+      onPress={() => router.push(`/kategori/${BANNER_CATEGORY_SLUG}` as never)}
       style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, width: '100%' })}
     >
       <YStack

@@ -81,5 +81,5 @@ export async function mergeCartDto(): Promise<void> {
   if (!token) return;
 
   const deviceId = await getDeviceId();
-  await apiClient.post('/cart/merge', { device_id: deviceId });
+  await apiClient.post('/cart/merge', { device_id: deviceId }, { skipNetworkErrorLog: true });
 }

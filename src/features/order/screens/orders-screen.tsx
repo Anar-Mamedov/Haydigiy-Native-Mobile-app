@@ -133,7 +133,7 @@ export function OrdersScreen() {
             ? 'Alışverişe başlayın ve siparişlerinizi burada görün.'
             : 'Bu kategoride sipariş bulunmuyor. Farklı bir kategori seçebilirsiniz.'
         }
-        onActionPress={category === 'all' ? () => router.replace('/(tabs)') : undefined}
+        onActionPress={category === 'all' ? () => router.replace('/') : undefined}
         primary
         title={category === 'all' ? 'Henüz siparişiniz bulunmuyor' : 'Sipariş bulunamadı'}
       />
@@ -164,7 +164,7 @@ export function OrdersScreen() {
           onRefresh={() => query.refetch()}
           renderItem={({ item }) => (
             <OrderCard
-              onPressDetails={() => router.push(`/(tabs)/order/${item.id}` as never)}
+              onPressDetails={() => router.push(`/order/${item.id}` as never)}
               onPressProduct={(slug) => router.push(`/product/${slug}` as never)}
               order={item}
             />
