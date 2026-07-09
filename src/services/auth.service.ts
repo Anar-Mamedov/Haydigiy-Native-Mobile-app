@@ -53,6 +53,22 @@ export interface FastLoginInitResponse {
   remaining_seconds?: number;
 }
 
+export type ForgotPasswordPayload =
+  | {
+      type: 'email';
+      email: string;
+    }
+  | {
+      type: 'phone';
+      country_code: '+90';
+      phone: string;
+    };
+
+export interface ForgotPasswordResponse {
+  message?: string;
+  remaining_seconds?: number;
+}
+
 export async function loginApi(payload: any): Promise<LoginResponse> {
   if (!appEnv.apiBaseUrl) {
     // Mock Mode
@@ -133,6 +149,25 @@ export async function fastLoginInitApi(payload: { identifier: string }): Promise
   }
 
   const response = await apiClient.post('/auth/fast-login/init', payload);
+  return response.data;
+}
+
+/**
+ * Starts the same password-reset flow used by the web application. The backend
+ * sends a reset link for e-mail accounts or a reset code for phone accounts.
+ */
+export async function forgotPasswordApi(payload: ForgotPasswordPayload): Promise<ForgotPasswordResponse> {
+  if (!appEnv.apiBaseUrl) {
+    return {
+      message:
+        payload.type === 'email'
+          ? 'Şifre yenileme bağlantısı e-posta adresinize gönderildi.'
+          : 'Şifre yenileme kodu SMS ile telefon numaranıza gönderildi.',
+      remaining_seconds: 60,
+    };
+  }
+
+  const response = await apiClient.post('/auth/forgot-password', payload);
   return response.data;
 }
 

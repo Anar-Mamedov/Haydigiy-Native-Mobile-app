@@ -9,12 +9,13 @@ import { useAuthStatus } from '../../auth/hooks/use-auth-status';
 import { LoginForm } from '../../auth/components/login-form';
 import { RegisterForm } from '../../auth/components/register-form';
 import { FastLoginForm } from '../../auth/components/fast-login-form';
+import { ForgotPasswordForm } from '../../auth/components/forgot-password-form';
 import { OtpVerification } from '../../auth/components/otp-verification';
 import { AccountHub } from '../components/account-hub';
 import { AccountHeader } from '../components/account-header';
 import { useUserProfileQuery } from '../api/profile.queries';
 
-type ActiveView = 'login' | 'register' | 'fast-login' | 'otp';
+type ActiveView = 'login' | 'register' | 'fast-login' | 'forgot-password' | 'otp';
 
 export function ProfileScreen() {
   const router = useRouter();
@@ -41,6 +42,11 @@ export function ProfileScreen() {
   } | null>(null);
 
   const handleBackPress = () => {
+    if (activeView === 'forgot-password') {
+      setActiveView('login');
+      return;
+    }
+
     if (router.canGoBack()) {
       router.back();
     } else {
@@ -117,6 +123,8 @@ export function ProfileScreen() {
                 ? 'Üye Ol'
                 : activeView === 'fast-login'
                 ? 'Hızlı Giriş'
+                : activeView === 'forgot-password'
+                ? 'Şifremi Unuttum'
                 : 'Doğrulama'}
             </Paragraph>
           </XStack>
@@ -142,7 +150,7 @@ export function ProfileScreen() {
           ) : (
             <YStack gap="$4">
               {/* Tab Navigation (Login vs Register) when not in OTP or Fast Login */}
-              {activeView !== 'fast-login' && (
+              {(activeView === 'login' || activeView === 'register') && (
                 <XStack width="100%" borderBottomWidth={1} borderBottomColor="$borderColor" paddingBottom="$1">
                   <PressableTab
                     active={activeView === 'login'}
@@ -163,7 +171,12 @@ export function ProfileScreen() {
                     // Handled automatically by Zustand update & useAuthStatus hook
                   }}
                   onFastLoginPress={() => setActiveView('fast-login')}
+                  onForgotPasswordPress={() => setActiveView('forgot-password')}
                 />
+              )}
+
+              {activeView === 'forgot-password' && (
+                <ForgotPasswordForm onBackToLogin={() => setActiveView('login')} />
               )}
 
               {activeView === 'register' && (

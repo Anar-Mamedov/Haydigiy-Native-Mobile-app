@@ -17,9 +17,10 @@ const isEmailLikeInput = (value: string): boolean => {
 interface LoginFormProps {
   onSuccess: () => void;
   onFastLoginPress: () => void;
+  onForgotPasswordPress: () => void;
 }
 
-export function LoginForm({ onSuccess, onFastLoginPress }: LoginFormProps) {
+export function LoginForm({ onSuccess, onFastLoginPress, onForgotPasswordPress }: LoginFormProps) {
   const storeLogin = useAuthStore((state) => state.login);
   const loginMutation = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
@@ -97,7 +98,7 @@ export function LoginForm({ onSuccess, onFastLoginPress }: LoginFormProps) {
   };
 
   return (
-    <YStack gap="$4" width="100%">
+    <YStack gap="$3" width="100%">
       <Controller
         name="identifier"
         control={control}
@@ -139,6 +140,25 @@ export function LoginForm({ onSuccess, onFastLoginPress }: LoginFormProps) {
           />
         )}
       />
+
+      <AppButton
+        id="login-forgot-password-btn"
+        alignSelf="flex-start"
+        backgroundColor="transparent"
+        borderColor="transparent"
+        color="$brand"
+        height={32}
+        hitSlop={6}
+        onPress={onForgotPasswordPress}
+        paddingHorizontal="$1"
+        paddingVertical={0}
+        pressStyle={{ opacity: 0.7 }}
+        size="$2"
+      >
+        <Paragraph color="$brand" fontSize="$3" fontWeight="600">
+          Şifremi Unuttum
+        </Paragraph>
+      </AppButton>
 
       {serverError && (
         <Paragraph color="$red10" size="$3" textAlign="center" fontWeight="500">

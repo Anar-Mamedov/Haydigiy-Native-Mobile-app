@@ -131,6 +131,21 @@ describe('ProfileScreen', () => {
     expect(screen.getByPlaceholderText('Şifrenizi girin')).toBeTruthy();
   });
 
+  it('opens the forgot-password flow from the login form', () => {
+    (useAuthStatus as jest.Mock).mockReturnValue({
+      isAuthenticated: false,
+      isLoading: false,
+    });
+
+    renderWithTamagui(<ProfileScreen />);
+
+    fireEvent.press(screen.getByText('Şifremi Unuttum'));
+
+    expect(screen.getByText('Şifre Yenileme')).toBeTruthy();
+    expect(screen.getByText('Şifremi Unuttum')).toBeTruthy();
+    expect(screen.getByLabelText('E-posta veya Telefon Numarası')).toBeTruthy();
+  });
+
   it('navigates back when back button is pressed', () => {
     (useAuthStatus as jest.Mock).mockReturnValue({
       isAuthenticated: false,

@@ -72,6 +72,36 @@ export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type OtpFormData = z.infer<typeof otpSchema>;
 
+export const forgotPasswordSchema = z.object({
+  identifier: z
+    .string()
+    .min(1, { message: 'E-posta adresi veya telefon numarası zorunludur' }),
+}).superRefine((data, ctx) => {
+  const trimmed = data.identifier.trim();
+  if (trimmed.includes('@') || /[a-zA-Z]/.test(trimmed)) {
+    const isEmail = z.string().email().safeParse(trimmed).success;
+    if (!isEmail) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Geçerli bir e-posta adresi giriniz.',
+        path: ['identifier'],
+      });
+    }
+    return;
+  }
+
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  if (!/^5[0-9]{9}$/.test(digitsOnly)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Geçerli bir telefon numarası giriniz (5xxxxxxxxx).',
+      path: ['identifier'],
+    });
+  }
+});
+
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+
 export const fastLoginSchema = z.object({
   phone: z
     .string()
@@ -82,4 +112,3 @@ export const fastLoginSchema = z.object({
 });
 
 export type FastLoginFormData = z.infer<typeof fastLoginSchema>;
-

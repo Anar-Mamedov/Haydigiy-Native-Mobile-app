@@ -1,4 +1,10 @@
-import { loginSchema, registerSchema, fastLoginSchema, otpSchema } from '@/features/auth/schemas/auth.schema';
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  fastLoginSchema,
+  otpSchema,
+} from '@/features/auth/schemas/auth.schema';
 
 describe('Auth Validation Schemas', () => {
   describe('loginSchema', () => {
@@ -159,6 +165,20 @@ describe('Auth Validation Schemas', () => {
         code: '12345a',
       });
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe('forgotPasswordSchema', () => {
+    it('accepts a valid e-mail address', () => {
+      expect(forgotPasswordSchema.safeParse({ identifier: 'user@example.com' }).success).toBe(true);
+    });
+
+    it('accepts a valid Turkish mobile number', () => {
+      expect(forgotPasswordSchema.safeParse({ identifier: '5321234567' }).success).toBe(true);
+    });
+
+    it('rejects an invalid reset identifier', () => {
+      expect(forgotPasswordSchema.safeParse({ identifier: 'not-an-identifier' }).success).toBe(false);
     });
   });
 });
