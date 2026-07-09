@@ -133,7 +133,7 @@ export function AskQuestionSheet({ open, onClose, slug, productId }: AskQuestion
               color="white"
               onPress={() => {
                 onClose();
-                router.push('/(tabs)/profile');
+                router.push('/profile');
               }}
             >
               Giriş Yap
@@ -248,7 +248,7 @@ export function AskQuestionSheet({ open, onClose, slug, productId }: AskQuestion
                     fontWeight="600"
                     onPress={() => {
                       onClose();
-                      router.push('/(tabs)/agreements');
+                      router.push('/agreements');
                     }}
                     textDecorationLine="underline"
                   >

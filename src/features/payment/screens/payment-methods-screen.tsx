@@ -21,13 +21,13 @@ export function PaymentMethodsScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/profile');
+      router.replace('/profile');
     }
   };
 
-  const goToCreate = () => router.push('/(tabs)/payment-method-form');
+  const goToCreate = () => router.push('/payment-method-form');
   const goToEdit = (id: number) =>
-    router.push({ pathname: '/(tabs)/payment-method-form', params: { id: String(id) } });
+    router.push({ pathname: '/payment-method-form', params: { id: String(id) } });
 
   const handleConfirmDelete = async () => {
     if (pendingDeleteId == null) return;
@@ -59,7 +59,7 @@ export function PaymentMethodsScreen() {
           <EmptyState
             actionLabel="Giriş Yap"
             description="Ödeme bilgilerinizi görmek için hesabınıza giriş yapın."
-            onActionPress={() => router.replace('/(tabs)/profile')}
+            onActionPress={() => router.replace('/profile')}
             primary
             title="Giriş Yapın"
           />

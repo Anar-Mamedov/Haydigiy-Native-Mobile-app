@@ -85,7 +85,7 @@ export function CheckoutScreen() {
           <EmptyState
             actionLabel="Sepete Git"
             description="Ödeme yapmak için sepetinizde ürün bulunmalıdır."
-            onActionPress={() => router.replace('/(tabs)/cart')}
+            onActionPress={() => router.replace('/cart')}
             primary
             title="Sepetiniz Boş"
           />

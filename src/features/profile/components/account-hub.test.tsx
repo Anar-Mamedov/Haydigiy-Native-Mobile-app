@@ -28,70 +28,70 @@ describe('AccountHub', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('Favorilerim'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/favorites');
+    expect(mockPush).toHaveBeenCalledWith('/favorites');
   });
 
   it('navigates to the coupons screen when İndirim Kuponlarım is pressed', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('İndirim Kuponlarım'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/coupons');
+    expect(mockPush).toHaveBeenCalledWith('/coupons');
   });
 
   it('navigates to the reviews screen when Ürün Değerlendirme is pressed', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('Ürün Değerlendirme'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/reviews');
+    expect(mockPush).toHaveBeenCalledWith('/reviews');
   });
 
   it('navigates to the user info screen when Kullanıcı Bilgilerim is pressed', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('Kullanıcı Bilgilerim'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/user-info');
+    expect(mockPush).toHaveBeenCalledWith('/user-info');
   });
 
   it('navigates to the change password screen when Şifre Değişikliği is pressed', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('Şifre Değişikliği'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/change-password');
+    expect(mockPush).toHaveBeenCalledWith('/change-password');
   });
 
   it('navigates to the addresses screen when Adres Bilgilerim is pressed', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('Adres Bilgilerim'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/addresses');
+    expect(mockPush).toHaveBeenCalledWith('/addresses');
   });
 
   it('navigates to the payment methods screen when Ödeme Bilgilerim is pressed', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('Ödeme Bilgilerim'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/payment-methods');
+    expect(mockPush).toHaveBeenCalledWith('/payment-methods');
   });
 
   it('navigates to the bank account screen when Banka Hesabımız is pressed', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('Banka Hesabımız'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/bank-account');
+    expect(mockPush).toHaveBeenCalledWith('/bank-account');
   });
 
   it('navigates to the agreements screen when Sözleşmeler is pressed', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('Sözleşmeler'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/agreements');
+    expect(mockPush).toHaveBeenCalledWith('/agreements');
   });
 
   it('navigates to the help screen when Yardım & Sıkça Sorulan Sorular is pressed', () => {
     renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
 
     fireEvent.press(screen.getByLabelText('Yardım & Sıkça Sorulan Sorular'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/help');
+    expect(mockPush).toHaveBeenCalledWith('/help');
   });
 
   it('calls onLogout when Çıkış Yap is pressed', () => {

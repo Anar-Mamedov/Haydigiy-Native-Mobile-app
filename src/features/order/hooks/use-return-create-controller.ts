@@ -313,7 +313,7 @@ export function useReturnCreateController(orderId: string, options: Options) {
 
   const closeSuccess = useCallback(() => {
     setSuccessMessage(null);
-    router.replace('/(tabs)/orders');
+    router.replace('/orders');
   }, [router]);
 
   return {

@@ -20,7 +20,7 @@ export function CouponsScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/profile');
+      router.replace('/profile');
     }
   };
 
@@ -43,7 +43,7 @@ export function CouponsScreen() {
           <EmptyState
             actionLabel="Giriş Yap"
             description="İndirim kuponlarınızı görmek için hesabınıza giriş yapın."
-            onActionPress={() => router.replace('/(tabs)/profile')}
+            onActionPress={() => router.replace('/profile')}
             primary
             title="Giriş Yapın"
           />

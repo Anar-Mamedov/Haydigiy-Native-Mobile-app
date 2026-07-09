@@ -57,7 +57,7 @@ export function ReviewsScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/profile');
+      router.replace('/profile');
     }
   };
 
@@ -80,7 +80,7 @@ export function ReviewsScreen() {
           <EmptyState
             actionLabel="Giriş Yap"
             description="Değerlendirmelerinizi görmek için hesabınıza giriş yapın."
-            onActionPress={() => router.replace('/(tabs)/profile')}
+            onActionPress={() => router.replace('/profile')}
             primary
             title="Giriş Yapın"
           />

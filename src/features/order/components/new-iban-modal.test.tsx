@@ -4,7 +4,7 @@ import { NewIbanModal } from './new-iban-modal';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
 jest.mock('expo-router', () => ({
-  usePathname: () => '/(tabs)/return-create/1',
+  usePathname: () => '/return-create/1',
   useRouter: () => ({ back: jest.fn(), canGoBack: () => false, push: jest.fn(), replace: jest.fn() }),
 }));
 

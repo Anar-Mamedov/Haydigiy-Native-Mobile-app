@@ -330,19 +330,19 @@ export function useCheckoutController() {
   );
 
   const goToAddAddress = useCallback(() => {
-    router.push('/(tabs)/address-form' as never);
+    router.push('/address-form' as never);
   }, [router]);
 
   const goToEditAddress = useCallback(
     (address: CheckoutAddress) => {
-      router.push(`/(tabs)/address-form?id=${address.id}` as never);
+      router.push(`/address-form?id=${address.id}` as never);
     },
     [router],
   );
 
   const goBack = useCallback(() => {
     if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/cart' as never);
+    else router.replace('/cart' as never);
   }, [router]);
 
   // ---- Submit gating ----

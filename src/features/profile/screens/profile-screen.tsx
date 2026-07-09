@@ -69,7 +69,7 @@ export function ProfileScreen() {
   // 1. Authenticated User Profile View
   if (isAuthenticated && user) {
     const handleUserInfoPress = () => {
-      router.push('/(tabs)/user-info');
+      router.push('/user-info');
     };
 
     // The profile endpoint is authoritative for the verification flag.

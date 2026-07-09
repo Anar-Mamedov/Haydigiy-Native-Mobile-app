@@ -84,7 +84,7 @@ export function PaymentFailedScreen() {
                 backgroundColor="$brand"
                 borderRadius="$4"
                 height={48}
-                onPress={() => router.replace('/(tabs)/orders')}
+                onPress={() => router.replace('/orders')}
                 pressStyle={{ opacity: 0.85 }}
               >
                 <Paragraph color="white" fontSize={15} fontWeight="700">
@@ -140,7 +140,7 @@ export function PaymentFailedScreen() {
               borderRadius="$4"
               borderWidth={1}
               height={48}
-              onPress={() => router.replace('/(tabs)/cart')}
+              onPress={() => router.replace('/cart')}
               pressStyle={{ opacity: 0.7 }}
             >
               <Paragraph color="$color" fontSize={15} fontWeight="700">

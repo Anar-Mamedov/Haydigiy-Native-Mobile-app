@@ -50,7 +50,7 @@ export function AddressFormScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/addresses');
+      router.replace('/addresses');
     }
   };
 
@@ -73,7 +73,7 @@ export function AddressFormScreen() {
           <EmptyState
             actionLabel="Giriş Yap"
             description="Adres eklemek için hesabınıza giriş yapın."
-            onActionPress={() => router.replace('/(tabs)/profile')}
+            onActionPress={() => router.replace('/profile')}
             primary
             title="Giriş Yapın"
           />

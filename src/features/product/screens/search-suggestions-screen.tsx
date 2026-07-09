@@ -355,7 +355,7 @@ export function SearchSuggestionsScreen() {
                   Önceden Gezdiklerim
                 </Paragraph>
                 {viewedProducts.length > 0 ? (
-                  <Pressable onPress={() => router.push('/(tabs)/gezdiklerim')}>
+                  <Pressable onPress={() => router.push('/gezdiklerim')}>
                     {({ pressed }) => (
                       <Paragraph fontSize={12} fontWeight="600" color="$brand" opacity={pressed ? 0.7 : 1}>
                         Tümünü Gör

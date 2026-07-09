@@ -37,19 +37,19 @@ export function handleLinkPress(link: string | null | undefined) {
 
   // 1. Cart
   if (path === '/sepet' || path === '/cart') {
-    router.push('/(tabs)/cart');
+    router.push('/cart');
     return;
   }
 
   // 2. Favorites
   if (path === '/favori-listem' || path === '/favorites') {
-    router.push('/(tabs)/favorites');
+    router.push('/favorites');
     return;
   }
 
   // 3. Profile
   if (path === '/hesabim' || path === '/profile') {
-    router.push('/(tabs)/profile');
+    router.push('/profile');
     return;
   }
 

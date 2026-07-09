@@ -138,7 +138,7 @@ export function useOrderCancelController(orderId: string, options: Options) {
       setPendingItems([]);
       setWarningPreview(null);
       Alert.alert('Başarılı', message || 'Sipariş iptal talebiniz alındı.', [
-        { text: 'Tamam', onPress: () => router.replace('/(tabs)/orders') },
+        { text: 'Tamam', onPress: () => router.replace('/orders') },
       ]);
     },
     [router],

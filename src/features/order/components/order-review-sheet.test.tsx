@@ -4,7 +4,7 @@ import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { ReviewTarget } from '@/types/review.types';
 
 jest.mock('expo-router', () => ({
-  usePathname: () => '/(tabs)/orders',
+  usePathname: () => '/orders',
   useRouter: () => ({ back: jest.fn(), canGoBack: () => false, push: jest.fn(), replace: jest.fn() }),
 }));
 

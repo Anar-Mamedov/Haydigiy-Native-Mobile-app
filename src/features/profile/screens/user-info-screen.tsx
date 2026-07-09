@@ -15,7 +15,7 @@ export function UserInfoScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/profile');
+      router.replace('/profile');
     }
   };
 
@@ -38,7 +38,7 @@ export function UserInfoScreen() {
           <EmptyState
             actionLabel="Giriş Yap"
             description="Bilgilerinizi görmek için hesabınıza giriş yapın."
-            onActionPress={() => router.replace('/(tabs)/profile')}
+            onActionPress={() => router.replace('/profile')}
             primary
             title="Giriş Yapın"
           />

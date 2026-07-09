@@ -59,7 +59,7 @@ export function ProductDetailHeader() {
           chromeless
           circular
           icon={<Grid color={iconColor as any} size={20} />}
-          onPress={() => router.push('/(tabs)/categories')}
+          onPress={() => router.push('/categories')}
           pressStyle={{ backgroundColor: '$backgroundPress' }}
           size="$3"
           padding={0}
@@ -126,7 +126,7 @@ export function ProductDetailHeader() {
               ) : null}
             </YStack>
           }
-          onPress={() => router.push('/(tabs)/cart')}
+          onPress={() => router.push('/cart')}
           pressStyle={{ backgroundColor: '$backgroundPress' }}
           size="$3"
         />
@@ -137,7 +137,7 @@ export function ProductDetailHeader() {
           chromeless
           circular
           icon={<UserRound color={iconColor as any} size={22} />}
-          onPress={() => router.push('/(tabs)/profile')}
+          onPress={() => router.push('/profile')}
           pressStyle={{ backgroundColor: '$backgroundPress' }}
           size="$3"
         />

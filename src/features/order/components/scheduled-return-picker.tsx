@@ -67,7 +67,7 @@ export function ScheduledReturnPicker({ sr }: Props) {
   const router = useRouter();
 
   const goToAddAddress = () => {
-    router.push('/(tabs)/address-form');
+    router.push('/address-form');
   };
 
   return (

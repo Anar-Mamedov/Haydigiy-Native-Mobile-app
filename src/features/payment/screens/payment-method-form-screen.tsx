@@ -40,7 +40,7 @@ export function PaymentMethodFormScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/payment-methods');
+      router.replace('/payment-methods');
     }
   };
 
@@ -65,7 +65,7 @@ export function PaymentMethodFormScreen() {
           <EmptyState
             actionLabel="Giriş Yap"
             description="IBAN eklemek için hesabınıza giriş yapın."
-            onActionPress={() => router.replace('/(tabs)/profile')}
+            onActionPress={() => router.replace('/profile')}
             primary
             title="Giriş Yapın"
           />

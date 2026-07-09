@@ -31,7 +31,7 @@ export function OrderCancelScreen() {
 
   const handleBack = () => {
     if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/orders');
+    else router.replace('/orders');
   };
 
   const header = <OrdersHeader onBack={handleBack} title="Sipariş İptal" />;
@@ -53,7 +53,7 @@ export function OrderCancelScreen() {
           <EmptyState
             actionLabel="Siparişlerime Dön"
             description="Sipariş bilgileri yüklenemedi."
-            onActionPress={() => router.replace('/(tabs)/orders')}
+            onActionPress={() => router.replace('/orders')}
             primary
             title="Bir Hata Oluştu"
           />

@@ -21,12 +21,12 @@ export function AddressesScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/profile');
+      router.replace('/profile');
     }
   };
 
-  const goToCreate = () => router.push('/(tabs)/address-form');
-  const goToEdit = (id: string) => router.push({ pathname: '/(tabs)/address-form', params: { id } });
+  const goToCreate = () => router.push('/address-form');
+  const goToEdit = (id: string) => router.push({ pathname: '/address-form', params: { id } });
 
   const handleConfirmDelete = async () => {
     if (!pendingDeleteId) return;
@@ -58,7 +58,7 @@ export function AddressesScreen() {
           <EmptyState
             actionLabel="Giriş Yap"
             description="Adreslerinizi görmek için hesabınıza giriş yapın."
-            onActionPress={() => router.replace('/(tabs)/profile')}
+            onActionPress={() => router.replace('/profile')}
             primary
             title="Giriş Yapın"
           />

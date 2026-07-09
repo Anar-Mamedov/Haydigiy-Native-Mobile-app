@@ -185,7 +185,7 @@ export function useCartController() {
         'Sepeti onaylamak için hesabınıza giriş yapın veya ücretsiz üye olun.',
         [
           { text: 'Vazgeç', style: 'cancel' },
-          { text: 'Giriş Yap', onPress: () => router.push('/(tabs)/profile') },
+          { text: 'Giriş Yap', onPress: () => router.push('/profile') },
         ],
       );
       return;
@@ -202,7 +202,7 @@ export function useCartController() {
           'Siparişi tamamlamak için önce bir teslimat adresi eklemelisiniz.',
           [
             { text: 'Vazgeç', style: 'cancel' },
-            { text: 'Adres Ekle', onPress: () => router.push('/(tabs)/address-form') },
+            { text: 'Adres Ekle', onPress: () => router.push('/address-form') },
           ],
         );
         return;

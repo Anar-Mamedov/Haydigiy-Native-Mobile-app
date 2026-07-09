@@ -45,30 +45,30 @@ export function AccountHub({ onLogout }: AccountHubProps) {
 
   // Both entries pass the category explicitly so each press forces its own
   // chip, regardless of which chip the user last left the orders screen on.
-  const goToOrders = () => router.push({ pathname: '/(tabs)/orders', params: { category: 'all' } });
+  const goToOrders = () => router.push({ pathname: '/orders', params: { category: 'all' } });
   const goToCancellations = () =>
-    router.push({ pathname: '/(tabs)/orders', params: { category: 'cancelled' } });
+    router.push({ pathname: '/orders', params: { category: 'cancelled' } });
 
   const quickActions = [
     {
       icon: <Eye color="$brand" size={26} />,
       label: 'Önceden Gezdiklerim',
-      onPress: () => router.push('/(tabs)/gezdiklerim'),
+      onPress: () => router.push('/gezdiklerim'),
     },
     {
       icon: <Ticket color="$brand" size={26} />,
       label: 'İndirim Kuponlarım',
-      onPress: () => router.push('/(tabs)/coupons'),
+      onPress: () => router.push('/coupons'),
     },
     {
       icon: <Heart color="$brand" size={26} />,
       label: 'Favorilerim',
-      onPress: () => router.push('/(tabs)/favorites'),
+      onPress: () => router.push('/favorites'),
     },
     {
       icon: <MessageSquare color="$brand" size={26} />,
       label: 'Ürün Değerlendirme',
-      onPress: () => router.push('/(tabs)/reviews'),
+      onPress: () => router.push('/reviews'),
     },
   ];
 
@@ -89,32 +89,32 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <UserRound color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Kullanıcı Bilgilerim',
-      onPress: () => router.push('/(tabs)/user-info'),
+      onPress: () => router.push('/user-info'),
     },
     {
       icon: <ShieldCheck color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Şifre Değişikliği',
-      onPress: () => router.push('/(tabs)/change-password'),
+      onPress: () => router.push('/change-password'),
     },
     {
       icon: <MapPin color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Adres Bilgilerim',
-      onPress: () => router.push('/(tabs)/addresses'),
+      onPress: () => router.push('/addresses'),
     },
     {
       icon: <CreditCard color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Ödeme Bilgilerim',
-      onPress: () => router.push('/(tabs)/payment-methods'),
+      onPress: () => router.push('/payment-methods'),
     },
     {
       icon: <Landmark color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Banka Hesabımız',
-      onPress: () => router.push('/(tabs)/bank-account'),
+      onPress: () => router.push('/bank-account'),
     },
     {
       icon: <FileText color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Sözleşmeler',
-      onPress: () => router.push('/(tabs)/agreements'),
+      onPress: () => router.push('/agreements'),
     },
   ];
 
@@ -122,7 +122,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     {
       icon: <CircleHelp color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Yardım & Sıkça Sorulan Sorular',
-      onPress: () => router.push('/(tabs)/help'),
+      onPress: () => router.push('/help'),
     },
   ];
 

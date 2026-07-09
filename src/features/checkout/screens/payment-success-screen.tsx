@@ -75,7 +75,7 @@ export function PaymentSuccessScreen() {
               backgroundColor="$brand"
               borderRadius="$4"
               height={48}
-              onPress={() => router.replace('/(tabs)/orders')}
+              onPress={() => router.replace('/orders')}
               pressStyle={{ opacity: 0.85 }}
             >
               <Paragraph color="white" fontSize={15} fontWeight="700">

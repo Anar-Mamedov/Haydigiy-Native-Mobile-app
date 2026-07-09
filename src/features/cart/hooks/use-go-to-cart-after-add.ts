@@ -10,6 +10,6 @@ export function useGoToCartAfterAdd() {
   const router = useRouter();
 
   return useCallback(() => {
-    router.push('/(tabs)/cart');
+    router.push('/cart');
   }, [router]);
 }

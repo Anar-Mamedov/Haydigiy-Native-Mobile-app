@@ -140,7 +140,7 @@ export function FavoritesScreen() {
     }
     Alert.alert('Başarılı', `${product.title} (${size}) sepetinize eklendi.`, [
       { text: 'Alışverişe Devam Et', style: 'cancel' },
-      { text: 'Sepete Git', onPress: () => router.push('/(tabs)/cart') },
+      { text: 'Sepete Git', onPress: () => router.push('/cart') },
     ]);
   };
 
@@ -189,7 +189,7 @@ export function FavoritesScreen() {
             title="Favorilerim İçin Giriş Yapın"
             description="Beğendiğiniz ürünleri favorilerinize eklemek ve listelemek için giriş yapmalısınız."
             actionLabel="Giriş Yap"
-            onActionPress={() => router.push('/(tabs)/profile')}
+            onActionPress={() => router.push('/profile')}
             primary
           />
         </YStack>

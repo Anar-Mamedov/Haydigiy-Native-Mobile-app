@@ -41,13 +41,13 @@ export function OrderDetailScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/orders');
+      router.replace('/orders');
     }
   };
 
   const openProduct = (slug: string) => router.push(`/product/${slug}` as never);
-  const goToCancel = (query = '') => router.push(`/(tabs)/order-cancel/${id}${query}` as never);
-  const goToReturn = (query = '') => router.push(`/(tabs)/return-create/${id}${query}` as never);
+  const goToCancel = (query = '') => router.push(`/order-cancel/${id}${query}` as never);
+  const goToReturn = (query = '') => router.push(`/return-create/${id}${query}` as never);
 
   const isCancelable = order ? isOrderCancellableStatus(order.status, order.statusId) : false;
   const canCreateReturn = !isCancelable && (order?.canCreateReturnRequest ?? false);
@@ -66,7 +66,7 @@ export function OrderDetailScreen() {
     addToCart.mutate({ variantId: String(item.variantId), quantity: item.quantity || 1 });
     Alert.alert('Başarılı', `${item.name} sepetinize eklendi.`, [
       { text: 'Alışverişe Devam Et', style: 'cancel' },
-      { text: 'Sepete Git', onPress: () => router.push('/(tabs)/cart' as never) },
+      { text: 'Sepete Git', onPress: () => router.push('/cart' as never) },
     ]);
   };
 

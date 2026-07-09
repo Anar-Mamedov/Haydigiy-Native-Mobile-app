@@ -104,7 +104,7 @@ describe('useCartController checkout', () => {
     expect(addAddressButton?.onPress).toBeDefined();
 
     act(() => addAddressButton?.onPress?.());
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/address-form');
+    expect(mockPush).toHaveBeenCalledWith('/address-form');
   });
 
   it('continues to checkout when the order is prepared with an address', async () => {

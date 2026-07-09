@@ -88,7 +88,7 @@ describe('ProfileScreen', () => {
     renderWithTamagui(<ProfileScreen />);
 
     fireEvent.press(screen.getByLabelText('Anar Mamedov'));
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/user-info');
+    expect(mockPush).toHaveBeenCalledWith('/user-info');
   });
 
   it('calls logout when Çıkış Yap button is pressed', async () => {

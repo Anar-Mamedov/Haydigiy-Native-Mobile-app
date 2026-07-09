@@ -39,7 +39,7 @@ export function ReturnCreateScreen() {
 
   const handleBack = () => {
     if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/orders');
+    else router.replace('/orders');
   };
 
   const header = <OrdersHeader onBack={handleBack} title="İade Oluştur" />;
@@ -102,7 +102,7 @@ export function ReturnCreateScreen() {
               backgroundColor="$red10"
               borderRadius="$4"
               height={44}
-              onPress={() => router.replace('/(tabs)/orders')}
+              onPress={() => router.replace('/orders')}
               pressStyle={{ opacity: 0.85 }}
               width="100%"
             >

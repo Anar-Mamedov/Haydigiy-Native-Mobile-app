@@ -127,7 +127,7 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
   };
 
   const handleCartPress = () => {
-    router.push('/(tabs)/cart');
+    router.push('/cart');
   };
 
   const handleApplyFilters = (newFilters: {

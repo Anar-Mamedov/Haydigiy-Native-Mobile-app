@@ -55,6 +55,6 @@ describe('ScheduledReturnPicker', () => {
 
     fireEvent.press(screen.getByLabelText('Yeni Adres Ekle'));
 
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/address-form');
+    expect(mockPush).toHaveBeenCalledWith('/address-form');
   });
 });

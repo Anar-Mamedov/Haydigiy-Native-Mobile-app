@@ -23,7 +23,7 @@ export function AppHeader() {
   const isHomePage = pathname === '/' || pathname === '/(tabs)' || pathname === '/(tabs)/';
 
   const handleMenuPress = () => {
-    router.push('/(tabs)/categories');
+    router.push('/categories');
   };
 
   const handleLogoPress = () => {
@@ -33,19 +33,19 @@ export function AppHeader() {
   };
 
   const handleAccountPress = () => {
-    router.push('/(tabs)/profile');
+    router.push('/profile');
   };
 
   const handleFavoritesPress = () => {
-    router.push('/(tabs)/favorites');
+    router.push('/favorites');
   };
 
   const handleCartPress = () => {
-    router.push('/(tabs)/cart');
+    router.push('/cart');
   };
 
   const handleSearchPress = () => {
-    router.push('/(tabs)/categories');
+    router.push('/categories');
   };
 
   return (
