@@ -1,7 +1,7 @@
 {
   "name": "haydigiy-webview-app",
   "main": "index.js",
-  "version": "2.3.1",
+  "version": "2.3.3",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",

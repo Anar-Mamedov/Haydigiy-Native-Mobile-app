@@ -225,6 +225,7 @@ export function CheckoutScreen() {
           isSubmitting={placeOrder.isSubmitting}
           onSubmit={placeOrder.submit}
           onToggle={controller.toggleSummary}
+          reserveBottomSafeArea={false}
           serviceFee={controller.totals.serviceFee}
           subtotal={controller.subtotal}
           submitError={controller.submitError}

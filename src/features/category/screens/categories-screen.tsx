@@ -256,20 +256,31 @@ export function CategoriesScreen() {
                 {/* View All Button */}
                 {selectedMain && (
                   <Button
+                    alignItems="center"
                     backgroundColor="$brand"
                     borderRadius={8}
                     height={40}
+                    justifyContent="center"
                     onPress={() => {
                       const target = selectedSub || selectedMain;
                       if (target) {
                         handleCategoryPress(target.category_id, target.url, target);
                       }
                     }}
+                    paddingHorizontal="$3"
+                    paddingVertical={0}
                     pressStyle={{ opacity: 0.8 }}
                   >
-                    <Paragraph color="white" fontSize={13} fontWeight="700">
+                    <Button.Text
+                      color="white"
+                      fontSize={13}
+                      fontWeight="700"
+                      lineHeight={18}
+                      numberOfLines={1}
+                      textAlign="center"
+                    >
                       {selectedSub?.title || selectedMain?.title} Tüm Ürünler
-                    </Paragraph>
+                    </Button.Text>
                   </Button>
                 )}
 

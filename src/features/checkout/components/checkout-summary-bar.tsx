@@ -27,6 +27,7 @@ export interface CheckoutSummaryBarProps {
   hint: string | null;
   onSubmit: () => void;
   agreementSlot?: ReactNode;
+  reserveBottomSafeArea?: boolean;
 }
 
 function Row({
@@ -53,14 +54,16 @@ function Row({
 
 export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
   const insets = useSafeAreaInsets();
+  const bottomPadding = props.reserveBottomSafeArea === false ? 0 : insets.bottom;
 
   return (
     <YStack
       backgroundColor="$background"
       borderTopColor="$borderColor"
       borderTopWidth={1}
-      paddingBottom={insets.bottom}
+      paddingBottom={bottomPadding}
       position="relative"
+      testID="checkout-summary-bar"
       width="100%"
       zIndex={2}
     >

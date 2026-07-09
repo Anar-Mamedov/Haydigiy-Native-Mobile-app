@@ -1,3 +1,4 @@
+import { StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { CategoriesScreen } from './categories-screen';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -144,6 +145,19 @@ describe('CategoriesScreen', () => {
 
     // View All Products button
     expect(screen.getByText('Giyim Tüm Ürünler')).toBeTruthy();
+  });
+
+  it('keeps the view-all button label centered inside the button', () => {
+    renderWithTamagui(<CategoriesScreen />);
+
+    const labelStyle = StyleSheet.flatten(screen.getByText('Giyim Tüm Ürünler').props.style);
+
+    expect(labelStyle).toEqual(
+      expect.objectContaining({
+        lineHeight: 18,
+        textAlign: 'center',
+      }),
+    );
   });
 
   it('switches subcategories when sidebar item is pressed', () => {

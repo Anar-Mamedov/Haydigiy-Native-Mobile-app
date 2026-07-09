@@ -1,3 +1,4 @@
+import { StyleSheet } from 'react-native';
 import { screen } from '@testing-library/react-native';
 import { Paragraph } from 'tamagui';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -38,5 +39,13 @@ describe('CheckoutSummaryBar', () => {
     expect(screen.getByText('Agreement consent belongs to summary bar')).toBeTruthy();
     expect(screen.getByText('Toplam')).toBeTruthy();
     expect(screen.getByText('Onayla ve Bitir')).toBeTruthy();
+  });
+
+  it('can skip bottom safe-area padding when rendered above the tab bar', () => {
+    renderWithTamagui(<CheckoutSummaryBar {...baseProps} reserveBottomSafeArea={false} />);
+
+    expect(StyleSheet.flatten(screen.getByTestId('checkout-summary-bar').props.style)).toEqual(
+      expect.objectContaining({ paddingBottom: 0 }),
+    );
   });
 });

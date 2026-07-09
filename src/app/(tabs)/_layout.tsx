@@ -2,6 +2,10 @@ import { Stack } from 'expo-router';
 import { YStack, useTheme } from 'tamagui';
 import { BottomNavigationBar } from '@/components/navigation/bottom-navigation-bar';
 
+export const unstable_settings = {
+  anchor: '(home)',
+};
+
 export default function TabsLayout() {
   const theme = useTheme();
 
