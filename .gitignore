@@ -33,6 +33,7 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+local-app-links.md
 
 # typescript
 *.tsbuildinfo
@@ -52,4 +53,3 @@ skill/
 
 # UI & build caches
 .tamagui/
-

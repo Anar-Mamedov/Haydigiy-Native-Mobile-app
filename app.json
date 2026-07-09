@@ -13,6 +13,10 @@
       "buildNumber": "18",
       "bundleIdentifier": "com.faprika.haydigiy.app",
       "supportsTablet": true,
+      "associatedDomains": [
+        "applinks:haydigiy.com",
+        "applinks:www.haydigiy.com"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -24,7 +28,18 @@
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "haydigiy.com" },
+            { "scheme": "https", "host": "www.haydigiy.com" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "output": "static",
