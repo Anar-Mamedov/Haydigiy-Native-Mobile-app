@@ -1,10 +1,13 @@
 import { Image } from 'expo-image';
+import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CircleAlert, CircleCheck } from '@tamagui/lucide-icons-2';
 import { Button, Paragraph, ScrollView, Sheet, XStack, YStack } from 'tamagui';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { ReturnMethod } from '@/types/order.types';
 
 const PTT_LOGO_URL = 'https://cdn.haydigiy.com/uploads/cargo-logos/ptt.png';
+const SHEET_TOP_CLEARANCE = 24;
+const MIN_BOTTOM_CONTENT_PADDING = 16;
 
 type Props = {
   successMessage: string | null;
@@ -82,9 +85,13 @@ export function ReturnResultSheets({
   onCloseError,
   onRecreatePtt,
 }: Props) {
+  const insets = useSafeAreaInsets();
+  const { height: frameHeight } = useSafeAreaFrame();
   const normalizedError = (errorMessage ?? '').toLocaleLowerCase('tr-TR');
   const showRecreate =
     normalizedError.includes('hepsijet') && normalizedError.includes('sistemde kayıtlı');
+  const contentMaxHeight = Math.max(frameHeight - insets.top - SHEET_TOP_CLEARANCE, 0);
+  const bottomContentPadding = Math.max(insets.bottom, MIN_BOTTOM_CONTENT_PADDING);
 
   return (
     <>
@@ -97,7 +104,11 @@ export function ReturnResultSheets({
       >
         <AppSheetOverlay />
         <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
-          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }} style={{ maxHeight: 480 }}>
+          <ScrollView
+            contentContainerStyle={{ gap: 16, padding: 20, paddingBottom: bottomContentPadding }}
+            style={{ maxHeight: contentMaxHeight }}
+            testID="return-success-sheet-scroll"
+          >
             <YStack alignItems="center" gap="$2">
               <XStack
                 alignItems="center"
@@ -146,7 +157,7 @@ export function ReturnResultSheets({
       >
         <AppSheetOverlay />
         <Sheet.Frame backgroundColor="$background" borderTopLeftRadius="$6" borderTopRightRadius="$6">
-          <YStack gap="$3" padding="$5">
+          <YStack gap="$3" padding="$5" paddingBottom={bottomContentPadding}>
             <XStack alignItems="center" gap="$2">
               <CircleAlert color="$red10" size={20} />
               <Paragraph color="$red10" fontSize={16} fontWeight="800">
