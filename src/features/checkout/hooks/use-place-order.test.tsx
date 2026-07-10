@@ -19,12 +19,8 @@ jest.mock('@/services/checkout.service', () => ({
   getClientIp: jest.fn(async () => '127.0.0.1'),
   initializeIyzico3dsDto: jest.fn(async () => ({ threeDSHtmlContent: '<html>3ds</html>' })),
   routePaymentDto: jest.fn(async () => ({ status: 'error', message: 'kullanılmıyor' })),
-  updateOrderTokenDto: jest.fn(async () => ({ total_price: '2909.92' })),
 }));
 
-const updateOrderTokenDto = checkoutService.updateOrderTokenDto as jest.MockedFunction<
-  typeof checkoutService.updateOrderTokenDto
->;
 const initializeIyzico3dsDto = checkoutService.initializeIyzico3dsDto as jest.MockedFunction<
   typeof checkoutService.initializeIyzico3dsDto
 >;
@@ -53,6 +49,7 @@ function makeController(overrides: Partial<CheckoutController> = {}): CheckoutCo
     totals: { finalTotal: 2909.92 },
     items: [{ title: 'Ürün', unitPrice: 1454.96, quantity: 2 }],
     appliedCoupon: null,
+    syncOrderToken: jest.fn(async () => ({ total_price: '2909.92' })),
     setSubmitError: jest.fn(),
     markOrderSubmitted: jest.fn(),
     resumeOrderTokenSync: jest.fn(),
@@ -73,38 +70,37 @@ function renderPlaceOrder(controller: CheckoutController) {
 describe('usePlaceOrder order-token sync', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    updateOrderTokenDto.mockResolvedValue({ total_price: '2909.92' });
   });
 
   // Regression: İyzico `prepare` ve `/order/confirm` kargo bedava kampanyasını
   // yalnızca `/order/token` adımının sipariş satırına yazdığı snapshot'tan okur.
   // Bu senkron atlanınca kampanyaya rağmen kargo ücreti tahsil ediliyordu.
   it('syncs /order/token with the plan installment before starting İyzico 3DS', async () => {
+    const syncOrderToken = jest.fn(async () => ({ total_price: '2910.00' }));
     const controller = makeController({
       card: { ...card, selectedPlan: { installment: 3, perMonth: 970 } },
       totals: { finalTotal: 2910 },
+      syncOrderToken,
     } as unknown as Partial<CheckoutController>);
     const { result } = renderPlaceOrder(controller);
-
-    updateOrderTokenDto.mockResolvedValue({ total_price: '2910.00' });
 
     act(() => {
       result.current.submit();
     });
 
     await waitFor(() => expect(initializeIyzico3dsDto).toHaveBeenCalled());
-    expect(updateOrderTokenDto).toHaveBeenCalledWith(
-      expect.objectContaining({ installment_count: 3, cargo_id: 2, total_price: '2910.00' }),
-    );
-    expect(updateOrderTokenDto.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(syncOrderToken).toHaveBeenCalledTimes(1);
+    expect(syncOrderToken.mock.invocationCallOrder[0]).toBeLessThan(
       initializeIyzico3dsDto.mock.invocationCallOrder[0],
     );
   });
 
   it('syncs /order/token before confirming a non-card (Kapıda Ödeme) order', async () => {
+    const syncOrderToken = jest.fn(async () => ({ total_price: '2909.92' }));
     const controller = makeController({
       isCardPayment: false,
       selectedMethod: { id: 3, slug: 'cash_on_delivery', name: 'Kapıda Ödeme' },
+      syncOrderToken,
     } as unknown as Partial<CheckoutController>);
     const { result } = renderPlaceOrder(controller);
 
@@ -113,10 +109,8 @@ describe('usePlaceOrder order-token sync', () => {
     });
 
     await waitFor(() => expect(confirmOrderDto).toHaveBeenCalled());
-    expect(updateOrderTokenDto).toHaveBeenCalledWith(
-      expect.objectContaining({ installment_count: 1, payment_method_id: 3 }),
-    );
-    expect(updateOrderTokenDto.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(syncOrderToken).toHaveBeenCalledTimes(1);
+    expect(syncOrderToken.mock.invocationCallOrder[0]).toBeLessThan(
       confirmOrderDto.mock.invocationCallOrder[0],
     );
     // Onaydan sonra token senkronu durur; sepet boşalınca işlenmiş siparişe
@@ -125,12 +119,12 @@ describe('usePlaceOrder order-token sync', () => {
   });
 
   it('stops before charging when the backend total no longer matches the shown total', async () => {
+    const syncOrderToken = jest.fn(async () => ({ total_price: '3009.91' }));
     const controller = makeController({
       card: { ...card, selectedPlan: { installment: 3, perMonth: 970 } },
+      syncOrderToken,
     } as unknown as Partial<CheckoutController>);
     const { result } = renderPlaceOrder(controller);
-
-    updateOrderTokenDto.mockResolvedValue({ total_price: '3009.91' });
 
     act(() => {
       result.current.submit();

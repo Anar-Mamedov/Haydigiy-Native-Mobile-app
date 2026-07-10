@@ -6,6 +6,11 @@ import {
   removeCouponDto,
   validateCouponDto,
 } from '@/services/coupon.service';
+import {
+  OrderTokenRequestDto,
+  OrderTokenResponseDto,
+  updateOrderTokenDto,
+} from '@/services/checkout.service';
 
 export type CheckoutPreparation =
   | { status: 'no_address' }
@@ -53,5 +58,12 @@ export function useValidateCouponMutation() {
 export function useRemoveCouponMutation() {
   return useMutation<void, unknown, void>({
     mutationFn: () => removeCouponDto(),
+  });
+}
+
+/** Persists the current checkout snapshot on the active draft order. */
+export function useUpdateOrderTokenMutation() {
+  return useMutation<OrderTokenResponseDto, unknown, OrderTokenRequestDto>({
+    mutationFn: updateOrderTokenDto,
   });
 }

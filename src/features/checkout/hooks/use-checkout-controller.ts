@@ -228,7 +228,7 @@ export function useCheckoutController() {
   // ekrana girişte ve kargo/yöntem/taksit/tutar/kupon değiştikçe /order/token yazılır,
   // böylece başka bir platformun (ör. web) bıraktığı sipariş durumu onarılır ve
   // submit'teki tutar koruması bu ekranın ürettiği satırla karşılaştırır.
-  useOrderTokenSync({
+  const orderTokenSync = useOrderTokenSync({
     orderToken,
     selectedCargo,
     selectedMethod,
@@ -238,7 +238,9 @@ export function useCheckoutController() {
       : (billingAddress?.id ?? shippingAddress?.id ?? null),
     finalTotal: totals.finalTotal,
     installmentCount:
-      card.selectedPlan && card.selectedPlan.installment > 1 ? card.selectedPlan.installment : 1,
+      isCardPayment && card.selectedPlan && card.selectedPlan.installment > 1
+        ? card.selectedPlan.installment
+        : 1,
     appliedCoupon,
     isPaused: useCallback(() => isOrderSubmittedRef.current, []),
     onCouponError: useCallback((message: string) => {
@@ -437,6 +439,7 @@ export function useCheckoutController() {
     goBack,
     // order token + raw context for place-order
     orderToken,
+    syncOrderToken: orderTokenSync.syncNow,
     markOrderSubmitted,
     resumeOrderTokenSync,
   };

@@ -61,11 +61,16 @@ export function useCheckoutAddressesQuery(enabled = true) {
 /**
  * İyzico installment plans for an 8-digit BIN + single-payment amount. The amount
  * is the Tek Çekim total so the rates stay stable while the user picks a plan.
+ *
+ * The key uses the kuruş-precision amount (web parity: the web refetches on any
+ * exact single-payment total change). A coarser key would keep serving per-month
+ * prices computed for a nearby-but-different total, and `installment × perMonth`
+ * could then fall below the backend's calculated order total at charge time.
  */
 export function useInstallmentPlansQuery(bin: string, amount: number, enabled = true) {
   const isReady = bin.length === 8 && amount >= 1;
   return useQuery<InstallmentPlan[]>({
-    queryKey: checkoutKeys.installments(bin, Math.round(amount)),
+    queryKey: checkoutKeys.installments(bin, Number(amount.toFixed(2))),
     enabled: enabled && isReady,
     staleTime: 60_000,
     queryFn: async () => mapInstallmentPlans(await getInstallmentsDto(bin, amount), amount),

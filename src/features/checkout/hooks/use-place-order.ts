@@ -11,7 +11,6 @@ import {
   getClientIp,
   initializeIyzico3dsDto,
   routePaymentDto,
-  updateOrderTokenDto,
 } from '@/services/checkout.service';
 import { cartKeys } from '@/features/cart/api/cart.keys';
 
@@ -38,12 +37,13 @@ export interface PlaceOrderController {
  * - card + installment → `/order/token` → İyzico `/iyzico-prod/3ds/initialize` →
  *   3DS HTML in the WebView
  *
- * Every path MUST sync `/order/token` before charging/confirming: the backend
+ * Every path MUST have `/order/token` synced before charging/confirming: the backend
  * applies campaign free-shipping and cart-discount snapshots to the draft order
  * only in that step, and both İyzico `prepare` and `/order/confirm` read those
- * flags from the order row. Skipping it charges the cargo fee despite an active
- * free-shipping campaign. The web keeps the row fresh with an on-change
- * `updateOrderToken` effect; mobile syncs once at submit time instead.
+ * flags from the order row. The web keeps the row fresh with an on-change
+ * `updateOrderToken` effect. Mobile follows that behavior through the shared
+ * sync controller and awaits the matching background request at submit time,
+ * without starting a second competing write.
  */
 export function usePlaceOrder(controller: CheckoutController): PlaceOrderController {
   const router = useRouter();
@@ -72,7 +72,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
       card,
       totals,
       items,
-      appliedCoupon,
+      syncOrderToken,
       markOrderSubmitted,
     } = controller;
 
@@ -91,19 +91,13 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
     setIsSubmitting(true);
     controller.setSubmitError(null);
 
-    // Writes cargo/payment/coupon + campaign snapshots onto the draft order and
+    // Waits for the shared cargo/payment/coupon + campaign snapshot sync and
     // verifies the backend's persisted total against the total shown on screen.
-    const syncOrderToken = async (installmentCount: number) => {
-      const tokenRes = await updateOrderTokenDto({
-        order_token: orderToken,
-        cargo_id: selectedCargo.id,
-        payment_method_id: selectedMethod.id,
-        total_price: finalTotal.toFixed(2),
-        installment_count: installmentCount,
-        coupon_code: appliedCoupon?.code,
-        shipping_address_id: shippingAddress.id,
-        billing_address_id: billingId,
-      });
+    const verifySyncedOrderToken = async () => {
+      const tokenRes = await syncOrderToken();
+      if (!tokenRes) {
+        throw new Error('Sipariş bilgileri henüz senkronize edilemedi. Lütfen tekrar deneyin.');
+      }
       if (tokenRes.coupon_error) throw new Error(tokenRes.coupon_error);
 
       const backendTotal = parsePrice(tokenRes.total_price ?? null);
@@ -117,7 +111,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
     try {
       // ---- Non-card (Kapıda Ödeme, etc.) ----
       if (!isCardPayment) {
-        await syncOrderToken(1);
+        await verifySyncedOrderToken();
 
         const res = await confirmOrderDto({
           order_token: orderToken,
@@ -145,7 +139,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
 
       // ---- Card + installment → İyzico 3DS ----
       if (card.selectedPlan) {
-        await syncOrderToken(card.selectedPlan.installment);
+        await verifySyncedOrderToken();
 
         const init = await initializeIyzico3dsDto({
           order_token: orderToken,
@@ -190,7 +184,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
       }
 
       // ---- Card + single (Tek Çekim) → Garanti 3D ----
-      await syncOrderToken(1);
+      await verifySyncedOrderToken();
 
       const ip = await getClientIp();
       const basket = items.map((item) => ({

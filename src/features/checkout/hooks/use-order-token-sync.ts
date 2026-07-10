@@ -1,5 +1,10 @@
-import { useEffect, useRef } from 'react';
-import { updateOrderTokenDto, OrderTokenCouponDto } from '@/services/checkout.service';
+import { useCallback, useEffect, useRef } from 'react';
+import {
+  OrderTokenCouponDto,
+  OrderTokenRequestDto,
+  OrderTokenResponseDto,
+} from '@/services/checkout.service';
+import { useUpdateOrderTokenMutation } from '../api/checkout.mutations';
 import { getApiErrorMessage } from '../utils/error-message';
 import {
   AppliedCoupon,
@@ -28,20 +33,17 @@ export interface OrderTokenSyncInput {
   onSyncError: (message: string) => void;
 }
 
-/**
- * Keeps the backend draft order in sync with the checkout screen, mirroring the
- * web payment page's on-change `updateOrderToken` effect: it fires as soon as
- * the screen has an order token + cargo + payment method, and again whenever
- * any total-affecting selection changes. This rewrites the draft order to THIS
- * screen's state on entry — repairing whatever an earlier visit from another
- * platform (e.g. the web payment page) left on the order — so the submit-time
- * total guard compares against a row this screen produced.
- *
- * Web parity details: identical request-key dedup, 422 responses are ignored
- * silently, and coupon recalculations from the response are folded back into
- * the coupon state.
- */
-export function useOrderTokenSync(input: OrderTokenSyncInput): void {
+export interface OrderTokenSyncController {
+  /** Waits for the latest checkout snapshot to be persisted exactly once. */
+  syncNow: () => Promise<OrderTokenResponseDto | null>;
+}
+
+type OrderTokenSyncSnapshot = {
+  key: string;
+  request: OrderTokenRequestDto;
+};
+
+function buildSyncSnapshot(input: OrderTokenSyncInput): OrderTokenSyncSnapshot | null {
   const {
     orderToken,
     selectedCargo,
@@ -51,10 +53,73 @@ export function useOrderTokenSync(input: OrderTokenSyncInput): void {
     finalTotal,
     installmentCount,
     appliedCoupon,
-    isPaused,
   } = input;
 
-  const lastRequestKeyRef = useRef('');
+  if (input.isPaused?.()) return null;
+  if (!orderToken || !selectedCargo || !selectedMethod || !shippingAddress) return null;
+  if (!(finalTotal > 0)) return null;
+
+  const request: OrderTokenRequestDto = {
+    order_token: orderToken,
+    cargo_id: selectedCargo.id,
+    payment_method_id: selectedMethod.id,
+    total_price: finalTotal.toFixed(2),
+    installment_count: installmentCount,
+    coupon_code: appliedCoupon?.code,
+    shipping_address_id: shippingAddress.id,
+    billing_address_id: billingAddressId ?? shippingAddress.id,
+  };
+
+  return {
+    key: [
+      request.order_token,
+      request.cargo_id,
+      request.payment_method_id,
+      request.installment_count,
+      request.total_price,
+      request.coupon_code ?? '',
+      request.shipping_address_id ?? '',
+      request.billing_address_id ?? '',
+    ].join('-'),
+    request,
+  };
+}
+
+/**
+ * Keeps the backend draft order in sync with the checkout screen, mirroring the
+ * web payment page's on-change `updateOrderToken` effect: it fires as soon as
+ * the screen has an order token + cargo + payment method, and again whenever
+ * any total-affecting selection changes. This rewrites the draft order to THIS
+ * screen's state on entry — repairing whatever an earlier visit from another
+ * platform (e.g. the web payment page) left on the order — so the submit-time
+ * total guard compares against a row this screen produced.
+ *
+ * Web parity details: identical checkout snapshots are deduplicated, 422
+ * responses are ignored silently in the background, and coupon recalculations
+ * are folded back into the coupon state.
+ *
+ * Unlike the web effect, requests are serialized here. A selection change can
+ * therefore never let an older request finish after a newer one and overwrite
+ * the draft order. `syncNow` is shared with the submit flow: it reuses an
+ * already completed matching sync or waits for the matching queued request,
+ * avoiding the mobile-only duplicate `/order/token` call before İyzico.
+ */
+export function useOrderTokenSync(input: OrderTokenSyncInput): OrderTokenSyncController {
+  const updateOrderToken = useUpdateOrderTokenMutation();
+  const mutateAsyncRef = useRef(updateOrderToken.mutateAsync);
+  mutateAsyncRef.current = updateOrderToken.mutateAsync;
+
+  const inputRef = useRef(input);
+  inputRef.current = input;
+
+  const queueTailRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingByKeyRef = useRef(new Map<string, Promise<OrderTokenResponseDto>>());
+  const lastScheduledKeyRef = useRef('');
+  const lastSuccessfulRef = useRef<{
+    key: string;
+    response: OrderTokenResponseDto;
+  } | null>(null);
+
   // Callback'ler her render'da yeni referans alabilir; senkronu yeniden
   // tetiklememeleri için ref üzerinden okunur.
   const callbacksRef = useRef({
@@ -68,69 +133,103 @@ export function useOrderTokenSync(input: OrderTokenSyncInput): void {
     onSyncError: input.onSyncError,
   };
 
+  const syncNow = useCallback((): Promise<OrderTokenResponseDto | null> => {
+    const snapshot = buildSyncSnapshot(inputRef.current);
+    if (!snapshot) return Promise.resolve(null);
+
+    // Reusing a pending or completed write is only safe while this snapshot is
+    // also the LAST scheduled one. If a different snapshot was queued after it
+    // (state went A → B → back to A), that later write still lands on top and
+    // the draft order would not end at this state — queue a fresh write instead.
+    const isLastScheduledWrite =
+      lastScheduledKeyRef.current === '' || lastScheduledKeyRef.current === snapshot.key;
+    if (isLastScheduledWrite) {
+      const pending = pendingByKeyRef.current.get(snapshot.key);
+      if (pending) return pending;
+
+      if (
+        pendingByKeyRef.current.size === 0 &&
+        lastSuccessfulRef.current?.key === snapshot.key
+      ) {
+        return Promise.resolve(lastSuccessfulRef.current.response);
+      }
+    }
+
+    lastScheduledKeyRef.current = snapshot.key;
+    const requestPromise = queueTailRef.current
+      .catch(() => undefined)
+      .then(() => mutateAsyncRef.current(snapshot.request));
+
+    const processedPromise = requestPromise.then(
+      (response) => {
+        lastSuccessfulRef.current = { key: snapshot.key, response };
+
+        // A stale response must not mutate current coupon UI state. Its server
+        // write is safe because a newer snapshot is serialized behind it.
+        if (buildSyncSnapshot(inputRef.current)?.key === snapshot.key) {
+          if (response.coupon_error) {
+            callbacksRef.current.onCouponError(response.coupon_error);
+          } else if (response.coupon) {
+            callbacksRef.current.onCouponRefresh(response.coupon);
+          }
+        }
+
+        return response;
+      },
+      (error: unknown) => {
+        // A network failure can occur after the server applied the write, so a
+        // previous successful snapshot can no longer be treated as authoritative.
+        lastSuccessfulRef.current = null;
+        throw error;
+      },
+    );
+
+    let queuedPromise: Promise<OrderTokenResponseDto>;
+    queuedPromise = processedPromise.finally(() => {
+      if (pendingByKeyRef.current.get(snapshot.key) === queuedPromise) {
+        pendingByKeyRef.current.delete(snapshot.key);
+      }
+    });
+
+    pendingByKeyRef.current.set(snapshot.key, queuedPromise);
+    queueTailRef.current = queuedPromise.then(
+      () => undefined,
+      () => undefined,
+    );
+
+    return queuedPromise;
+  }, []);
+
   useEffect(() => {
-    if (isPaused?.()) return;
-    if (!orderToken || !selectedCargo || !selectedMethod || !shippingAddress) return;
-    if (!(finalTotal > 0)) return;
-
-    const requestKey = [
-      orderToken,
-      selectedCargo.id,
-      selectedMethod.id,
-      installmentCount,
-      finalTotal.toFixed(2),
-      appliedCoupon?.code ?? '',
-    ].join('-');
-    if (lastRequestKeyRef.current === requestKey) return;
-    lastRequestKeyRef.current = requestKey;
-
     let cancelled = false;
 
-    (async () => {
-      try {
-        const response = await updateOrderTokenDto({
-          order_token: orderToken,
-          cargo_id: selectedCargo.id,
-          payment_method_id: selectedMethod.id,
-          total_price: finalTotal.toFixed(2),
-          installment_count: installmentCount,
-          coupon_code: appliedCoupon?.code,
-          shipping_address_id: shippingAddress.id,
-          billing_address_id: billingAddressId ?? shippingAddress.id,
-        });
-        if (cancelled) return;
-
-        if (response.coupon_error) {
-          callbacksRef.current.onCouponError(response.coupon_error);
-        } else if (response.coupon) {
-          callbacksRef.current.onCouponRefresh(response.coupon);
-        }
-      } catch (error) {
+    void syncNow().catch((error: unknown) => {
+      if (!cancelled) {
         const status = (error as { response?: { status?: number } })?.response?.status;
         // Web paritesi: 422 (ör. sipariş zaten işlenmiş) arka plan senkronunda
-        // sessizce yutulur; diğer hatalarda anahtar sıfırlanır ki tekrar denensin.
+        // sessizce yutulur.
         if (status === 422) return;
-        lastRequestKeyRef.current = '';
-        if (!cancelled) {
-          callbacksRef.current.onSyncError(
-            getApiErrorMessage(error, 'Ödeme bilgileri güncellenemedi.'),
-          );
-        }
+        callbacksRef.current.onSyncError(
+          getApiErrorMessage(error, 'Ödeme bilgileri güncellenemedi.'),
+        );
       }
-    })();
+    });
 
     return () => {
       cancelled = true;
     };
   }, [
-    orderToken,
-    selectedCargo,
-    selectedMethod,
-    shippingAddress,
-    billingAddressId,
-    finalTotal,
-    installmentCount,
-    appliedCoupon,
-    isPaused,
+    input.orderToken,
+    input.selectedCargo,
+    input.selectedMethod,
+    input.shippingAddress,
+    input.billingAddressId,
+    input.finalTotal,
+    input.installmentCount,
+    input.appliedCoupon,
+    input.isPaused,
+    syncNow,
   ]);
+
+  return { syncNow };
 }
