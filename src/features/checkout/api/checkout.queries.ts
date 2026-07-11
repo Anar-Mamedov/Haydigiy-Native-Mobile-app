@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { checkoutKeys } from './checkout.keys';
+import { savedAddressesQueryOptions } from '@/features/address/api/address.query-options';
 import {
   mapCargoCompany,
   mapCheckoutAddress,
@@ -9,7 +10,6 @@ import {
 import { getPaymentTypesDto } from '@/services/payment-type.service';
 import { getCargoCompaniesDto } from '@/services/cargo.service';
 import { getInstallmentsDto } from '@/services/installment.service';
-import { getAddressesDto } from '@/services/address.service';
 import {
   CargoCompany,
   CheckoutAddress,
@@ -51,10 +51,10 @@ export function useCargoCompaniesQuery(address: CheckoutAddress | null) {
 
 /** Saved addresses enriched with location IDs + email for checkout. */
 export function useCheckoutAddressesQuery(enabled = true) {
-  return useQuery<CheckoutAddress[]>({
-    queryKey: [...checkoutKeys.all, 'addresses'],
+  return useQuery({
+    ...savedAddressesQueryOptions(),
     enabled,
-    queryFn: async () => (await getAddressesDto()).map(mapCheckoutAddress),
+    select: (dtos): CheckoutAddress[] => dtos.map(mapCheckoutAddress),
   });
 }
 

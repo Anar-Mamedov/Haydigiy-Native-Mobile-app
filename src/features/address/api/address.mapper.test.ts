@@ -86,4 +86,22 @@ describe('mapAddressToFormValues', () => {
     expect(result.isEFatura).toBe(false);
     expect(result.cityId).toBe('');
   });
+
+  it('handles scalar location ids and serialized backend flags', () => {
+    const result = mapAddressToFormValues({
+      id: 5,
+      city_id: '34',
+      district_id: 198,
+      neighbourhood_id: '1024',
+      is_invoice: '0',
+      is_e_invoice: '0',
+      billing_type: 'individual',
+    });
+
+    expect(result.cityId).toBe('34');
+    expect(result.districtId).toBe('198');
+    expect(result.neighbourhoodId).toBe('1024');
+    expect(result.invoiceType).toBe('individual');
+    expect(result.isEFatura).toBe(false);
+  });
 });

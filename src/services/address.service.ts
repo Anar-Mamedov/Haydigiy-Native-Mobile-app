@@ -101,12 +101,16 @@ export interface AddressDetailDto {
   phone?: string;
   address_line?: string;
   zip_code?: string;
-  is_invoice?: boolean;
+  is_invoice?: number | boolean | string;
+  billing_type?: AddressInvoiceType;
   tax_number?: string;
   tax_office?: string;
   tc_number?: string;
   company_name?: string;
-  is_e_invoice?: boolean;
+  is_e_invoice?: number | boolean | string;
+  city_id?: number | string;
+  district_id?: number | string;
+  neighbourhood_id?: number | string;
   city?: { id?: number; name?: string } | null;
   district?: { id?: number; name?: string } | null;
   neighbourhood?: { id?: number; name?: string } | null;

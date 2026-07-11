@@ -12,8 +12,8 @@ export function useAddAddressMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: NewAddressInput) => addAddressDto(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: addressKeys.lists() });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: addressKeys.lists() });
     },
   });
 }
@@ -24,9 +24,11 @@ export function useUpdateAddressMutation() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: NewAddressInput }) =>
       updateAddressDto(id, input),
-    onSuccess: (_data, { id }) => {
-      queryClient.invalidateQueries({ queryKey: addressKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: addressKeys.detail(id) });
+    onSuccess: async (_data, { id }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: addressKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: addressKeys.detail(id) }),
+      ]);
     },
   });
 }
@@ -36,8 +38,8 @@ export function useDeleteAddressMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteAddressDto(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: addressKeys.lists() });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: addressKeys.lists() });
     },
   });
 }

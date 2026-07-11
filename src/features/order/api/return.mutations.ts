@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { addressKeys } from '@/features/address/api/address.keys';
 import { orderKeys } from './order.keys';
 import { returnKeys } from './return.keys';
 import {
@@ -58,8 +59,8 @@ export function useAddAddressMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: NewAddressInput) => addAddressDto(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: returnKeys.addresses() });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: addressKeys.lists() });
     },
   });
 }

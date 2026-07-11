@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { addressKeys } from './address.keys';
+import { savedAddressesQueryOptions } from './address.query-options';
 import { mapAddress, mapAddressToFormValues } from './address.mapper';
 import {
   getAddressByIdDto,
-  getAddressesDto,
   getCitiesDto,
   getDistrictsDto,
   getNeighbourhoodsDto,
@@ -13,13 +13,10 @@ import { LocationOption } from '@/types/order.types';
 
 /** Loads the user's saved addresses (`GET /addresses`) for the list screen. */
 export function useAddressesQuery(enabled = true) {
-  return useQuery<Address[]>({
-    queryKey: addressKeys.lists(),
+  return useQuery({
+    ...savedAddressesQueryOptions(),
     enabled,
-    queryFn: async () => {
-      const dtos = await getAddressesDto();
-      return dtos.map(mapAddress);
-    },
+    select: (dtos): Address[] => dtos.map(mapAddress),
   });
 }
 

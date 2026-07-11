@@ -20,21 +20,31 @@ export function mapAddress(dto: AddressDto): Address {
 
 /** Maps a full address detail DTO into the editable form values. */
 export function mapAddressToFormValues(dto: AddressDetailDto): AddressFormValues {
-  const isCorporate = Boolean(dto.is_invoice);
+  const isEnabledFlag = (value: unknown): boolean =>
+    value === true || value === 1 || value === '1';
+  const locationId = (
+    relation: { id?: number; name?: string } | null | undefined,
+    fallback: number | string | undefined,
+  ): string => {
+    const value = relation?.id ?? fallback;
+    return value == null ? '' : String(value);
+  };
+  const isCorporate =
+    dto.billing_type === 'corporate' || isEnabledFlag(dto.is_invoice);
   return {
     title: dto.title ?? '',
     name: dto.name ?? '',
     surname: dto.surname ?? '',
     phone: dto.phone ? extractTurkishNationalNumber(dto.phone) : '',
     tcNumber: dto.tc_number ?? '',
-    cityId: dto.city?.id ? String(dto.city.id) : '',
-    districtId: dto.district?.id ? String(dto.district.id) : '',
-    neighbourhoodId: dto.neighbourhood?.id ? String(dto.neighbourhood.id) : '',
+    cityId: locationId(dto.city, dto.city_id),
+    districtId: locationId(dto.district, dto.district_id),
+    neighbourhoodId: locationId(dto.neighbourhood, dto.neighbourhood_id),
     addressLine: dto.address_line ?? '',
     invoiceType: isCorporate ? 'corporate' : 'individual',
     taxNumber: dto.tax_number ?? '',
     taxOffice: dto.tax_office ?? '',
     companyName: dto.company_name ?? '',
-    isEFatura: dto.is_e_invoice ?? false,
+    isEFatura: isEnabledFlag(dto.is_e_invoice),
   };
 }

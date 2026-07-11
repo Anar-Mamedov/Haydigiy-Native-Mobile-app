@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { returnKeys } from './return.keys';
+import { savedAddressesQueryOptions } from '@/features/address/api/address.query-options';
 import { mapPaymentMethod, mapReturnReason, mapSavedAddress } from './return.mapper';
 import { getReturnReasonsDto } from '@/services/return.service';
 import { getPaymentMethodsDto } from '@/services/payment.service';
 import {
-  getAddressesDto,
   getCitiesDto,
   getDistrictsDto,
   getNeighbourhoodsDto,
@@ -38,13 +38,10 @@ export function usePaymentMethodsQuery(enabled = true) {
 
 /** Loads the user's saved addresses (`GET /addresses`) for the pickup picker. */
 export function useSavedAddressesQuery(enabled = true) {
-  return useQuery<SavedAddress[]>({
-    queryKey: returnKeys.addresses(),
+  return useQuery({
+    ...savedAddressesQueryOptions(),
     enabled,
-    queryFn: async () => {
-      const dtos = await getAddressesDto();
-      return dtos.map(mapSavedAddress);
-    },
+    select: (dtos): SavedAddress[] => dtos.map(mapSavedAddress),
   });
 }
 

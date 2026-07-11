@@ -1,4 +1,4 @@
-/** Query keys for the return-creation flow (reasons, IBANs, address lookups). */
+/** Query keys for the return-creation flow (reasons, IBANs, location lookups). */
 export const returnKeys = {
   all: ['return'] as const,
   reasons: () => [...returnKeys.all, 'reasons'] as const,
@@ -7,5 +7,4 @@ export const returnKeys = {
   districts: (cityId: string) => [...returnKeys.all, 'districts', cityId] as const,
   neighbourhoods: (districtId: string) =>
     [...returnKeys.all, 'neighbourhoods', districtId] as const,
-  addresses: () => [...returnKeys.all, 'addresses'] as const,
 };
