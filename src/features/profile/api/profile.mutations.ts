@@ -16,6 +16,9 @@ export function useUpdateProfileMutation() {
 
   return useMutation({
     mutationFn: (payload: UpdateProfilePayloadDto) => updateProfileDto(payload),
+    // Validation failures such as a duplicate phone number are permanent for the
+    // submitted payload. Retrying would send the same profile update twice.
+    retry: false,
     onSuccess: (_result, payload) => {
       queryClient.invalidateQueries({ queryKey: profileKeys.me() });
 

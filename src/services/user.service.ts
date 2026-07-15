@@ -9,12 +9,16 @@ export interface UserProfileDto {
   birth_date?: string | null;
   gender?: string | null;
   email_verified?: boolean;
+  phone_verified?: boolean;
   [key: string]: unknown;
 }
 
 export interface UserProfileResponseDto {
   user?: UserProfileDto;
   email_verified?: boolean;
+  phone_verified?: boolean;
+  needs_phone_verification?: boolean;
+  phone_verification_status?: string | null;
   [key: string]: unknown;
 }
 

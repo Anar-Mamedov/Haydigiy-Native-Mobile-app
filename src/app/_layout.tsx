@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppProviders } from '@/lib/providers/app-providers';
 import { OtaUpdateWatcher } from '@/components/ota-update-watcher';
 import { CartHydrator } from '@/features/cart/components/cart-hydrator';
+import { PhoneVerificationGate } from '@/features/profile/components/phone-verification-gate';
 import { loadWebStyles } from '../theme/web-css';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
@@ -41,6 +42,7 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+        <PhoneVerificationGate />
       </AppProviders>
     </GestureHandlerRootView>
   );

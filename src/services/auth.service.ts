@@ -42,7 +42,13 @@ export interface RegisterPayload {
 
 export interface SendCodeResponse {
   message: string;
-  remaining_seconds?: number;
+  remaining_seconds?: number | string;
+}
+
+export interface VerifyCodeResponse {
+  message?: string;
+  token?: string;
+  user?: User & { phone?: string };
 }
 
 export interface FastLoginInitResponse {
@@ -126,7 +132,11 @@ export async function sendCodeApi(payload: { type: 'phone'; value: string }): Pr
   return response.data;
 }
 
-export async function verifyCodeApi(payload: { type: 'phone'; value: string; code: string }): Promise<LoginResponse> {
+export async function verifyCodeApi(payload: {
+  type: 'phone';
+  value: string;
+  code: string;
+}): Promise<VerifyCodeResponse> {
   if (!appEnv.apiBaseUrl) {
     // Mock Mode
     return {

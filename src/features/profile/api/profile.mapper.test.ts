@@ -26,4 +26,28 @@ describe('mapUserProfile', () => {
     const result = mapUserProfile({ email_verified: true, user: { email_verified: false } });
     expect(result.emailVerified).toBe(true);
   });
+
+  it('maps the phone verification state from the profile response', () => {
+    const result = mapUserProfile({
+      needs_phone_verification: true,
+      phone_verification_status: 'pending',
+      phone_verified: false,
+      user: { phone: '5076534634' },
+    });
+
+    expect(result).toMatchObject({
+      needsPhoneVerification: true,
+      phone: '5076534634',
+      phoneVerificationStatus: 'pending',
+      phoneVerified: false,
+    });
+  });
+
+  it('keeps phone verification unknown when the backend omits its flags', () => {
+    const result = mapUserProfile({ user: { phone: '5076534634' } });
+
+    expect(result.phoneVerified).toBeNull();
+    expect(result.needsPhoneVerification).toBeNull();
+    expect(result.phoneVerificationStatus).toBeNull();
+  });
 });

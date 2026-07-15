@@ -13,13 +13,15 @@ export function AppProviders({ children }: PropsWithChildren) {
   useAndroidNavigationBarStyle(resolvedTheme);
 
   return (
-    <TamaguiProvider config={config} defaultTheme={resolvedTheme}>
-      <KeyboardProvider>
-        <Theme name={resolvedTheme}>
-          <StatusBar style={resolvedTheme === 'dark' ? 'light' : 'dark'} />
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        </Theme>
-      </KeyboardProvider>
-    </TamaguiProvider>
+    <QueryClientProvider client={queryClient}>
+      <TamaguiProvider config={config} defaultTheme={resolvedTheme}>
+        <KeyboardProvider>
+          <Theme name={resolvedTheme}>
+            <StatusBar style={resolvedTheme === 'dark' ? 'light' : 'dark'} />
+            {children}
+          </Theme>
+        </KeyboardProvider>
+      </TamaguiProvider>
+    </QueryClientProvider>
   );
 }

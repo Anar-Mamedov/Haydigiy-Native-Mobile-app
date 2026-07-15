@@ -24,17 +24,51 @@ const profile: UserProfile = {
   birthDate: '1990-05-08',
   gender: 'male',
   emailVerified: true,
+  needsPhoneVerification: false,
+  phoneVerificationStatus: null,
+  phoneVerified: true,
 };
 
 describe('UserInfoForm', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('renders editable fields prefilled and the read-only phone with country code', () => {
+  it('renders the prefilled phone as an editable field with the fixed country code', () => {
     renderWithTamagui(<UserInfoForm profile={profile} />);
 
     expect(screen.getByDisplayValue('Anar')).toBeTruthy();
     expect(screen.getByDisplayValue('Mamedov')).toBeTruthy();
     expect(screen.getByText('+90')).toBeTruthy();
+    expect(screen.getByDisplayValue('0555 123 45 67').props.editable).not.toBe(false);
+  });
+
+  it('allows an e-mail account without a phone to add one', async () => {
+    mockMutateAsync.mockResolvedValueOnce(undefined);
+    renderWithTamagui(<UserInfoForm profile={{ ...profile, phone: null }} />);
+
+    fireEvent.changeText(screen.getByLabelText('Telefon Numarası'), '0532 123 45 67');
+    expect(screen.getByDisplayValue('0532 123 45 67')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('Kaydet'));
+
+    await waitFor(() =>
+      expect(mockMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ phone: '5321234567' }),
+      ),
+    );
+  });
+
+  it('shows a duplicate-phone validation error below the phone field', async () => {
+    const message = 'Bu telefon numarası başka bir kullanıcı tarafından kullanılıyor.';
+    mockMutateAsync.mockRejectedValueOnce({
+      response: { data: { errors: { phone: [message] }, message } },
+    });
+    renderWithTamagui(<UserInfoForm profile={{ ...profile, phone: null }} />);
+
+    fireEvent.changeText(screen.getByLabelText('Telefon Numarası'), '0507 653 46 41');
+    fireEvent.press(screen.getByText('Kaydet'));
+
+    await waitFor(() => expect(screen.getByText(message)).toBeTruthy());
+    expect(mockMutateAsync).toHaveBeenCalledTimes(1);
   });
 
   it('submits the cleaned profile payload on save', async () => {

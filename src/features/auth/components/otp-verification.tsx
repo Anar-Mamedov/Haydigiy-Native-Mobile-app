@@ -11,14 +11,17 @@ import {
 import { otpSchema } from '../schemas/auth.schema';
 import { useAuthStore } from '../store/use-auth-store';
 import { KVKK_DISCLOSURE_TEXT, COMMERCIAL_CONSENT_TEXT } from '../constants/auth-texts';
+import { getOtpSendErrorFeedback, parseOtpCooldownSeconds } from '../utils/otp-delivery';
 
 interface OtpVerificationProps {
   identifier: string;
   isNewUser?: boolean;
-  flowType: 'register' | 'fast-login';
+  flowType: 'register' | 'fast-login' | 'profile';
   initialCooldown?: number;
-  onSuccess: () => void;
-  onCancel: () => void;
+  onSuccess: () => void | Promise<void>;
+  onCancel: () => void | Promise<void>;
+  cancelLabel?: string;
+  isCodeDeliveryPending?: boolean;
 }
 
 export function OtpVerification({
@@ -28,6 +31,8 @@ export function OtpVerification({
   initialCooldown = 60,
   onSuccess,
   onCancel,
+  cancelLabel = 'Vazgeç',
+  isCodeDeliveryPending = false,
 }: OtpVerificationProps) {
   const storeLogin = useAuthStore((state) => state.login);
   const fastLoginVerify = useFastLoginVerifyMutation();
@@ -56,6 +61,10 @@ export function OtpVerification({
     }, 1000);
     return () => clearInterval(interval);
   }, [cooldown]);
+
+  useEffect(() => {
+    setCooldown(initialCooldown);
+  }, [initialCooldown]);
 
   const handleVerify = async () => {
     const parsedCode = otpSchema.safeParse({ code });
@@ -93,6 +102,11 @@ export function OtpVerification({
           value: identifier,
           code,
         });
+      }
+
+      if (flowType === 'profile') {
+        await onSuccess();
+        return;
       }
 
       if (response.token && response.user) {
@@ -145,14 +159,15 @@ export function OtpVerification({
         response = await sendCode.mutateAsync({ type: 'phone', value: identifier });
       }
       
-      const nextCooldown = typeof response.remaining_seconds === 'number' ? response.remaining_seconds : 60;
+      const nextCooldown = parseOtpCooldownSeconds(response.remaining_seconds, 60);
       setCooldown(nextCooldown);
       setInfo(response.message || 'Yeni doğrulama kodu gönderildi.');
       setCode('');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('OTP resend error:', err);
-      const apiMessage = err?.response?.data?.message || err?.message;
-      setError(apiMessage || 'Kod tekrar gönderilemedi. Lütfen biraz bekleyip tekrar deneyin.');
+      const feedback = getOtpSendErrorFeedback(err);
+      setCooldown(feedback.cooldownSeconds);
+      setError(feedback.message);
     } finally {
       setIsResending(false);
     }
@@ -185,7 +200,12 @@ export function OtpVerification({
       </YStack>
 
       {/* Code Input Boxes container */}
-      <Pressable onPress={() => inputRef.current?.focus()} style={{ width: '100%' }}>
+      <Pressable
+        accessibilityLabel="Telefon doğrulama kodunu gir"
+        accessibilityRole="button"
+        onPress={() => inputRef.current?.focus()}
+        style={{ width: '100%' }}
+      >
         <XStack gap="$2" justifyContent="space-between" width="100%" paddingVertical="$2">
           {[0, 1, 2, 3, 4, 5].map((i) => {
             const digit = code[i] || '';
@@ -213,6 +233,7 @@ export function OtpVerification({
 
       {/* Hidden text input to capture keyboard entries */}
       <TextInput
+        accessibilityLabel="6 haneli telefon doğrulama kodu"
         ref={inputRef}
         value={code}
         onChangeText={(text) => {
@@ -316,28 +337,30 @@ export function OtpVerification({
             </Paragraph>
           ) : (
             <Button
+              accessibilityLabel="Doğrulama kodunu tekrar gönder"
               chromeless
               padding={0}
               size="$2"
               onPress={handleResend}
-              disabled={isResending}
+              disabled={isResending || isCodeDeliveryPending}
               pressStyle={{ opacity: 0.6 }}
             >
               <Paragraph size="$2" color="$brand" fontWeight="700">
-                {isResending ? 'Gönderiliyor...' : 'Kodu Tekrar Gönder'}
+                {isResending || isCodeDeliveryPending ? 'Gönderiliyor...' : 'Kodu Tekrar Gönder'}
               </Paragraph>
             </Button>
           )}
 
           <Button
+            accessibilityLabel={cancelLabel}
             chromeless
             padding={0}
             size="$2"
-            onPress={onCancel}
+            onPress={() => void onCancel()}
             pressStyle={{ opacity: 0.6 }}
           >
             <Paragraph size="$2" color="$color10" textDecorationLine="underline">
-              Vazgeç
+              {cancelLabel}
             </Paragraph>
           </Button>
         </XStack>

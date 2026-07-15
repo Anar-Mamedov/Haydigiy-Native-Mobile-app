@@ -1,11 +1,15 @@
-import { ReactNode, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Paragraph, Spinner, XStack, YStack } from 'tamagui';
 import { AppButton, AppInput, AppSelect } from '@/components/ui';
-import { extractTurkishNationalNumber, formatTurkishPhoneDisplay } from '@/utils/turkish-phone';
+import {
+  extractTurkishNationalNumber,
+  formatTurkishPhoneDisplay,
+  sanitizeTurkishMobileInput,
+} from '@/utils/turkish-phone';
 import { UserProfile } from '../api/profile.mapper';
 import { useUpdateProfileMutation } from '../api/profile.mutations';
 import {
@@ -20,6 +24,7 @@ import {
   getYearOptions,
   splitBirthDate,
 } from '../utils/birth-date';
+import { parseProfileUpdateError } from '../utils/profile-update-error';
 
 const DAY_OPTIONS = getDayOptions();
 const MONTH_OPTIONS = getMonthOptions();
@@ -29,31 +34,23 @@ type UserInfoFormProps = {
   profile: UserProfile;
 };
 
-/** Disabled, input-styled box for read-only values (country code / phone). */
-function ReadOnlyField({
-  children,
-  flex,
-  width,
-}: {
-  children: ReactNode;
-  flex?: number;
-  width?: number;
-}) {
+/** Fixed country-code field shown beside the editable national phone number. */
+function CountryCodeField() {
   return (
     <XStack
+      accessibilityLabel="Ülke kodu +90"
       alignItems="center"
       backgroundColor="$color4"
       borderColor="$borderColor"
       borderRadius="$6"
       borderWidth={1}
-      flex={flex}
       height={48}
       opacity={0.7}
       paddingHorizontal="$3"
-      width={width}
+      width={92}
     >
       <Paragraph color="$color11" fontSize={15} numberOfLines={1}>
-        {children}
+        +90
       </Paragraph>
     </XStack>
   );
@@ -82,6 +79,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<UserInfoFormData>({
     resolver: zodResolver(userInfoSchema),
@@ -111,10 +109,16 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
       });
       Alert.alert('Başarılı', 'Bilgileriniz güncellendi.');
     } catch (error: unknown) {
-      const message =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Bilgiler güncellenirken bir hata oluştu.';
-      setServerError(message);
+      const updateError = parseProfileUpdateError(error);
+      if (updateError.phoneMessage) {
+        setError(
+          'phone',
+          { message: updateError.phoneMessage, type: 'server' },
+          { shouldFocus: true },
+        );
+        return;
+      }
+      setServerError(updateError.message);
     }
   };
 
@@ -181,8 +185,6 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
         ) : null}
       </YStack>
 
-      {/* Phone + country code are read-only here (changing the login number needs a
-          separate verification flow), matching the web profile editor. */}
       <YStack gap="$2">
         <Paragraph color="$color" fontSize={14} fontWeight="600">
           Telefon Numarası
@@ -190,12 +192,26 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
         <Controller
           control={control}
           name="phone"
-          render={({ field: { value } }) => (
-            <XStack gap="$2">
-              <ReadOnlyField width={92}>+90</ReadOnlyField>
-              <ReadOnlyField flex={1}>
-                {value ? formatTurkishPhoneDisplay(value) : '-'}
-              </ReadOnlyField>
+          render={({ field: { onChange, onBlur, value } }) => (
+            <XStack alignItems="flex-start" gap="$2">
+              <CountryCodeField />
+              <YStack flex={1}>
+                <AppInput
+                  backgroundColor="$color1"
+                  errorMessage={errors.phone?.message}
+                  height={48}
+                  hideVisibleLabel
+                  id="user-info-phone"
+                  keyboardType="phone-pad"
+                  label="Telefon Numarası"
+                  maxLength={14}
+                  onBlur={onBlur}
+                  onChangeText={(text) => onChange(sanitizeTurkishMobileInput(text))}
+                  placeholder="05XX XXX XX XX"
+                  textContentType="telephoneNumber"
+                  value={formatTurkishPhoneDisplay(value)}
+                />
+              </YStack>
             </XStack>
           )}
         />

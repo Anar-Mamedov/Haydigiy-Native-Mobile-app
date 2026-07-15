@@ -42,11 +42,11 @@ export function useResetPasswordMutation() {
 }
 
 export function useVerifyCodeMutation() {
-  return useMutation({ mutationFn: verifyCodeApi });
+  return useMutation({ mutationFn: verifyCodeApi, retry: false });
 }
 
 export function useSendCodeMutation() {
-  return useMutation({ mutationFn: sendCodeApi });
+  return useMutation({ mutationFn: sendCodeApi, retry: false });
 }
 
 export function useDeactivateAccountMutation() {
