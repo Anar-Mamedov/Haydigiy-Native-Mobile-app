@@ -102,6 +102,21 @@ export const forgotPasswordSchema = z.object({
 
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
+export const resetPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(1, { message: 'Yeni şifre zorunludur' })
+      .min(6, { message: 'Şifre en az 6 karakter olmalıdır' }),
+    confirmPassword: z.string().min(1, { message: 'Şifre tekrarı zorunludur' }),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Şifreler eşleşmiyor',
+    path: ['confirmPassword'],
+  });
+
+export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+
 export const fastLoginSchema = z.object({
   phone: z
     .string()

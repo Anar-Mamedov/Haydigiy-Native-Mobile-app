@@ -1,5 +1,6 @@
 import {
   forgotPasswordSchema,
+  resetPasswordSchema,
   loginSchema,
   registerSchema,
   fastLoginSchema,
@@ -52,6 +53,31 @@ describe('Auth Validation Schemas', () => {
         password: '12345',
       });
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe('resetPasswordSchema', () => {
+    it('accepts matching passwords supported by the API', () => {
+      expect(
+        resetPasswordSchema.safeParse({
+          newPassword: 'secret1',
+          confirmPassword: 'secret1',
+        }).success,
+      ).toBe(true);
+    });
+
+    it('rejects short and mismatched passwords', () => {
+      const shortPassword = resetPasswordSchema.safeParse({
+        newPassword: '12345',
+        confirmPassword: '12345',
+      });
+      const mismatchedPassword = resetPasswordSchema.safeParse({
+        newPassword: 'secret1',
+        confirmPassword: 'secret2',
+      });
+
+      expect(shortPassword.success).toBe(false);
+      expect(mismatchedPassword.success).toBe(false);
     });
   });
 

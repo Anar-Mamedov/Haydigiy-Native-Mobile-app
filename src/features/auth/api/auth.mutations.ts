@@ -7,6 +7,7 @@ import {
   fastLoginInitApi,
   fastLoginVerifyApi,
   forgotPasswordApi,
+  resetPasswordApi,
   deactivateAccountApi,
 } from '@/services/auth.service';
 
@@ -34,6 +35,10 @@ export function useFastLoginVerifyMutation() {
 
 export function useForgotPasswordMutation() {
   return useMutation({ mutationFn: forgotPasswordApi });
+}
+
+export function useResetPasswordMutation() {
+  return useMutation({ mutationFn: resetPasswordApi });
 }
 
 export function useVerifyCodeMutation() {

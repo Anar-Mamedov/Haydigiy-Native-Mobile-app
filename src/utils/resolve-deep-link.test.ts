@@ -25,6 +25,18 @@ describe('resolveDeepLinkPath', () => {
     expect(resolveDeepLinkPath('/order/42')).toBe('/order/42');
   });
 
+  it('preserves the password-reset token and opens the native reset route', () => {
+    expect(
+      resolveDeepLinkPath('https://haydigiy.com/sifremi-sifirla?token=reset-token-123'),
+    ).toBe('/sifremi-sifirla?token=reset-token-123');
+    expect(resolveDeepLinkPath('/sifremi-sifirla?token=reset-token-123')).toBe(
+      '/sifremi-sifirla?token=reset-token-123',
+    );
+    expect(
+      resolveDeepLinkPath('haydigiywebviewapp://sifremi-sifirla?token=reset-token-123'),
+    ).toBe('/sifremi-sifirla?token=reset-token-123');
+  });
+
   it('rewrites known web pages to their app equivalents', () => {
     expect(resolveDeepLinkPath('https://haydigiy.com/sepet')).toBe('/cart');
     expect(resolveDeepLinkPath('https://haydigiy.com/favori-listem')).toBe('/favorites');

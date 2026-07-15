@@ -69,6 +69,15 @@ export interface ForgotPasswordResponse {
   remaining_seconds?: number;
 }
 
+export interface ResetPasswordPayload {
+  token: string;
+  new_password: string;
+}
+
+export interface ResetPasswordResponse {
+  message?: string;
+}
+
 export async function loginApi(payload: any): Promise<LoginResponse> {
   if (!appEnv.apiBaseUrl) {
     // Mock Mode
@@ -168,6 +177,18 @@ export async function forgotPasswordApi(payload: ForgotPasswordPayload): Promise
   }
 
   const response = await apiClient.post('/auth/forgot-password', payload);
+  return response.data;
+}
+
+/** Completes a password reset with the single-use token from the e-mail/SMS link. */
+export async function resetPasswordApi(
+  payload: ResetPasswordPayload,
+): Promise<ResetPasswordResponse> {
+  if (!appEnv.apiBaseUrl) {
+    return { message: 'Şifreniz başarıyla güncellendi.' };
+  }
+
+  const response = await apiClient.post('/auth/reset-password', payload);
   return response.data;
 }
 

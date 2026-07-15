@@ -20,6 +20,7 @@ const APP_ROUTE_ROOTS = new Set([
   'order-cancel',
   'return-create',
   'checkout',
+  'sifremi-sifirla',
 ]);
 
 /** Web kök yolu → app rotası (app karşılığı olan ticari sayfalar). */
@@ -72,7 +73,6 @@ const RESERVED_WEB_ROOTS = new Set([
   'sitemap-main.xml',
   'sitemap-urunler',
   'sitemap.xml',
-  'sifremi-sifirla',
   'sifremi-unuttum',
   'soru',
   'surocevaplar',
