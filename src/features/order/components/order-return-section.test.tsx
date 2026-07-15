@@ -38,6 +38,7 @@ function makeReturnedItem(overrides: Partial<OrderDetailItem> = {}): OrderDetail
     returnRequestId: 42,
     returnCode: 'HG130626803895',
     returnRequestedAt: '04 Tem 2026 - 23:26',
+    returnPickupDate: '17 Tem 2026',
     returnReceivedAt: null,
     returnStatusCode: 1,
     returnStatusName: '',
@@ -70,6 +71,7 @@ describe('OrderReturnSection', () => {
     ).toBeTruthy();
     expect(screen.getByText('HG130626803895')).toBeTruthy();
     expect(screen.getByText('İade Tarihi: 04 Tem 2026 - 23:26')).toBeTruthy();
+    expect(screen.getByText('Kargo Teslim Alma Tarihi: 17 Tem 2026')).toBeTruthy();
     expect(screen.getByText('İşlem Bekliyor')).toBeTruthy();
     expect(screen.getByText('İade Beklemede')).toBeTruthy();
     expect(screen.getByLabelText('İade talebini iptal et')).toBeTruthy();

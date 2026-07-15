@@ -85,6 +85,8 @@ export type OrderDetailItem = {
   returnRequestId?: number | null;
   returnCode?: string | null;
   returnRequestedAt?: string | null;
+  /** Scheduled cargo pickup date, formatted for display without a time. */
+  returnPickupDate?: string | null;
   returnReceivedAt?: string | null;
   /** Normalized return status code (1 beklemede … 7 ödeme iadesi), null when unknown. */
   returnStatusCode?: number | null;

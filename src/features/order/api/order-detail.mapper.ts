@@ -73,6 +73,7 @@ function mapReturnedItem(dto: ReturnedItemDetailDto): OrderDetailItem {
     returnRequestId: dto.return_request_id ?? null,
     returnCode: dto.return_code ?? null,
     returnRequestedAt: dto.requested_at ?? null,
+    returnPickupDate: dto.deliveryDateCurrent ? formatOrderDate(dto.deliveryDateCurrent) : null,
     returnReceivedAt: dto.received_at ?? null,
     returnStatusCode: normalizeReturnStatus(dto.status),
     returnStatusName: dto.status_name ?? null,
@@ -130,8 +131,6 @@ export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
   const hasInstallmentInfo =
     interestAmount > 0 || hasTotalWithInterest || installmentCount !== null;
   const payableTotal = hasInstallmentInfo && hasTotalWithInterest ? totalWithInterest : totalPrice;
-  const shippedAt = formatOrderTimelineDate(dto.shipped_at);
-
   return {
     id: dto.id,
     orderNo: dto.order_no ?? '-',
@@ -140,8 +139,8 @@ export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
     timelineDates: {
       orderedAt: formatOrderTimelineDate(dto.created_at),
       confirmedAt: formatOrderTimelineDate(dto.confirmed_at),
-      preparedAt: shippedAt,
-      shippedAt,
+      preparedAt: null,
+      shippedAt: formatOrderTimelineDate(dto.shipped_at),
       deliveredAt: formatOrderTimelineDate(dto.delivered_at),
     },
     status: dto.status ?? '',

@@ -16,10 +16,13 @@ export function getOrderStatusText(status: string): string {
  * "17 Haziran 2026 - 12:00" → "17 Haziran 2026"; ISO "2026-06-10T..." → "2026-06-10".
  */
 export function formatOrderDate(value: string): string {
-  if (!value) return '-';
-  if (value.includes(' - ')) return value.split(' - ')[0];
-  if (value.includes('T')) return value.split('T')[0];
-  return value;
+  const trimmed = value?.trim();
+  if (!trimmed) return '-';
+
+  const isoDateMatch = trimmed.match(/^(\d{4}-\d{2}-\d{2})T/);
+  if (isoDateMatch?.[1]) return isoDateMatch[1];
+
+  return trimmed.split(' - ')[0].trim();
 }
 
 /** Keeps frontend-style timeline labels such as "04 Tem 2026 - 16:09" intact. */

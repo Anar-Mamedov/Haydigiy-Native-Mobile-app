@@ -46,6 +46,7 @@ export interface ReturnedItemDetailDto {
   return_request_id?: number;
   return_code?: string | null;
   requested_at?: string | null;
+  deliveryDateCurrent?: string | null;
   received_at?: string | null;
   status?: number | string | null;
   is_hepsijet?: boolean;

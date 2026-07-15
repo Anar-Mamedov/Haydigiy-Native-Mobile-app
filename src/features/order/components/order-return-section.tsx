@@ -163,6 +163,11 @@ function ReturnedItemCard({
             İade Tarihi: {item.returnRequestedAt}
           </Paragraph>
         ) : null}
+        {item.returnPickupDate ? (
+          <Paragraph color="$color10" fontSize={12} selectable>
+            Kargo Teslim Alma Tarihi: {item.returnPickupDate}
+          </Paragraph>
+        ) : null}
         <XStack marginTop="$1">
           <XStack backgroundColor="$orange3" borderRadius={100} paddingHorizontal="$3" paddingVertical="$1">
             <Paragraph color="$brand" fontSize={11} fontWeight="700">

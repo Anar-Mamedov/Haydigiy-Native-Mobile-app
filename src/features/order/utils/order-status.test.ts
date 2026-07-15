@@ -51,6 +51,10 @@ describe('formatOrderDate', () => {
     expect(formatOrderDate('2026-06-10T17:31:50.000000Z')).toBe('2026-06-10');
   });
 
+  it('does not treat the T in a Turkish short month name as an ISO separator', () => {
+    expect(formatOrderDate('10 Tem 2026')).toBe('10 Tem 2026');
+  });
+
   it('returns "-" for an empty value', () => {
     expect(formatOrderDate('')).toBe('-');
   });

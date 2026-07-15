@@ -237,7 +237,10 @@ describe('mapAvailableFilters', () => {
       variants: [{ id: 10, name: 'M', parent_id: 2, product_count: 4 }],
       properties: [{ id: 21, name: 'Pamuk', parent_id: 20, parent_name: 'Kumaş', product_count: 3 }],
       price_ranges: [{ label: '0 - 100 TL', min: 0, max: 100 }],
-      product_categories: [{ id: 70, name: 'İndirim', slug: 'indirim', product_count: 9, parent_id: null }],
+      product_categories: [
+        { id: 70, name: 'İndirim', slug: 'indirim', menu_status: 1, product_count: 9, parent_id: null },
+        { id: 71, name: 'Gizli İndirim', slug: 'gizli-indirim', menu_status: 0, product_count: 3, parent_id: null },
+      ],
       category_children: [{ id: 3, name: 'Çanta', slug: 'canta', parent_id: 1 }],
       use_product_category_filters: true,
     });
@@ -251,6 +254,19 @@ describe('mapAvailableFilters', () => {
       categoryChildren: [{ id: 3, name: 'Çanta', slug: 'canta', productCount: undefined, parentId: 1 }],
       useProductCategoryFilters: true,
     });
+  });
+
+  it('keeps only product categories whose menu_status is one', () => {
+    const result = mapAvailableFilters({
+      product_categories: [
+        { id: 1, name: 'Görünür', slug: 'gorunur', menu_status: 1 },
+        { id: 2, name: 'String Görünür', slug: 'string-gorunur', menu_status: '1' },
+        { id: 3, name: 'Gizli', slug: 'gizli', menu_status: 0 },
+        { id: 4, name: 'Durumu Yok', slug: 'durumu-yok' },
+      ],
+    });
+
+    expect(result.productCategories.map((category) => category.id)).toEqual([1, 2]);
   });
 
   it('returns empty collections and false flag when no filters are provided', () => {

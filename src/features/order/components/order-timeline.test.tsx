@@ -19,7 +19,7 @@ describe('OrderTimeline', () => {
         timelineDates={{
           orderedAt: '04 Tem 2026 - 16:09',
           confirmedAt: '04 Tem 2026 - 16:09',
-          preparedAt: '06 Tem 2026 - 13:15',
+          preparedAt: null,
           shippedAt: '06 Tem 2026 - 13:15',
           deliveredAt: '08 Tem 2026 - 12:00',
         }}
@@ -32,7 +32,7 @@ describe('OrderTimeline', () => {
     expect(screen.getByText('Kargoya Verildi')).toBeTruthy();
     expect(screen.getByText('Teslim Edildi')).toBeTruthy();
     expect(screen.getAllByText('04 Tem 2026 - 16:09')).toHaveLength(2);
-    expect(screen.getAllByText('06 Tem 2026 - 13:15')).toHaveLength(2);
+    expect(screen.getByText('06 Tem 2026 - 13:15')).toBeTruthy();
     expect(screen.queryByText('08 Tem 2026 - 12:00')).toBeNull();
   });
 

@@ -97,6 +97,10 @@ function mapFeatureIconDto(icon: ProductFeatureIconDto): FeatureIcon {
 
 type AvailableFiltersDto = NonNullable<SearchProductsResponseDto['available_filters']>;
 
+function hasVisibleMenuStatus(category: { menu_status?: number | string | null }): boolean {
+  return category.menu_status === 1 || category.menu_status === '1';
+}
+
 export function mapAvailableFilters(dto: SearchProductsResponseDto['available_filters']): ProductAvailableFilters {
   const filters: AvailableFiltersDto = dto ?? {};
 
@@ -125,7 +129,7 @@ export function mapAvailableFilters(dto: SearchProductsResponseDto['available_fi
       min: range.min,
       max: range.max,
     })),
-    productCategories: (filters.product_categories ?? []).map(mapFilterCategory),
+    productCategories: (filters.product_categories ?? []).filter(hasVisibleMenuStatus).map(mapFilterCategory),
     categoryChildren: (filters.category_children ?? []).map(mapFilterCategory),
     useProductCategoryFilters: Boolean(filters.use_product_category_filters),
   };

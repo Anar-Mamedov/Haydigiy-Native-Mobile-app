@@ -54,7 +54,7 @@ describe('mapOrderDetail', () => {
     expect(order.timelineDates).toEqual({
       orderedAt: '2026-06-05',
       confirmedAt: '05 Haz 2026 - 14:18',
-      preparedAt: '06 Haz 2026 - 09:30',
+      preparedAt: null,
       shippedAt: '06 Haz 2026 - 09:30',
       deliveredAt: '2026-06-05',
     });
@@ -84,6 +84,7 @@ describe('mapOrderDetail', () => {
             return_request_id: 42,
             return_code: 'HG1-R',
             requested_at: '04 Tem 2026 - 23:26',
+            deliveryDateCurrent: '17 Tem 2026 - 00:00',
             status: 'pending',
             status_name: '',
             is_hepsijet: true,
@@ -104,10 +105,31 @@ describe('mapOrderDetail', () => {
     const [pending, shipped] = order.returnedItems;
     expect(pending?.returnCode).toBe('HG1-R');
     expect(pending?.returnRequestedAt).toBe('04 Tem 2026 - 23:26');
+    expect(pending?.returnPickupDate).toBe('17 Tem 2026');
     expect(pending?.returnStatusCode).toBe(1);
     expect(shipped?.returnStatusCode).toBe(4);
     expect(order.cancellableReturnRequestId).toBe(42);
     expect(order.hasHepsijetReturn).toBe(true);
+  });
+
+  it('preserves localized delivery dates and maps only available timeline dates', () => {
+    const order = mapOrderDetail(
+      baseDetail({
+        created_at: '07 Tem 2026 - 16:34',
+        confirmed_at: '07 Tem 2026 - 17:30',
+        shipped_at: null,
+        delivered_at: '10 Tem 2026',
+      }),
+    );
+
+    expect(order.deliveredAt).toBe('10 Tem 2026');
+    expect(order.timelineDates).toEqual({
+      orderedAt: '07 Tem 2026 - 16:34',
+      confirmedAt: '07 Tem 2026 - 17:30',
+      preparedAt: null,
+      shippedAt: null,
+      deliveredAt: '10 Tem 2026',
+    });
   });
 
   it('leaves no cancellable return when all requests shipped or were received', () => {

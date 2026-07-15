@@ -173,6 +173,7 @@ export interface SearchProductsResponseDto {
       id: number;
       name: string;
       slug: string;
+      menu_status?: number | string | null;
       product_count?: number;
       parent_id?: number | null;
     }[];
