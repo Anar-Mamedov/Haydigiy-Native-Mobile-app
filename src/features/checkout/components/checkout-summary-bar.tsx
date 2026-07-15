@@ -140,31 +140,36 @@ export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
         </XStack>
       ) : null}
 
-      <XStack alignItems="center" gap="$3" justifyContent="space-between" padding="$3">
-        <XStack alignItems="center" flex={1} gap="$2">
-          <Pressable
-            accessibilityLabel={props.expanded ? 'Özeti gizle' : 'Özeti göster'}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={props.onToggle}
-          >
-            {props.expanded ? (
-              <ChevronDown color="$brand" size={22} />
-            ) : (
-              <ChevronUp color="$brand" size={22} />
-            )}
-          </Pressable>
-          <YStack>
-            <Paragraph color="$color10" fontSize={11}>
-              Toplam
-            </Paragraph>
-            <Paragraph color="$color" fontSize={17} fontWeight="800">
-              {formatCurrency(props.finalTotal)}
-            </Paragraph>
-          </YStack>
-        </XStack>
+      <YStack gap="$1.5" padding="$3">
+        <XStack
+          alignItems="center"
+          gap="$3"
+          justifyContent="space-between"
+          testID="checkout-summary-actions"
+        >
+          <XStack alignItems="center" flex={1} gap="$2">
+            <Pressable
+              accessibilityLabel={props.expanded ? 'Özeti gizle' : 'Özeti göster'}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={props.onToggle}
+            >
+              {props.expanded ? (
+                <ChevronDown color="$brand" size={22} />
+              ) : (
+                <ChevronUp color="$brand" size={22} />
+              )}
+            </Pressable>
+            <YStack>
+              <Paragraph color="$color10" fontSize={11}>
+                Toplam
+              </Paragraph>
+              <Paragraph color="$color" fontSize={17} fontWeight="800" numberOfLines={1}>
+                {formatCurrency(props.finalTotal)}
+              </Paragraph>
+            </YStack>
+          </XStack>
 
-        <YStack alignItems="flex-end" gap="$1">
           <Button
             accessibilityLabel="Onayla ve bitir"
             accessibilityRole="button"
@@ -184,13 +189,20 @@ export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
               </Paragraph>
             </XStack>
           </Button>
-          {props.hint ? (
-            <Paragraph color="$orange10" fontSize={11} textAlign="right">
-              {props.hint}
-            </Paragraph>
-          ) : null}
-        </YStack>
-      </XStack>
+        </XStack>
+
+        {props.hint ? (
+          <Paragraph
+            alignSelf="flex-end"
+            color="$orange10"
+            fontSize={11}
+            textAlign="right"
+            testID="checkout-summary-hint"
+          >
+            {props.hint}
+          </Paragraph>
+        ) : null}
+      </YStack>
     </YStack>
   );
 }

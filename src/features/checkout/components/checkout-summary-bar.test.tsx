@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { Paragraph } from 'tamagui';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { CheckoutSummaryBar, CheckoutSummaryBarProps } from './checkout-summary-bar';
@@ -47,5 +47,16 @@ describe('CheckoutSummaryBar', () => {
     expect(StyleSheet.flatten(screen.getByTestId('checkout-summary-bar').props.style)).toEqual(
       expect.objectContaining({ paddingBottom: 0 }),
     );
+  });
+
+  it('renders the payment hint below the total and submit actions', () => {
+    renderWithTamagui(<CheckoutSummaryBar {...baseProps} />);
+
+    const actions = screen.getByTestId('checkout-summary-actions');
+
+    expect(within(actions).getByText('Toplam')).toBeTruthy();
+    expect(within(actions).getByText('Onayla ve Bitir')).toBeTruthy();
+    expect(within(actions).queryByText(baseProps.hint!)).toBeNull();
+    expect(screen.getByTestId('checkout-summary-hint')).toHaveTextContent(baseProps.hint!);
   });
 });
