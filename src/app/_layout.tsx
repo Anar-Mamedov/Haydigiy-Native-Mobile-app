@@ -4,6 +4,7 @@ import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppProviders } from '@/lib/providers/app-providers';
+import { IncomingLinkHandler } from '@/components/navigation/incoming-link-handler';
 import { OtaUpdateWatcher } from '@/components/ota-update-watcher';
 import { CartHydrator } from '@/features/cart/components/cart-hydrator';
 import { PhoneVerificationGate } from '@/features/profile/components/phone-verification-gate';
@@ -42,6 +43,7 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+        <IncomingLinkHandler />
         <PhoneVerificationGate />
       </AppProviders>
     </GestureHandlerRootView>

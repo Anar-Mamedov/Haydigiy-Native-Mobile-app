@@ -1,10 +1,14 @@
+import { resolveAccountDeepLinkPath } from './resolve-account-deep-link';
+
 /**
  * Gelen derin bağlantı URL'ini (iOS Universal Links, Android App Links veya
  * `haydigiywebviewapp://` custom scheme) uygulama rotasına çevirir.
  *
  * Web (haydigiy.com) ile uygulama rota yapıları farklıdır:
  *   web  haydigiy.com/{slug}          →  app  /product/{slug}
+ *   web  haydigiy.com/{slug}?c={id}   →  app  /kategori/{slug}?c={id}
  *   web  haydigiy.com/kategori/{slug} →  app  /kategori/{slug}
+ *   web  haydigiy.com/hesabim/... → app'teki ilgili hesap ekranı
  * Bu yüzden gelen yol burada eşlenir. Tanınmayan her şey güvenli biçimde ana
  * ekrana (`/`) düşer; asla +not-found'a gitmez.
  *
@@ -27,10 +31,10 @@ const APP_ROUTE_ROOTS = new Set([
 const WEB_TO_APP: Record<string, string> = {
   sepet: '/cart',
   'favori-listem': '/favorites',
-  hesabim: '/profile',
   profile: '/profile',
   kategoriler: '/categories',
   yardim: '/help',
+  'banka-hesabimiz': '/bank-account',
 };
 
 /**
@@ -39,7 +43,6 @@ const WEB_TO_APP: Record<string, string> = {
  * değişirse burası güncellenmelidir.
  */
 const RESERVED_WEB_ROOTS = new Set([
-  'banka-hesabimiz',
   'cache-temizle',
   'cerez-politikasi',
   'dogrulama',
@@ -158,11 +161,22 @@ export function resolveDeepLinkPath(input: string): string {
       return `/${segments.join('/')}${search}`;
     }
 
+    // Frontend hesap yollarını genel web eşlemelerinden önce çöz.
+    const accountPath = resolveAccountDeepLinkPath(segments, search);
+    if (accountPath) return accountPath;
+
     // Bilinen web → app eşlemesi.
     if (WEB_TO_APP[first]) return WEB_TO_APP[first];
 
     // Rezerve web sayfaları (app karşılığı yok) → ana ekran.
     if (RESERVED_WEB_ROOTS.has(first)) return '/';
+
+    // Web kategori sayfaları da ürünler gibi kök seviyededir; `c` parametresi
+    // sayfanın kategori kimliğidir. Uygulamadaki liste rotasına taşı.
+    const categoryId = getQueryParam(search, 'c');
+    if (categoryId && /^[1-9]\d*$/.test(categoryId)) {
+      return `/kategori/${segments[0]}${search}`;
+    }
 
     // Kök seviyede tek segment ve rezerve değil → ürün slug'ı.
     return `/product/${segments[0]}`;

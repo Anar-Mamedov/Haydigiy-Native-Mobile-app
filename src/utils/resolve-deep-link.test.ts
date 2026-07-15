@@ -20,9 +20,72 @@ describe('resolveDeepLinkPath', () => {
     );
   });
 
+  it('maps a root-level web category link to the category listing route', () => {
+    expect(resolveDeepLinkPath('https://haydigiy.com/haydigiy-butik?c=147')).toBe(
+      '/kategori/haydigiy-butik?c=147',
+    );
+    expect(resolveDeepLinkPath('/haydigiy-butik?c=147')).toBe(
+      '/kategori/haydigiy-butik?c=147',
+    );
+    expect(resolveDeepLinkPath('haydigiywebviewapp://haydigiy-butik?c=147')).toBe(
+      '/kategori/haydigiy-butik?c=147',
+    );
+  });
+
+  it('does not mistake an invalid category marker for a category link', () => {
+    expect(resolveDeepLinkPath('https://haydigiy.com/spor-ayakkabi-123?c=invalid')).toBe(
+      '/product/spor-ayakkabi-123',
+    );
+  });
+
   it('passes through paths that are already app routes', () => {
     expect(resolveDeepLinkPath('https://haydigiy.com/product/abc-1')).toBe('/product/abc-1');
     expect(resolveDeepLinkPath('/order/42')).toBe('/order/42');
+  });
+
+  it.each([
+    ['/hesabim', '/profile'],
+    ['/hesabim/kullaniciBilgileri', '/user-info'],
+    ['/hesabim/adreslerim', '/addresses'],
+    ['/hesabim/odemeBilgileri', '/payment-methods'],
+    ['/hesabim/sifre-degistir', '/change-password'],
+    ['/hesabim/siparislerim', '/orders'],
+    ['/hesabim/siparislerim/940225', '/order/940225'],
+    ['/hesabim/iade-olustur/940225', '/return-create/940225'],
+    ['/hesabim/siparis-iptal/940225', '/order-cancel/940225'],
+    ['/hesabim/degerlendirmelerim', '/reviews'],
+    ['/hesabim/kuponlarim', '/coupons'],
+    ['/hesabim/gezdiklerim', '/gezdiklerim'],
+    ['/hesabim/sozlesmeler', '/agreements'],
+    ['/hesabim/yardim', '/help'],
+    ['/hesabim/bildirimlerim', '/orders'],
+    ['/hesabim/duyurular', '/user-info'],
+    ['/hesabim/geri-bildirim', '/help'],
+  ])('maps the web account path %s to %s', (webPath, appPath) => {
+    expect(resolveDeepLinkPath(`https://haydigiy.com${webPath}`)).toBe(appPath);
+  });
+
+  it('maps mobile-web account aliases and address form links', () => {
+    expect(resolveDeepLinkPath('https://haydigiy.com/m/hesabim')).toBe('/profile');
+    expect(resolveDeepLinkPath('https://haydigiy.com/m/hesabim/hesap')).toBe('/profile');
+    expect(resolveDeepLinkPath('https://haydigiy.com/m/hesabim/adreslerim/ekle')).toBe(
+      '/address-form',
+    );
+    expect(resolveDeepLinkPath('https://haydigiy.com/m/hesabim/adreslerim/52')).toBe(
+      '/address-form?id=52',
+    );
+    expect(resolveDeepLinkPath('haydigiywebviewapp://hesabim/siparislerim/940225')).toBe(
+      '/order/940225',
+    );
+  });
+
+  it('preserves query parameters on web account order links', () => {
+    expect(
+      resolveDeepLinkPath('https://haydigiy.com/hesabim/siparislerim?category=cancelled'),
+    ).toBe('/orders?category=cancelled');
+    expect(
+      resolveDeepLinkPath('https://haydigiy.com/hesabim/siparis-iptal/940225?select_all=1'),
+    ).toBe('/order-cancel/940225?select_all=1');
   });
 
   it('preserves the password-reset token and opens the native reset route', () => {
@@ -42,6 +105,7 @@ describe('resolveDeepLinkPath', () => {
     expect(resolveDeepLinkPath('https://haydigiy.com/favori-listem')).toBe('/favorites');
     expect(resolveDeepLinkPath('https://haydigiy.com/kategoriler')).toBe('/categories');
     expect(resolveDeepLinkPath('https://haydigiy.com/hesabim')).toBe('/profile');
+    expect(resolveDeepLinkPath('https://haydigiy.com/banka-hesabimiz')).toBe('/bank-account');
   });
 
   it('sends reserved web-only pages to the home screen', () => {

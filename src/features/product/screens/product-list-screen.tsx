@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
 import { Paragraph, Spinner, XStack, YStack } from 'tamagui';
 import { ArrowLeft, ShoppingCart } from '@tamagui/lucide-icons-2';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 
 import { AppScreen, EmptyState } from '@/components/ui';
@@ -21,6 +21,8 @@ import { ProductListHeader } from '../components/product-list-header';
 import { ProductVideoModal } from '../components/product-video-modal';
 import { resolveColorVariantTarget } from '../utils/color-variant-route';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
+import { NOT_FOUND_ROUTE } from '@/features/not-found/routes';
+import { isMissingResourceApiError } from '@/utils/api-error';
 
 interface ProductListScreenProps {
   slug: string;
@@ -85,6 +87,7 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
 
   const {
     data,
+    error,
     isPending,
     isError,
     refetch,
@@ -107,6 +110,10 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
   // enhancement: while loading or on error it simply stays hidden.
   const quickFiltersQuery = useQuickFiltersQuery(categoryId ?? categoryDetails?.id);
   const quickFilterGroups = quickFiltersQuery.data ?? [];
+
+  if (isMissingResourceApiError(error)) {
+    return <Redirect href={NOT_FOUND_ROUTE} />;
+  }
 
   // Active filters count
   const activeFiltersCount =

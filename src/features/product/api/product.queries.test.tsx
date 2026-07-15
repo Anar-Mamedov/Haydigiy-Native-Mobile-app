@@ -102,4 +102,16 @@ describe('useProductDetailsQuery', () => {
     expect(mockedGetSlug).toHaveBeenCalledWith('12345');
     expect(mockedGetDetail).toHaveBeenCalledWith('elbise');
   });
+
+  it('exposes a missing-product error so the screen can open the 404 route', async () => {
+    const notFoundError = { isAxiosError: true, response: { status: 404 } };
+    mockedGetDetail.mockRejectedValue(notFoundError);
+
+    const { result } = renderHook(() => useProductDetailsQuery('kaldirilan-urun'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBe(notFoundError);
+  });
 });

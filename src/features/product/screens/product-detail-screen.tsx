@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Spinner, YStack, Paragraph, XStack } from 'tamagui';
 import { Linking, Pressable, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +19,8 @@ import { getCarouselImageHeight } from '../utils/product-carousel-geometry';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 import { ProductVariant, Product, ProductColorOption, SimilarProduct } from '@/types/product.types';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
+import { NOT_FOUND_ROUTE } from '@/features/not-found/routes';
+import { isMissingResourceApiError } from '@/utils/api-error';
 
 // Subcomponents
 import { ProductDetailHeader } from '../components/product-detail-header';
@@ -66,7 +68,7 @@ export function ProductDetailScreen() {
   const initialImageIndex = params.imageIndex ? Math.max(0, parseInt(params.imageIndex, 10) || 0) : 0;
   
   // Queries
-  const { data: product, isError, isPending, refetch } = useProductDetailsQuery(idOrSlug);
+  const { data: product, error, isError, isPending, refetch } = useProductDetailsQuery(idOrSlug);
   const addToCart = useAddToCartMutation();
   const goToCartAfterAdd = useGoToCartAfterAdd();
   const shippingQuery = useShippingEstimateQuery();
@@ -255,6 +257,10 @@ export function ProductDetailScreen() {
         </YStack>
       </AppScreen>
     );
+  }
+
+  if (isMissingResourceApiError(error)) {
+    return <Redirect href={NOT_FOUND_ROUTE} />;
   }
 
   if (isError) {

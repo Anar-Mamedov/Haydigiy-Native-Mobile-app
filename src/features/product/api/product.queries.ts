@@ -158,6 +158,7 @@ export function useProductDetailsQuery(idOrSlug: string) {
 
   return {
     data,
+    error: detailQuery.error,
     isError: detailQuery.isError,
     isPending: detailQuery.isPending,
     refetch: detailQuery.refetch,

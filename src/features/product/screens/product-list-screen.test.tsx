@@ -7,8 +7,13 @@ const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockBack = jest.fn();
 const mockCanGoBack = jest.fn().mockReturnValue(true);
+const mockRedirect = jest.fn();
 
 jest.mock('expo-router', () => ({
+  Redirect: ({ href }: { href: string }) => {
+    mockRedirect(href);
+    return null;
+  },
   useRouter: () => ({
     push: mockPush,
     replace: mockReplace,
@@ -173,6 +178,19 @@ describe('ProductListScreen', () => {
 
     fireEvent.press(screen.getByText('Tekrar Dene'));
     expect(mockRefetch).toHaveBeenCalled();
+  });
+
+  it('redirects a removed category to the 404 screen', () => {
+    (useInfiniteSearchProductsQuery as jest.Mock).mockReturnValue({
+      error: { isAxiosError: true, response: { status: 404 } },
+      isError: true,
+      isPending: false,
+    });
+
+    renderWithTamagui(<ProductListScreen slug="kaldirilan-kategori" categoryId={404} />);
+
+    expect(mockRedirect).toHaveBeenCalledWith('/not-found');
+    expect(screen.queryByText('Ürünler Yüklenemedi')).toBeNull();
   });
 
   it('renders product feed correctly on successful load', () => {
