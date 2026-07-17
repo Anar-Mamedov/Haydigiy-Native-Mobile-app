@@ -34,8 +34,11 @@ export interface OrderTokenSyncInput {
 }
 
 export interface OrderTokenSyncController {
-  /** Waits for the latest checkout snapshot to be persisted exactly once. */
-  syncNow: () => Promise<OrderTokenResponseDto | null>;
+  /**
+   * Waits for the latest checkout snapshot to be persisted. Submit-time price
+   * freshness checks can force a new backend request instead of reusing cache.
+   */
+  syncNow: (options?: { forceNetwork?: boolean }) => Promise<OrderTokenResponseDto | null>;
 }
 
 type OrderTokenSyncSnapshot = {
@@ -100,9 +103,9 @@ function buildSyncSnapshot(input: OrderTokenSyncInput): OrderTokenSyncSnapshot |
  *
  * Unlike the web effect, requests are serialized here. A selection change can
  * therefore never let an older request finish after a newer one and overwrite
- * the draft order. `syncNow` is shared with the submit flow: it reuses an
- * already completed matching sync or waits for the matching queued request,
- * avoiding the mobile-only duplicate `/order/token` call before İyzico.
+ * the draft order. Background calls reuse matching work. Non-installment submit
+ * checks force a new request so cross-device cart changes are read from the
+ * backend immediately, matching the web payment flow.
  */
 export function useOrderTokenSync(input: OrderTokenSyncInput): OrderTokenSyncController {
   const updateOrderToken = useUpdateOrderTokenMutation();
@@ -133,7 +136,7 @@ export function useOrderTokenSync(input: OrderTokenSyncInput): OrderTokenSyncCon
     onSyncError: input.onSyncError,
   };
 
-  const syncNow = useCallback((): Promise<OrderTokenResponseDto | null> => {
+  const syncNow = useCallback((options?: { forceNetwork?: boolean }): Promise<OrderTokenResponseDto | null> => {
     const snapshot = buildSyncSnapshot(inputRef.current);
     if (!snapshot) return Promise.resolve(null);
 
@@ -143,7 +146,7 @@ export function useOrderTokenSync(input: OrderTokenSyncInput): OrderTokenSyncCon
     // the draft order would not end at this state — queue a fresh write instead.
     const isLastScheduledWrite =
       lastScheduledKeyRef.current === '' || lastScheduledKeyRef.current === snapshot.key;
-    if (isLastScheduledWrite) {
+    if (!options?.forceNetwork && isLastScheduledWrite) {
       const pending = pendingByKeyRef.current.get(snapshot.key);
       if (pending) return pending;
 

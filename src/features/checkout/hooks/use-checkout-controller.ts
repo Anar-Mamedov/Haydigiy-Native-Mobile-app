@@ -1,25 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import { useCardForm } from './use-card-form';
+import { useCheckoutBootstrap } from './use-checkout-bootstrap';
 import { useOrderTokenSync } from './use-order-token-sync';
 import { getApiErrorMessage } from '../utils/error-message';
-import {
-  extractInitialCargoId,
-  extractOrderToken,
-  prepareOrderDto,
-} from '@/services/order.service';
 import {
   useCargoCompaniesQuery,
   useCheckoutAddressesQuery,
   usePaymentTypesQuery,
 } from '../api/checkout.queries';
-import { checkoutKeys } from '../api/checkout.keys';
 import { useValidateCouponMutation, useRemoveCouponMutation } from '../api/checkout.mutations';
 import { isMethodOverLimit } from '../components/checkout-payment-options';
 import { mapAppliedCoupon } from '../api/checkout.mapper';
 import { calculateOrderTotals, getEffectiveCouponDiscount } from '../utils/order-totals';
-import { useCartQuery } from '@/features/cart/api/cart.queries';
 import { calculateCartSubtotal, useCartStore } from '@/features/cart/store/use-cart-store';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
 import { useCouponsQuery } from '@/features/coupon/api/coupon.queries';
@@ -44,30 +37,16 @@ const CARD_ONLY_CARGO_ID = 5;
 export function useCheckoutController() {
   const router = useRouter();
 
-  const cartQuery = useCartQuery();
+  const params = useLocalSearchParams<{ orderToken?: string }>();
+  const passedToken = typeof params.orderToken === 'string' ? params.orderToken : '';
+  const checkoutBootstrap = useCheckoutBootstrap(passedToken);
   const shippingQuery = useShippingEstimateQuery();
   const addressesQuery = useCheckoutAddressesQuery();
   const paymentTypesQuery = usePaymentTypesQuery();
   const couponsQuery = useCouponsQuery();
 
-  // Prepare the order on the payment screen (like the web payment page) to get a
-  // fresh order token AND the backend's default cargo id. The cart may also pass a
-  // token, kept as a fallback.
-  const params = useLocalSearchParams<{ orderToken?: string }>();
-  const passedToken = typeof params.orderToken === 'string' ? params.orderToken : '';
-  const prepareQuery = useQuery({
-    queryKey: [...checkoutKeys.all, 'prepare'],
-    staleTime: 0,
-    queryFn: async () => {
-      const response = await prepareOrderDto();
-      return {
-        orderToken: extractOrderToken(response),
-        cargoId: extractInitialCargoId(response),
-      };
-    },
-  });
-  const orderToken = prepareQuery.data?.orderToken || passedToken || null;
-  const initialCargoId = prepareQuery.data?.cargoId ?? null;
+  const orderToken = checkoutBootstrap.orderToken;
+  const initialCargoId = checkoutBootstrap.initialCargoId;
 
   const items = useCartStore((state) => state.items);
 
@@ -153,8 +132,8 @@ export function useCheckoutController() {
 
   // ---- Pricing inputs ----
   const subtotal = calculateCartSubtotal(items);
-  const userDiscount = cartQuery.data?.userDiscount ?? 0;
-  const campaigns = useMemo(() => cartQuery.data?.campaigns ?? [], [cartQuery.data?.campaigns]);
+  const userDiscount = checkoutBootstrap.cartData?.userDiscount ?? 0;
+  const campaigns = useMemo(() => checkoutBootstrap.cartData?.campaigns ?? [], [checkoutBootstrap.cartData?.campaigns]);
   const campaignBasis = Math.max(0, subtotal - userDiscount);
   const freeShippingCampaign = getFreeShippingCampaign(campaigns, campaignBasis);
   const isFreeShippingCoupon = Boolean(appliedCoupon?.isFreeShipping);
@@ -349,26 +328,40 @@ export function useCheckoutController() {
 
   // ---- Submit gating ----
   const billingResolved = sendInvoiceToSameAddress || Boolean(billingAddress);
+  const isSelectedInstallmentReady =
+    card.selectedInstallment <= 1 ||
+    (Boolean(card.selectedPlan) && !card.isLoadingInstallments);
   const canSubmit =
     isAgreementChecked &&
     Boolean(shippingAddress) &&
     Boolean(selectedCargo) &&
     Boolean(selectedMethod) &&
     billingResolved &&
-    (!isCardPayment || card.isValid);
+    (!isCardPayment || (card.isValid && isSelectedInstallmentReady));
 
   const hint = useMemo(() => {
     if (isCardPayment && card.isRestrictedBin) return 'Bu kartla ödeme yapılamaz.';
     if (isCardPayment && !card.isValid) return 'Kart bilgilerini eksiksiz doldurun.';
+    if (isCardPayment && card.selectedInstallment > 1 && card.isLoadingInstallments) {
+      return 'Güncel taksit tutarları hesaplanıyor.';
+    }
     if (isCardPayment && card.selectedPlan) return 'Taksitli ödeme için 3D doğrulamaya yönlendirileceksiniz.';
     return null;
-  }, [isCardPayment, card.isRestrictedBin, card.isValid, card.selectedPlan]);
+  }, [
+    isCardPayment,
+    card.isRestrictedBin,
+    card.isValid,
+    card.isLoadingInstallments,
+    card.selectedInstallment,
+    card.selectedPlan,
+  ]);
 
   return {
     // async state
-    isLoading: cartQuery.isPending,
-    isError: cartQuery.isError,
-    refetchCart: cartQuery.refetch,
+    isLoading: checkoutBootstrap.isLoading,
+    isError: checkoutBootstrap.isError,
+    refetchCart: checkoutBootstrap.refetchCart,
+    retryCheckout: checkoutBootstrap.retryCheckout,
     refetchAddresses: addressesQuery.refetch,
     // cart
     items,

@@ -59,4 +59,16 @@ describe('CheckoutSummaryBar', () => {
     expect(within(actions).queryByText(baseProps.hint!)).toBeNull();
     expect(screen.getByTestId('checkout-summary-hint')).toHaveTextContent(baseProps.hint!);
   });
+
+  it('announces a submit error accessibly', () => {
+    renderWithTamagui(
+      <CheckoutSummaryBar
+        {...baseProps}
+        submitError="Ödeme işlemi başlatılamadı."
+      />,
+    );
+
+    expect(screen.getByText('Ödeme işlemi başlatılamadı.')).toBeTruthy();
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
 });

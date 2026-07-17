@@ -104,6 +104,20 @@ describe('useOrderTokenSync', () => {
     expect(updateOrderTokenDto).toHaveBeenCalledTimes(1);
   });
 
+  it('forces a fresh backend write for submit-time cross-device cart checks', async () => {
+    const { result } = renderOrderTokenSync(makeInput());
+    await waitFor(() => expect(updateOrderTokenDto).toHaveBeenCalledTimes(1));
+    updateOrderTokenDto.mockResolvedValueOnce({ total_price: '600.00' });
+
+    let response: { total_price?: string | number } | null = null;
+    await act(async () => {
+      response = await result.current.syncNow({ forceNetwork: true });
+    });
+
+    expect(updateOrderTokenDto).toHaveBeenCalledTimes(2);
+    expect(response).toEqual(expect.objectContaining({ total_price: '600.00' }));
+  });
+
   it('serializes changed snapshots so an older request cannot overwrite the latest state', async () => {
     let resolveFirst: ((value: { total_price: string; coupon?: {
       code: string;

@@ -51,13 +51,16 @@ export function useCardForm(singlePaymentAmount: number, enabled: boolean): Card
   const installmentPlans = useMemo(() => installmentsQuery.data ?? [], [installmentsQuery.data]);
 
   // Reset the selection when the available plans change (new BIN / amount) and the
-  // previously chosen installment is no longer offered.
+  // previously chosen installment is no longer offered. Keep the selection while
+  // a new amount is loading so a price refresh cannot silently turn an installment
+  // checkout into a single-payment checkout before the user retries.
   useEffect(() => {
     if (selectedInstallment === 1) return;
+    if (installmentsQuery.isFetching) return;
     if (!installmentPlans.some((plan) => plan.installment === selectedInstallment)) {
       setSelectedInstallment(1);
     }
-  }, [installmentPlans, selectedInstallment]);
+  }, [installmentPlans, installmentsQuery.isFetching, selectedInstallment]);
 
   const selectedPlan = useMemo(
     () => installmentPlans.find((plan) => plan.installment === selectedInstallment) ?? null,

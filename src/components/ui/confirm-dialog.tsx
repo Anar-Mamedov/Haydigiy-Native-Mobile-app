@@ -10,6 +10,8 @@ export type ConfirmDialogProps = {
   cancelLabel?: string;
   onConfirm: () => void;
   destructive?: boolean;
+  descriptionTone?: 'default' | 'danger';
+  confirmDisabled?: boolean;
   isConfirming?: boolean;
 };
 
@@ -26,8 +28,12 @@ export function ConfirmDialog({
   cancelLabel = 'Vazgeç',
   onConfirm,
   destructive,
+  descriptionTone = 'default',
+  confirmDisabled = false,
   isConfirming,
 }: ConfirmDialogProps) {
+  const isConfirmUnavailable = confirmDisabled || Boolean(isConfirming);
+
   return (
     <AppAlertDialog maxWidth={340} onOpenChange={onOpenChange} open={open}>
       <YStack gap="$3">
@@ -39,7 +45,13 @@ export function ConfirmDialog({
 
             {description ? (
               <AlertDialog.Description asChild>
-                <Paragraph fontSize={14} color="$color10" textAlign="center" lineHeight={20}>
+                <Paragraph
+                  color={descriptionTone === 'danger' ? '$red10' : '$color10'}
+                  fontSize={14}
+                  lineHeight={20}
+                  selectable
+                  textAlign="center"
+                >
                   {description}
                 </Paragraph>
               </AlertDialog.Description>
@@ -79,8 +91,8 @@ export function ConfirmDialog({
                   alignItems="center"
                   backgroundColor={destructive ? '$red10' : '$brand'}
                   borderRadius="$4"
-                  disabled={isConfirming}
-                  opacity={isConfirming ? 0.7 : 1}
+                  disabled={isConfirmUnavailable}
+                  opacity={isConfirmUnavailable ? 0.5 : 1}
                   onPress={onConfirm}
                   accessibilityRole="button"
                 >

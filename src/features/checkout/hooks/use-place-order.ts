@@ -6,6 +6,7 @@ import { isGarantiRouterResponse, mapGarantiForm } from '../api/checkout.mapper'
 import { buildGarantiFormHtml } from '../utils/build-garanti-form-html';
 import { parsePrice } from '../utils/parse-price';
 import { getApiErrorMessage } from '../utils/error-message';
+import { isCheckoutPriceChangeMessage } from '../utils/checkout-price-change';
 import {
   confirmOrderDto,
   getClientIp,
@@ -26,6 +27,9 @@ export interface PlaceOrderController {
   submit: () => void;
   isSubmitting: boolean;
   threeDS: ThreeDSPayload | null;
+  priceChangeConfirmation: { message: string } | null;
+  confirmPriceChange: () => void;
+  cancelPriceChange: () => void;
   closeThreeDS: () => void;
 }
 
@@ -34,22 +38,24 @@ export interface PlaceOrderController {
  * - non-card (Kapıda Ödeme …) → `/order/token` → `/order/confirm` → native success
  * - card + single (Tek Çekim) → `/order/token` → `/payment-router` (Garanti) →
  *   `/order/confirm` (pre-confirm) → Garanti 3D form in the WebView
- * - card + installment → `/order/token` → İyzico `/iyzico-prod/3ds/initialize` →
- *   3DS HTML in the WebView
+ * - card + installment → İyzico `/iyzico-prod/3ds/initialize` → 3DS HTML in
+ *   the WebView (the web skips submit-time `/order/token` for this path)
  *
- * Every path MUST have `/order/token` synced before charging/confirming: the backend
- * applies campaign free-shipping and cart-discount snapshots to the draft order
- * only in that step, and both İyzico `prepare` and `/order/confirm` read those
- * flags from the order row. The web keeps the row fresh with an on-change
- * `updateOrderToken` effect. Mobile follows that behavior through the shared
- * sync controller and awaits the matching background request at submit time,
- * without starting a second competing write.
+ * The web keeps the draft row fresh with an on-change `updateOrderToken` effect.
+ * Mobile mirrors that background sync. At submit time, non-card and single-card
+ * paths await and verify the matching snapshot; the İyzico installment path
+ * deliberately proceeds directly to initialize, matching the web branch exactly.
+ * After an explicit price-change modal confirmation, however, the confirmed retry
+ * waits for one fresh token sync so the refreshed cart is persisted before 3DS.
  */
 export function usePlaceOrder(controller: CheckoutController): PlaceOrderController {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [threeDS, setThreeDS] = useState<ThreeDSPayload | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [priceChangeConfirmation, setPriceChangeConfirmation] = useState<{
+    message: string;
+  } | null>(null);
 
   const fail = useCallback(
     (message: string) => {
@@ -58,7 +64,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
     [controller],
   );
 
-  const submit = useCallback(async () => {
+  const executeSubmit = useCallback(async (hasConfirmedPriceChange: boolean) => {
     if (isSubmitting) return;
 
     const {
@@ -73,6 +79,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
       totals,
       items,
       syncOrderToken,
+      refetchCart,
       markOrderSubmitted,
     } = controller;
 
@@ -89,12 +96,16 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
     const finalTotal = totals.finalTotal;
 
     setIsSubmitting(true);
+    setPriceChangeConfirmation(null);
     controller.setSubmitError(null);
 
     // Waits for the shared cargo/payment/coupon + campaign snapshot sync and
     // verifies the backend's persisted total against the total shown on screen.
     const verifySyncedOrderToken = async () => {
-      const tokenRes = await syncOrderToken();
+      // The web always posts a fresh `/order/token` request at submit time for
+      // non-installment paths. Do not reuse the background-sync cache: the cart
+      // may have changed from another device while this screen stayed open.
+      const tokenRes = await syncOrderToken({ forceNetwork: true });
       if (!tokenRes) {
         throw new Error('Sipariş bilgileri henüz senkronize edilemedi. Lütfen tekrar deneyin.');
       }
@@ -139,7 +150,9 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
 
       // ---- Card + installment → İyzico 3DS ----
       if (card.selectedPlan) {
-        await verifySyncedOrderToken();
+        if (hasConfirmedPriceChange) {
+          await verifySyncedOrderToken();
+        }
 
         const init = await initializeIyzico3dsDto({
           order_token: orderToken,
@@ -236,16 +249,51 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
         html: buildGarantiFormHtml(garanti, card.values, shippingAddress.email, ipForForm),
       });
     } catch (error) {
-      fail(getApiErrorMessage(error, 'Ödeme işlemi başlatılamadı.'));
+      const message = getApiErrorMessage(error, 'Ödeme işlemi başlatılamadı.');
+
+      if (isCheckoutPriceChangeMessage(message)) {
+        try {
+          const refreshedCart = await refetchCart();
+          if (refreshedCart.isError) {
+            fail(
+              `${message} Güncel sepet bilgileri alınamadı; lütfen bağlantınızı kontrol edip tekrar deneyin.`,
+            );
+          } else {
+            setPriceChangeConfirmation({ message });
+          }
+        } catch {
+          fail(
+            `${message} Güncel sepet bilgileri alınamadı; lütfen bağlantınızı kontrol edip tekrar deneyin.`,
+          );
+        }
+      } else {
+        fail(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
   }, [controller, fail, isSubmitting, queryClient, router]);
 
+  const submit = useCallback(() => {
+    void executeSubmit(false);
+  }, [executeSubmit]);
+
+  const confirmPriceChange = useCallback(() => {
+    setPriceChangeConfirmation(null);
+    void executeSubmit(true);
+  }, [executeSubmit]);
+
+  const cancelPriceChange = useCallback(() => {
+    setPriceChangeConfirmation(null);
+  }, []);
+
   return {
     submit,
     isSubmitting,
     threeDS,
+    priceChangeConfirmation,
+    confirmPriceChange,
+    cancelPriceChange,
     closeThreeDS: () => {
       // 3DS iptal edildi; kullanıcı seçim değiştirebilir, senkron kaldığı yerden sürsün.
       controller.resumeOrderTokenSync();

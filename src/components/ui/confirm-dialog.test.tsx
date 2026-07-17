@@ -40,4 +40,16 @@ describe('ConfirmDialog', () => {
 
     expect(screen.queryByText('Favorilerden Kaldır')).toBeNull();
   });
+
+  it('supports danger copy and a disabled confirm action', () => {
+    renderWithTamagui(
+      <ConfirmDialog
+        {...baseProps}
+        confirmDisabled
+        descriptionTone="danger"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Evet, Kaldır' })).toBeDisabled();
+  });
 });

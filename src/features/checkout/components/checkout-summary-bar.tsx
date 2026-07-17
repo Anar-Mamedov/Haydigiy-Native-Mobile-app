@@ -126,6 +126,9 @@ export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
 
       {props.submitError ? (
         <XStack
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
+          accessible
           backgroundColor="$red2"
           borderColor="$red7"
           borderRadius="$3"

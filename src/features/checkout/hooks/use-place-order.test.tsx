@@ -27,6 +27,9 @@ const initializeIyzico3dsDto = checkoutService.initializeIyzico3dsDto as jest.Mo
 const confirmOrderDto = checkoutService.confirmOrderDto as jest.MockedFunction<
   typeof checkoutService.confirmOrderDto
 >;
+const routePaymentDto = checkoutService.routePaymentDto as jest.MockedFunction<
+  typeof checkoutService.routePaymentDto
+>;
 
 const card = {
   isValid: true,
@@ -50,6 +53,7 @@ function makeController(overrides: Partial<CheckoutController> = {}): CheckoutCo
     items: [{ title: 'Ürün', unitPrice: 1454.96, quantity: 2 }],
     appliedCoupon: null,
     syncOrderToken: jest.fn(async () => ({ total_price: '2909.92' })),
+    refetchCart: jest.fn(async () => ({ isError: false })),
     setSubmitError: jest.fn(),
     markOrderSubmitted: jest.fn(),
     resumeOrderTokenSync: jest.fn(),
@@ -72,11 +76,10 @@ describe('usePlaceOrder order-token sync', () => {
     jest.clearAllMocks();
   });
 
-  // Regression: İyzico `prepare` ve `/order/confirm` kargo bedava kampanyasını
-  // yalnızca `/order/token` adımının sipariş satırına yazdığı snapshot'tan okur.
-  // Bu senkron atlanınca kampanyaya rağmen kargo ücreti tahsil ediliyordu.
-  it('syncs /order/token with the plan installment before starting İyzico 3DS', async () => {
-    const syncOrderToken = jest.fn(async () => ({ total_price: '2910.00' }));
+  // Web parity: İyzico installment checkout relies on the on-change background
+  // token sync and skips a second submit-time `/order/token` verification.
+  it('skips submit-time /order/token verification before starting İyzico 3DS', async () => {
+    const syncOrderToken = jest.fn(async () => ({ total_price: '3009.91' }));
     const controller = makeController({
       card: { ...card, selectedPlan: { installment: 3, perMonth: 970 } },
       totals: { finalTotal: 2910 },
@@ -89,10 +92,7 @@ describe('usePlaceOrder order-token sync', () => {
     });
 
     await waitFor(() => expect(initializeIyzico3dsDto).toHaveBeenCalled());
-    expect(syncOrderToken).toHaveBeenCalledTimes(1);
-    expect(syncOrderToken.mock.invocationCallOrder[0]).toBeLessThan(
-      initializeIyzico3dsDto.mock.invocationCallOrder[0],
-    );
+    expect(syncOrderToken).not.toHaveBeenCalled();
   });
 
   it('syncs /order/token before confirming a non-card (Kapıda Ödeme) order', async () => {
@@ -110,6 +110,7 @@ describe('usePlaceOrder order-token sync', () => {
 
     await waitFor(() => expect(confirmOrderDto).toHaveBeenCalled());
     expect(syncOrderToken).toHaveBeenCalledTimes(1);
+    expect(syncOrderToken).toHaveBeenCalledWith({ forceNetwork: true });
     expect(syncOrderToken.mock.invocationCallOrder[0]).toBeLessThan(
       confirmOrderDto.mock.invocationCallOrder[0],
     );
@@ -118,10 +119,25 @@ describe('usePlaceOrder order-token sync', () => {
     expect(controller.markOrderSubmitted).toHaveBeenCalled();
   });
 
-  it('stops before charging when the backend total no longer matches the shown total', async () => {
+  it('forces a fresh /order/token check before routing single-card payment to 3DS', async () => {
+    const syncOrderToken = jest.fn(async () => ({ total_price: '2909.92' }));
+    const controller = makeController({ syncOrderToken });
+    const { result } = renderPlaceOrder(controller);
+
+    act(() => {
+      result.current.submit();
+    });
+
+    await waitFor(() => expect(routePaymentDto).toHaveBeenCalled());
+    expect(syncOrderToken).toHaveBeenCalledWith({ forceNetwork: true });
+    expect(syncOrderToken.mock.invocationCallOrder[0]).toBeLessThan(
+      routePaymentDto.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('refreshes the cart and stops single-card 3DS when the backend total changes', async () => {
     const syncOrderToken = jest.fn(async () => ({ total_price: '3009.91' }));
     const controller = makeController({
-      card: { ...card, selectedPlan: { installment: 3, perMonth: 970 } },
       syncOrderToken,
     } as unknown as Partial<CheckoutController>);
     const { result } = renderPlaceOrder(controller);
@@ -131,11 +147,146 @@ describe('usePlaceOrder order-token sync', () => {
     });
 
     await waitFor(() =>
-      expect(controller.setSubmitError).toHaveBeenCalledWith(
-        expect.stringContaining('Sipariş tutarı güncellendi: 3009.91'),
+      expect(result.current.priceChangeConfirmation?.message).toContain(
+        'Sipariş tutarı güncellendi: 3009.91',
       ),
     );
+    expect(controller.refetchCart).toHaveBeenCalledTimes(1);
+    expect(controller.setSubmitError).not.toHaveBeenCalledWith(
+      expect.stringContaining('Sipariş tutarı güncellendi'),
+    );
+    expect(syncOrderToken).toHaveBeenCalledWith({ forceNetwork: true });
+    expect(routePaymentDto).not.toHaveBeenCalled();
     expect(initializeIyzico3dsDto).not.toHaveBeenCalled();
     expect(confirmOrderDto).not.toHaveBeenCalled();
+  });
+
+  it('continues single-card payment after modal confirmation with the refreshed total', async () => {
+    const syncOrderToken = jest
+      .fn()
+      .mockResolvedValueOnce({ total_price: '3009.91' })
+      .mockResolvedValueOnce({ total_price: '3009.91' });
+    const controller = makeController({ syncOrderToken });
+    const { result } = renderPlaceOrder(controller);
+
+    act(() => {
+      result.current.submit();
+    });
+
+    await waitFor(() => expect(result.current.priceChangeConfirmation).not.toBeNull());
+    await waitFor(() => expect(result.current.isSubmitting).toBe(false));
+
+    // The successful cart refresh hydrates the controller with the amount the
+    // user now sees before the explicit second press.
+    controller.totals = { finalTotal: 3009.91 } as CheckoutController['totals'];
+
+    act(() => {
+      result.current.confirmPriceChange();
+    });
+
+    await waitFor(() => expect(routePaymentDto).toHaveBeenCalledTimes(1));
+    expect(routePaymentDto).toHaveBeenCalledWith(
+      expect.objectContaining({ total_price: 3009.91 }),
+    );
+    expect(syncOrderToken).toHaveBeenCalledTimes(2);
+  });
+
+  it('reopens the modal instead of paying if the price changes again before confirmation', async () => {
+    const syncOrderToken = jest
+      .fn()
+      .mockResolvedValueOnce({ total_price: '3009.91' })
+      .mockResolvedValueOnce({ total_price: '3109.91' });
+    const controller = makeController({ syncOrderToken });
+    const { result } = renderPlaceOrder(controller);
+
+    act(() => {
+      result.current.submit();
+    });
+
+    await waitFor(() => expect(result.current.priceChangeConfirmation).not.toBeNull());
+    await waitFor(() => expect(result.current.isSubmitting).toBe(false));
+    controller.totals = { finalTotal: 3009.91 } as CheckoutController['totals'];
+
+    act(() => {
+      result.current.confirmPriceChange();
+    });
+
+    await waitFor(() =>
+      expect(result.current.priceChangeConfirmation?.message).toContain('3109.91'),
+    );
+    expect(controller.refetchCart).toHaveBeenCalledTimes(2);
+    expect(routePaymentDto).not.toHaveBeenCalled();
+    expect(initializeIyzico3dsDto).not.toHaveBeenCalled();
+    expect(confirmOrderDto).not.toHaveBeenCalled();
+  });
+
+  it('cancels the price-change modal without starting payment', async () => {
+    const syncOrderToken = jest.fn(async () => ({ total_price: '3009.91' }));
+    const controller = makeController({ syncOrderToken });
+    const { result } = renderPlaceOrder(controller);
+
+    act(() => {
+      result.current.submit();
+    });
+
+    await waitFor(() => expect(result.current.priceChangeConfirmation).not.toBeNull());
+
+    act(() => {
+      result.current.cancelPriceChange();
+    });
+
+    expect(result.current.priceChangeConfirmation).toBeNull();
+    expect(routePaymentDto).not.toHaveBeenCalled();
+    expect(initializeIyzico3dsDto).not.toHaveBeenCalled();
+    expect(confirmOrderDto).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the cart and waits for a fresh draft sync on an installment retry', async () => {
+    initializeIyzico3dsDto.mockRejectedValueOnce(
+      new Error('Geçersiz ödeme tutarı. Taksitli tutar ürün bedelinden düşük olamaz.'),
+    );
+    const controller = makeController({
+      card: { ...card, selectedPlan: { installment: 3, perMonth: 970 } },
+      totals: { finalTotal: 2910 },
+    } as unknown as Partial<CheckoutController>);
+    const { result } = renderPlaceOrder(controller);
+
+    act(() => {
+      result.current.submit();
+    });
+
+    await waitFor(() =>
+      expect(result.current.priceChangeConfirmation?.message).toBe(
+        'Geçersiz ödeme tutarı. Taksitli tutar ürün bedelinden düşük olamaz.',
+      ),
+    );
+    expect(controller.refetchCart).toHaveBeenCalledTimes(1);
+    expect(result.current.threeDS).toBeNull();
+
+    await waitFor(() => expect(result.current.isSubmitting).toBe(false));
+    controller.totals = { finalTotal: 3200.01 } as CheckoutController['totals'];
+    controller.card = {
+      ...controller.card,
+      selectedPlan: { installment: 3, perMonth: 1066.67 },
+    } as CheckoutController['card'];
+    const retrySyncOrderToken = controller.syncOrderToken as jest.Mock;
+    retrySyncOrderToken.mockResolvedValueOnce({
+      total_price: '3200.01',
+    });
+
+    act(() => {
+      result.current.confirmPriceChange();
+    });
+
+    await waitFor(() => expect(initializeIyzico3dsDto).toHaveBeenCalledTimes(2));
+    expect(retrySyncOrderToken).toHaveBeenCalledWith({ forceNetwork: true });
+    expect(retrySyncOrderToken.mock.invocationCallOrder[0]).toBeLessThan(
+      initializeIyzico3dsDto.mock.invocationCallOrder[1],
+    );
+    await waitFor(() =>
+      expect(result.current.threeDS).toEqual(
+        expect.objectContaining({ kind: 'iyzico-html' }),
+      ),
+    );
   });
 });

@@ -21,6 +21,7 @@ import {
 } from '../components/checkout-contracts';
 import type { CheckoutContractKind } from '../components/checkout-contracts';
 import { CheckoutSummaryBar } from '../components/checkout-summary-bar';
+import { CheckoutPriceChangeDialog } from '../components/checkout-price-change-dialog';
 import { PaymentWebView } from '../components/payment-webview';
 
 export function CheckoutScreen() {
@@ -69,7 +70,7 @@ export function CheckoutScreen() {
           <EmptyState
             actionLabel="Tekrar Dene"
             description="Ödeme bilgileri yüklenirken bir hata oluştu."
-            onActionPress={() => controller.refetchCart()}
+            onActionPress={controller.retryCheckout}
             primary
             title="Bir Hata Oluştu"
           />
@@ -95,6 +96,10 @@ export function CheckoutScreen() {
   }
 
   const showCardSections = controller.isCardPayment && !controller.card.isRestrictedBin;
+  const isPreparingUpdatedInstallments =
+    controller.isCardPayment &&
+    controller.card.selectedInstallment > 1 &&
+    controller.card.isLoadingInstallments;
 
   const contractData = {
     buyer: controller.shippingAddress,
@@ -237,6 +242,15 @@ export function CheckoutScreen() {
         contractData={contractData}
         kind={openContract}
         onClose={closeContract}
+      />
+      <CheckoutPriceChangeDialog
+        canConfirm={controller.canSubmit && !placeOrder.isSubmitting}
+        isPreparingInstallments={isPreparingUpdatedInstallments}
+        message={placeOrder.priceChangeConfirmation?.message ?? ''}
+        onCancel={placeOrder.cancelPriceChange}
+        onConfirm={placeOrder.confirmPriceChange}
+        open={Boolean(placeOrder.priceChangeConfirmation)}
+        updatedTotal={controller.totals.finalTotal}
       />
       <PaymentWebView payload={placeOrder.threeDS} onClose={placeOrder.closeThreeDS} />
     </AppScreen>
