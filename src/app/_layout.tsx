@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppProviders } from '@/lib/providers/app-providers';
 import { IncomingLinkHandler } from '@/components/navigation/incoming-link-handler';
 import { OtaUpdateWatcher } from '@/components/ota-update-watcher';
+import { AppUpdateChecker } from '@/features/app-update/components/app-update-checker';
 import { CartHydrator } from '@/features/cart/components/cart-hydrator';
 import { PhoneVerificationGate } from '@/features/profile/components/phone-verification-gate';
 import { loadWebStyles } from '../theme/web-css';
@@ -35,6 +36,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppProviders>
         <OtaUpdateWatcher />
+        <AppUpdateChecker />
         <CartHydrator />
         <Stack
           screenOptions={{
