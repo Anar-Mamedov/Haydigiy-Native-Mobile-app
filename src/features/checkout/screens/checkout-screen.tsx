@@ -29,15 +29,30 @@ export function CheckoutScreen() {
   const controller = useCheckoutController();
   const placeOrder = usePlaceOrder(controller);
   const { refetchAddresses, refetchCart } = controller;
+  const { orderSummary, setSubmitError } = controller;
   const [openContract, setOpenContract] = useState<CheckoutContractKind>(null);
 
   const openPreInfoContract = useCallback(() => {
+    if (!orderSummary) {
+      setSubmitError(
+        'Sipariş tutarları API’den henüz alınamadı. Lütfen tekrar deneyin.',
+      );
+      return;
+    }
+    setSubmitError(null);
     setOpenContract('pre-info');
-  }, []);
+  }, [orderSummary, setSubmitError]);
 
   const openDistanceSalesContract = useCallback(() => {
+    if (!orderSummary) {
+      setSubmitError(
+        'Sipariş tutarları API’den henüz alınamadı. Lütfen tekrar deneyin.',
+      );
+      return;
+    }
+    setSubmitError(null);
     setOpenContract('distance-sales');
-  }, []);
+  }, [orderSummary, setSubmitError]);
 
   const closeContract = useCallback(() => {
     setOpenContract(null);
@@ -111,10 +126,10 @@ export function CheckoutScreen() {
       quantity: item.quantity,
       unitPrice: item.unitPrice,
     })),
-    subtotal: controller.subtotal,
-    cargoPrice: controller.hasFreeShipping ? 0 : controller.cargoPrice,
-    serviceFee: controller.totals.serviceFee,
-    total: controller.totals.finalTotal,
+    subtotal: controller.orderSummary?.subtotal ?? 0,
+    cargoPrice: controller.orderSummary?.cargoPrice ?? 0,
+    serviceFee: controller.orderSummary?.serviceFee ?? 0,
+    total: controller.orderSummary?.totalPrice ?? 0,
     paymentMethodName: controller.selectedMethod?.name ?? '',
   };
 
@@ -214,27 +229,16 @@ export function CheckoutScreen() {
               onOpenPreInfo={openPreInfoContract}
             />
           }
-          campaignDiscount={controller.campaignDiscount}
           canSubmit={controller.canSubmit}
-          cargoPrice={controller.cargoPrice}
-          commission={controller.totals.commission}
-          commissionRate={controller.selectedMethod?.commissionRate ?? 0}
-          couponDiscount={controller.effectiveCouponDiscount}
           expanded={controller.isSummaryExpanded}
-          finalTotal={controller.totals.finalTotal}
-          hasFreeShipping={controller.hasFreeShipping}
           hint={placeOrder.isSubmitting ? null : controller.hint}
-          installmentCount={controller.card.selectedInstallment}
-          installmentFee={controller.totals.installmentFee}
-          isFreeShippingCoupon={controller.isFreeShippingCoupon}
+          isSummaryLoading={controller.isOrderSummaryLoading}
           isSubmitting={placeOrder.isSubmitting}
           onSubmit={placeOrder.submit}
           onToggle={controller.toggleSummary}
           reserveBottomSafeArea={false}
-          serviceFee={controller.totals.serviceFee}
-          subtotal={controller.subtotal}
-          submitError={controller.submitError}
-          userDiscount={controller.userDiscount}
+          submitError={controller.submitError ?? controller.orderSummaryError}
+          summary={controller.orderSummary}
         />
       </YStack>
 
@@ -250,7 +254,7 @@ export function CheckoutScreen() {
         onCancel={placeOrder.cancelPriceChange}
         onConfirm={placeOrder.confirmPriceChange}
         open={Boolean(placeOrder.priceChangeConfirmation)}
-        updatedTotal={controller.totals.finalTotal}
+        updatedTotal={controller.orderSummary?.totalPrice ?? 0}
       />
       <PaymentWebView payload={placeOrder.threeDS} onClose={placeOrder.closeThreeDS} />
     </AppScreen>

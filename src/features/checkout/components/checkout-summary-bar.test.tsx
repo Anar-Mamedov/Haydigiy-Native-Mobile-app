@@ -5,19 +5,21 @@ import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { CheckoutSummaryBar, CheckoutSummaryBarProps } from './checkout-summary-bar';
 
 const baseProps: CheckoutSummaryBarProps = {
-  subtotal: 2339.96,
-  userDiscount: 0,
-  campaignDiscount: 0,
-  couponDiscount: 0,
-  isFreeShippingCoupon: false,
-  commission: 0,
-  commissionRate: 0,
-  serviceFee: 0,
-  cargoPrice: 99.99,
-  hasFreeShipping: false,
-  installmentFee: 0,
-  installmentCount: 1,
-  finalTotal: 2339.96,
+  summary: {
+    subtotal: 399.99,
+    userDiscount: 0,
+    campaignDiscount: 0,
+    couponDiscount: 40,
+    cargoPrice: 119.99,
+    serviceFee: 19.99,
+    commissionRate: 0,
+    commission: 0,
+    installmentCount: 1,
+    installmentFee: 0,
+    totalPrice: 499.97,
+    isFreeShippingCoupon: false,
+  },
+  isSummaryLoading: false,
   expanded: false,
   onToggle: jest.fn(),
   canSubmit: false,
@@ -60,12 +62,26 @@ describe('CheckoutSummaryBar', () => {
     expect(screen.getByTestId('checkout-summary-hint')).toHaveTextContent(baseProps.hint!);
   });
 
+  it('renders the expanded amounts from the order-token summary model', () => {
+    renderWithTamagui(<CheckoutSummaryBar {...baseProps} expanded />);
+
+    expect(screen.getByText('₺399,99')).toBeTruthy();
+    expect(screen.getByText('- ₺40,00')).toBeTruthy();
+    expect(screen.getByText('₺19,99')).toBeTruthy();
+    expect(screen.getByText('₺119,99')).toBeTruthy();
+    expect(screen.getAllByText('₺499,97')).toHaveLength(2);
+  });
+
+  it('does not retain an old total while the latest API summary is loading', () => {
+    renderWithTamagui(<CheckoutSummaryBar {...baseProps} isSummaryLoading summary={null} />);
+
+    expect(screen.getByText('—')).toBeTruthy();
+    expect(screen.queryByText('₺499,97')).toBeNull();
+  });
+
   it('announces a submit error accessibly', () => {
     renderWithTamagui(
-      <CheckoutSummaryBar
-        {...baseProps}
-        submitError="Ödeme işlemi başlatılamadı."
-      />,
+      <CheckoutSummaryBar {...baseProps} submitError="Ödeme işlemi başlatılamadı." />,
     );
 
     expect(screen.getByText('Ödeme işlemi başlatılamadı.')).toBeTruthy();

@@ -1,8 +1,7 @@
 /**
- * Single source of truth for checkout amounts. Every total shown, sent to a
- * gateway, or used in a freshness guard must come from here — the formula is
- * never duplicated. Ported 1:1 from the web `frontend/src/lib/orderTotals.ts`
- * so the mobile-charged amount matches the web exactly.
+ * Builds the provisional amount sent to `/order/token` and used for installment
+ * lookup prerequisites. Displayed and charged amounts never use this result;
+ * they come back from the API-authoritative order-token summary.
  */
 
 export type OrderInstallmentSelection = {

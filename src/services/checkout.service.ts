@@ -20,13 +20,27 @@ export interface OrderTokenRequestDto {
 export interface OrderTokenCouponDto {
   code: string;
   discount_type: 'percentage' | 'fixed' | 'free_shipping';
-  discount: number;
+  discount: number | string;
   is_free_shipping: boolean;
 }
 
 export interface OrderTokenResponseDto {
   message?: string;
+  cargo_id?: number | string;
+  payment_method_id?: number | string;
+  subtotal?: number | string;
+  user_discount_amount?: number | string;
+  campaign_discount_amount?: number | string;
+  coupon_price?: number | string;
+  cargo_price?: number | string;
+  cod_price?: number | string;
+  payment_commission_rate?: number | string;
+  payment_fee?: number | string;
+  installment_count?: number | string;
+  interest_amount?: number | string;
+  calculated_total_price?: number | string;
   total_price?: number | string;
+  payment_status_id?: number | string | null;
   coupon?: OrderTokenCouponDto;
   coupon_error?: string;
   garanti?: Record<string, string | number | undefined>;
@@ -172,9 +186,7 @@ export async function queryOrderDto(orderNo: string): Promise<void> {
 }
 
 /** Finalize a Garanti 3D payment from the intercepted callback params (`POST /garanti/callback`). */
-export async function submitGarantiCallbackDto(
-  params: Record<string, string>,
-): Promise<void> {
+export async function submitGarantiCallbackDto(params: Record<string, string>): Promise<void> {
   if (!appEnv.apiBaseUrl) return;
   const body = new URLSearchParams(params).toString();
   await apiClient.post('/garanti/callback', body, {
@@ -189,7 +201,9 @@ export async function submitGarantiCallbackDto(
  */
 export async function getClientIp(): Promise<string> {
   try {
-    const response = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+    const response = await fetch('https://api.ipify.org?format=json', {
+      cache: 'no-store',
+    });
     if (response.ok) {
       const data = (await response.json()) as { ip?: string };
       const ip = data?.ip?.trim();

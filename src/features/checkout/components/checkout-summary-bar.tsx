@@ -3,22 +3,12 @@ import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronDown, ChevronUp } from '@tamagui/lucide-icons-2';
 import { Button, Paragraph, Separator, Spinner, XStack, YStack } from 'tamagui';
+import type { OrderTokenSummary } from '@/types/checkout.types';
 import { formatCurrency } from '@/utils/format-currency';
 
 export interface CheckoutSummaryBarProps {
-  subtotal: number;
-  userDiscount: number;
-  campaignDiscount: number;
-  couponDiscount: number;
-  isFreeShippingCoupon: boolean;
-  commission: number;
-  commissionRate: number;
-  serviceFee: number;
-  cargoPrice: number;
-  hasFreeShipping: boolean;
-  installmentFee: number;
-  installmentCount: number;
-  finalTotal: number;
+  summary: OrderTokenSummary | null;
+  isSummaryLoading: boolean;
   expanded: boolean;
   onToggle: () => void;
   canSubmit: boolean;
@@ -55,6 +45,9 @@ function Row({
 export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
   const insets = useSafeAreaInsets();
   const bottomPadding = props.reserveBottomSafeArea === false ? 0 : insets.bottom;
+  const summary = props.summary;
+  const isFreeShipping = summary?.cargoPrice === 0;
+  const totalLabel = summary ? formatCurrency(summary.totalPrice) : '—';
 
   return (
     <YStack
@@ -75,46 +68,61 @@ export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
           paddingHorizontal="$4"
           paddingVertical="$3"
         >
-          <Row label="Ara Toplam" value={formatCurrency(props.subtotal)} />
-          {props.userDiscount > 0 ? (
-            <Row label="İndirim" tone="discount" value={`- ${formatCurrency(props.userDiscount)}`} />
+          <Row label="Ara Toplam" value={summary ? formatCurrency(summary.subtotal) : '—'} />
+          {summary && summary.userDiscount > 0 ? (
+            <Row
+              label="İndirim"
+              tone="discount"
+              value={`- ${formatCurrency(summary.userDiscount)}`}
+            />
           ) : null}
-          {props.campaignDiscount > 0 ? (
+          {summary && summary.campaignDiscount > 0 ? (
             <Row
               label="Kampanya İndirimi"
               tone="discount"
-              value={`- ${formatCurrency(props.campaignDiscount)}`}
+              value={`- ${formatCurrency(summary.campaignDiscount)}`}
             />
           ) : null}
-          {props.couponDiscount > 0 || props.isFreeShippingCoupon ? (
+          {summary && (summary.couponDiscount > 0 || summary.isFreeShippingCoupon) ? (
             <Row
               label="Kupon İndirimi"
               tone="discount"
-              value={props.couponDiscount > 0 ? `- ${formatCurrency(props.couponDiscount)}` : 'Uygulandı'}
+              value={
+                summary.couponDiscount > 0
+                  ? `- ${formatCurrency(summary.couponDiscount)}`
+                  : 'Uygulandı'
+              }
             />
           ) : null}
-          {props.commission > 0 ? (
+          {summary && summary.commission > 0 ? (
             <Row
-              label={`Komisyon (%${props.commissionRate})`}
-              value={formatCurrency(props.commission)}
+              label={`Komisyon (%${summary.commissionRate})`}
+              value={formatCurrency(summary.commission)}
             />
           ) : null}
-          {props.serviceFee > 0 ? (
-            <Row label="Hizmet Bedeli" value={formatCurrency(props.serviceFee)} />
+          {summary && summary.serviceFee > 0 ? (
+            <Row label="Hizmet Bedeli" value={formatCurrency(summary.serviceFee)} />
           ) : null}
           <Row
             label="Kargo"
-            tone={props.hasFreeShipping ? 'discount' : 'default'}
-            value={props.hasFreeShipping ? 'Ücretsiz' : formatCurrency(props.cargoPrice)}
+            tone={isFreeShipping ? 'discount' : 'default'}
+            value={
+              summary ? (isFreeShipping ? 'Ücretsiz' : formatCurrency(summary.cargoPrice)) : '—'
+            }
           />
-          {props.installmentFee > 0 ? (
+          {summary && summary.installmentFee > 0 ? (
             <Row
-              label={`Vade Farkı (${props.installmentCount} Taksit)`}
-              value={formatCurrency(props.installmentFee)}
+              label={`Vade Farkı (${summary.installmentCount} Taksit)`}
+              value={formatCurrency(summary.installmentFee)}
             />
           ) : null}
           <Separator borderColor="$borderColor" marginVertical="$1" />
-          <Row label="Genel Toplam" tone="total" value={formatCurrency(props.finalTotal)} />
+          <Row label="Genel Toplam" tone="total" value={totalLabel} />
+          {props.isSummaryLoading ? (
+            <Paragraph accessibilityLiveRegion="polite" color="$color10" fontSize={11}>
+              Sipariş tutarları güncelleniyor...
+            </Paragraph>
+          ) : null}
         </YStack>
       ) : null}
 
@@ -168,7 +176,7 @@ export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
                 Toplam
               </Paragraph>
               <Paragraph color="$color" fontSize={17} fontWeight="800" numberOfLines={1}>
-                {formatCurrency(props.finalTotal)}
+                {totalLabel}
               </Paragraph>
             </YStack>
           </XStack>

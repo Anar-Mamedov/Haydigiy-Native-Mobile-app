@@ -3,19 +3,47 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useOrderTokenSync, OrderTokenSyncInput } from './use-order-token-sync';
 import * as checkoutService from '@/services/checkout.service';
+import type { OrderTokenResponseDto } from '@/services/checkout.service';
 
 jest.mock('@/services/checkout.service', () => ({
-  updateOrderTokenDto: jest.fn(async () => ({ total_price: '100.00' })),
+  updateOrderTokenDto: jest.fn(),
 }));
 
 const updateOrderTokenDto = checkoutService.updateOrderTokenDto as jest.MockedFunction<
   typeof checkoutService.updateOrderTokenDto
 >;
 
+function tokenResponse(
+  totalPrice: string,
+  overrides: Partial<OrderTokenResponseDto> = {},
+): OrderTokenResponseDto {
+  return {
+    subtotal: '80.00',
+    user_discount_amount: '0.00',
+    campaign_discount_amount: '0.00',
+    coupon_price: '0.00',
+    cargo_price: '20.00',
+    cod_price: '0.00',
+    payment_commission_rate: '0.00',
+    payment_fee: '0.00',
+    installment_count: 1,
+    interest_amount: '0.00',
+    calculated_total_price: '999.99',
+    total_price: totalPrice,
+    ...overrides,
+  };
+}
+
 function makeInput(overrides: Partial<OrderTokenSyncInput> = {}): OrderTokenSyncInput {
   return {
     orderToken: 'token-1',
-    selectedCargo: { id: 2, name: 'Kargo', logo: '', price: 99.99, sortOrder: 0 },
+    selectedCargo: {
+      id: 2,
+      name: 'Kargo',
+      logo: '',
+      price: 99.99,
+      sortOrder: 0,
+    },
     selectedMethod: {
       id: 7,
       name: 'Kredi Kartı',
@@ -28,12 +56,11 @@ function makeInput(overrides: Partial<OrderTokenSyncInput> = {}): OrderTokenSync
     },
     shippingAddress: { id: 11 } as OrderTokenSyncInput['shippingAddress'],
     billingAddressId: 11,
-    finalTotal: 100,
+    requestTotal: 100,
     installmentCount: 1,
     appliedCoupon: null,
     onCouponError: jest.fn(),
     onCouponRefresh: jest.fn(),
-    onSyncError: jest.fn(),
     ...overrides,
   };
 }
@@ -53,7 +80,7 @@ function renderOrderTokenSync(initialProps: OrderTokenSyncInput) {
 describe('useOrderTokenSync', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    updateOrderTokenDto.mockResolvedValue({ total_price: '100.00' });
+    updateOrderTokenDto.mockResolvedValue(tokenResponse('100.00'));
   });
 
   // Regression: web'de ödeme sayfasına girilip çıkıldıktan sonra mobil checkout,
@@ -84,7 +111,13 @@ describe('useOrderTokenSync', () => {
 
     rerender(
       makeInput({
-        selectedCargo: { id: 5, name: 'Diğer Kargo', logo: '', price: 49.99, sortOrder: 1 },
+        selectedCargo: {
+          id: 5,
+          name: 'Diğer Kargo',
+          logo: '',
+          price: 49.99,
+          sortOrder: 1,
+        },
       }),
     );
     await waitFor(() => expect(updateOrderTokenDto).toHaveBeenCalledTimes(2));
@@ -104,12 +137,45 @@ describe('useOrderTokenSync', () => {
     expect(updateOrderTokenDto).toHaveBeenCalledTimes(1);
   });
 
+  it('publishes a complete API summary and uses total_price for the visible total', async () => {
+    updateOrderTokenDto.mockResolvedValueOnce(
+      tokenResponse('499.97', {
+        subtotal: '399.99',
+        coupon_price: '40.00',
+        cargo_price: '119.99',
+        cod_price: '19.99',
+        calculated_total_price: '777.77',
+      }),
+    );
+    const { result } = renderOrderTokenSync(makeInput());
+
+    await waitFor(() => expect(result.current.summary?.totalPrice).toBe(499.97));
+    expect(result.current.summary).toEqual(
+      expect.objectContaining({
+        subtotal: 399.99,
+        couponDiscount: 40,
+        cargoPrice: 119.99,
+        serviceFee: 19.99,
+      }),
+    );
+    expect(result.current.errorMessage).toBeNull();
+  });
+
+  it('rejects an incomplete pricing response instead of calculating a fallback', async () => {
+    updateOrderTokenDto.mockResolvedValueOnce(tokenResponse('100.00', { cargo_price: undefined }));
+    const { result } = renderOrderTokenSync(makeInput());
+
+    await waitFor(() => expect(result.current.errorMessage).toContain('cargo_price'));
+    expect(result.current.summary).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it('forces a fresh backend write for submit-time cross-device cart checks', async () => {
     const { result } = renderOrderTokenSync(makeInput());
     await waitFor(() => expect(updateOrderTokenDto).toHaveBeenCalledTimes(1));
-    updateOrderTokenDto.mockResolvedValueOnce({ total_price: '600.00' });
+    updateOrderTokenDto.mockResolvedValueOnce(tokenResponse('600.00'));
 
-    let response: { total_price?: string | number } | null = null;
+    let response: OrderTokenResponseDto | null = null;
     await act(async () => {
       response = await result.current.syncNow({ forceNetwork: true });
     });
@@ -119,12 +185,7 @@ describe('useOrderTokenSync', () => {
   });
 
   it('serializes changed snapshots so an older request cannot overwrite the latest state', async () => {
-    let resolveFirst: ((value: { total_price: string; coupon?: {
-      code: string;
-      discount_type: 'fixed';
-      discount: number;
-      is_free_shipping: boolean;
-    } }) => void) | undefined;
+    let resolveFirst: ((value: OrderTokenResponseDto) => void) | undefined;
     updateOrderTokenDto
       .mockImplementationOnce(
         () =>
@@ -132,13 +193,13 @@ describe('useOrderTokenSync', () => {
             resolveFirst = resolve;
           }),
       )
-      .mockResolvedValueOnce({ total_price: '200.00' });
+      .mockResolvedValueOnce(tokenResponse('200.00'));
 
     const onCouponRefresh = jest.fn();
     const { rerender } = renderOrderTokenSync(makeInput({ onCouponRefresh }));
     await waitFor(() => expect(updateOrderTokenDto).toHaveBeenCalledTimes(1));
 
-    rerender(makeInput({ finalTotal: 200, onCouponRefresh }));
+    rerender(makeInput({ requestTotal: 200, onCouponRefresh }));
 
     // The newer write is queued behind the in-flight old snapshot.
     await act(async () => {
@@ -147,15 +208,16 @@ describe('useOrderTokenSync', () => {
     expect(updateOrderTokenDto).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      resolveFirst?.({
-        total_price: '100.00',
-        coupon: {
-          code: 'ESKI',
-          discount_type: 'fixed',
-          discount: 10,
-          is_free_shipping: false,
-        },
-      });
+      resolveFirst?.(
+        tokenResponse('100.00', {
+          coupon: {
+            code: 'ESKI',
+            discount_type: 'fixed',
+            discount: 10,
+            is_free_shipping: false,
+          },
+        }),
+      );
     });
 
     await waitFor(() => expect(updateOrderTokenDto).toHaveBeenCalledTimes(2));
@@ -169,7 +231,7 @@ describe('useOrderTokenSync', () => {
   // o isteği yeniden kullanırsa, arkasına kuyruklanmış B yazımı en son iner ve
   // taslak sipariş B'de kalırdı; İyzico initialize bu bayat satırdan hesap yapar.
   it('queues a fresh write when returning to a snapshot that has a different write scheduled after it', async () => {
-    let resolveFirst: ((value: { total_price: string }) => void) | undefined;
+    let resolveFirst: ((value: OrderTokenResponseDto) => void) | undefined;
     updateOrderTokenDto
       .mockImplementationOnce(
         () =>
@@ -177,13 +239,13 @@ describe('useOrderTokenSync', () => {
             resolveFirst = resolve;
           }),
       )
-      .mockResolvedValue({ total_price: '100.00' });
+      .mockResolvedValue(tokenResponse('100.00'));
 
     const { result, rerender } = renderOrderTokenSync(makeInput());
     await waitFor(() => expect(updateOrderTokenDto).toHaveBeenCalledTimes(1));
 
     // State moves to B (queued behind the in-flight A write), then back to A.
-    rerender(makeInput({ finalTotal: 200 }));
+    rerender(makeInput({ requestTotal: 200 }));
     rerender(makeInput());
 
     let submitResult: { total_price?: string | number } | null = null;
@@ -191,7 +253,7 @@ describe('useOrderTokenSync', () => {
       const submitPromise = result.current.syncNow().then((response) => {
         submitResult = response;
       });
-      resolveFirst?.({ total_price: '100.00' });
+      resolveFirst?.(tokenResponse('100.00'));
       await submitPromise;
     });
 
@@ -213,7 +275,9 @@ describe('useOrderTokenSync', () => {
   });
 
   it('surfaces a backend coupon error through the callback', async () => {
-    updateOrderTokenDto.mockResolvedValue({ coupon_error: 'Kupon geçersiz.' });
+    updateOrderTokenDto.mockResolvedValue(
+      tokenResponse('100.00', { coupon_error: 'Kupon geçersiz.' }),
+    );
     const onCouponError = jest.fn();
 
     renderOrderTokenSync(
@@ -238,13 +302,12 @@ describe('useOrderTokenSync', () => {
     await waitFor(() => expect(updateOrderTokenDto).not.toHaveBeenCalled());
   });
 
-  it('ignores 422 responses silently like the web sync effect', async () => {
+  it('exposes a sync error when the API cannot provide the authoritative summary', async () => {
     updateOrderTokenDto.mockRejectedValue({ response: { status: 422 } });
-    const onSyncError = jest.fn();
-
-    renderOrderTokenSync(makeInput({ onSyncError }));
+    const { result } = renderOrderTokenSync(makeInput());
 
     await waitFor(() => expect(updateOrderTokenDto).toHaveBeenCalledTimes(1));
-    expect(onSyncError).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.errorMessage).not.toBeNull());
+    expect(result.current.summary).toBeNull();
   });
 });

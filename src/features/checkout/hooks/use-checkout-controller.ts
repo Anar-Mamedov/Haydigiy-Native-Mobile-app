@@ -133,7 +133,10 @@ export function useCheckoutController() {
   // ---- Pricing inputs ----
   const subtotal = calculateCartSubtotal(items);
   const userDiscount = checkoutBootstrap.cartData?.userDiscount ?? 0;
-  const campaigns = useMemo(() => checkoutBootstrap.cartData?.campaigns ?? [], [checkoutBootstrap.cartData?.campaigns]);
+  const campaigns = useMemo(
+    () => checkoutBootstrap.cartData?.campaigns ?? [],
+    [checkoutBootstrap.cartData?.campaigns],
+  );
   const campaignBasis = Math.max(0, subtotal - userDiscount);
   const freeShippingCampaign = getFreeShippingCampaign(campaigns, campaignBasis);
   const isFreeShippingCoupon = Boolean(appliedCoupon?.isFreeShipping);
@@ -179,7 +182,10 @@ export function useCheckoutController() {
       calculateOrderTotals({
         ...pricingInput,
         installment: card.selectedPlan
-          ? { installment: card.selectedPlan.installment, perMonth: card.selectedPlan.perMonth }
+          ? {
+              installment: card.selectedPlan.installment,
+              perMonth: card.selectedPlan.perMonth,
+            }
           : null,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -215,7 +221,7 @@ export function useCheckoutController() {
     billingAddressId: sendInvoiceToSameAddress
       ? (shippingAddress?.id ?? null)
       : (billingAddress?.id ?? shippingAddress?.id ?? null),
-    finalTotal: totals.finalTotal,
+    requestTotal: totals.finalTotal,
     installmentCount:
       isCardPayment && card.selectedPlan && card.selectedPlan.installment > 1
         ? card.selectedPlan.installment
@@ -226,7 +232,7 @@ export function useCheckoutController() {
       setAppliedCoupon(null);
       setCouponError(message);
     }, []),
-    onCouponRefresh: useCallback((coupon: { code: string; discount_type: 'percentage' | 'fixed' | 'free_shipping'; discount: number; is_free_shipping: boolean }) => {
+    onCouponRefresh: useCallback((coupon) => {
       setAppliedCoupon((previous) => ({
         code: coupon.code || previous?.code || '',
         discountType: coupon.discount_type || previous?.discountType || 'fixed',
@@ -236,9 +242,6 @@ export function useCheckoutController() {
         isCombinable: previous?.isCombinable,
       }));
       setCouponError(null);
-    }, []),
-    onSyncError: useCallback((message: string) => {
-      setSubmitError(message);
     }, []),
   });
 
@@ -329,10 +332,12 @@ export function useCheckoutController() {
   // ---- Submit gating ----
   const billingResolved = sendInvoiceToSameAddress || Boolean(billingAddress);
   const isSelectedInstallmentReady =
-    card.selectedInstallment <= 1 ||
-    (Boolean(card.selectedPlan) && !card.isLoadingInstallments);
+    card.selectedInstallment <= 1 || (Boolean(card.selectedPlan) && !card.isLoadingInstallments);
   const canSubmit =
     isAgreementChecked &&
+    Boolean(orderTokenSync.summary) &&
+    !orderTokenSync.isLoading &&
+    !orderTokenSync.errorMessage &&
     Boolean(shippingAddress) &&
     Boolean(selectedCargo) &&
     Boolean(selectedMethod) &&
@@ -340,15 +345,20 @@ export function useCheckoutController() {
     (!isCardPayment || (card.isValid && isSelectedInstallmentReady));
 
   const hint = useMemo(() => {
+    if (orderTokenSync.isLoading) return 'Sipariş tutarları API’den alınıyor.';
+    if (orderTokenSync.errorMessage) return 'Sipariş tutarları alınamadı.';
     if (isCardPayment && card.isRestrictedBin) return 'Bu kartla ödeme yapılamaz.';
     if (isCardPayment && !card.isValid) return 'Kart bilgilerini eksiksiz doldurun.';
     if (isCardPayment && card.selectedInstallment > 1 && card.isLoadingInstallments) {
       return 'Güncel taksit tutarları hesaplanıyor.';
     }
-    if (isCardPayment && card.selectedPlan) return 'Taksitli ödeme için 3D doğrulamaya yönlendirileceksiniz.';
+    if (isCardPayment && card.selectedPlan)
+      return 'Taksitli ödeme için 3D doğrulamaya yönlendirileceksiniz.';
     return null;
   }, [
     isCardPayment,
+    orderTokenSync.isLoading,
+    orderTokenSync.errorMessage,
     card.isRestrictedBin,
     card.isValid,
     card.isLoadingInstallments,
@@ -420,6 +430,9 @@ export function useCheckoutController() {
     cargoPrice,
     totals,
     singlePaymentTotal: baseTotals.singlePaymentTotal,
+    orderSummary: orderTokenSync.summary,
+    isOrderSummaryLoading: orderTokenSync.isLoading,
+    orderSummaryError: orderTokenSync.errorMessage,
     // contracts + submit
     isAgreementChecked,
     setIsAgreementChecked,

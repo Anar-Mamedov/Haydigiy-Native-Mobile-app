@@ -47,6 +47,25 @@ export type AppliedCoupon = {
   isCombinable?: boolean;
 };
 
+/**
+ * API-authoritative monetary snapshot returned by `POST /order/token`.
+ * Checkout UI and payment routing consume this model without recalculating it.
+ */
+export type OrderTokenSummary = {
+  subtotal: number;
+  userDiscount: number;
+  campaignDiscount: number;
+  couponDiscount: number;
+  cargoPrice: number;
+  serviceFee: number;
+  commissionRate: number;
+  commission: number;
+  installmentCount: number;
+  installmentFee: number;
+  totalPrice: number;
+  isFreeShippingCoupon: boolean;
+};
+
 /** A saved address enriched with the location IDs checkout needs (cargo + Garanti). */
 export type CheckoutAddress = {
   id: number;
