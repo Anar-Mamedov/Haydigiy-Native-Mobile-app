@@ -1,18 +1,35 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppState } from 'react-native';
 import { useLatestAppVersionQuery } from '../api/app-update.queries';
-import { AppUpdateDialog } from './app-update-dialog';
+import { AppUpdateContext } from '../context/app-update-context';
 import { getCurrentStorePlatform, openAppStore } from '../utils/app-store';
-import { getInstalledAppVersion } from '../utils/installed-app-version';
+import {
+  getInstalledAppVersion,
+  type InstalledAppVersion,
+} from '../utils/installed-app-version';
 import { isRemoteVersionNewer } from '../utils/version-comparison';
 
 const STORE_OPEN_ERROR = 'Uygulama mağazası açılamadı. Lütfen daha sonra tekrar deneyin.';
 
-export function AppUpdateChecker() {
+export function formatInstalledVersion(version: InstalledAppVersion): string {
+  const { applicationVersion, buildVersion } = version;
+
+  if (applicationVersion && buildVersion) {
+    return `${applicationVersion} (${buildVersion})`;
+  }
+
+  return applicationVersion ?? buildVersion ?? 'Bilinmiyor';
+}
+
+export function AppUpdateProvider({ children }: PropsWithChildren) {
   const isNativePlatform = getCurrentStorePlatform() !== null;
   const latestVersionQuery = useLatestAppVersionQuery(isNativePlatform);
   const installedVersion = useMemo(() => getInstalledAppVersion(), []);
-  const [dismissedVersion, setDismissedVersion] = useState<string | null>(null);
+  const installedVersionLabel = useMemo(
+    () => formatInstalledVersion(installedVersion),
+    [installedVersion],
+  );
+  const [dismissedHomeVersion, setDismissedHomeVersion] = useState<string | null>(null);
   const [storeError, setStoreError] = useState<string | null>(null);
   const [isOpeningStore, setIsOpeningStore] = useState(false);
   const [isRefreshingVersion, setIsRefreshingVersion] = useState(false);
@@ -25,7 +42,8 @@ export function AppUpdateChecker() {
   const isUpdateAvailable = remoteVersion
     ? isRemoteVersionNewer(remoteVersion, installedVersion)
     : false;
-  const isDialogOpen = isUpdateAvailable && dismissedVersion !== remoteVersion;
+  const isHomeBannerVisible =
+    isUpdateAvailable && remoteVersion !== dismissedHomeVersion;
 
   useEffect(() => {
     let isSubscribed = true;
@@ -35,15 +53,10 @@ export function AppUpdateChecker() {
         setIsRefreshingVersion(true);
         setStoreError(null);
 
-        void refetch().then((result) => {
-          if (!isSubscribed) {
-            return;
+        void refetch().then(() => {
+          if (isSubscribed) {
+            setIsRefreshingVersion(false);
           }
-
-          if (!result.error) {
-            setDismissedVersion(null);
-          }
-          setIsRefreshingVersion(false);
         });
       }
     });
@@ -60,9 +73,9 @@ export function AppUpdateChecker() {
     }
   }, [error]);
 
-  const dismissDialog = useCallback(() => {
+  const dismissHomeBanner = useCallback(() => {
     if (remoteVersion) {
-      setDismissedVersion(remoteVersion);
+      setDismissedHomeVersion(remoteVersion);
     }
     setStoreError(null);
   }, [remoteVersion]);
@@ -73,24 +86,34 @@ export function AppUpdateChecker() {
 
     try {
       await openAppStore();
-      if (remoteVersion) {
-        setDismissedVersion(remoteVersion);
-      }
     } catch (error) {
       console.error('App store could not be opened:', error);
       setStoreError(STORE_OPEN_ERROR);
     } finally {
       setIsOpeningStore(false);
     }
-  }, [remoteVersion]);
+  }, []);
 
-  return (
-    <AppUpdateDialog
-      errorMessage={storeError}
-      isOpeningStore={isOpeningStore}
-      onConfirm={openStore}
-      onDismiss={dismissDialog}
-      open={isDialogOpen}
-    />
+  const contextValue = useMemo(
+    () => ({
+      dismissHomeBanner,
+      errorMessage: storeError,
+      installedVersionLabel,
+      isHomeBannerVisible,
+      isOpeningStore,
+      isUpdateAvailable,
+      openStore,
+    }),
+    [
+      dismissHomeBanner,
+      installedVersionLabel,
+      isHomeBannerVisible,
+      isOpeningStore,
+      isUpdateAvailable,
+      openStore,
+      storeError,
+    ],
   );
+
+  return <AppUpdateContext value={contextValue}>{children}</AppUpdateContext>;
 }

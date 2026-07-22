@@ -14,6 +14,7 @@ import { OtpVerification } from '../../auth/components/otp-verification';
 import { AccountHub } from '../components/account-hub';
 import { AccountHeader } from '../components/account-header';
 import { useUserProfileQuery } from '../api/profile.queries';
+import { ProfileAppUpdateBanner } from '@/features/app-update/components/profile-app-update-banner';
 
 type ActiveView = 'login' | 'register' | 'fast-login' | 'forgot-password' | 'otp';
 
@@ -95,7 +96,10 @@ export function ProfileScreen() {
         }
         onScroll={handleScroll}
       >
-        <AccountHub onLogout={handleLogout} />
+        <YStack gap="$4">
+          <ProfileAppUpdateBanner />
+          <AccountHub onLogout={handleLogout} />
+        </YStack>
       </AppScreen>
     );
   }

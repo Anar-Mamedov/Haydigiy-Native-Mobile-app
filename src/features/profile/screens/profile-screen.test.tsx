@@ -26,6 +26,10 @@ jest.mock('@/features/promotions/components/top-banner', () => ({
   TopBanner: () => null,
 }));
 
+jest.mock('@/features/app-update/components/profile-app-update-banner', () => ({
+  ProfileAppUpdateBanner: () => null,
+}));
+
 describe('ProfileScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();

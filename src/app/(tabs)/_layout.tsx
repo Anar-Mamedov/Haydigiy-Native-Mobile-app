@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { YStack, useTheme } from 'tamagui';
 import { BottomNavigationBar } from '@/components/navigation/bottom-navigation-bar';
+import { HomeAppUpdateBanner } from '@/features/app-update/components/home-app-update-banner';
 
 export const unstable_settings = {
   anchor: '(home)',
@@ -24,6 +25,7 @@ export default function TabsLayout() {
           }}
         />
       </YStack>
+      <HomeAppUpdateBanner />
       <BottomNavigationBar />
     </YStack>
   );

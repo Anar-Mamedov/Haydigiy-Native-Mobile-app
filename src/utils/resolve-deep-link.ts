@@ -27,6 +27,9 @@ const APP_ROUTE_ROOTS = new Set([
   'sifremi-sifirla',
 ]);
 
+/** Expo'nun development build'i başlatmak için kullandığı, app rotası olmayan yollar. */
+const RESERVED_NATIVE_ROOTS = new Set(['expo-development-client']);
+
 /** Web kök yolu → app rotası (app karşılığı olan ticari sayfalar). */
 const WEB_TO_APP: Record<string, string> = {
   sepet: '/cart',
@@ -155,6 +158,9 @@ export function resolveDeepLinkPath(input: string): string {
     if (segments.length === 0) return '/';
 
     const first = segments[0].toLowerCase();
+
+    // Development client'ın manifest URL'ini ürün slug'ı gibi yorumlama.
+    if (RESERVED_NATIVE_ROOTS.has(first)) return '/';
 
     // Zaten app rotası olan üst-seviye yollar → alt yol + query ile geçir.
     if (APP_ROUTE_ROOTS.has(first)) {

@@ -127,6 +127,21 @@ describe('resolveDeepLinkPath', () => {
     expect(resolveDeepLinkPath('haydigiywebviewapp://')).toBe('/');
   });
 
+  it('ignores Expo development-client launcher URLs instead of treating them as products', () => {
+    const manifestUrl = encodeURIComponent('http://192.168.1.10:8081');
+
+    expect(
+      resolveDeepLinkPath(
+        `haydigiywebviewapp://expo-development-client/?url=${manifestUrl}`,
+      ),
+    ).toBe('/');
+    expect(
+      resolveDeepLinkPath(
+        `exp+haydigiy-webview-app://expo-development-client/?url=${manifestUrl}`,
+      ),
+    ).toBe('/');
+  });
+
   it('never throws on malformed input and falls back safely', () => {
     expect(() => resolveDeepLinkPath('%%%not-a-url%%%')).not.toThrow();
     expect(() => resolveDeepLinkPath('haydigiywebviewapp:///?to=%E0%A4%A')).not.toThrow();

@@ -6,6 +6,10 @@ jest.mock('@/components/navigation/bottom-navigation-bar', () => ({
   BottomNavigationBar: () => null,
 }));
 
+jest.mock('@/features/app-update/components/home-app-update-banner', () => ({
+  HomeAppUpdateBanner: () => null,
+}));
+
 import { unstable_settings } from '@/app/(tabs)/_layout';
 
 describe('tabs layout routing', () => {
