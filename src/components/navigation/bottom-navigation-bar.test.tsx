@@ -3,11 +3,12 @@ import { BottomNavigationBar } from '@/components/navigation/bottom-navigation-b
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
 const mockPush = jest.fn();
+const mockReplace = jest.fn();
 let mockPathname = '/';
 
 jest.mock('expo-router', () => ({
   usePathname: () => mockPathname,
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -21,6 +22,7 @@ jest.mock('@/features/cart/api/cart.queries', () => ({
 describe('BottomNavigationBar', () => {
   beforeEach(() => {
     mockPush.mockClear();
+    mockReplace.mockClear();
     mockPathname = '/';
   });
 
@@ -40,6 +42,24 @@ describe('BottomNavigationBar', () => {
     fireEvent.press(screen.getByLabelText('Sepetim'));
 
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('returns to the home root when Home is pressed from a category route', () => {
+    mockPathname = '/kategori/sicak-yaz-indirimleri';
+
+    renderWithTamagui(<BottomNavigationBar />);
+
+    fireEvent.press(screen.getByLabelText('Anasayfa'));
+
+    expect(mockReplace).toHaveBeenCalledWith('/');
+  });
+
+  it('keeps the user on the home root when Home is pressed on the home route', () => {
+    renderWithTamagui(<BottomNavigationBar />);
+
+    fireEvent.press(screen.getByLabelText('Anasayfa'));
+
+    expect(mockReplace).toHaveBeenCalledWith('/');
   });
 
   it('shows the cart badge count', () => {

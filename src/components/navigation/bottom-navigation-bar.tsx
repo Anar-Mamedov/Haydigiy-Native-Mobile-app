@@ -148,6 +148,11 @@ export function BottomNavigationBar() {
 
   const navigate = useCallback(
     (path: TabItem['path']) => {
+      if (path === '/') {
+        router.replace(path);
+        return;
+      }
+
       if (isTabActive(pathname, path)) return;
       router.push(path);
     },
