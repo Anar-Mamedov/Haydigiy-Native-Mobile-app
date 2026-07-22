@@ -8,7 +8,9 @@ export function useLatestAppVersionQuery(enabled = true) {
     enabled,
     queryKey: appUpdateKeys.latestVersion(),
     queryFn: async () => mapAppVersionNumber(await getAppVersionNumberDto()),
+    gcTime: 0,
     refetchOnMount: 'always',
+    refetchOnReconnect: 'always',
     staleTime: 0,
   });
 }

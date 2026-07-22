@@ -25,6 +25,8 @@ export function AppUpdateDialog({
         }
       }}
       open={open}
+      overlayBackgroundColor="$black"
+      overlayOpacity={0.5}
     >
       <YStack gap="$4">
         <AlertDialog.Title asChild>

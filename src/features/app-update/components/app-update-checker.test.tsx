@@ -56,7 +56,7 @@ const getInstalledVersion = getInstalledAppVersion as jest.MockedFunction<
 >;
 
 describe('AppUpdateChecker', () => {
-  const refetch = jest.fn(async () => undefined);
+  const refetch = jest.fn(async () => ({ error: null }) as never);
   let appStateListeners: ((state: AppStateStatus) => void)[];
 
   beforeEach(() => {
@@ -69,6 +69,8 @@ describe('AppUpdateChecker', () => {
     useLatestVersion.mockReturnValue({
       data: '27',
       error: null,
+      isFetchedAfterMount: true,
+      isFetching: false,
       refetch,
     });
     jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, handler) => {
@@ -87,7 +89,27 @@ describe('AppUpdateChecker', () => {
     expect(screen.getByRole('button', { name: 'Evet' })).toBeTruthy();
     updateRender.unmount();
 
-    useLatestVersion.mockReturnValue({ data: '26', error: null, refetch });
+    useLatestVersion.mockReturnValue({
+      data: '26',
+      error: null,
+      isFetchedAfterMount: true,
+      isFetching: false,
+      refetch,
+    });
+    renderWithTamagui(<AppUpdateChecker />);
+
+    expect(screen.queryByRole('button', { name: 'Evet' })).toBeNull();
+  });
+
+  it('does not use cached version data while waiting for a fresh response', () => {
+    useLatestVersion.mockReturnValue({
+      data: '27',
+      error: null,
+      isFetchedAfterMount: false,
+      isFetching: true,
+      refetch,
+    });
+
     renderWithTamagui(<AppUpdateChecker />);
 
     expect(screen.queryByRole('button', { name: 'Evet' })).toBeNull();
@@ -117,5 +139,25 @@ describe('AppUpdateChecker', () => {
     });
 
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides previous version data while a foreground refresh is pending', () => {
+    const pendingRefetch = jest.fn(() => new Promise<never>(() => undefined));
+    useLatestVersion.mockReturnValue({
+      data: '27',
+      error: null,
+      isFetchedAfterMount: true,
+      isFetching: false,
+      refetch: pendingRefetch,
+    });
+    renderWithTamagui(<AppUpdateChecker />);
+
+    expect(screen.getByRole('button', { name: 'Evet' })).toBeTruthy();
+
+    act(() => {
+      appStateListeners.forEach((listener) => listener('active'));
+    });
+
+    expect(screen.queryByRole('button', { name: 'Evet' })).toBeNull();
   });
 });

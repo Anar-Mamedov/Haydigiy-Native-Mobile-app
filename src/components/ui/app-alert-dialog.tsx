@@ -1,11 +1,15 @@
-import { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { AlertDialog } from 'tamagui';
+
+type AlertDialogOverlayProps = ComponentProps<typeof AlertDialog.Overlay>;
 
 export type AppAlertDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
   maxWidth?: number;
+  overlayBackgroundColor?: AlertDialogOverlayProps['backgroundColor'];
+  overlayOpacity?: number;
 };
 
 /**
@@ -20,11 +24,17 @@ export function AppAlertDialog({
   onOpenChange,
   children,
   maxWidth = 360,
+  overlayBackgroundColor = '$shadowColor',
+  overlayOpacity = 0.5,
 }: AppAlertDialogProps) {
   return (
     <AlertDialog onOpenChange={onOpenChange} open={open}>
       <AlertDialog.Portal>
-        <AlertDialog.Overlay backgroundColor="$shadowColor" key="overlay" opacity={0.5} />
+        <AlertDialog.Overlay
+          backgroundColor={overlayBackgroundColor}
+          key="overlay"
+          opacity={overlayOpacity}
+        />
         <AlertDialog.Content
           backgroundColor="$background"
           borderColor="$borderColor"

@@ -15,8 +15,12 @@ export function AppUpdateChecker() {
   const [dismissedVersion, setDismissedVersion] = useState<string | null>(null);
   const [storeError, setStoreError] = useState<string | null>(null);
   const [isOpeningStore, setIsOpeningStore] = useState(false);
-  const { data, error, refetch } = latestVersionQuery;
-  const remoteVersion = data ?? null;
+  const [isRefreshingVersion, setIsRefreshingVersion] = useState(false);
+  const { data, error, isFetchedAfterMount, isFetching, refetch } = latestVersionQuery;
+  const remoteVersion =
+    isFetchedAfterMount && !isFetching && !isRefreshingVersion && !error
+      ? (data ?? null)
+      : null;
 
   const isUpdateAvailable = remoteVersion
     ? isRemoteVersionNewer(remoteVersion, installedVersion)
@@ -24,15 +28,30 @@ export function AppUpdateChecker() {
   const isDialogOpen = isUpdateAvailable && dismissedVersion !== remoteVersion;
 
   useEffect(() => {
+    let isSubscribed = true;
+
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active' && isNativePlatform) {
-        setDismissedVersion(null);
+        setIsRefreshingVersion(true);
         setStoreError(null);
-        refetch();
+
+        void refetch().then((result) => {
+          if (!isSubscribed) {
+            return;
+          }
+
+          if (!result.error) {
+            setDismissedVersion(null);
+          }
+          setIsRefreshingVersion(false);
+        });
       }
     });
 
-    return () => subscription.remove();
+    return () => {
+      isSubscribed = false;
+      subscription.remove();
+    };
   }, [isNativePlatform, refetch]);
 
   useEffect(() => {
