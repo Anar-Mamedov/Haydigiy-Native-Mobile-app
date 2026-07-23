@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidTurkishMobile } from '@/utils/turkish-phone';
+import { isAddressTitle } from '../utils/address-title';
 import { isValidTurkishId } from '../utils/turkish-id';
 
 export const INVOICE_TYPE_OPTIONS = [
@@ -9,7 +10,12 @@ export const INVOICE_TYPE_OPTIONS = [
 
 export const addressSchema = z
   .object({
-    title: z.string().trim().min(1, { message: 'Adres başlığı zorunludur' }),
+    title: z
+      .string()
+      .trim()
+      .refine((value): boolean => isAddressTitle(value), {
+        message: 'Geçerli bir adres başlığı seçiniz',
+      }),
     name: z
       .string()
       .trim()

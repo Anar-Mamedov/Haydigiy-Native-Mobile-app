@@ -14,9 +14,11 @@ import {
   useNeighbourhoodsQuery,
 } from '../api/address.queries';
 import { useAddAddressMutation, useUpdateAddressMutation } from '../api/address.mutations';
+import { ADDRESS_TITLES } from '../utils/address-title';
 import { InvoiceFields } from './invoice-fields';
 
 const PHONE_DISPLAY_MAX_LENGTH = 14;
+const ADDRESS_TITLE_OPTIONS = ADDRESS_TITLES.map((title) => ({ label: title, value: title }));
 
 /** Blank form values; the create screen clones this and prefills user details. */
 export const EMPTY_ADDRESS_VALUES: AddressFormValues = {
@@ -126,14 +128,14 @@ export function AddressForm({ mode, addressId, initialValues, onSuccess }: Addre
       <Controller
         control={control}
         name="title"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <AppInput
+        render={({ field: { onChange, value } }) => (
+          <AppSelect
             errorMessage={errors.title?.message}
             label="Adres Başlığı *"
-            onBlur={onBlur}
-            onChangeText={onChange}
-            placeholder="Ev, İş, vb."
-            value={value}
+            onValueChange={(next) => onChange(String(next))}
+            options={ADDRESS_TITLE_OPTIONS}
+            placeholder="Seçiniz"
+            value={value || null}
           />
         )}
       />

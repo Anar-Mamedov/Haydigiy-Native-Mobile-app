@@ -1,4 +1,5 @@
 import { addressSchema } from './address.schema';
+import { ADDRESS_TITLES } from '../utils/address-title';
 
 const validIndividual = {
   title: 'Ev',
@@ -39,6 +40,15 @@ describe('addressSchema', () => {
     expect(addressSchema.safeParse({ ...validIndividual, neighbourhoodId: '' }).success).toBe(false);
     expect(addressSchema.safeParse({ ...validIndividual, addressLine: '' }).success).toBe(false);
     expect(addressSchema.safeParse({ ...validIndividual, phone: '123' }).success).toBe(false);
+  });
+
+  it('accepts only the fixed address title options', () => {
+    for (const title of ADDRESS_TITLES) {
+      expect(addressSchema.safeParse({ ...validIndividual, title }).success).toBe(true);
+    }
+
+    expect(addressSchema.safeParse({ ...validIndividual, title: 'Ev Adresim' }).success).toBe(false);
+    expect(addressSchema.safeParse({ ...validIndividual, title: 'İş' }).success).toBe(false);
   });
 
   it('requires VKN/TCKN, tax office and company name for corporate invoices', () => {

@@ -46,7 +46,7 @@ describe('mapAddressToFormValues', () => {
   it('extracts the national phone, stringifies ids and reads the corporate invoice', () => {
     const result = mapAddressToFormValues({
       id: 3,
-      title: 'İş',
+      title: 'İş Yeri',
       name: 'Anar',
       surname: 'Mamedov',
       phone: '05551234567',
@@ -63,7 +63,7 @@ describe('mapAddressToFormValues', () => {
     });
 
     expect(result).toEqual({
-      title: 'İş',
+      title: 'İş Yeri',
       name: 'Anar',
       surname: 'Mamedov',
       phone: '5551234567',
@@ -85,6 +85,11 @@ describe('mapAddressToFormValues', () => {
     expect(result.invoiceType).toBe('individual');
     expect(result.isEFatura).toBe(false);
     expect(result.cityId).toBe('');
+  });
+
+  it('clears unsupported legacy titles so edit requires a fixed option', () => {
+    const result = mapAddressToFormValues({ id: 2, title: 'Ev Adresim' });
+    expect(result.title).toBe('');
   });
 
   it('handles scalar location ids and serialized backend flags', () => {

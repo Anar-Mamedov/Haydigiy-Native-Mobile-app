@@ -1,6 +1,7 @@
 import { AddressDetailDto, AddressDto } from '@/services/address.service';
 import { extractTurkishNationalNumber } from '@/utils/turkish-phone';
 import { Address, AddressFormValues } from '@/types/address.types';
+import { isAddressTitle } from '../utils/address-title';
 
 /** Maps a raw address DTO to the domain model used by the list card. */
 export function mapAddress(dto: AddressDto): Address {
@@ -32,7 +33,7 @@ export function mapAddressToFormValues(dto: AddressDetailDto): AddressFormValues
   const isCorporate =
     dto.billing_type === 'corporate' || isEnabledFlag(dto.is_invoice);
   return {
-    title: dto.title ?? '',
+    title: isAddressTitle(dto.title) ? dto.title : '',
     name: dto.name ?? '',
     surname: dto.surname ?? '',
     phone: dto.phone ? extractTurkishNationalNumber(dto.phone) : '',
