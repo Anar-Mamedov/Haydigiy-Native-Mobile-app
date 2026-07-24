@@ -122,7 +122,11 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
   const { isFavorite, toggleFavorite: handleToggleFavorite } = useToggleFavorite(product);
   // Track the image currently shown in the card so the detail screen can open
   // on the same one.
-  const [imageIndex, setImageIndex] = useState(0);
+  const [imageSelection, setImageSelection] = useState({
+    productId: product.id,
+    index: 0,
+  });
+  const imageIndex = imageSelection.productId === product.id ? imageSelection.index : 0;
 
   const ratingValue = product.rating ?? 0;
   const fullStars = Math.floor(ratingValue);
@@ -157,9 +161,11 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
       <YStack width="100%">
         <YStack width="100%" aspectRatio={2 / 3} backgroundColor="$color3" position="relative">
           <ProductImageCarousel
+            key={product.id}
             images={images}
             onOpen={() => onOpen(imageIndex)}
-            onIndexChange={setImageIndex}
+            onIndexChange={(index) => setImageSelection({ productId: product.id, index })}
+            productId={product.id}
             title={product.title}
           />
 
