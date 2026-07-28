@@ -81,6 +81,25 @@ describe('OrderDetailSummary', () => {
     expect(onPressCargoTracking).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the selected cargo company before a tracking code is assigned', () => {
+    renderWithTamagui(
+      <OrderDetailSummary
+        order={makeOrder({
+          status: 'Onaylandı',
+          statusId: 3,
+          trackingCode: null,
+          cargoCompanyName: 'Aras Kargo',
+        })}
+        onPressCargoTracking={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Kargo Firması:')).toBeTruthy();
+    expect(screen.getByText('Aras Kargo')).toBeTruthy();
+    expect(screen.queryByText('Takip:')).toBeNull();
+    expect(screen.queryByLabelText('Kargo Takip')).toBeNull();
+  });
+
   it('hides the cargo tracking action for cancelled orders', () => {
     renderWithTamagui(
       <OrderDetailSummary order={makeOrder({ statusId: 4 })} onPressCargoTracking={jest.fn()} />,

@@ -88,7 +88,7 @@ export function OrderDetailSummary({ order, onPressCargoTracking }: OrderDetailS
           )}
         </Paragraph>
 
-        {order.trackingCode && order.statusId !== 4 ? (
+        {(order.cargoCompanyName || order.trackingCode) && order.statusId !== 4 ? (
           <XStack
             alignItems="center"
             borderTopColor="$borderColor"
@@ -110,19 +110,32 @@ export function OrderDetailSummary({ order, onPressCargoTracking }: OrderDetailS
               )}
               <YStack flex={1} gap="$0.5" minWidth={0}>
                 {order.cargoCompanyName ? (
-                  <Paragraph color="$color" fontSize={12} fontWeight="700" numberOfLines={1}>
-                    {order.cargoCompanyName}
+                  <XStack alignItems="center" gap="$1" minWidth={0}>
+                    <Paragraph color="$color10" fontSize={12}>
+                      Kargo Firması:
+                    </Paragraph>
+                    <Paragraph
+                      color="$color"
+                      flex={1}
+                      fontSize={12}
+                      fontWeight="700"
+                      numberOfLines={1}
+                    >
+                      {order.cargoCompanyName}
+                    </Paragraph>
+                  </XStack>
+                ) : null}
+                {order.trackingCode ? (
+                  <Paragraph color="$color10" fontSize={12} numberOfLines={1}>
+                    Takip:{' '}
+                    <Paragraph color="$blue10" fontSize={12} fontWeight="700">
+                      {order.trackingCode}
+                    </Paragraph>
                   </Paragraph>
                 ) : null}
-                <Paragraph color="$color10" fontSize={12} numberOfLines={1}>
-                  Takip:{' '}
-                  <Paragraph color="$blue10" fontSize={12} fontWeight="700">
-                    {order.trackingCode}
-                  </Paragraph>
-                </Paragraph>
               </YStack>
             </XStack>
-            {onPressCargoTracking ? (
+            {order.trackingCode && onPressCargoTracking ? (
               <Button
                 accessibilityLabel="Kargo Takip"
                 backgroundColor="$brand"
