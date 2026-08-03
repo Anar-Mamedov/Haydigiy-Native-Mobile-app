@@ -57,6 +57,17 @@ describe('IncomingLinkHandler', () => {
     expect(mockDismissTo).toHaveBeenCalledWith('/kategori/haydigiy-butik?c=147');
   });
 
+  it('leaves Insider test-device URLs to the Insider SDK', () => {
+    render(<IncomingLinkHandler />);
+
+    act(() => {
+      urlListener?.({ url: 'insiderhaydigiyprod://test_device/123' });
+      jest.runOnlyPendingTimers();
+    });
+
+    expect(mockDismissTo).not.toHaveBeenCalled();
+  });
+
   it('removes its listener and cancels pending navigation when unmounted', () => {
     const { unmount } = render(<IncomingLinkHandler />);
 

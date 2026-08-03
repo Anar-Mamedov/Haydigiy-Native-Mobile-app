@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as Linking from 'expo-linking';
 import { type Href, useRouter } from 'expo-router';
+import { isInsiderSdkUrl } from '@/features/insider/utils/insider-url';
 import { resolveDeepLinkPath } from '@/utils/resolve-deep-link';
 
 /**
@@ -14,6 +15,8 @@ export function IncomingLinkHandler() {
 
   useEffect(() => {
     const subscription = Linking.addEventListener('url', ({ url }) => {
+      if (isInsiderSdkUrl(url)) return;
+
       const target = resolveDeepLinkPath(url) as Href;
 
       if (pendingNavigation.current) {

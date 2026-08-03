@@ -5,6 +5,7 @@ import { SplashScreen, Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppProviders } from '@/lib/providers/app-providers';
 import { IncomingLinkHandler } from '@/components/navigation/incoming-link-handler';
+import { InsiderIntegration } from '@/features/insider/components/insider-integration';
 import { OtaUpdateWatcher } from '@/components/ota-update-watcher';
 import { AppUpdateProvider } from '@/features/app-update/components/app-update-provider';
 import { CartHydrator } from '@/features/cart/components/cart-hydrator';
@@ -46,6 +47,7 @@ export default function RootLayout() {
             }}
           />
           <IncomingLinkHandler />
+          <InsiderIntegration />
           <PhoneVerificationGate />
         </AppUpdateProvider>
       </AppProviders>

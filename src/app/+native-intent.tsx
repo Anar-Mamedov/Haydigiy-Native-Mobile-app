@@ -1,3 +1,4 @@
+import { isInsiderSdkUrl } from '@/features/insider/utils/insider-url';
 import { resolveDeepLinkPath } from '@/utils/resolve-deep-link';
 
 /**
@@ -7,5 +8,7 @@ import { resolveDeepLinkPath } from '@/utils/resolve-deep-link';
  * için saf `resolveDeepLinkPath` yardımcısında tutulur.
  */
 export function redirectSystemPath({ path }: { path: string; initial: boolean }): string {
+  if (isInsiderSdkUrl(path)) return '/';
+
   return resolveDeepLinkPath(path);
 }
