@@ -2,6 +2,7 @@ import { Control, Controller, FieldErrors } from 'react-hook-form';
 import { Paragraph, XStack, YStack } from 'tamagui';
 import { AppCheckbox, AppInput } from '@/components/ui';
 import { AddressFormData } from '../schemas/address.schema';
+import { toAddressText } from '@/utils/normalize-text';
 
 type InvoiceFieldsProps = {
   control: Control<AddressFormData>;
@@ -39,7 +40,7 @@ export function InvoiceFields({ control, errors }: InvoiceFieldsProps) {
                 errorMessage={errors.taxOffice?.message}
                 label="Vergi Dairesi *"
                 onBlur={onBlur}
-                onChangeText={onChange}
+                onChangeText={(text) => onChange(toAddressText(text))}
                 placeholder="Vergi Dairesi Giriniz"
                 value={value}
               />
@@ -56,7 +57,7 @@ export function InvoiceFields({ control, errors }: InvoiceFieldsProps) {
             errorMessage={errors.companyName?.message}
             label="Firma Adı *"
             onBlur={onBlur}
-            onChangeText={onChange}
+            onChangeText={(text) => onChange(toAddressText(text))}
             placeholder="Firma Adı Giriniz"
             value={value}
           />

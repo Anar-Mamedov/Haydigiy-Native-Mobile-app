@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidTurkishMobile } from '@/utils/turkish-phone';
+import { toPersonName } from '@/utils/normalize-text';
 
 export const loginSchema = z.object({
   identifier: z
@@ -36,11 +37,17 @@ export const registerSchema = z.object({
   name: z
     .string()
     .min(1, { message: 'Ad zorunludur' })
-    .min(2, { message: 'Ad en az 2 karakter olmalıdır' }),
+    .min(2, { message: 'Ad en az 2 karakter olmalıdır' })
+    // Alanlar yazarken de normalize ediliyor; bu katman profilden ön-doldurulan
+    // ya da programatik set edilen değerleri de düz metne indirir.
+    .transform(toPersonName)
+    .refine((value) => value.trim().length >= 2, { message: 'Ad en az 2 karakter olmalıdır' }),
   surname: z
     .string()
     .min(1, { message: 'Soyad zorunludur' })
-    .min(2, { message: 'Soyad en az 2 karakter olmalıdır' }),
+    .min(2, { message: 'Soyad en az 2 karakter olmalıdır' })
+    .transform(toPersonName)
+    .refine((value) => value.trim().length >= 2, { message: 'Soyad en az 2 karakter olmalıdır' }),
   phone: z
     .string()
     .min(1, { message: 'Telefon numarası zorunludur' })

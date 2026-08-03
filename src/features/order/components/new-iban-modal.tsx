@@ -5,6 +5,7 @@ import { AppCheckbox, AppInput, AppSheetOverlay, KeyboardAwareSheetScrollView } 
 import { useAddPaymentMethodMutation } from '../api/return.mutations';
 import { formatIbanInput, getIbanDigits, isValidIban, normalizeIban } from '@/utils/iban';
 import { getReturnErrorMessage } from '@/services/return.service';
+import { toPersonName } from '@/utils/normalize-text';
 
 type Props = {
   open: boolean;
@@ -111,7 +112,7 @@ export function NewIbanModal({ open, onClose, onSuccess }: Props) {
               label="IBAN Sahibi Adı *"
               maxLength={100}
               onChangeText={(text) => {
-                setIbanName(text);
+                setIbanName(toPersonName(text));
                 setError(null);
               }}
               placeholder="Ad Soyad"

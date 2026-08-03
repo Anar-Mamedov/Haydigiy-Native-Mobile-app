@@ -16,6 +16,7 @@ import {
 import { useAddAddressMutation, useUpdateAddressMutation } from '../api/address.mutations';
 import { ADDRESS_TITLES } from '../utils/address-title';
 import { InvoiceFields } from './invoice-fields';
+import { toAddressText, toPersonName } from '@/utils/normalize-text';
 
 const PHONE_DISPLAY_MAX_LENGTH = 14;
 const ADDRESS_TITLE_OPTIONS = ADDRESS_TITLES.map((title) => ({ label: title, value: title }));
@@ -150,7 +151,7 @@ export function AddressForm({ mode, addressId, initialValues, onSuccess }: Addre
                 errorMessage={errors.name?.message}
                 label="Ad *"
                 onBlur={onBlur}
-                onChangeText={onChange}
+                onChangeText={(text) => onChange(toPersonName(text))}
                 placeholder="Adınız"
                 value={value}
               />
@@ -166,7 +167,7 @@ export function AddressForm({ mode, addressId, initialValues, onSuccess }: Addre
                 errorMessage={errors.surname?.message}
                 label="Soyad *"
                 onBlur={onBlur}
-                onChangeText={onChange}
+                onChangeText={(text) => onChange(toPersonName(text))}
                 placeholder="Soyadınız"
                 value={value}
               />
@@ -286,7 +287,7 @@ export function AddressForm({ mode, addressId, initialValues, onSuccess }: Addre
             multiline
             numberOfLines={3}
             onBlur={onBlur}
-            onChangeText={onChange}
+            onChangeText={(text) => onChange(toAddressText(text))}
             placeholder="Cadde, mahalle, sokak ve diğer bilgileri giriniz."
             value={value}
           />

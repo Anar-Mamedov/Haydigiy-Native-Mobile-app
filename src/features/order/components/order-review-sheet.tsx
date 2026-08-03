@@ -10,6 +10,7 @@ import { WARNING_COLOR } from '@/lib/theme/colors';
 import { ReviewTarget } from '@/types/review.types';
 import { resolveReviewVariantId, ReviewPhoto } from '@/services/review.service';
 import { useSubmitReviewMutation } from '../api/review.mutations';
+import { toPlainText } from '@/utils/normalize-text';
 
 const MAX_COMMENT = 2000;
 
@@ -267,7 +268,7 @@ export function OrderReviewSheet({
                   borderColor="$borderColor"
                   maxLength={MAX_COMMENT}
                   minHeight={90}
-                  onChangeText={setComment}
+                  onChangeText={(text) => setComment(toPlainText(text))}
                   placeholder="Ürün hakkındaki düşüncelerinizi paylaşın."
                   value={comment}
                 />

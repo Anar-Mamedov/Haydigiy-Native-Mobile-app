@@ -13,6 +13,7 @@ import { registerSchema, RegisterFormData } from '../schemas/auth.schema';
 import { useRegisterMutation } from '../api/auth.mutations';
 import { KVKK_DISCLOSURE_TEXT, COMMERCIAL_CONSENT_TEXT } from '../constants/auth-texts';
 import { sanitizeTurkishMobileInput, formatTurkishPhoneDisplay } from '@/utils/turkish-phone';
+import { toPersonName } from '@/utils/normalize-text';
 
 interface RegisterFormProps {
   onSuccess: (phone: string) => void;
@@ -85,7 +86,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             label="Ad"
             placeholder="Adınız"
             value={value}
-            onChangeText={onChange}
+            onChangeText={(text) => onChange(toPersonName(text))}
             onBlur={onBlur}
             errorMessage={errors.name?.message}
           />
@@ -101,7 +102,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             label="Soyad"
             placeholder="Soyadınız"
             value={value}
-            onChangeText={onChange}
+            onChangeText={(text) => onChange(toPersonName(text))}
             onBlur={onBlur}
             errorMessage={errors.surname?.message}
           />

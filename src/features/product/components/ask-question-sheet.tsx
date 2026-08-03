@@ -7,6 +7,7 @@ import { Paragraph, ScrollView, Sheet, Spinner, TextArea, XStack, YStack } from 
 import { AppButton, AppCheckbox, AppSheetOverlay, KeyboardAwareSheetScrollView } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useAskProductQuestionMutation } from '../api/product-questions.queries';
+import { toPlainText } from '@/utils/normalize-text';
 
 type AskQuestionSheetProps = {
   open: boolean;
@@ -207,7 +208,7 @@ export function AskQuestionSheet({ open, onClose, slug, productId }: AskQuestion
                 height={96}
                 maxLength={MAX_LENGTH}
                 onChangeText={(text) => {
-                  setQuestion(text);
+                  setQuestion(toPlainText(text));
                   setError(null);
                 }}
                 placeholder="Sorunuzu yazın..."

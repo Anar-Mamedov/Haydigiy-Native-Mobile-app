@@ -25,6 +25,7 @@ import {
   splitBirthDate,
 } from '../utils/birth-date';
 import { parseProfileUpdateError } from '../utils/profile-update-error';
+import { toPersonName } from '@/utils/normalize-text';
 
 const DAY_OPTIONS = getDayOptions();
 const MONTH_OPTIONS = getMonthOptions();
@@ -136,7 +137,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
             id="user-info-name"
             label="Ad"
             onBlur={onBlur}
-            onChangeText={onChange}
+            onChangeText={(text) => onChange(toPersonName(text))}
             placeholder="Adınız"
             value={value}
           />
@@ -153,7 +154,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
             id="user-info-surname"
             label="Soyad"
             onBlur={onBlur}
-            onChangeText={onChange}
+            onChangeText={(text) => onChange(toPersonName(text))}
             placeholder="Soyadınız"
             value={value}
           />
