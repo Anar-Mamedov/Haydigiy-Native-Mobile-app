@@ -53,3 +53,8 @@ skill/
 
 # UI & build caches
 .tamagui/
+
+# Documentation
+dokuman/
+
+
