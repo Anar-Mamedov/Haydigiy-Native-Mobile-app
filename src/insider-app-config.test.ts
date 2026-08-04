@@ -6,10 +6,18 @@ describe('Insider Expo configuration', () => {
 
   it('configures Insider push targets and Android notification permission', () => {
     const config = createConfig({ config: appJson.expo });
+    const buildPropertiesPlugin = config.plugins.find(
+      (plugin: unknown) => Array.isArray(plugin) && plugin[0] === 'expo-build-properties',
+    );
     const insiderPlugin = config.plugins.find(
       (plugin: unknown) => Array.isArray(plugin) && plugin[0] === 'expo-insider-plugin',
     );
 
+    expect(buildPropertiesPlugin?.[1]).toEqual({
+      ios: {
+        useFrameworks: 'dynamic',
+      },
+    });
     expect(insiderPlugin?.[1]).toEqual(
       expect.objectContaining({
         appGroup: 'group.com.faprika.haydigiy.app',
