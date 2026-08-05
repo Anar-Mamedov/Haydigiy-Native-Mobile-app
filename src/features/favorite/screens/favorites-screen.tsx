@@ -8,6 +8,8 @@ import { AppScreen, EmptyState, ConfirmDialog } from '@/components/ui';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useFavoritesQuery, useRemoveFavoriteMutation } from '../api/favorite.queries';
+import { useTrackWishlistPageView } from '@/features/insider/hooks/use-insider-page-tracking';
+import { productToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { buildProductDetailRoute } from '@/features/product/utils/product-detail-route';
 import { getFavoritePricing } from '../utils/favorite-pricing';
 import { FavoriteCard } from '../components/favorite-card';
@@ -50,6 +52,12 @@ export function FavoritesScreen() {
     debouncedSearch || undefined
   );
   const removeFavoriteMutation = useRemoveFavoriteMutation();
+
+  // Insider "favori listesi görüntüleme": fires with the loaded list per visit.
+  useTrackWishlistPageView(
+    useMemo(() => favorites.map((favorite) => favorite.product), [favorites]),
+    isAuthenticated && !isListPending && !isError,
+  );
 
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
@@ -136,7 +144,10 @@ export function FavoritesScreen() {
     const variant = product.variants?.find((candidate) => candidate.name === size);
     const variantId = variant?.pivotId ?? variant?.id;
     if (variantId) {
-      addToCart.mutate({ variantId });
+      addToCart.mutate({
+        variantId,
+        tracking: productToInsiderInput(product, { size, quantity: 1 }),
+      });
     }
     Alert.alert('Başarılı', `${product.title} (${size}) sepetinize eklendi.`, [
       { text: 'Alışverişe Devam Et', style: 'cancel' },

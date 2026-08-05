@@ -97,6 +97,30 @@ Insider kampanyasında **Internal URL** kullanın. Güvenli uygulama içi yönle
 
 Uygulama içi yönlendirme yalnızca `haydigiy.com`, `www.haydigiy.com`, `/...` yolları ve `haydigiywebviewapp://` şeması için kabul edilir. Insider'daki **External URL** alanı ise doğrulanmış `http`/`https` bağlantısını sistem üzerinden açar.
 
+## iOS build: framework modu neden `static` olmak zorunda
+
+`insiderRichPush` / `insiderAdvancedPush` açıkken plugin, Podfile'a iki push
+extension hedefi ekler ve her ikisini de `use_frameworks!` ile tanımlar:
+
+```ruby
+target 'InsiderNotificationService' do
+    use_frameworks!
+    pod 'InsiderMobileAdvancedNotification'
+end
+```
+
+Bu yüzden `app.config.js` içindeki `expo-build-properties` ayarı
+`ios.useFrameworks: 'static'` olmalıdır. Üç durumun sonucu:
+
+| Ayar | Sonuç |
+| --- | --- |
+| Ayar yok | `pod install` çöker: *"Haydigiy (false) and InsiderNotificationService (true) do not both set use_frameworks!"* — CocoaPods host ve extension hedefinin aynı modda olmasını şart koşar |
+| `dynamic` | `pod install` geçer, Xcode çöker: `react-native-webview` derlenirken `React/RCTView.h file not found` — dynamic frameworks React Native New Architecture ile desteklenmiyor |
+| **`static`** | ✅ Her ikisi de çalışır; Expo pod install sırasında *"Created non-framework React modulemap for use_frameworks! compatibility"* ile başlık uyumunu kurar |
+
+Bu davranış `src/insider-app-config.test.ts` ile kilitlenmiştir; testi değiştirmeden
+framework modunu değiştirmeyin.
+
 ## Sorun giderme kontrol listesi
 
 - Android Firebase uygulamasının package adı `com.faprika.haydigiy` ile birebir aynı mı?

@@ -10,6 +10,10 @@ import {
   submitGarantiCallbackDto,
 } from '@/services/checkout.service';
 import { cartKeys } from '@/features/cart/api/cart.keys';
+import { useCartStore } from '@/features/cart/store/use-cart-store';
+import { insiderTracker } from '@/features/insider/services/insider-tracker';
+import { cartItemToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
+import { consumePurchaseSnapshot } from '../utils/purchase-snapshot';
 import { OrderDetails } from '@/types/checkout.types';
 
 type SuccessParams = {
@@ -97,6 +101,15 @@ export function usePaymentSuccess(): { orderDetails: OrderDetails | null; isProc
           orderNo: bankOrderNo || orderNoParam || token,
           totalPrice: parsePrice(totalPrice),
         };
+      }
+
+      // Insider purchase: sipariş satırları submit anında alınan snapshot'tan
+      // gelir (sepet bu noktada boşalmış olabilir); yoksa hâlâ dolu olan sepete
+      // düşülür. `consume` tek seferlik olduğundan event mükerrer atılmaz.
+      const purchasedItems = consumePurchaseSnapshot() ?? useCartStore.getState().items;
+      const saleId = details.orderNo || token;
+      if (saleId && purchasedItems.length > 0) {
+        insiderTracker.trackPurchase(saleId, purchasedItems.map(cartItemToInsiderInput));
       }
 
       setOrderDetails(details);

@@ -7,6 +7,7 @@ import { AppScreen, EmptyState } from '@/components/ui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
+import { buildInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { useOrderDetailQuery } from '../api/order.queries';
 import { OrdersHeader } from '../components/orders-header';
 import { OrderDetailSummary } from '../components/order-detail-summary';
@@ -63,7 +64,19 @@ export function OrderDetailScreen() {
       Alert.alert('Hata', 'Ürün sepete eklenemedi. Lütfen ürün sayfasından ekleyin.');
       return;
     }
-    addToCart.mutate({ variantId: String(item.variantId), quantity: item.quantity || 1 });
+    addToCart.mutate({
+      variantId: String(item.variantId),
+      quantity: item.quantity || 1,
+      tracking: buildInsiderInput({
+        id: item.productId != null ? String(item.productId) : '',
+        name: item.name,
+        imageUrl: item.image ?? '',
+        price: item.price,
+        size: item.variantName || undefined,
+        quantity: item.quantity || 1,
+        slug: item.slug || undefined,
+      }),
+    });
     Alert.alert('Başarılı', `${item.name} sepetinize eklendi.`, [
       { text: 'Alışverişe Devam Et', style: 'cancel' },
       { text: 'Sepete Git', onPress: () => router.push('/cart' as never) },

@@ -6,6 +6,7 @@ import { ProductReviewFilters } from '@/services/product.service';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
+import { buildInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { ProductVariant } from '@/types/product.types';
 import { useProductReviewsQuery } from '../api/product-reviews.queries';
 import { ProductReviewItem } from '../api/product-reviews.mapper';
@@ -110,7 +111,20 @@ export function ProductReviewsScreen() {
     const product = query.data?.product;
     if (!product) return;
     const variantId = selectedVariant?.pivotId ?? selectedVariant?.id;
-    if (variantId) addToCart.mutate({ variantId });
+    if (variantId) {
+      addToCart.mutate({
+        variantId,
+        tracking: buildInsiderInput({
+          id: product.id,
+          name: product.name,
+          imageUrl: product.imageUrl,
+          price: selectedVariant?.price || Number(product.price) || 0,
+          size: selectedVariant?.name,
+          quantity: 1,
+          slug,
+        }),
+      });
+    }
     setShowSizeSheet(false);
     // Skip the success modal and take the user straight to the cart.
     goToCartAfterAdd();

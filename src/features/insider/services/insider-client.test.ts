@@ -4,15 +4,23 @@ import { InsiderPayload, InsiderSdk } from '../types/insider.types';
 function createSdkMock() {
   let nativeCallback: ((type: number, payload: InsiderPayload) => void) | undefined;
 
-  const sdk: jest.Mocked<InsiderSdk> = {
-    init: jest.fn((_partnerName, _appGroup, callback) => {
-      nativeCallback = callback;
-    }),
+  // The push client only touches the init/push/link surface of the SDK, so the
+  // mock covers just that slice of the full interface.
+  const sdk = {
+    init: jest.fn(
+      (
+        _partnerName: string,
+        _appGroup: string,
+        callback: (type: number, payload: InsiderPayload) => void,
+      ) => {
+        nativeCallback = callback;
+      },
+    ),
     registerWithQuietPermission: jest.fn(),
     setActiveForegroundPushView: jest.fn(),
     handleUniversalLink: jest.fn(),
     handleURL: jest.fn(),
-  };
+  } as unknown as jest.Mocked<InsiderSdk>;
 
   return { sdk, emit: (type: number, payload: InsiderPayload) => nativeCallback?.(type, payload) };
 }

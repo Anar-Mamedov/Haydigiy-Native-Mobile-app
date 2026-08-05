@@ -27,11 +27,19 @@ module.exports = ({ config }) => ({
   },
   plugins: [
     ...(config.plugins || []),
+    // iOS framework modu STATIC olmalı, başka bir değer değil:
+    // - Insider push extension'ları (InsiderNotificationService/Content) Podfile'da
+    //   `use_frameworks!` ile geliyor. CocoaPods, host ve embedded target'ın aynı
+    //   framework moduna sahip olmasını şart koşar; ana hedefte hiç ayar olmazsa
+    //   "do not both set use_frameworks!" ile pod install patlar.
+    // - `dynamic` ise React Native New Architecture ile desteklenmiyor ve
+    //   react-native-webview derlenirken "React/RCTView.h file not found" verir.
+    // `static` her iki koşulu da sağlayan tek değerdir.
     [
       'expo-build-properties',
       {
         ios: {
-          useFrameworks: 'dynamic',
+          useFrameworks: 'static',
         },
       },
     ],

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { zustandStorage } from '@/lib/storage/zustand-storage';
 import { clearAccessToken, setAccessToken } from '@/lib/storage/secure-storage';
+import { insiderTracker } from '@/features/insider/services/insider-tracker';
 import { User } from '@/types/auth.types';
 
 type AuthState = {
@@ -22,6 +23,8 @@ export const useAuthStore = create<AuthState>()(
         try {
           await setAccessToken(token);
           set({ user, isLoading: false });
+          // Insider: oturum açan kullanıcıyı attribute + identifier'larla tanıt.
+          insiderTracker.identifyUser(user);
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -32,12 +35,22 @@ export const useAuthStore = create<AuthState>()(
         try {
           await clearAccessToken();
           set({ user: null, isLoading: false });
+          insiderTracker.clearUser();
         } catch (error) {
           set({ isLoading: false });
           throw error;
         }
       },
-      setUser: (user) => set({ user }),
+      setUser: (user) => {
+        set({ user });
+        // Profil güncellemeleri Insider attribute'larını tazeler; süresi dolan
+        // oturumun düşmesi (null) Insider tarafında da logout sayılır.
+        if (user) {
+          insiderTracker.identifyUser(user);
+        } else {
+          insiderTracker.clearUser();
+        }
+      },
     }),
     {
       name: 'auth-storage',

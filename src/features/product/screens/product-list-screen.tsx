@@ -11,6 +11,7 @@ import { useCartCount } from '@/features/cart/api/cart.queries';
 import { useInfiniteSearchProductsQuery } from '@/features/product/api/product.queries';
 import { useQuickFiltersQuery } from '@/features/product/api/quick-filter.queries';
 import { useStableCategoryOptions } from '@/features/product/hooks/use-stable-category-options';
+import { useTrackListingPageView } from '@/features/insider/hooks/use-insider-page-tracking';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
 import { SortSheet, SORT_OPTIONS } from '../components/sort-sheet';
@@ -101,6 +102,12 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
   const products = data ? data.pages.flatMap((page) => page.products) : [];
   const firstPage = data?.pages[0];
   const categoryDetails = firstPage?.category;
+
+  // Insider "kategori görüntüleme": only real category listings count, search
+  // results (q) are not a category page.
+  useTrackListingPageView(
+    !searchQuery && categoryDetails?.name ? [categoryDetails.name] : null,
+  );
   const availableFilters = useStableCategoryOptions(firstPage?.availableFilters, Boolean(productCategories));
   const categoryFilterOptions =
     (availableFilters?.productCategories.length ?? 0) + (availableFilters?.categoryChildren.length ?? 0);

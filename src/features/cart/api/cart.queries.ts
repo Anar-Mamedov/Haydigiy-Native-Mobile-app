@@ -8,6 +8,8 @@ import {
   removeCartItemDto,
   updateCartItemDto,
 } from '@/services/cart.service';
+import { insiderTracker } from '@/features/insider/services/insider-tracker';
+import { InsiderProductInput } from '@/features/insider/utils/insider-product.mapper';
 import { CartLineItem } from '@/types/cart.types';
 
 /**
@@ -94,6 +96,14 @@ export function useRemoveCartItemMutation() {
     onError: (_error, _variantId, context) => {
       if (context?.previous) rollbackTo(context.previous);
     },
+    onSuccess: (_data, variantId, context) => {
+      const removed = context?.previous.find((item) => item.variantId === variantId);
+      if (!removed) return;
+      insiderTracker.trackRemoveFromCart(removed.productId);
+      // Insider: removing the last line also counts as clearing the cart.
+      const remaining = context.previous.filter((item) => item.variantId !== variantId);
+      if (remaining.length === 0) insiderTracker.trackCartCleared();
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
@@ -129,6 +139,9 @@ export function useClearCartMutation() {
     onError: (_error, _variables, context) => {
       if (context?.previous) rollbackTo(context.previous);
     },
+    onSuccess: () => {
+      insiderTracker.trackCartCleared();
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
@@ -139,8 +152,18 @@ export function useAddToCartMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ variantId, quantity = 1 }: { variantId: string; quantity?: number }) =>
-      addToCartDto(Number(variantId), quantity),
+    mutationFn: ({
+      variantId,
+      quantity = 1,
+    }: {
+      variantId: string;
+      quantity?: number;
+      /** Insider add-to-cart snapshot; callers with product context pass it. */
+      tracking?: InsiderProductInput;
+    }) => addToCartDto(Number(variantId), quantity),
+    onSuccess: (_data, variables) => {
+      if (variables.tracking) insiderTracker.trackAddToCart(variables.tracking);
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },

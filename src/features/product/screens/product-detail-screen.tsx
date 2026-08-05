@@ -17,6 +17,8 @@ import { ProductCodeBadge } from '../components/product-code-badge';
 import { isProductCodeBadgeVisible, PRODUCT_CODE_BADGE_OFFSET } from '../utils/product-code-badge';
 import { getCarouselImageHeight } from '../utils/product-carousel-geometry';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
+import { useTrackProductDetailView } from '@/features/insider/hooks/use-insider-page-tracking';
+import { productToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { ProductVariant, Product, ProductColorOption, SimilarProduct } from '@/types/product.types';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
 import { NOT_FOUND_ROUTE } from '@/features/not-found/routes';
@@ -123,6 +125,9 @@ export function ProductDetailScreen() {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [galleryImageIndex, setGalleryImageIndex] = useState<number | null>(null);
 
+  // Insider "ürün detay görüntüleme" (fires once per loaded product).
+  useTrackProductDetailView(product);
+
   // Recently Viewed Tracking
   useEffect(() => {
     if (product) {
@@ -217,7 +222,13 @@ export function ProductDetailScreen() {
 
     const variantId = selectedVariant?.pivotId ?? selectedVariant?.id;
     if (variantId) {
-      addToCart.mutate({ variantId });
+      addToCart.mutate({
+        variantId,
+        tracking: productToInsiderInput(activeProduct, {
+          size: selectedVariant?.name,
+          quantity: 1,
+        }),
+      });
     }
     setShowSizeSheet(false);
     // Skip the success modal and take the user straight to the cart.

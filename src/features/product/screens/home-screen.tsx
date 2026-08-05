@@ -4,6 +4,7 @@ import { ScrollView, Paragraph, Spinner, XStack, YStack } from 'tamagui';
 import { AppHeader, AppScreen, EmptyState } from '@/components/ui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { useMobilePageDesignQuery } from '@/features/product/api/page-design.queries';
+import { useTrackHomePageView } from '@/features/insider/hooks/use-insider-page-tracking';
 import { HomeBannerSection } from '@/features/product/components/home-banner-section';
 import { HomeHeadingSection } from '@/features/product/components/home-heading-section';
 import { HomeSliderSection } from '@/features/product/components/home-slider-section';
@@ -14,6 +15,8 @@ import { HomeFooter } from '@/features/product/components/home-footer';
 import { BannerContent, StoryContent, HeadingContent, TextContent, Section } from '@/types/page-design.types';
 
 export function HomeScreen() {
+  useTrackHomePageView();
+
   const { width: windowWidth } = useWindowDimensions();
   const containerWidth = windowWidth - 20; // 10px padding on each side to match web mobile layout
 

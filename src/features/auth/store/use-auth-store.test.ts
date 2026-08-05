@@ -1,6 +1,16 @@
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { getAccessToken } from '@/lib/storage/secure-storage';
 import { appStorage } from '@/lib/storage/mmkv';
+import { insiderTracker } from '@/features/insider/services/insider-tracker';
+
+jest.mock('@/features/insider/services/insider-tracker', () => ({
+  insiderTracker: {
+    identifyUser: jest.fn(),
+    clearUser: jest.fn(),
+  },
+}));
+
+const trackerMock = insiderTracker as jest.Mocked<typeof insiderTracker>;
 
 describe('useAuthStore', () => {
   beforeEach(async () => {
@@ -16,6 +26,7 @@ describe('useAuthStore', () => {
       user: null,
       isLoading: false,
     });
+    jest.clearAllMocks();
   });
 
   it('initially has no authenticated user', () => {
@@ -36,6 +47,8 @@ describe('useAuthStore', () => {
     expect(useAuthStore.getState().user).toEqual(mockUser);
     const storedToken = await getAccessToken();
     expect(storedToken).toBe('test-token-xyz');
+    // Login introduces the user to Insider (attributes + identifiers).
+    expect(trackerMock.identifyUser).toHaveBeenCalledWith(mockUser);
   });
 
   it('resets user state and deletes token on logout', async () => {
@@ -53,6 +66,7 @@ describe('useAuthStore', () => {
 
     const storedToken = await getAccessToken();
     expect(storedToken).toBeNull();
+    expect(trackerMock.clearUser).toHaveBeenCalled();
   });
 
   it('sets user correctly using setUser action', () => {
@@ -64,8 +78,10 @@ describe('useAuthStore', () => {
 
     useAuthStore.getState().setUser(mockUser);
     expect(useAuthStore.getState().user).toEqual(mockUser);
+    expect(trackerMock.identifyUser).toHaveBeenCalledWith(mockUser);
 
     useAuthStore.getState().setUser(null);
     expect(useAuthStore.getState().user).toBeNull();
+    expect(trackerMock.clearUser).toHaveBeenCalled();
   });
 });

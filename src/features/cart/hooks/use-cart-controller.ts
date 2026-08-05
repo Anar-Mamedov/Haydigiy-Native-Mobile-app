@@ -16,6 +16,7 @@ import {
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
 import { useCheckoutMutation } from '@/features/checkout/api/checkout.mutations';
 import { useAddFavoriteMutation } from '@/features/favorite/api/favorite.queries';
+import { cartItemToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { isAuthenticated } from '@/features/auth/api/auth-session';
 import { CartCampaign, CartLineItem } from '@/types/cart.types';
 
@@ -123,7 +124,13 @@ export function useCartController() {
   const confirmRemoveAndFavorite = useCallback(() => {
     const variantId = removeTarget?.variantId;
     if (!removeTarget || !variantId) return;
-    addFavorite.mutate(removeTarget.productId, { onError: () => undefined });
+    addFavorite.mutate(
+      {
+        productId: removeTarget.productId,
+        tracking: cartItemToInsiderInput(removeTarget),
+      },
+      { onError: () => undefined },
+    );
     removeMutation.mutate(variantId);
     setRemoveTarget(null);
   }, [addFavorite, removeMutation, removeTarget]);

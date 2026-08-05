@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { orderKeys } from './order.keys';
+import { insiderTracker } from '@/features/insider/services/insider-tracker';
 import { submitReviewDto, SubmitReviewPayload } from '@/services/review.service';
 
 /**
@@ -11,7 +12,12 @@ export function useSubmitReviewMutation(orderId: string) {
 
   return useMutation({
     mutationFn: (payload: SubmitReviewPayload) => submitReviewDto(payload),
-    onSuccess: () => {
+    onSuccess: (_data, payload) => {
+      // Insider custom eventi: yorum yapan kullanıcı (yorum_yapildi).
+      insiderTracker.trackReviewSubmitted({
+        productId: payload.productId ? String(payload.productId) : '',
+        rating: payload.rating,
+      });
       queryClient.invalidateQueries({ queryKey: orderKeys.detail(orderId) });
     },
   });

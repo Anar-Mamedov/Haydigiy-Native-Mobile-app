@@ -13,9 +13,12 @@ describe('Insider Expo configuration', () => {
       (plugin: unknown) => Array.isArray(plugin) && plugin[0] === 'expo-insider-plugin',
     );
 
+    // Insider push extension'ları Podfile'da `use_frameworks!` ile geldiği için
+    // ana hedefin de framework modunda olması gerekir; `dynamic` ise RN New
+    // Architecture'ı kırar. Tek geçerli değer `static` (regresyon koruması).
     expect(buildPropertiesPlugin?.[1]).toEqual({
       ios: {
-        useFrameworks: 'dynamic',
+        useFrameworks: 'static',
       },
     });
     expect(insiderPlugin?.[1]).toEqual(

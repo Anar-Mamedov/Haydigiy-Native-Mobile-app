@@ -7,6 +7,7 @@ import { getOrderTokenSummaryError, mapOrderTokenSummary } from '../api/order-to
 import { buildGarantiFormHtml } from '../utils/build-garanti-form-html';
 import { getApiErrorMessage } from '../utils/error-message';
 import { isCheckoutPriceChangeMessage } from '../utils/checkout-price-change';
+import { setPurchaseSnapshot } from '../utils/purchase-snapshot';
 import {
   confirmOrderDto,
   getClientIp,
@@ -103,6 +104,10 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
       setIsSubmitting(true);
       setPriceChangeConfirmation(null);
       controller.setSubmitError(null);
+
+      // Ödeme başarı ekranı sepeti boşalmış bulabilir; Insider purchase eventi
+      // bu anda alınan satır kopyalarından beslenir (başarıda tek sefer tüketilir).
+      setPurchaseSnapshot(items);
 
       // Waits for the shared cargo/payment/coupon + campaign snapshot sync and
       // verifies the backend's persisted total against the total shown on screen.

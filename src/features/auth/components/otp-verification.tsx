@@ -10,6 +10,7 @@ import {
 } from '../api/auth.mutations';
 import { otpSchema } from '../schemas/auth.schema';
 import { useAuthStore } from '../store/use-auth-store';
+import { insiderTracker } from '@/features/insider/services/insider-tracker';
 import { KVKK_DISCLOSURE_TEXT, COMMERCIAL_CONSENT_TEXT } from '../constants/auth-texts';
 import { getOtpSendErrorFeedback, parseOtpCooldownSeconds } from '../utils/otp-delivery';
 
@@ -120,9 +121,16 @@ export function OtpVerification({
         // synchronously inside the verify handler re-enters the New Architecture
         // renderer mid-work and crashes ("Should not already be working."). Defer
         // the commit one frame so the teardown happens on a clean tick.
+        // Insider sign_up: hem kayıt akışının OTP onayı hem de hızlı girişte
+        // yeni oluşturulan hesap gerçek bir "kayıt olma" aksiyonudur.
+        const isNewSignUp = flowType === 'register' || (flowType === 'fast-login' && isNewUser);
+
         willCommitLogin = true;
         requestAnimationFrame(() => {
           void storeLogin(token, userWithPhone)
+            .then(() => {
+              if (isNewSignUp) insiderTracker.trackSignUp();
+            })
             .then(onSuccess)
             .catch((storeError) => {
               console.error('Auth state commit failed:', storeError);

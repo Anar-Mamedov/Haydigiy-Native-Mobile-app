@@ -11,11 +11,18 @@ import { CartSummaryBar } from '@/features/cart/components/cart-summary-bar';
 import { FreeShippingCampaignCard } from '@/features/cart/components/free-shipping-campaign-card';
 import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-estimate-info';
 import { useCartController } from '@/features/cart/hooks/use-cart-controller';
+import { useTrackCartPageView } from '@/features/insider/hooks/use-insider-page-tracking';
 
 export function CartScreen() {
   const router = useRouter();
   const controller = useCartController();
   const { items, syncCart } = controller;
+
+  // Insider "sepet görüntüleme": fires with the synced lines once per visit.
+  useTrackCartPageView(
+    items,
+    !controller.isLoading && !controller.isSyncing && !controller.isError,
+  );
 
   // Re-sync the account cart every time the screen gains focus so it always shows
   // a spinner on entry and reflects the latest server-side state (e.g. items added

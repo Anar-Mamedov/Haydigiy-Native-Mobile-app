@@ -3,6 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { usePlaceOrder } from './use-place-order';
 import type { CheckoutController } from './use-checkout-controller';
+import {
+  clearPurchaseSnapshot,
+  consumePurchaseSnapshot,
+} from '../utils/purchase-snapshot';
 import * as checkoutService from '@/services/checkout.service';
 import type { OrderTokenResponseDto } from '@/services/checkout.service';
 import type { OrderTokenSummary } from '@/types/checkout.types';
@@ -124,6 +128,22 @@ function renderPlaceOrder(controller: CheckoutController) {
 describe('usePlaceOrder order-token sync', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    clearPurchaseSnapshot();
+  });
+
+  it('stores the submitted cart lines for the Insider purchase event', async () => {
+    const controller = makeController({
+      isCardPayment: false,
+      selectedMethod: { id: 3, slug: 'cash_on_delivery', name: 'Kapıda Ödeme' },
+    } as unknown as Partial<CheckoutController>);
+    const { result } = renderPlaceOrder(controller);
+
+    act(() => {
+      result.current.submit();
+    });
+
+    await waitFor(() => expect(confirmOrderDto).toHaveBeenCalled());
+    expect(consumePurchaseSnapshot()).toEqual(controller.items);
   });
 
   // Web parity: İyzico installment checkout relies on the on-change background

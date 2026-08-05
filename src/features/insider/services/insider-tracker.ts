@@ -1,0 +1,264 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+import { NativeModules, Platform } from 'react-native';
+import { isInsiderNativeSdkAvailable } from './insider-client';
+import {
+  InsiderIdentifierConstructor,
+  InsiderProductSdk,
+  InsiderSdk,
+} from '../types/insider.types';
+import {
+  InsiderProductInput,
+  isValidInsiderProductInput,
+} from '../utils/insider-product.mapper';
+import { User } from '@/types/auth.types';
+import { extractTurkishNationalNumber, isValidTurkishMobile } from '@/utils/turkish-phone';
+
+/**
+ * Custom event tetiklendiğinde Insider'ın beklediği ad: yalnızca küçük Latin
+ * harfleri ve alt çizgi ("yorum_yapıldı" SDK tarafından reddedilir).
+ */
+export const REVIEW_SUBMITTED_EVENT = 'yorum_yapildi';
+
+export interface ReviewSubmittedInput {
+  productId: string;
+  rating: number;
+}
+
+/**
+ * Domain-facing Insider analytics API. Screens and data hooks call these
+ * methods with plain snapshots; SDK loading, product-object construction and
+ * error isolation stay behind this boundary.
+ */
+export interface InsiderTracker {
+  trackHomePageView(): void;
+  trackListingPageView(taxonomy: string[]): void;
+  trackProductDetailView(product: InsiderProductInput): void;
+  trackCartView(items: InsiderProductInput[]): void;
+  trackWishlistView(items: InsiderProductInput[]): void;
+  trackAddToCart(product: InsiderProductInput): void;
+  trackRemoveFromCart(productId: string): void;
+  trackCartCleared(): void;
+  trackAddToWishlist(product: InsiderProductInput): void;
+  trackRemoveFromWishlist(productId: string): void;
+  trackPurchase(saleId: string, items: InsiderProductInput[]): void;
+  trackSignUp(): void;
+  trackReviewSubmitted(input: ReviewSubmittedInput): void;
+  identifyUser(user: User): void;
+  clearUser(): void;
+}
+
+interface InsiderTrackerDependencies {
+  isNativeSdkAvailable: () => boolean;
+  loadSdk: () => InsiderSdk;
+  loadIdentifierConstructor: () => InsiderIdentifierConstructor;
+  onError: (message: string, error: unknown) => void;
+}
+
+const defaultDependencies: InsiderTrackerDependencies = {
+  isNativeSdkAvailable: () => isInsiderNativeSdkAvailable(Platform.OS, NativeModules),
+  loadSdk: () => require('react-native-insider').default as InsiderSdk,
+  loadIdentifierConstructor: () =>
+    require('react-native-insider/src/InsiderIdentifier').default as InsiderIdentifierConstructor,
+  onError: (message, error) => console.warn(message, error),
+};
+
+/** Kayıtlı telefonlar ulusal formatta (5XXXXXXXXX); Insider E164 bekler. */
+export function toE164TurkishPhone(phone: string | undefined): string | null {
+  if (!phone) return null;
+  const trimmed = phone.trim();
+  if (trimmed.startsWith('+')) return trimmed;
+
+  const national = extractTurkishNationalNumber(trimmed);
+  if (!isValidTurkishMobile(national)) return null;
+  return `+90${national}`;
+}
+
+export function createInsiderTracker(
+  dependencies: InsiderTrackerDependencies = defaultDependencies,
+): InsiderTracker {
+  let sdk: InsiderSdk | null = null;
+
+  const getSdk = (): InsiderSdk | null => {
+    if (sdk) return sdk;
+    if (!dependencies.isNativeSdkAvailable()) return null;
+    sdk = dependencies.loadSdk();
+    return sdk;
+  };
+
+  /**
+   * Analytics asla uygulama akışını kırmamalı: SDK yoksa sessiz no-op, hata
+   * durumunda logla ve devam et.
+   */
+  const run = (label: string, action: (activeSdk: InsiderSdk) => void): void => {
+    try {
+      const activeSdk = getSdk();
+      if (!activeSdk) return;
+      action(activeSdk);
+    } catch (error) {
+      dependencies.onError(`[Insider] ${label} gönderilemedi.`, error);
+    }
+  };
+
+  const buildProduct = (
+    activeSdk: InsiderSdk,
+    input: InsiderProductInput,
+  ): InsiderProductSdk => {
+    const product = activeSdk.createNewProduct(
+      input.id,
+      input.name,
+      input.taxonomy,
+      input.imageUrl,
+      input.price,
+      input.currency,
+    );
+    if (typeof input.salePrice === 'number') product.setSalePrice(input.salePrice);
+    if (typeof input.quantity === 'number' && input.quantity > 0) {
+      product.setQuantity(input.quantity);
+    }
+    if (typeof input.stock === 'number' && input.stock >= 0) product.setStock(input.stock);
+    if (input.size) product.setSize(input.size);
+    if (input.brand) product.setBrand(input.brand);
+    if (input.productUrl) product.setProductURL(input.productUrl);
+    return product;
+  };
+
+  const buildValidProducts = (
+    activeSdk: InsiderSdk,
+    items: InsiderProductInput[],
+  ): InsiderProductSdk[] =>
+    items
+      .filter(isValidInsiderProductInput)
+      .map((item) => buildProduct(activeSdk, item));
+
+  return {
+    trackHomePageView() {
+      run('ana sayfa ziyareti', (activeSdk) => {
+        activeSdk.visitHomePage();
+      });
+    },
+
+    trackListingPageView(taxonomy) {
+      const cleaned = taxonomy.map((entry) => entry.trim()).filter(Boolean);
+      if (cleaned.length === 0) return;
+      run('kategori görüntüleme', (activeSdk) => {
+        activeSdk.visitListingPage(cleaned);
+      });
+    },
+
+    trackProductDetailView(product) {
+      if (!isValidInsiderProductInput(product)) return;
+      run('ürün detay görüntüleme', (activeSdk) => {
+        activeSdk.visitProductDetailPage(buildProduct(activeSdk, product));
+      });
+    },
+
+    trackCartView(items) {
+      run('sepet görüntüleme', (activeSdk) => {
+        const products = buildValidProducts(activeSdk, items);
+        if (products.length === 0) return;
+        activeSdk.visitCartPage(products);
+      });
+    },
+
+    trackWishlistView(items) {
+      run('favori listesi görüntüleme', (activeSdk) => {
+        const products = buildValidProducts(activeSdk, items);
+        if (products.length === 0) return;
+        activeSdk.visitWishlistPage(products);
+      });
+    },
+
+    trackAddToCart(product) {
+      if (!isValidInsiderProductInput(product)) return;
+      run('sepete ekleme', (activeSdk) => {
+        activeSdk.itemAddedToCart(buildProduct(activeSdk, product));
+      });
+    },
+
+    trackRemoveFromCart(productId) {
+      if (!productId.trim()) return;
+      run('sepetten çıkarma', (activeSdk) => {
+        activeSdk.itemRemovedFromCart(productId);
+      });
+    },
+
+    trackCartCleared() {
+      run('sepet temizleme', (activeSdk) => {
+        activeSdk.cartCleared();
+      });
+    },
+
+    trackAddToWishlist(product) {
+      if (!isValidInsiderProductInput(product)) return;
+      run('favoriye ekleme', (activeSdk) => {
+        activeSdk.itemAddedToWishlist(buildProduct(activeSdk, product));
+      });
+    },
+
+    trackRemoveFromWishlist(productId) {
+      if (!productId.trim()) return;
+      run('favoriden çıkarma', (activeSdk) => {
+        activeSdk.itemRemovedFromWishlist(productId);
+      });
+    },
+
+    trackPurchase(saleId, items) {
+      if (!saleId.trim()) return;
+      run('satın alma', (activeSdk) => {
+        items.filter(isValidInsiderProductInput).forEach((item) => {
+          activeSdk.itemPurchased(saleId, buildProduct(activeSdk, item));
+        });
+      });
+    },
+
+    trackSignUp() {
+      run('kayıt olma', (activeSdk) => {
+        activeSdk.signUpConfirmation();
+      });
+    },
+
+    trackReviewSubmitted(input) {
+      if (!input.productId.trim()) return;
+      run('yorum yapıldı', (activeSdk) => {
+        activeSdk
+          .tagEvent(REVIEW_SUBMITTED_EVENT)
+          .addParameterWithString('product_id', input.productId)
+          .addParameterWithInt('rating', Math.round(input.rating))
+          .build();
+      });
+    },
+
+    identifyUser(user) {
+      run('kullanıcı bilgisi güncelleme', (activeSdk) => {
+        const currentUser = activeSdk.getCurrentUser();
+        if (!currentUser) return;
+
+        if (user.name) currentUser.setName(user.name);
+        if (user.surname) currentUser.setSurname(user.surname);
+        currentUser.setLanguage('tr');
+        currentUser.setLocale('tr_TR');
+
+        const email = user.email?.includes('@') ? user.email.trim() : null;
+        if (email) currentUser.setEmail(email);
+
+        const phone = toE164TurkishPhone(user.phoneNumber);
+        if (phone) currentUser.setPhoneNumber(phone);
+
+        const IdentifierConstructor = dependencies.loadIdentifierConstructor();
+        const identifiers = new IdentifierConstructor();
+        identifiers.addUserID(user.id);
+        if (email) identifiers.addEmail(email);
+        if (phone) identifiers.addPhoneNumber(phone);
+        currentUser.login(identifiers);
+      });
+    },
+
+    clearUser() {
+      run('oturum kapatma', (activeSdk) => {
+        activeSdk.getCurrentUser()?.logout();
+      });
+    },
+  };
+}
+
+export const insiderTracker = createInsiderTracker();
