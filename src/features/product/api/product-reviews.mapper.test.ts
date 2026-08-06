@@ -40,6 +40,7 @@ describe('mapProductReviewPage', () => {
       cartCount: 2600,
       favoritesCount: 432,
       totalQuantity: 3,
+      featureIcons: [],
       variants: [],
     });
     expect(result.summary).toEqual({
@@ -66,5 +67,23 @@ describe('mapProductReviewPage', () => {
     expect(result.summary.stars[5]).toBe(0);
     expect(result.filterValues.sizes).toEqual([]);
     expect(result.reviews).toEqual([]);
+    expect(result.product.featureIcons).toEqual([]);
+  });
+
+  it('carries feature icon descriptions so the size sheet can show them', () => {
+    const result = mapProductReviewPage({
+      product: {
+        id: 5,
+        feature_icons: [
+          { id: 20, name: 'İade Yok', slug: 'iade-yok', description: 'Bu üründe iade/değişim yoktur.' },
+        ],
+      },
+    });
+
+    expect(result.product.featureIcons).toHaveLength(1);
+    expect(result.product.featureIcons[0]).toMatchObject({
+      id: 20,
+      description: 'Bu üründe iade/değişim yoktur.',
+    });
   });
 });
