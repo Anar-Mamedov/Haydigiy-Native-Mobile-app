@@ -95,6 +95,14 @@ function mapFeatureIconDto(icon: ProductFeatureIconDto): FeatureIcon {
   };
 }
 
+/**
+ * Maps a raw `feature_icons` payload, tolerating a missing or malformed list.
+ * Shared by the detail, reviews and Q&A page mappers.
+ */
+export function mapFeatureIconDtos(icons: ProductFeatureIconDto[] | null | undefined): FeatureIcon[] {
+  return Array.isArray(icons) ? icons.map(mapFeatureIconDto) : [];
+}
+
 type AvailableFiltersDto = NonNullable<SearchProductsResponseDto['available_filters']>;
 
 function hasVisibleMenuStatus(category: { menu_status?: number | string | null }): boolean {
@@ -238,9 +246,7 @@ export function mapSearchProductDto(dto: SearchProductDto): Product {
     };
   });
 
-  const featureIconsMapped = Array.isArray(dto.feature_icons)
-    ? dto.feature_icons.map(mapFeatureIconDto)
-    : [];
+  const featureIconsMapped = mapFeatureIconDtos(dto.feature_icons);
 
   return {
     badge: dto.badge,
@@ -388,9 +394,7 @@ export function mapProductDetailDto(dto: any): Product {
       }))
     : [];
 
-  const featureIconsMapped = Array.isArray(dto.feature_icons)
-    ? dto.feature_icons.map(mapFeatureIconDto)
-    : [];
+  const featureIconsMapped = mapFeatureIconDtos(dto.feature_icons);
 
   return {
     badge: dto.badge,

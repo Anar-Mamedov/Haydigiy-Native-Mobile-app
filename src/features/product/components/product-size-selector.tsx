@@ -2,11 +2,13 @@ import React from 'react';
 import { Table, Calculator, Bell } from '@tamagui/lucide-icons-2';
 import { XStack, YStack, Paragraph, useThemeName } from 'tamagui';
 import { Pressable } from 'react-native';
-import { ProductVariant } from '@/types/product.types';
+import { FeatureIcon, ProductVariant } from '@/types/product.types';
+import { ProductFeatureDescriptionList } from './product-feature-tags';
 import { ProductSizeSelectorSkeleton } from './product-size-skeleton';
 
 interface ProductSizeSelectorProps {
   variants?: ProductVariant[];
+  featureIcons?: FeatureIcon[];
   isLoading?: boolean;
   selectedVariant: ProductVariant | null;
   onSelectVariant: (variant: ProductVariant) => void;
@@ -16,6 +18,7 @@ interface ProductSizeSelectorProps {
 
 export function ProductSizeSelector({
   variants = [],
+  featureIcons,
   isLoading = false,
   selectedVariant,
   onSelectVariant,
@@ -161,6 +164,8 @@ export function ProductSizeSelector({
           );
         })}
       </XStack>
+
+      <ProductFeatureDescriptionList featureIcons={featureIcons} gap="$1.5" />
     </YStack>
   );
 }

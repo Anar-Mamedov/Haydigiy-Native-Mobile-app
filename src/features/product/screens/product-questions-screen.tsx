@@ -221,6 +221,7 @@ export function ProductQuestionsScreen() {
 
       {showSizeSheet ? (
         <SizeSelectionSheet
+          featureIcons={query.data.product.featureIcons}
           imageUrl={query.data.product.imageUrl}
           onAskQuestion={() => {
             // Unmount the size sheet first, then open the ask sheet after it is

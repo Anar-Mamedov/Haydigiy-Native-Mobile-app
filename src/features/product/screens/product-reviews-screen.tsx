@@ -234,6 +234,7 @@ export function ProductReviewsScreen() {
 
       {showSizeSheet ? (
         <SizeSelectionSheet
+          featureIcons={query.data.product.featureIcons}
           imageUrl={query.data.product.imageUrl}
           onAskQuestion={() => {
             setShowSizeSheet(false);

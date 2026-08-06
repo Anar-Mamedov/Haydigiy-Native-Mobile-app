@@ -1,3 +1,5 @@
+import { ProductFeatureIconDto } from './product.dtos';
+
 /** Raw `GET /product/{slug}/question` response shape. */
 export interface ProductQuestionReplyDto {
   admin_name?: string;
@@ -24,6 +26,7 @@ export interface ProductQuestionsPageDto {
     cart_count?: number;
     favorites_count?: number;
     total_quantity?: number;
+    feature_icons?: ProductFeatureIconDto[];
     variants?: unknown[];
   };
   /** The API returns the topic tags either as a bare array or under `tags`. */

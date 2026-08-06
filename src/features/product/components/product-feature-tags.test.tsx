@@ -1,7 +1,11 @@
 import { act, screen } from '@testing-library/react-native';
 import { YStack } from 'tamagui';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
-import { ProductFeatureAssetTicker, ProductFeatureDescriptionTicker } from './product-feature-tags';
+import {
+  ProductFeatureAssetTicker,
+  ProductFeatureDescriptionList,
+  ProductFeatureDescriptionTicker,
+} from './product-feature-tags';
 import { FeatureIcon } from '@/types/product.types';
 
 const featureIcons: FeatureIcon[] = [
@@ -51,5 +55,31 @@ describe('product feature tags', () => {
 
     expect(screen.getByText('Butik kontrol edildi')).toBeTruthy();
     expect(screen.getByLabelText('Butik Kontrol ürün etiketi')).toBeTruthy();
+  });
+
+  it('lists every description at once in backend order and never rotates', () => {
+    renderWithTamagui(<ProductFeatureDescriptionList featureIcons={featureIcons} />);
+
+    const list = screen.getByTestId('product-feature-description-list');
+    expect(list).toBeTruthy();
+    expect(screen.getByText('Peşin Fiyatına 3 Taksit')).toBeTruthy();
+    expect(screen.getByText('Butik kontrol edildi')).toBeTruthy();
+
+    act(() => {
+      jest.advanceTimersByTime(9000);
+    });
+
+    expect(screen.getByText('Peşin Fiyatına 3 Taksit')).toBeTruthy();
+    expect(screen.getByText('Butik kontrol edildi')).toBeTruthy();
+  });
+
+  it('renders nothing when no feature icon carries a description', () => {
+    renderWithTamagui(
+      <ProductFeatureDescriptionList
+        featureIcons={[{ id: 1, name: 'Etiket', slug: 'etiket', assetUrl: '', description: '   ' }]}
+      />,
+    );
+
+    expect(screen.queryByTestId('product-feature-description-list')).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
-import { ProductVariant } from '@/types/product.types';
+import { FeatureIcon, ProductVariant } from '@/types/product.types';
+import { mapFeatureIconDtos } from './product.mapper';
 import { mapVariants } from './variant.mapper';
 import { ProductQuestionsPageDto } from './product-questions.dtos';
 
@@ -10,6 +11,7 @@ export type QaProduct = {
   cartCount: number;
   favoritesCount: number;
   totalQuantity: number;
+  featureIcons: FeatureIcon[];
   variants: ProductVariant[];
 };
 
@@ -50,6 +52,7 @@ export function mapProductQuestionsPage(dto: ProductQuestionsPageDto): ProductQu
       cartCount: Number(dto.product?.cart_count) || 0,
       favoritesCount: Number(dto.product?.favorites_count) || 0,
       totalQuantity: Number(dto.product?.total_quantity) || 0,
+      featureIcons: mapFeatureIconDtos(dto.product?.feature_icons),
       variants: mapVariants(dto.product?.variants as never),
     },
     tags: mapTags(dto.filters),

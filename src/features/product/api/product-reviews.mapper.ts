@@ -1,5 +1,6 @@
-import { ProductVariant } from '@/types/product.types';
+import { FeatureIcon, ProductVariant } from '@/types/product.types';
 import { maskName } from '../utils/mask-name';
+import { mapFeatureIconDtos } from './product.mapper';
 import { mapVariants } from './variant.mapper';
 import { ProductReviewPageDto } from './product-reviews.dtos';
 
@@ -37,6 +38,7 @@ export type ReviewProduct = {
   cartCount: number;
   favoritesCount: number;
   totalQuantity: number;
+  featureIcons: FeatureIcon[];
   variants: ProductVariant[];
 };
 
@@ -65,6 +67,7 @@ export function mapProductReviewPage(dto: ProductReviewPageDto): ProductReviewPa
       cartCount: Number(dto.product?.cart_count) || 0,
       favoritesCount: Number(dto.product?.favorites_count) || 0,
       totalQuantity: Number(dto.product?.total_quantity) || 0,
+      featureIcons: mapFeatureIconDtos(dto.product?.feature_icons),
       variants: mapVariants(dto.product?.variants as never),
     },
     summary: summaryDto

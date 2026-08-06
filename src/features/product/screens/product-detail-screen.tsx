@@ -400,6 +400,7 @@ export function ProductDetailScreen() {
               {/* Size selector squares */}
               <ProductSizeSelector
                 variants={product.variants}
+                featureIcons={product.featureIcons}
                 selectedVariant={selectedVariant}
                 onSelectVariant={(v) => setSelectedVariant(v)}
                 onSizeChartPress={() => setShowSizeChart(true)}
@@ -487,6 +488,7 @@ export function ProductDetailScreen() {
       {/* Size selection bottom sheet (opened from "Sepete Ekle" when no size chosen) */}
       {showSizeSheet ? (
         <SizeSelectionSheet
+          featureIcons={product?.featureIcons}
           imageUrl={displayData.imageUrl}
           isLoadingVariants={areProductOptionsLoading}
           onAskQuestion={openQuestions}

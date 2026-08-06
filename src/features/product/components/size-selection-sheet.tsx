@@ -5,7 +5,8 @@ import { Truck } from '@tamagui/lucide-icons-2';
 import { Paragraph, Sheet, XStack, YStack } from 'tamagui';
 import { AppButton } from '@/components/ui/app-button';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
-import { ProductVariant } from '@/types/product.types';
+import { FeatureIcon, ProductVariant } from '@/types/product.types';
+import { ProductFeatureDescriptionList } from './product-feature-tags';
 import { ProductSizeSkeletonGrid } from './product-size-skeleton';
 
 type SizeSelectionSheetProps = {
@@ -16,6 +17,7 @@ type SizeSelectionSheetProps = {
   /** Already-formatted price label, e.g. "349,99 TL". */
   priceLabel: string;
   shippingMessage?: string;
+  featureIcons?: FeatureIcon[];
   variants: ProductVariant[];
   isLoadingVariants?: boolean;
   selectedVariant: ProductVariant | null;
@@ -36,6 +38,7 @@ export function SizeSelectionSheet({
   imageUrl,
   priceLabel,
   shippingMessage,
+  featureIcons,
   variants,
   isLoadingVariants = false,
   selectedVariant,
@@ -90,52 +93,56 @@ export function SizeSelectionSheet({
             </Paragraph>
           </YStack>
 
-          <XStack flexWrap="wrap" gap="$2">
-            {isLoadingVariants ? (
-              <ProductSizeSkeletonGrid
-                itemBorderRadius={8}
-                itemBorderWidth={2}
-                itemHeight={44}
-                itemMinWidth={64}
-              />
-            ) : (
-              variants.map((variant) => {
-                const available = variant.hasStock && variant.quantity > 0;
-                const selected = selectedVariant?.id === variant.id;
-                return (
-                  <XStack
-                    accessibilityLabel={`Beden ${variant.name}`}
-                    accessibilityRole="button"
-                    accessibilityState={{ disabled: !available, selected }}
-                    alignItems="center"
-                    backgroundColor={selected && available ? '$brand' : '$background'}
-                    borderColor={selected ? '$brand' : '$borderColor'}
-                    borderRadius="$3"
-                    borderWidth={2}
-                    disabled={!available}
-                    justifyContent="center"
-                    key={variant.id}
-                    minWidth={64}
-                    onPress={() => available && onSelectVariant(variant)}
-                    opacity={available ? 1 : 0.5}
-                    paddingHorizontal="$3"
-                    paddingVertical="$2.5"
-                    pressStyle={available ? { opacity: 0.85 } : undefined}
-                  >
-                    <Paragraph
-                      color={selected && available ? 'white' : selected ? '$brand' : '$color'}
-                      fontSize={14}
-                      fontWeight="600"
-                      textDecorationLine={available ? 'none' : 'line-through'}
+          <YStack gap="$2">
+            <XStack flexWrap="wrap" gap="$2">
+              {isLoadingVariants ? (
+                <ProductSizeSkeletonGrid
+                  itemBorderRadius={8}
+                  itemBorderWidth={2}
+                  itemHeight={44}
+                  itemMinWidth={64}
+                />
+              ) : (
+                variants.map((variant) => {
+                  const available = variant.hasStock && variant.quantity > 0;
+                  const selected = selectedVariant?.id === variant.id;
+                  return (
+                    <XStack
+                      accessibilityLabel={`Beden ${variant.name}`}
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: !available, selected }}
+                      alignItems="center"
+                      backgroundColor={selected && available ? '$brand' : '$background'}
+                      borderColor={selected ? '$brand' : '$borderColor'}
+                      borderRadius="$3"
+                      borderWidth={2}
+                      disabled={!available}
+                      justifyContent="center"
+                      key={variant.id}
+                      minWidth={64}
+                      onPress={() => available && onSelectVariant(variant)}
+                      opacity={available ? 1 : 0.5}
+                      paddingHorizontal="$3"
+                      paddingVertical="$2.5"
+                      pressStyle={available ? { opacity: 0.85 } : undefined}
                     >
-                      {variant.name}
-                      {variant.name2 ? ` (${variant.name2})` : ''}
-                    </Paragraph>
-                  </XStack>
-                );
-              })
-            )}
-          </XStack>
+                      <Paragraph
+                        color={selected && available ? 'white' : selected ? '$brand' : '$color'}
+                        fontSize={14}
+                        fontWeight="600"
+                        textDecorationLine={available ? 'none' : 'line-through'}
+                      >
+                        {variant.name}
+                        {variant.name2 ? ` (${variant.name2})` : ''}
+                      </Paragraph>
+                    </XStack>
+                  );
+                })
+              )}
+            </XStack>
+
+            <ProductFeatureDescriptionList featureIcons={featureIcons} />
+          </YStack>
 
           {onAskQuestion ? (
             <Pressable onPress={onAskQuestion}>

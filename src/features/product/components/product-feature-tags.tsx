@@ -86,6 +86,55 @@ export function ProductFeatureAssetTicker({
   );
 }
 
+type ProductFeatureDescriptionListProps = {
+  featureIcons?: FeatureIcon[];
+  fontSize?: number;
+  lineHeight?: number;
+  gap?: ComponentProps<typeof YStack>['gap'];
+  testID?: string;
+};
+
+const DESCRIPTION_BULLET_SIZE = 6;
+
+/**
+ * Renders every feature description at once, stacked and static. Used where the
+ * copy must stay readable (size sheet, size selector) instead of rotating like
+ * {@link ProductFeatureDescriptionTicker}.
+ */
+export function ProductFeatureDescriptionList({
+  featureIcons,
+  fontSize = 13,
+  lineHeight = 18,
+  gap = '$1',
+  testID = 'product-feature-description-list',
+}: ProductFeatureDescriptionListProps) {
+  const descriptions = useMemo(
+    () => getOrderedFeatureIcons(featureIcons).filter((icon) => hasValue(icon.description)),
+    [featureIcons],
+  );
+
+  if (descriptions.length === 0) return null;
+
+  return (
+    <YStack gap={gap} testID={testID}>
+      {descriptions.map((icon, index) => (
+        <XStack alignItems="flex-start" gap="$2" key={`${icon.id}-${index}`}>
+          <YStack
+            backgroundColor="$brand"
+            borderRadius={DESCRIPTION_BULLET_SIZE / 2}
+            height={DESCRIPTION_BULLET_SIZE}
+            marginTop={(lineHeight - DESCRIPTION_BULLET_SIZE) / 2}
+            width={DESCRIPTION_BULLET_SIZE}
+          />
+          <Paragraph color="$color" flex={1} fontSize={fontSize} fontWeight="700" lineHeight={lineHeight}>
+            {icon.description?.trim()}
+          </Paragraph>
+        </XStack>
+      ))}
+    </YStack>
+  );
+}
+
 type ProductFeatureDescriptionTickerProps = {
   featureIcons?: FeatureIcon[];
   width?: ComponentProps<typeof XStack>['width'];

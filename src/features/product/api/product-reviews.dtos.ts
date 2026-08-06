@@ -1,3 +1,5 @@
+import { ProductFeatureIconDto } from './product.dtos';
+
 /** Raw `GET /product/{slug}/review` response shape. */
 export interface ProductReviewDto {
   id: number;
@@ -34,6 +36,7 @@ export interface ProductReviewPageDto {
     cart_count?: number;
     favorites_count?: number;
     total_quantity?: number;
+    feature_icons?: ProductFeatureIconDto[];
     variants?: unknown[];
   };
   review_summary?: ReviewSummaryDto;

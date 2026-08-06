@@ -55,6 +55,7 @@ const product: ReviewProduct = {
   cartCount: 12,
   favoritesCount: 5,
   totalQuantity: 8,
+  featureIcons: [],
   variants: [],
 };
 
