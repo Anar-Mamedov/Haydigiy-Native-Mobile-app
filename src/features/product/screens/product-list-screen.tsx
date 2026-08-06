@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Paragraph, Spinner, XStack, YStack } from 'tamagui';
 import { ArrowLeft, ShoppingCart } from '@tamagui/lucide-icons-2';
 import { Redirect, useRouter } from 'expo-router';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 
-import { AppScreen, EmptyState } from '@/components/ui';
+import { AppScreen, EmptyState, ScrollToTopButton } from '@/components/ui';
 import { ProductCard } from '@/features/product/components/product-card';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { useInfiniteSearchProductsQuery } from '@/features/product/api/product.queries';
@@ -31,8 +32,13 @@ interface ProductListScreenProps {
   searchQuery?: string;
 }
 
+/** Bu kadar piksel kaydırıldıktan sonra "başa dön" butonu görünür. */
+const SCROLL_TO_TOP_THRESHOLD = 400;
+
 export function ProductListScreen({ slug, categoryId, searchQuery }: ProductListScreenProps) {
   const router = useRouter();
+  const listRef = useRef<FlashListRef<Product>>(null);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
 
   // Cart integration — badge count derives from the hydrated cart store.
   const cartCount = useCartCount();
@@ -209,6 +215,23 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
     }
   };
 
+  const handleListScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (quickFilterSection !== null) {
+      setQuickFilterSection(null);
+    }
+
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowScrollToTop((current) => {
+      const next = offsetY > SCROLL_TO_TOP_THRESHOLD;
+      return next === current ? current : next;
+    });
+  };
+
+  const handleScrollToTop = () => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    setShowScrollToTop(false);
+  };
+
   // Custom Navigation Header
   const customHeader = (
     <XStack
@@ -326,11 +349,9 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
               }
             }}
             onEndReachedThreshold={0.5}
-            onScroll={() => {
-              if (quickFilterSection !== null) {
-                setQuickFilterSection(null);
-              }
-            }}
+            onScroll={handleListScroll}
+            ref={listRef}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl
                 colors={[BRAND_COLOR]}
@@ -395,6 +416,8 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
               ) : null
             }
           />
+
+          <ScrollToTopButton onPress={handleScrollToTop} visible={showScrollToTop} />
         </YStack>
       )}
 

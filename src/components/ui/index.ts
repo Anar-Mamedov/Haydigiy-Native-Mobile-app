@@ -19,6 +19,7 @@ export * from '@/components/ui/password-visibility-toggle';
 export * from '@/components/ui/pull-to-dismiss-scroll-view';
 export * from '@/components/ui/quantity-stepper';
 export * from '@/components/ui/screen-header';
+export * from '@/components/ui/scroll-to-top-button';
 export * from '@/components/ui/search-input';
 export * from '@/components/ui/section-card';
 export * from '@/components/ui/segmented-control';
