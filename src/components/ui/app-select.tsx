@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Keyboard, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, ChevronDown, Search } from '@tamagui/lucide-icons-2';
-import { Input, Paragraph, Sheet, Spinner, XStack, YStack } from 'tamagui';
+import { Check, ChevronDown, Search } from '@/components/ui/icons';
+import { Input, Sheet, Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { KeyboardAwareSheetScrollView } from '@/components/ui/keyboard-aware-sheet-scroll-view';
 import { matchesSearch } from '@/utils/search';

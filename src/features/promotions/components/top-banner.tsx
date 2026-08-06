@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Animated, Linking, Pressable } from 'react-native';
-import { Button, Paragraph, XStack, YStack } from 'tamagui';
-import { X } from '@tamagui/lucide-icons-2';
+import { Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { X } from '@/components/ui/icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';

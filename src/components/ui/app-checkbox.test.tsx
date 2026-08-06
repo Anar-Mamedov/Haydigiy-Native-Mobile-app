@@ -1,5 +1,6 @@
 import { screen, fireEvent } from '@testing-library/react-native';
-import { Paragraph, Theme } from 'tamagui';
+import { Theme } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppCheckbox } from './app-checkbox';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 

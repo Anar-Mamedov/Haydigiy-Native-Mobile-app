@@ -1,4 +1,5 @@
-import { Paragraph, ScrollView, XStack } from 'tamagui';
+import { ScrollView, XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { HelpCategory } from '@/types/help.types';
 
 type HelpCategoryTabsProps = {

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Spinner, YStack, Paragraph, XStack } from 'tamagui';
+import { Spinner, YStack, XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Linking, Pressable, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThumbsUp } from '@tamagui/lucide-icons-2';
+import { ThumbsUp } from '@/components/ui/icons';
 import { AppScreen, DeferredMount, EmptyState, PullToDismissScrollView } from '@/components/ui';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Alert, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
-import { CircleAlert, CircleX, Undo2 } from '@tamagui/lucide-icons-2';
+import { Button, ScrollView, Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { CircleAlert, CircleX, Undo2 } from '@/components/ui/icons';
 import { AppScreen, EmptyState } from '@/components/ui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';

@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Paragraph, Separator, Spinner, YStack } from 'tamagui';
+import { Separator, Spinner, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { CheckoutSection } from './checkout-section';
 import { CheckoutOptionRow } from './checkout-option-row';
 import { formatCurrency } from '@/utils/format-currency';

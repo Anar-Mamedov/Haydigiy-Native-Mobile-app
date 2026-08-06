@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
-import { CheckCircle } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, Spinner, XStack, YStack } from 'tamagui';
+import { CheckCircle } from '@/components/ui/icons';
+import { Button, Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, ScreenHeader, SectionCard } from '@/components/ui';
 import { formatCurrency } from '@/utils/format-currency';
 import { usePaymentSuccess } from '../hooks/use-payment-success';

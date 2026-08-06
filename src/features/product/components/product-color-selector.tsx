@@ -1,6 +1,7 @@
 import React from 'react';
-import { ChevronRight } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, ScrollView, useThemeName } from 'tamagui';
+import { ChevronRight } from '@/components/ui/icons';
+import { XStack, YStack, ScrollView, useThemeName } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Image } from 'expo-image';
 import { Pressable } from 'react-native';
 import { ProductColorOption } from '@/types/product.types';

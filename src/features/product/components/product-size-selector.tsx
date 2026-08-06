@@ -1,8 +1,10 @@
 import React from 'react';
-import { Table, Calculator, Bell } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, useThemeName } from 'tamagui';
+import { Table, Calculator, Bell } from '@/components/ui/icons';
+import { XStack, YStack, useThemeName } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Pressable } from 'react-native';
 import { FeatureIcon, ProductVariant } from '@/types/product.types';
+import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
 import { ProductFeatureDescriptionList } from './product-feature-tags';
 import { ProductSizeSelectorSkeleton } from './product-size-skeleton';
 
@@ -27,6 +29,11 @@ export function ProductSizeSelector({
 }: ProductSizeSelectorProps) {
   const themeName = useThemeName();
   const isDark = themeName === 'dark' || themeName.includes('dark');
+  // Çipler sabit ölçülü; yazı ile kutu birlikte büyümeli.
+  const scale = useFontScale(COMPACT_MAX_FONT_SCALE);
+  const chipHeight = Math.round(40 * scale);
+  const chipMinWidth = Math.round(52 * scale);
+  const bellBadgeSize = Math.round(18 * scale);
 
   if (isLoading) return <ProductSizeSelectorSkeleton />;
 
@@ -84,8 +91,8 @@ export function ProductSizeSelector({
               })}
             >
               <YStack
-                height={40}
-                minWidth={52}
+                height={chipHeight}
+                minWidth={chipMinWidth}
                 paddingHorizontal={8}
                 borderRadius={6}
                 borderWidth={1}
@@ -113,6 +120,8 @@ export function ProductSizeSelector({
                 <Paragraph
                   fontSize={13}
                   fontWeight="700"
+                  maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}
+                  numberOfLines={1}
                   color={
                     isAvailable
                       ? isSelected
@@ -152,12 +161,12 @@ export function ProductSizeSelector({
                       borderRadius={10}
                       borderWidth={0.5}
                       borderColor={isDark ? '#374151' : '#E5E7EB'}
-                      width={18}
-                      height={18}
+                      width={bellBadgeSize}
+                      height={bellBadgeSize}
                       alignItems="center"
                       justifyContent="center"
                     >
-                      <Bell size={10} color={isDark ? '#6B7280' : '#9CA3AF'} />
+                      <Bell color={isDark ? '#6B7280' : '#9CA3AF'} maxFontScale={COMPACT_MAX_FONT_SCALE} size={10} />
                     </XStack>
                   </>
                 )}

@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
-import { ChevronRight } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { ChevronRight } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { User } from '@/types/auth.types';
 import { AccountAvatar } from './account-avatar';
 

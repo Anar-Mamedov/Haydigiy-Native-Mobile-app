@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
-import { CalendarDays, Check } from '@tamagui/lucide-icons-2';
-import { Paragraph, Spinner, XStack, YStack } from 'tamagui';
+import { CalendarDays, Check } from '@/components/ui/icons';
+import { Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSelect } from '@/components/ui';
 import { formatPickupDate, UseScheduledReturn } from '../hooks/use-scheduled-return';
 import { SavedAddress } from '@/types/order.types';

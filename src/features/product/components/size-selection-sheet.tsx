@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Bell, Truck } from '@tamagui/lucide-icons-2';
-import { Paragraph, Sheet, XStack, YStack } from 'tamagui';
+import { Bell, Truck } from '@/components/ui/icons';
+import { Sheet, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton } from '@/components/ui/app-button';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { FeatureIcon, ProductVariant } from '@/types/product.types';

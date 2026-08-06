@@ -1,7 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
-import { Camera, Image as ImagePlaceholderIcon, X } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Camera, Image as ImagePlaceholderIcon, X } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppCheckbox, AppSelect } from '@/components/ui';
 import { PHOTO_REQUIRED_REASON_ID, ExpandedReturnItem } from '../hooks/use-return-create-controller';
 import { ReturnPhoto, ReturnReason } from '@/types/order.types';

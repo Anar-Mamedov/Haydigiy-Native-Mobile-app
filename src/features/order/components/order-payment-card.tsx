@@ -1,4 +1,5 @@
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { OrderTotalsView } from '@/types/order.types';
 import { formatOrderPrice } from '../utils/order-status';

@@ -1,5 +1,5 @@
 import { YStack } from 'tamagui';
-import { Check } from '@tamagui/lucide-icons-2';
+import { Check } from '@/components/ui/icons';
 
 interface FilterCheckboxProps {
   checked: boolean;

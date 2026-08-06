@@ -1,6 +1,7 @@
 import { useRouter, usePathname } from 'expo-router';
-import { Heart, Menu, ShoppingCart, UserRound, Search } from '@tamagui/lucide-icons-2';
-import { Button, Theme, XStack, YStack, Paragraph, useTheme, useThemeName } from 'tamagui';
+import { Heart, Menu, ShoppingCart, UserRound, Search } from '@/components/ui/icons';
+import { Button, Theme, XStack, YStack, useTheme, useThemeName } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { Image } from 'expo-image';
 

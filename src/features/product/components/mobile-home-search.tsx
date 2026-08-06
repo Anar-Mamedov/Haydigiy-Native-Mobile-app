@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
-import { Search } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, XStack } from 'tamagui';
+import { Search } from '@/components/ui/icons';
+import { Button, XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 export function MobileHomeSearch() {
   const router = useRouter();

@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { Paragraph, Spinner, XStack, YStack } from 'tamagui';
-import { ArrowLeft, ShoppingCart } from '@tamagui/lucide-icons-2';
+import { Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { ArrowLeft, ShoppingCart } from '@/components/ui/icons';
 import { Redirect, useRouter } from 'expo-router';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 

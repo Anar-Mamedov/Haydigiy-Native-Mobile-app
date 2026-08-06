@@ -3,8 +3,9 @@ import { Modal, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { WebView, type WebViewNavigation } from 'react-native-webview';
-import { X } from '@tamagui/lucide-icons-2';
-import { Paragraph, Spinner, useTheme, XStack, YStack } from 'tamagui';
+import { X } from '@/components/ui/icons';
+import { Spinner, useTheme, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { ThreeDSPayload } from '../hooks/use-place-order';
 
 interface PaymentWebViewProps {

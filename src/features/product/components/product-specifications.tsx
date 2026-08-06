@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, useThemeName } from 'tamagui';
+import { ChevronDown, ChevronUp } from '@/components/ui/icons';
+import { XStack, YStack, useThemeName } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Pressable, Dimensions } from 'react-native';
 import { ProductModel, ProductVariantOnModel } from '@/types/product.types';
 

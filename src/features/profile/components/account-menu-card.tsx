@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
-import { Paragraph, Separator, YStack } from 'tamagui';
+import { Separator, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { ProfileMenuRow } from './profile-menu-row';
 

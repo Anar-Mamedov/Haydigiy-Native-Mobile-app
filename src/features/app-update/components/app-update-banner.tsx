@@ -1,4 +1,5 @@
-import { Button, Paragraph, XStack, YStack } from 'tamagui';
+import { Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppUpdatePhoneIcon } from './app-update-phone-icon';
 
 export type AppUpdateBannerProps = {

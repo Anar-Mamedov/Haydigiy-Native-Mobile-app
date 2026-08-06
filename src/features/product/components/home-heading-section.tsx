@@ -1,4 +1,5 @@
-import { Paragraph, YStack } from 'tamagui';
+import { YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { HeadingContent } from '@/types/page-design.types';
 
 type HomeHeadingSectionProps = {

@@ -1,7 +1,8 @@
 import { Linking } from 'react-native';
 import { Image } from 'expo-image';
-import { ChevronRight, FileText, Truck } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, XStack, YStack } from 'tamagui';
+import { ChevronRight, FileText, Truck } from '@/components/ui/icons';
+import { Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { OrderDetail } from '@/types/order.types';

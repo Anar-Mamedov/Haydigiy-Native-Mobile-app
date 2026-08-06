@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
-import { Paragraph, ScrollView, Sheet, XStack } from 'tamagui';
-import { X } from '@tamagui/lucide-icons-2';
+import { ScrollView, Sheet, XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { X } from '@/components/ui/icons';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 
 export interface DisclosureSheetProps {

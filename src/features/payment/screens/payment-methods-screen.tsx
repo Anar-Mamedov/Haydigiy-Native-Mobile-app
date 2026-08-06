@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CreditCard, Plus } from '@tamagui/lucide-icons-2';
+import { CreditCard, Plus } from '@/components/ui/icons';
 import { Spinner, YStack } from 'tamagui';
 import { AppButton, AppScreen, ConfirmDialog, EmptyState, ScreenHeader } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';

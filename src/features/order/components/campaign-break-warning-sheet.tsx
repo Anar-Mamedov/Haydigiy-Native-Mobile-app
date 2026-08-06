@@ -1,5 +1,6 @@
-import { TriangleAlert } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { TriangleAlert } from '@/components/ui/icons';
+import { Button, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { CancelPreview } from '@/types/order.types';
 

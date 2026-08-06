@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
-import { ImageOff } from '@tamagui/lucide-icons-2';
+import { ImageOff } from '@/components/ui/icons';
 import { Spinner, YStack } from 'tamagui';
 
 const PRODUCT_IMAGE_LOAD_TIMEOUT_MS = 12_000;

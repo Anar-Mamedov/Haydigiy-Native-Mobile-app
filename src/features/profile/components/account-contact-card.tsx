@@ -8,8 +8,9 @@ import {
   MapPin,
   MessageCircle,
   Phone,
-} from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+} from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 
 const CUSTOMER_SERVICE_PHONE = '08502590449';

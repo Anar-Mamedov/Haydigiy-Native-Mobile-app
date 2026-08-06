@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronDown, ChevronUp } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, Separator, Spinner, XStack, YStack } from 'tamagui';
+import { ChevronDown, ChevronUp } from '@/components/ui/icons';
+import { Button, Separator, Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import type { OrderTokenSummary } from '@/types/checkout.types';
 import { formatCurrency } from '@/utils/format-currency';
 

@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { Paragraph, ScrollView, XStack, YStack } from 'tamagui';
+import { ScrollView, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 import { formatCurrency } from '@/utils/format-currency';
 import { PopularProduct } from '@/types/product.types';

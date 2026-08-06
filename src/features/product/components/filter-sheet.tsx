@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable } from 'react-native';
-import { Sheet, XStack, YStack, Paragraph, ScrollView, Button, Input } from 'tamagui';
-import { ChevronDown, ChevronRight, Search, X } from '@tamagui/lucide-icons-2';
+import { Sheet, XStack, YStack, ScrollView, Button, Input } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { ChevronDown, ChevronRight, Search, X } from '@/components/ui/icons';
 import { FilterProperty, ProductAvailableFilters } from '@/types/product.types';
 import { CategoryFilterTree } from './category-filter-tree';
 import { FilterCheckbox } from '@/components/ui/filter-checkbox';

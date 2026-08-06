@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { Pressable } from 'react-native';
-import { Paragraph, XStack, YStack } from 'tamagui';
-import { ChevronLeft } from '@tamagui/lucide-icons-2';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { ChevronLeft } from '@/components/ui/icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 

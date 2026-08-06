@@ -1,4 +1,4 @@
-import { Truck, CircleX, CircleCheck } from '@tamagui/lucide-icons-2';
+import { Truck, CircleX, CircleCheck } from '@/components/ui/icons';
 import {
   formatOrderDate,
   formatOrderTimelineDate,

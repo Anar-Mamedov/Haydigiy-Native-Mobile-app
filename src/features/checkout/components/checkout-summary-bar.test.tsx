@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { screen, within } from '@testing-library/react-native';
-import { Paragraph } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { CheckoutSummaryBar, CheckoutSummaryBarProps } from './checkout-summary-bar';
 

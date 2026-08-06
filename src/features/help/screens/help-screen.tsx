@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Paragraph, Spinner, YStack } from 'tamagui';
+import { Spinner, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, EmptyState, ScreenHeader } from '@/components/ui';
 import { matchesSearch } from '@/utils/search';
 import { useHelpQuery } from '../api/help.queries';

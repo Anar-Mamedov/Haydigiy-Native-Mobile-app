@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Pressable, TextInput } from 'react-native';
-import { Paragraph, Spinner, XStack, YStack, ScrollView, Button, useTheme } from 'tamagui';
-import { ArrowLeft, Search } from '@tamagui/lucide-icons-2';
+import { Spinner, XStack, YStack, ScrollView, Button, useTheme } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { ArrowLeft, Search } from '@/components/ui/icons';
 import { AppScreen, EmptyState } from '@/components/ui';
 import { useRouter } from 'expo-router';
 import { useMenuGroupsQuery, useMenuItemsQuery } from '../api/category.queries';

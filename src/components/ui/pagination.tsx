@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
-import { ChevronLeft, ChevronRight } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack } from 'tamagui';
+import { ChevronLeft, ChevronRight } from '@/components/ui/icons';
+import { XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 type PaginationProps = {
   currentPage: number;

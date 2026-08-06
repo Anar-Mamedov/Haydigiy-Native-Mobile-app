@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
+import { ScrollView, Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, AppSelect, EmptyState, ScreenHeader, SearchInput, SectionCard } from '@/components/ui';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';

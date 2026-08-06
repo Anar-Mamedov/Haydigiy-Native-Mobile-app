@@ -1,5 +1,6 @@
 import { Control, Controller, FieldErrors } from 'react-hook-form';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppCheckbox, AppInput } from '@/components/ui';
 import { AddressFormData } from '../schemas/address.schema';
 import { toAddressText } from '@/utils/normalize-text';

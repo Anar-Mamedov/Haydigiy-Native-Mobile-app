@@ -3,9 +3,11 @@ import { Linking, Pressable } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
-import { Paragraph, XStack, YStack, useTheme } from 'tamagui';
+import { XStack, YStack, useTheme } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { BRAND_COLOR } from '@/lib/theme/colors';
+import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
 
 type TabItem = {
   label: string;
@@ -146,6 +148,16 @@ export function BottomNavigationBar() {
   const cartCount = useCartCount();
   const inactiveColor = theme.color10.val;
 
+  // Tab bar yüksekliği sabit; etiket, ikon ve rozet aynı sıkı oranla birlikte
+  // büyüsün ki aralarındaki denge bozulmasın ve satır taşmasın.
+  const scale = useFontScale(COMPACT_MAX_FONT_SCALE);
+  const tabIconSize = Math.round(25 * scale);
+  const tabLabelLineHeight = Math.round(13 * scale);
+  const badgeSize = Math.round(18 * scale);
+  // İçerik (ikon + etiket) büyüyünce çubuk da büyümeli; 56 sabit kalırsa
+  // etiketler kırpılıyor.
+  const barHeight = Math.round(56 * scale);
+
   const navigate = useCallback(
     (path: TabItem['path']) => {
       if (path === '/') {
@@ -171,7 +183,7 @@ export function BottomNavigationBar() {
       backgroundColor="$background"
       borderTopColor="$borderColor"
       borderTopWidth={1}
-      height={56 + insets.bottom}
+      height={barHeight + insets.bottom}
       paddingBottom={insets.bottom + 4}
       paddingTop={6}
     >
@@ -194,26 +206,26 @@ export function BottomNavigationBar() {
             })}
           >
             <YStack alignItems="center" gap={2} position="relative">
-              {item.icon({ color, focused, size: 25 })}
+              {item.icon({ color, focused, size: tabIconSize })}
               {showBadge ? (
                 <XStack
                   alignItems="center"
                   backgroundColor="$brand"
-                  borderRadius={10}
-                  height={18}
+                  borderRadius={badgeSize / 2}
+                  height={badgeSize}
                   justifyContent="center"
-                  minWidth={18}
+                  minWidth={badgeSize}
                   paddingHorizontal={5}
                   position="absolute"
                   right={-12}
                   top={-5}
                 >
-                  <Paragraph color="white" fontSize={10} fontWeight="700" lineHeight={12}>
+                  <Paragraph color="white" fontSize={10} fontWeight="700" lineHeight={Math.round(12 * scale)} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}>
                     {cartCount}
                   </Paragraph>
                 </XStack>
               ) : null}
-              <Paragraph fontSize={9.5} fontWeight="600" lineHeight={13} style={{ color }}>
+              <Paragraph fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1} style={{ color }}>
                 {item.label}
               </Paragraph>
             </YStack>
@@ -232,8 +244,8 @@ export function BottomNavigationBar() {
         })}
       >
         <YStack alignItems="center" gap={2}>
-          <WhatsappTabIcon color={inactiveColor} size={25} />
-          <Paragraph fontSize={9.5} fontWeight="600" lineHeight={13} style={{ color: inactiveColor }}>
+          <WhatsappTabIcon color={inactiveColor} size={tabIconSize} />
+          <Paragraph fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1} style={{ color: inactiveColor }}>
             Whatsapp
           </Paragraph>
         </YStack>
@@ -257,8 +269,8 @@ export function BottomNavigationBar() {
             })}
           >
             <YStack alignItems="center" gap={2}>
-              {item.icon({ color, focused, size: 25 })}
-              <Paragraph fontSize={9.5} fontWeight="600" lineHeight={13} style={{ color }}>
+              {item.icon({ color, focused, size: tabIconSize })}
+              <Paragraph fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1} style={{ color }}>
                 {item.label}
               </Paragraph>
             </YStack>

@@ -1,7 +1,8 @@
 import { Linking } from 'react-native';
 import { Image } from 'expo-image';
-import { Mail, MapPin, Phone } from '@tamagui/lucide-icons-2';
-import { Button, Card, Paragraph, XStack, YStack } from 'tamagui';
+import { Mail, MapPin, Phone } from '@/components/ui/icons';
+import { Button, Card, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 const paymentLogos = [
   'https://haydigiy.com/troy-logo.png',

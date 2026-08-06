@@ -1,5 +1,6 @@
-import { Pencil, Trash2 } from '@tamagui/lucide-icons-2';
-import { Paragraph, Separator, XStack, YStack } from 'tamagui';
+import { Pencil, Trash2 } from '@/components/ui/icons';
+import { Separator, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { formatIbanInput, getIbanDigits } from '@/utils/iban';
 import { PaymentMethod } from '@/types/order.types';

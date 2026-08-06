@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Paragraph, Spinner, XStack, YStack } from 'tamagui';
-import { CircleAlert } from '@tamagui/lucide-icons-2';
+import { Button, Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { CircleAlert } from '@/components/ui/icons';
 import { AppInput, AppScreen, EmptyState, KeyboardAwareFormScrollView, SectionCard } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { OrdersHeader } from '../components/orders-header';

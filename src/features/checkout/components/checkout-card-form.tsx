@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { CheckoutSection } from './checkout-section';
 import { AppInput, AppSelect } from '@/components/ui';
 import { CardFormController } from '../hooks/use-card-form';

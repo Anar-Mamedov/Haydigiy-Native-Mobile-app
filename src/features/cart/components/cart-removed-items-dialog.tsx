@@ -1,5 +1,6 @@
-import { AlertDialog, Button, Paragraph, XStack, YStack } from 'tamagui';
-import { TriangleAlert } from '@tamagui/lucide-icons-2';
+import { AlertDialog, Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { TriangleAlert } from '@/components/ui/icons';
 import { AppAlertDialog } from '@/components/ui';
 
 type CartRemovedItemsDialogProps = {

@@ -12,8 +12,9 @@ import {
   RefreshCw,
   Truck,
   X,
-} from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, ScrollView, Sheet, Spinner, XStack, YStack } from 'tamagui';
+} from '@/components/ui/icons';
+import { Button, ScrollView, Sheet, Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { useOrderCargoTrackingQuery } from '../api/order.queries';
 import { formatTrackingCode } from '../api/order-tracking.mapper';

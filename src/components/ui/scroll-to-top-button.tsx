@@ -1,4 +1,4 @@
-import { ChevronUp } from '@tamagui/lucide-icons-2';
+import { ChevronUp } from '@/components/ui/icons';
 import { Pressable } from 'react-native';
 import { YStack } from 'tamagui';
 

@@ -3,6 +3,7 @@ export * from '@/components/ui/app-alert-dialog';
 export * from '@/components/ui/app-button';
 export * from '@/components/ui/app-checkbox';
 export * from '@/components/ui/app-input';
+export * from '@/components/ui/app-paragraph';
 export * from '@/components/ui/app-screen';
 export * from '@/components/ui/app-select';
 export * from '@/components/ui/app-sheet-overlay';

@@ -1,4 +1,4 @@
-import { BadgeCheck, CircleCheck, CircleX, Clock, Truck } from '@tamagui/lucide-icons-2';
+import { BadgeCheck, CircleCheck, CircleX, Clock, Truck } from '@/components/ui/icons';
 
 export const PENDING_PAYMENT_STATUS_TEXT =
   'Ödeme durumu beklemede. Bankadan ödeme bilgilerinin gelmesi bekleniyor. (Bu işlem 10 dakika kadar sürebilir.)';

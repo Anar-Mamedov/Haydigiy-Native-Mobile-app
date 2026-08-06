@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
-import { CircleAlert } from '@tamagui/lucide-icons-2';
-import { ButtonProps, H3, Paragraph, YStack } from 'tamagui';
+import { CircleAlert } from '@/components/ui/icons';
+import { ButtonProps, H3, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton } from '@/components/ui/app-button';
 
 type EmptyStateProps = {

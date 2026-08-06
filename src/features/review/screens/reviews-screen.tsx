@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { MessageSquare } from '@tamagui/lucide-icons-2';
+import { MessageSquare } from '@/components/ui/icons';
 import { Spinner, YStack } from 'tamagui';
 import { AppScreen, EmptyState, ScreenHeader } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';

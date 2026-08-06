@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
-import { Package } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Package } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { ShippingEstimate } from '@/types/shipping.types';
 
 type ShippingEstimateInfoVariant = 'product' | 'cart';

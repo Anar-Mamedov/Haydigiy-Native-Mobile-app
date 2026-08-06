@@ -1,5 +1,6 @@
 import React from 'react';
-import { XStack, YStack, Paragraph, useThemeName } from 'tamagui';
+import { XStack, YStack, useThemeName } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Image } from 'expo-image';
 import { Pressable, ScrollView } from 'react-native';
 import { formatCurrency } from '@/utils/format-currency';

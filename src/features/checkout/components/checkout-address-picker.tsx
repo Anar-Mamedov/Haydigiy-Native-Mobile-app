@@ -1,6 +1,7 @@
 import { Pressable, useWindowDimensions } from 'react-native';
-import { Pencil, X } from '@tamagui/lucide-icons-2';
-import { Paragraph, ScrollView, Separator, Sheet, XStack, YStack } from 'tamagui';
+import { Pencil, X } from '@/components/ui/icons';
+import { ScrollView, Separator, Sheet, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { CheckoutAddress } from '@/types/checkout.types';
 import { formatCheckoutAddressLine } from '../utils/format-checkout-address';

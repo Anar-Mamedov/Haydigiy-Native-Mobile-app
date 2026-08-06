@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Spinner, YStack, Paragraph } from 'tamagui';
+import { Spinner, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { FlashList } from '@shopify/flash-list';
 
 import { AppScreen, EmptyState, ConfirmDialog } from '@/components/ui';

@@ -1,4 +1,5 @@
-import { Button, Paragraph, XStack, YStack } from 'tamagui';
+import { Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { handleLinkPress } from '@/utils/link-handler';
 import { TextContent } from '@/types/page-design.types';
 

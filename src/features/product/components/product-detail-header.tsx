@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Home, Grid, Search, ShoppingCart, UserRound } from '@tamagui/lucide-icons-2';
-import { Button, Theme, XStack, YStack, Paragraph, useTheme } from 'tamagui';
+import { ArrowLeft, Home, Grid, Search, ShoppingCart, UserRound } from '@/components/ui/icons';
+import { Button, Theme, XStack, YStack, useTheme } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { Pressable } from 'react-native';
 

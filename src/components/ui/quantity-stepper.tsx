@@ -1,5 +1,6 @@
-import { Minus, Plus } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, Spinner, XStack } from 'tamagui';
+import { Minus, Plus } from '@/components/ui/icons';
+import { Button, Spinner, XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 export type QuantityStepperProps = {
   value: number;

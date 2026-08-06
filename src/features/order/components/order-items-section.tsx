@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { OrderDetailItem as OrderDetailItemModel } from '@/types/order.types';
 import { OrderDetailItem } from './order-detail-item';

@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native';
-import { Paragraph } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AccordionSection } from '@/components/ui/accordion-section';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 

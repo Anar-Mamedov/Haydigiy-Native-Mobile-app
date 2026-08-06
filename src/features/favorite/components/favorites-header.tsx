@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
-import { XStack, Paragraph } from 'tamagui';
-import { ArrowLeft } from '@tamagui/lucide-icons-2';
+import { XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { ArrowLeft } from '@/components/ui/icons';
 
 interface FavoritesHeaderProps {
   onBack: () => void;

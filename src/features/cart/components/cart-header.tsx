@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
-import { ArrowLeft } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack } from 'tamagui';
+import { ArrowLeft } from '@/components/ui/icons';
+import { XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 type CartHeaderProps = {
   itemCount: number;

@@ -1,8 +1,9 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Calendar, Check, Copy, Percent, Tag, Truck } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Calendar, Check, Copy, Percent, Tag, Truck } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Coupon, CouponDiscountType } from '@/types/coupon.types';
 import {
   formatCouponDate,

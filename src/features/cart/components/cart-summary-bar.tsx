@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
-import { ChevronDown, ChevronUp } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, Spinner, XStack, YStack } from 'tamagui';
+import { ChevronDown, ChevronUp } from '@/components/ui/icons';
+import { Button, Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { formatCurrency } from '@/utils/format-currency';
 
 type CartSummaryBarProps = {

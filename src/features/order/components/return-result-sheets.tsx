@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
 import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CircleAlert, CircleCheck } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { CircleAlert, CircleCheck } from '@/components/ui/icons';
+import { Button, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { ReturnMethod } from '@/types/order.types';
 

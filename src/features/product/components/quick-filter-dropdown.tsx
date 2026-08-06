@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable } from 'react-native';
-import { Input, Paragraph, ScrollView, XStack, YStack } from 'tamagui';
-import { Search } from '@tamagui/lucide-icons-2';
+import { Input, ScrollView, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { Search } from '@/components/ui/icons';
 import { FilterProperty, ProductAvailableFilters, QuickFilterGroup } from '@/types/product.types';
 import { FilterShortcutSection } from './filter-sheet';
 import { CategoryFilterTree } from './category-filter-tree';

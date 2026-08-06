@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Sheet, YStack, XStack, Paragraph, Button, Input } from 'tamagui';
-import { X, Table, Calculator, WashingMachine, MessageSquare, Check } from '@tamagui/lucide-icons-2';
+import { Sheet, YStack, XStack, Button, Input } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { X, Table, Calculator, WashingMachine, MessageSquare, Check } from '@/components/ui/icons';
 import { Pressable, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';

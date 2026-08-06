@@ -1,4 +1,4 @@
-import { Eye, EyeOff } from '@tamagui/lucide-icons-2';
+import { Eye, EyeOff } from '@/components/ui/icons';
 import { Button } from 'tamagui';
 
 export interface PasswordVisibilityToggleProps {

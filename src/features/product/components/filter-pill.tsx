@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
-import { Paragraph, XStack } from 'tamagui';
-import { ChevronDown } from '@tamagui/lucide-icons-2';
+import { XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { ChevronDown } from '@/components/ui/icons';
 
 interface FilterPillProps {
   label: string;

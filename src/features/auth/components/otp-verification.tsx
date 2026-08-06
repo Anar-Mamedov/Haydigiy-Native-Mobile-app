@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TextInput, Pressable } from 'react-native';
-import { YStack, XStack, Paragraph, Button, Spinner } from 'tamagui';
+import { YStack, XStack, Button, Spinner } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton, AppCheckbox, DisclosureSheet } from '@/components/ui';
 import {
   useFastLoginInitMutation,

@@ -3,7 +3,8 @@ import { Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Paragraph, Spinner, XStack, YStack } from 'tamagui';
+import { Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton, AppInput, AppSelect } from '@/components/ui';
 import {
   extractTurkishNationalNumber,

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
-import { TriangleAlert } from '@tamagui/lucide-icons-2';
+import { Button, ScrollView, Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { TriangleAlert } from '@/components/ui/icons';
 import { AppScreen, EmptyState, SectionCard } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useOrderCancelController } from '../hooks/use-order-cancel-controller';

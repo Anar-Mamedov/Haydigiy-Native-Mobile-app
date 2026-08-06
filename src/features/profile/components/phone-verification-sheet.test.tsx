@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react-native';
-import { Paragraph } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { PhoneVerificationSheet } from './phone-verification-sheet';
 

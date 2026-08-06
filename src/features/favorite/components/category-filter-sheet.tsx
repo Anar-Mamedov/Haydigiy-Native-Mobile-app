@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Pressable } from 'react-native';
-import { Sheet, YStack, XStack, Paragraph, ScrollView } from 'tamagui';
-import { X } from '@tamagui/lucide-icons-2';
+import { Sheet, YStack, XStack, ScrollView } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { X } from '@/components/ui/icons';
 import { FilterCheckbox } from '@/components/ui/filter-checkbox';
 import { AppButton } from '@/components/ui/app-button';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';

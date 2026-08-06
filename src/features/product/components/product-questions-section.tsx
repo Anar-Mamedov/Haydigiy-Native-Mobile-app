@@ -1,6 +1,7 @@
 import React from 'react';
-import { Heart, ChevronDown } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, Button } from 'tamagui';
+import { Heart, ChevronDown } from '@/components/ui/icons';
+import { XStack, YStack, Button } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Pressable } from 'react-native';
 import { ProductQuestion } from '@/types/product.types';
 

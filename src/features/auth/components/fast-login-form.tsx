@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { YStack, Paragraph, Spinner } from 'tamagui';
+import { YStack, Spinner } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppInput, AppButton } from '@/components/ui';
 import { fastLoginSchema, FastLoginFormData } from '../schemas/auth.schema';
 import { useFastLoginInitMutation } from '../api/auth.mutations';

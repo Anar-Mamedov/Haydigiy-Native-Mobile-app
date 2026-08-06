@@ -1,5 +1,6 @@
 import { forwardRef, ReactNode } from 'react';
-import { Button, GetProps, Paragraph, useTheme, XStack } from 'tamagui';
+import { Button, GetProps, useTheme, XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 export type AppButtonProps = GetProps<typeof Button> & {
   children?: ReactNode;

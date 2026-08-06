@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from '@tamagui/lucide-icons-2';
-import { Paragraph, YStack, XStack, Button, Separator, ScrollView } from 'tamagui';
+import { ArrowLeft } from '@/components/ui/icons';
+import { YStack, XStack, Button, Separator, ScrollView } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen } from '@/components/ui';
 import { useAuthStore } from '../../auth/store/use-auth-store';
 import { useAuthStatus } from '../../auth/hooks/use-auth-status';

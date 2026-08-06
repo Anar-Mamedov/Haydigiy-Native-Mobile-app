@@ -1,4 +1,4 @@
-import { Star } from '@tamagui/lucide-icons-2';
+import { Star } from '@/components/ui/icons';
 import { XStack } from 'tamagui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 

@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
-import { Info } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Info } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui/section-card';
 import { ReviewProduct, ReviewSummary } from '../api/product-reviews.mapper';
 import { SocialTicker } from './social-ticker';

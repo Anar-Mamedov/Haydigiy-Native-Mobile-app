@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Paragraph, XStack } from 'tamagui';
+import { XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 
 type AccountAvatarProps = {

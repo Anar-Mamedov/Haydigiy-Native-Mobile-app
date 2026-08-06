@@ -1,5 +1,6 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Paragraph, XStack } from 'tamagui';
+import { XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 type ProductCtaFooterProps = {
   /** Outline (secondary) action on the left, e.g. "Soru & Cevap" or "Soru Sor". */

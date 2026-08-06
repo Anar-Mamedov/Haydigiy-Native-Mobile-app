@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import { Pressable } from 'react-native';
-import { YStack, XStack, Paragraph, Button } from 'tamagui';
+import { YStack, XStack, Button } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Image } from 'expo-image';
-import { X, ShoppingCart, TrendingDown } from '@tamagui/lucide-icons-2';
+import { X, ShoppingCart, TrendingDown } from '@/components/ui/icons';
 import { FavoriteItem } from '@/types/favorite.types';
 import { Product } from '@/types/product.types';
 import { formatCurrency } from '@/utils/format-currency';

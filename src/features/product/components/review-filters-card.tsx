@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
 import type { ScrollView as RNScrollView } from 'react-native';
-import { ChevronLeft, ChevronRight, Package, Star, User } from '@tamagui/lucide-icons-2';
-import { Paragraph, ScrollView, XStack, YStack } from 'tamagui';
+import { ChevronLeft, ChevronRight, Package, Star, User } from '@/components/ui/icons';
+import { ScrollView, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSelect, SectionCard } from '@/components/ui';
 
 type ReviewFiltersCardProps = {

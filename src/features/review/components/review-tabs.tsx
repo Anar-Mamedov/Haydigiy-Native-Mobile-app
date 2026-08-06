@@ -1,5 +1,6 @@
 import { Pressable } from 'react-native';
-import { Paragraph, ScrollView, XStack } from 'tamagui';
+import { ScrollView, XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { ReviewTab } from '@/types/review.types';
 
 type ReviewTabsProps = {

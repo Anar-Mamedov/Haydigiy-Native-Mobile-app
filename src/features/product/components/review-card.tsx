@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Image } from 'expo-image';
-import { ThumbsUp } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { ThumbsUp } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui/section-card';
 import { ProductReviewItem } from '../api/product-reviews.mapper';
 import { formatDateTR } from '../utils/format-date-tr';

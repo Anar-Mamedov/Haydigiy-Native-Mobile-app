@@ -1,5 +1,6 @@
 import { useWindowDimensions } from 'react-native';
-import { Paragraph, ScrollView, Sheet, YStack } from 'tamagui';
+import { ScrollView, Sheet, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppCheckbox } from '@/components/ui/app-checkbox';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { SectionCard } from '@/components/ui/section-card';

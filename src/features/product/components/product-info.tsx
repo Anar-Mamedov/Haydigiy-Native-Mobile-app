@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, AlertCircle, Star, Camera } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, H3 } from 'tamagui';
+import { ShoppingCart, Heart, AlertCircle, Star, Camera } from '@/components/ui/icons';
+import { XStack, YStack, H3 } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Pressable } from 'react-native';
 import { BRAND_COLOR, DANGER_COLOR, WARNING_COLOR } from '@/lib/theme/colors';
 

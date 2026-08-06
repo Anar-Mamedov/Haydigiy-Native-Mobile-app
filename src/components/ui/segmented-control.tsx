@@ -1,4 +1,5 @@
-import { Paragraph, XStack } from 'tamagui';
+import { XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 export type SegmentedControlOption<T extends string> = {
   label: string;

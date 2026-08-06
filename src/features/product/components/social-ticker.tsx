@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, ShoppingCart } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Heart, ShoppingCart } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { DANGER_COLOR } from '@/lib/theme/colors';
 import { buildSocialTickerMessages } from '../utils/social-ticker';
 

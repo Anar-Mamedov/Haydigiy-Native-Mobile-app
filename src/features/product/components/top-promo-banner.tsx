@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X } from '@tamagui/lucide-icons-2';
-import { Button, XStack, YStack, Paragraph } from 'tamagui';
+import { X } from '@/components/ui/icons';
+import { Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export function TopPromoBanner() {

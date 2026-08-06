@@ -8,8 +8,9 @@ import {
   ShoppingBag,
   Star,
   Undo2,
-} from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, XStack, YStack } from 'tamagui';
+} from '@/components/ui/icons';
+import { Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { OrderDetailItem as OrderDetailItemModel } from '@/types/order.types';
 import { formatOrderPrice } from '../utils/order-status';
 

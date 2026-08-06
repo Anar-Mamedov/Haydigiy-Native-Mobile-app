@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Alert, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Trash2 } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack } from 'tamagui';
+import { ChevronRight, Trash2 } from '@/components/ui/icons';
+import { XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { ConfirmDialog, SectionCard } from '@/components/ui';
 import { useDeactivateAccountMutation } from '@/features/auth/api/auth.mutations';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';

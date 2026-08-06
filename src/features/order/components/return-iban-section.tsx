@@ -1,4 +1,5 @@
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppInput, AppSelect, SectionCard } from '@/components/ui';
 import { formatIbanInput, getIbanDigits } from '@/utils/iban';
 import { UseReturnIban } from '../hooks/use-return-iban';

@@ -1,4 +1,5 @@
-import { Paragraph, YStack } from 'tamagui';
+import { YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { ScheduledReturnPicker } from './scheduled-return-picker';
 import { UseScheduledReturn } from '../hooks/use-scheduled-return';

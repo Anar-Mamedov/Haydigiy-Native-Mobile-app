@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
 import { Pressable } from 'react-native';
-import { ScrollView, XStack, YStack, Paragraph, Input } from 'tamagui';
-import { Search, X, TrendingDown } from '@tamagui/lucide-icons-2';
+import { ScrollView, XStack, YStack, Input } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { Search, X, TrendingDown } from '@/components/ui/icons';
 import { FavoritesFilter } from '@/types/favorite.types';
 
 interface FavoritesToolbarProps {

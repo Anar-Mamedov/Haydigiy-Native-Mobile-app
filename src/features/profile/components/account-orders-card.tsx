@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
 import { Pressable } from 'react-native';
-import { ChevronRight } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack } from 'tamagui';
+import { ChevronRight } from '@/components/ui/icons';
+import { XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 export type AccountOrderAction = {
   icon: ReactNode;

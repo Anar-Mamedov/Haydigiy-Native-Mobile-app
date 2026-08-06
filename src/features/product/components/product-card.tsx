@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { GestureResponderEvent, Pressable } from 'react-native';
-import { Heart, Play } from '@tamagui/lucide-icons-2';
+import { Heart, Play } from '@/components/ui/icons';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
-import { Paragraph, ScrollView, XStack, YStack } from 'tamagui';
+import { ScrollView, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui/section-card';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';

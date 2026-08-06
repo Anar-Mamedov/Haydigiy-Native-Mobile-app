@@ -1,6 +1,7 @@
 import { ComponentProps, useEffect, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { FeatureIcon } from '@/types/product.types';
 
 const FEATURE_TAG_ROTATION_MS = 3000;

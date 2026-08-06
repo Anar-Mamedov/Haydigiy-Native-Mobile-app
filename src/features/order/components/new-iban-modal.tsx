@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Paragraph, Sheet, XStack, YStack } from 'tamagui';
+import { Button, Sheet, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppCheckbox, AppInput, AppSheetOverlay, KeyboardAwareSheetScrollView } from '@/components/ui';
 import { useAddPaymentMethodMutation } from '../api/return.mutations';
 import { formatIbanInput, getIbanDigits, isValidIban, normalizeIban } from '@/utils/iban';

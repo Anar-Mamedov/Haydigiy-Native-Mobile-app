@@ -1,5 +1,7 @@
-import { Bell, ShoppingCart } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, XStack, YStack } from 'tamagui';
+import { Bell, ShoppingCart } from '@/components/ui/icons';
+import { Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { COMPACT_MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 import { resolveProductActionState } from '../utils/product-action-state';
 
 type ProductPrimaryActionProps = {
@@ -47,7 +49,7 @@ export function ProductPrimaryAction({
           height={height}
           testID="product-out-of-stock"
         >
-          <Paragraph color="$color10" fontSize={14} fontWeight="800">
+          <Paragraph color="$color10" fontSize={14} fontWeight="800" maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1}>
             Tükendi
           </Paragraph>
         </Button>
@@ -68,8 +70,8 @@ export function ProductPrimaryAction({
           testID="product-notify-requested"
         >
           <XStack alignItems="center" gap="$2">
-            <Bell color="white" size={18} />
-            <Paragraph color="white" fontSize={14} fontWeight="800">
+            <Bell color="white" maxFontScale={COMPACT_MAX_FONT_SCALE} size={18} />
+            <Paragraph color="white" fontSize={14} fontWeight="800" maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1}>
               Talebini Aldık
             </Paragraph>
           </XStack>
@@ -94,8 +96,8 @@ export function ProductPrimaryAction({
         testID="product-notify-me"
       >
         <XStack alignItems="center" gap="$2">
-          <Bell color="$brand" size={18} />
-          <Paragraph color="$brand" fontSize={14} fontWeight="800">
+          <Bell color="$brand" maxFontScale={COMPACT_MAX_FONT_SCALE} size={18} />
+          <Paragraph color="$brand" fontSize={14} fontWeight="800" maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1}>
             {isNotifying ? 'Gönderiliyor...' : 'Gelince Haber Ver'}
           </Paragraph>
         </XStack>
@@ -120,13 +122,13 @@ export function ProductPrimaryAction({
     >
       <YStack alignItems="center" justifyContent="center">
         <XStack alignItems="center" gap="$2">
-          <ShoppingCart color="white" size={18} />
-          <Paragraph color="white" fontSize={14} fontWeight="800">
+          <ShoppingCart color="white" maxFontScale={COMPACT_MAX_FONT_SCALE} size={18} />
+          <Paragraph color="white" fontSize={14} fontWeight="800" maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1}>
             Sepete Ekle
           </Paragraph>
         </XStack>
         {isLastOne && (
-          <Paragraph color="#FEE2E2" fontSize={10} fontWeight="700" marginTop={1}>
+          <Paragraph color="#FEE2E2" fontSize={10} fontWeight="700" marginTop={1} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1}>
             Son 1 Ürün!
           </Paragraph>
         )}

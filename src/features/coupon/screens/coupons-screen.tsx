@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
-import { Gift } from '@tamagui/lucide-icons-2';
+import { Gift } from '@/components/ui/icons';
 import { Spinner, YStack } from 'tamagui';
 import { AppScreen, EmptyState, ScreenHeader } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';

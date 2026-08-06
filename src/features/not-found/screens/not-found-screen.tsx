@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
-import { FileQuestion, Home, Search } from '@tamagui/lucide-icons-2';
-import { H1, H2, Paragraph, YStack } from 'tamagui';
+import { FileQuestion, Home, Search } from '@/components/ui/icons';
+import { H1, H2, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppButton, AppScreen } from '@/components/ui';
 

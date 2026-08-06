@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
-import { Check, Copy } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Check, Copy } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui/section-card';
 import { BANK_ACCOUNT_DETAILS, BankAccountField } from '../data/bank-account';
 

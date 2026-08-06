@@ -1,4 +1,5 @@
-import { AlertDialog, Button, Paragraph, XStack, YStack } from 'tamagui';
+import { AlertDialog, Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppAlertDialog } from '@/components/ui/app-alert-dialog';
 
 export type ConfirmDialogProps = {

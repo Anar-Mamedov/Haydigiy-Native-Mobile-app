@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Paragraph } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { useSendCodeMutation } from '@/features/auth/api/auth.mutations';
 import { OtpVerification } from '@/features/auth/components/otp-verification';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
-import { Paragraph, YStack, Spinner } from 'tamagui';
+import { YStack, Spinner } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Image } from 'expo-image';
 import { getRequiredApiBaseUrl } from '@/lib/env';
 import { useCategoryFirstProductImageQuery } from '../api/category.queries';

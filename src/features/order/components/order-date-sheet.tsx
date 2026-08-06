@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
-import { Check } from '@tamagui/lucide-icons-2';
-import { Paragraph, Sheet, XStack, YStack } from 'tamagui';
+import { Check } from '@/components/ui/icons';
+import { Sheet, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { OrderDateFilter } from '@/types/order.types';
 

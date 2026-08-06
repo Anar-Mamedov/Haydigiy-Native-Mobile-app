@@ -1,7 +1,8 @@
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { ChevronDown } from '@tamagui/lucide-icons-2';
-import { Paragraph, ScrollView, Separator, XStack, YStack } from 'tamagui';
+import { ChevronDown } from '@/components/ui/icons';
+import { ScrollView, Separator, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { formatCurrency } from '@/utils/format-currency';
 import { CartLineItem } from '@/types/cart.types';

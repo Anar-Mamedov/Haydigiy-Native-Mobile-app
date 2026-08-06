@@ -1,5 +1,6 @@
-import { Check, ClipboardCheck, Home, Package, ShoppingBag, Truck, XCircle } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Check, ClipboardCheck, Home, Package, ShoppingBag, Truck, XCircle } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { OrderTimelineDates } from '@/types/order.types';
 import { getOrderTimelineActiveIndex, ORDER_TIMELINE_STEPS } from '../utils/order-status';

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Pressable } from 'react-native';
-import { Calendar, ChevronDown, Search } from '@tamagui/lucide-icons-2';
-import { Input, Paragraph, XStack } from 'tamagui';
+import { Calendar, ChevronDown, Search } from '@/components/ui/icons';
+import { Input, XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { OrderDateFilter } from '@/types/order.types';
 import { OrderDateSheet, orderDateLabel } from './order-date-sheet';
 

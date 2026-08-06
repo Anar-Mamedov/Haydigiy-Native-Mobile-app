@@ -1,7 +1,8 @@
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { Clock, Trash2 } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Clock, Trash2 } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { QuantityStepper } from '@/components/ui';
 import { CartLineItem } from '@/types/cart.types';
 import { formatCurrency } from '@/utils/format-currency';

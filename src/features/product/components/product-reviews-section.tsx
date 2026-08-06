@@ -1,7 +1,8 @@
 import React from 'react';
 import { Image } from 'expo-image';
-import { Star, Camera, ChevronDown } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, Button, useThemeName } from 'tamagui';
+import { Star, Camera, ChevronDown } from '@/components/ui/icons';
+import { XStack, YStack, Button, useThemeName } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { ScrollView, Dimensions, Pressable } from 'react-native';
 import { ProductReview } from '@/types/product.types';
 

@@ -14,12 +14,12 @@ import {
   ShieldCheck,
   Ticket,
   UserRound,
-} from '@tamagui/lucide-icons-2';
+} from '@/components/ui/icons';
 import { YStack } from 'tamagui';
 import { AppButton } from '@/components/ui';
 // Temporarily disabled with the appearance card below.
 // import { Paragraph, XStack } from 'tamagui';
-// import { Palette } from '@tamagui/lucide-icons-2';
+// import { Palette } from '@/components/ui/icons';
 // import { SectionCard, ThemeToggle } from '@/components/ui';
 // import { useAppTheme } from '@/lib/theme/use-app-theme';
 import { AccountOrdersCard } from './account-orders-card';

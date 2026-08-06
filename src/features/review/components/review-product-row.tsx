@@ -1,7 +1,8 @@
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { Star } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Star } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { WARNING_COLOR } from '@/lib/theme/colors';
 import { ReviewTabKey, UserReview } from '@/types/review.types';
 

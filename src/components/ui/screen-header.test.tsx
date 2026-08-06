@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native';
-import { Paragraph } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 

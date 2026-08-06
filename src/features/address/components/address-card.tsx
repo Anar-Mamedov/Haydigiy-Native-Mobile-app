@@ -1,5 +1,6 @@
-import { Pencil, Trash2 } from '@tamagui/lucide-icons-2';
-import { Paragraph, Separator, XStack, YStack } from 'tamagui';
+import { Pencil, Trash2 } from '@/components/ui/icons';
+import { Separator, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { formatTurkishPhoneDisplay } from '@/utils/turkish-phone';
 import { Address } from '@/types/address.types';

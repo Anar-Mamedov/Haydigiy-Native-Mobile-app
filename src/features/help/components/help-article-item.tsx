@@ -1,4 +1,5 @@
-import { Paragraph, YStack } from 'tamagui';
+import { YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AccordionSection } from '@/components/ui/accordion-section';
 import { HelpArticle } from '@/types/help.types';
 import { HelpFeedbackButton } from './help-feedback-button';

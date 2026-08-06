@@ -1,4 +1,5 @@
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { OrderAddress, OrderDetail } from '@/types/order.types';
 import { SELLER_INFO } from '../data/agreement-content';
 

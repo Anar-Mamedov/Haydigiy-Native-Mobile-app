@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ThumbsUp } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { ThumbsUp } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { useHelpFeedbackMutation } from '../api/help.mutations';
 
 const ERROR_RESET_MS = 3000;

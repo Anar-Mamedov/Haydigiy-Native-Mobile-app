@@ -1,6 +1,7 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Hourglass, XCircle } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, XStack, YStack } from 'tamagui';
+import { Hourglass, XCircle } from '@/components/ui/icons';
+import { Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, ScreenHeader, SectionCard } from '@/components/ui';
 import { formatCurrency } from '@/utils/format-currency';
 import { parseQuery } from '../utils/parse-query';

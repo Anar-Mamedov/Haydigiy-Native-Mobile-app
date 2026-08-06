@@ -1,6 +1,7 @@
 import { Fragment, ReactNode } from 'react';
 import { Pressable } from 'react-native';
-import { Paragraph, Separator, XStack, YStack } from 'tamagui';
+import { Separator, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 
 export type AccountQuickAction = {

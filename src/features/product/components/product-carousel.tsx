@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, NativeSyntheticEvent, NativeScrollEvent, Pressable, Share, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
-import { Heart, Share2, Play, ChevronLeft, ChevronRight } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, useThemeName } from 'tamagui';
+import { Heart, Share2, Play, ChevronLeft, ChevronRight } from '@/components/ui/icons';
+import { XStack, YStack, useThemeName } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { FeatureIcon } from '@/types/product.types';
 import { ProductCarouselVideoSlide } from './product-carousel-video-slide';

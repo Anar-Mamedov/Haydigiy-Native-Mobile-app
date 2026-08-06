@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
-import { GetProps, Input, Label, Paragraph, XStack, YStack, styled } from 'tamagui';
+import { GetProps, Input, Label, XStack, YStack, styled } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 const StyledInput = styled(Input, {
   name: 'AppInput',

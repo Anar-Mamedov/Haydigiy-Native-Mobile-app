@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Pressable } from 'react-native';
-import { Input, Paragraph, Spinner, XStack, YStack, ScrollView, useTheme } from 'tamagui';
-import { ChevronLeft, Search, X } from '@tamagui/lucide-icons-2';
+import { Input, Spinner, XStack, YStack, ScrollView, useTheme } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { ChevronLeft, Search, X } from '@/components/ui/icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 

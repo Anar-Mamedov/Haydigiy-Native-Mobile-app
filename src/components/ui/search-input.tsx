@@ -1,4 +1,4 @@
-import { Search } from '@tamagui/lucide-icons-2';
+import { Search } from '@/components/ui/icons';
 import { Input, XStack } from 'tamagui';
 
 export interface SearchInputProps {

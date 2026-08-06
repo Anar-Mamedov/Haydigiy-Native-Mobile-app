@@ -1,5 +1,6 @@
-import { Bell, Mail } from '@tamagui/lucide-icons-2';
-import { AlertDialog, Button, Paragraph, XStack, YStack } from 'tamagui';
+import { Bell, Mail } from '@/components/ui/icons';
+import { AlertDialog, Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppAlertDialog } from '@/components/ui/app-alert-dialog';
 
 type NotifyStockDialogProps = {

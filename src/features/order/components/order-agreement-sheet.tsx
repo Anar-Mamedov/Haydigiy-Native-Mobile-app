@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Paragraph, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { Button, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { OrderDetail } from '@/types/order.types';
 import {

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { AlertDialog, Button, Paragraph, XStack, YStack } from 'tamagui';
-import { Check, Image as ImagePlaceholderIcon, Undo2 } from '@tamagui/lucide-icons-2';
+import { AlertDialog, Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { Check, Image as ImagePlaceholderIcon, Undo2 } from '@/components/ui/icons';
 import { AppAlertDialog } from '@/components/ui';
 import { useCancelReturnRequest } from '../hooks/use-cancel-return-request';
 import {

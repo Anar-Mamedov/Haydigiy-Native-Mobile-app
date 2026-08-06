@@ -1,5 +1,6 @@
-import { Moon, Monitor, Sun } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, useTheme, XStack } from 'tamagui';
+import { Moon, Monitor, Sun } from '@/components/ui/icons';
+import { Button, useTheme, XStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 export type ThemePreference = 'dark' | 'light' | 'system';
 

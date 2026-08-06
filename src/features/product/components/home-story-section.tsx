@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { Button, Paragraph, ScrollView, XStack, YStack } from 'tamagui';
+import { Button, ScrollView, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { StoryContent } from '@/types/page-design.types';
 import { tokenValues } from '@/lib/theme/token-values';
 import { handleLinkPress } from '@/utils/link-handler';

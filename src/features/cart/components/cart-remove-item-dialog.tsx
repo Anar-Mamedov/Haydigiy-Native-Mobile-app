@@ -1,4 +1,5 @@
-import { AlertDialog, Button, Paragraph, YStack } from 'tamagui';
+import { AlertDialog, Button, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppAlertDialog } from '@/components/ui';
 
 type CartRemoveItemDialogProps = {

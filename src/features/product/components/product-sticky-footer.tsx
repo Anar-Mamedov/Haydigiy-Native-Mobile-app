@@ -1,9 +1,11 @@
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
-import { TrendingDown } from '@tamagui/lucide-icons-2';
-import { XStack, Paragraph, useTheme } from 'tamagui';
+import { TrendingDown } from '@/components/ui/icons';
+import { XStack, useTheme } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
 import { ProductPrimaryAction } from './product-primary-action';
 
 const FOOTER_TOP_PADDING = 14;
@@ -53,6 +55,9 @@ export function ProductStickyFooter({
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const shadowColor = theme.shadowColor?.val ?? theme.color.val;
+  // Footer yüksekliği sabit; fiyat ve aksiyon sıkı oranla büyüsün.
+  const scale = useFontScale(COMPACT_MAX_FONT_SCALE);
+  const actionHeight = Math.round(FOOTER_ACTION_HEIGHT * scale);
 
   const showDiscount = originalPrice && originalPrice > price;
 
@@ -91,13 +96,13 @@ export function ProductStickyFooter({
         paddingVertical={8}
         gap={4}
       >
-        <Paragraph fontSize={30} fontWeight="900" color="$brand" lineHeight={34} letterSpacing={-0.5}>
+        <Paragraph fontSize={30} fontWeight="900" color="$brand" lineHeight={Math.round(34 * scale)} letterSpacing={-0.5} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}>
           {Number(price).toLocaleString('tr-TR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }).replace(/\s*TL\s*$/, '')}
         </Paragraph>
-        <Paragraph fontSize={16} fontWeight="700" color="$brand" lineHeight={20}>
+        <Paragraph fontSize={16} fontWeight="700" color="$brand" lineHeight={Math.round(20 * scale)} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}>
           TL
         </Paragraph>
 
@@ -127,7 +132,7 @@ export function ProductStickyFooter({
       {/* Buttons: WhatsApp & primary action */}
       <XStack flex={1} gap="$2.5" justifyContent="flex-end" alignItems="center">
         <ProductPrimaryAction
-          height={FOOTER_ACTION_HEIGHT}
+          height={actionHeight}
           isApprovedForSale={isApprovedForSale}
           isAuthenticated={isAuthenticated}
           isLastOne={isLastOne}

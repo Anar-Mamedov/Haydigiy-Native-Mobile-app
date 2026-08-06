@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { WashingMachine } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, Button, useThemeName } from 'tamagui';
+import { WashingMachine } from '@/components/ui/icons';
+import { XStack, YStack, Button, useThemeName } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { Image } from 'expo-image';
 import { Pressable } from 'react-native';
 import { MarkdownContent } from '@/components/ui/markdown-content';

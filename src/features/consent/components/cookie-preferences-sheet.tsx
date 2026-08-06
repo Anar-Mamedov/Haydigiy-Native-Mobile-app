@@ -1,5 +1,6 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Paragraph, ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { ScrollView, Sheet, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton } from '@/components/ui/app-button';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { AppSwitch } from '@/components/ui/app-switch';

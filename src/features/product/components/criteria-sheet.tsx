@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
-import { X } from '@tamagui/lucide-icons-2';
-import { Paragraph, Sheet, XStack, YStack } from 'tamagui';
+import { X } from '@/components/ui/icons';
+import { Sheet, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton, AppSheetOverlay } from '@/components/ui';
 
 type CriteriaSheetProps = {

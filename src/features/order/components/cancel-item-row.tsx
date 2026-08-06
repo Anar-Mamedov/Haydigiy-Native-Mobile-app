@@ -1,7 +1,8 @@
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { ChevronDown, Image as ImagePlaceholderIcon, Square, SquareCheck } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { ChevronDown, Image as ImagePlaceholderIcon, Square, SquareCheck } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { OrderDetailItem } from '@/types/order.types';
 import { formatOrderPrice } from '../utils/order-status';
 

@@ -1,7 +1,8 @@
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { Image as ImagePlaceholderIcon } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, ScrollView, XStack, YStack } from 'tamagui';
+import { Image as ImagePlaceholderIcon } from '@/components/ui/icons';
+import { Button, ScrollView, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { Order, OrderProduct } from '@/types/order.types';
 import { formatOrderDate, getOrderStatusIcon, getOrderStatusText } from '../utils/order-status';

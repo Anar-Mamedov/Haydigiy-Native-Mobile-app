@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Paragraph } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, ScreenHeader } from '@/components/ui';
 import { BankAccountDetails } from '../components/bank-account-details';
 

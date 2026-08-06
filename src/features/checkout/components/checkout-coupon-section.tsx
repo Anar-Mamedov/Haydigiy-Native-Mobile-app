@@ -1,5 +1,6 @@
 import { Pressable } from 'react-native';
-import { Input, Paragraph, XStack, YStack } from 'tamagui';
+import { Input, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { CheckoutSection } from './checkout-section';
 import { AppButton } from '@/components/ui/app-button';
 import { formatCurrency } from '@/utils/format-currency';

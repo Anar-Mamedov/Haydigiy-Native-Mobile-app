@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { RefreshControl, useWindowDimensions } from 'react-native';
-import { ScrollView, Paragraph, Spinner, XStack, YStack } from 'tamagui';
+import { ScrollView, Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppHeader, AppScreen, EmptyState } from '@/components/ui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { useMobilePageDesignQuery } from '@/features/product/api/page-design.queries';

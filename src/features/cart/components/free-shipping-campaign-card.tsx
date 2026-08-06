@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Check, Clock, Truck } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Check, Clock, Truck } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { CartCampaign } from '@/types/cart.types';
 import { getFreeShippingCampaign } from '@/utils/cart-campaigns';
 

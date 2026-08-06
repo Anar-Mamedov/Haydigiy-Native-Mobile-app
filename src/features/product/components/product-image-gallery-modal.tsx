@@ -17,8 +17,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { X } from '@tamagui/lucide-icons-2';
-import { Button, Paragraph, useTheme, XStack, YStack } from 'tamagui';
+import { X } from '@/components/ui/icons';
+import { Button, useTheme, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import {
   clampGalleryZoomValue,
   getFocusedZoomTranslate,

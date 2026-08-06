@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
-import { ChevronRight } from '@tamagui/lucide-icons-2';
-import { Paragraph, ScrollView, XStack, YStack } from 'tamagui';
+import { ChevronRight } from '@/components/ui/icons';
+import { ScrollView, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui/section-card';
 import { ProductReviewItem } from '../api/product-reviews.mapper';
 import { formatDateTR } from '../utils/format-date-tr';

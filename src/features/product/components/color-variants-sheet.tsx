@@ -1,5 +1,6 @@
-import { Sheet, YStack, XStack, Paragraph, ScrollView } from 'tamagui';
-import { X } from '@tamagui/lucide-icons-2';
+import { Sheet, YStack, XStack, ScrollView } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { X } from '@/components/ui/icons';
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';

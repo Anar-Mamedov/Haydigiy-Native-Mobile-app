@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState, useCallback, type ReactElement } from 're
 import { Modal, Share } from 'react-native';
 import { VideoView, useVideoPlayer, type VideoSource } from 'expo-video';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { XStack, YStack, Paragraph, Button } from 'tamagui';
+import { XStack, YStack, Button } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton } from '@/components/ui/app-button';
 import { Image } from 'expo-image';
-import { Heart, Share2, ThumbsUp, ThumbsDown, ChevronLeft, Image as ImageIcon } from '@tamagui/lucide-icons-2';
+import { Heart, Share2, ThumbsUp, ThumbsDown, ChevronLeft, Image as ImageIcon } from '@/components/ui/icons';
 import { Product } from '@/types/product.types';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { getVideoSource } from '../utils/video';

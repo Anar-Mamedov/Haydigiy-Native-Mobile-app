@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
-import { ChevronDown, ChevronUp } from '@tamagui/lucide-icons-2';
-import { Paragraph, Separator, XStack, YStack } from 'tamagui';
+import { ChevronDown, ChevronUp } from '@/components/ui/icons';
+import { Separator, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 
 export interface AccordionSectionProps {
   title: string;

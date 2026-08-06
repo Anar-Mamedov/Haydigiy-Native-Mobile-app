@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
-import { Sheet, XStack, YStack, Paragraph } from 'tamagui';
-import { Check, X } from '@tamagui/lucide-icons-2';
+import { Sheet, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { Check, X } from '@/components/ui/icons';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 
 export interface SortOption {

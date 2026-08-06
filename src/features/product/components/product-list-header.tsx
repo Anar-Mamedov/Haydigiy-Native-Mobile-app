@@ -1,5 +1,6 @@
-import { ScrollView, Button, Paragraph, XStack, YStack } from 'tamagui';
-import { ArrowUpDown, SlidersHorizontal } from '@tamagui/lucide-icons-2';
+import { ScrollView, Button, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
+import { ArrowUpDown, SlidersHorizontal } from '@/components/ui/icons';
 import { QuickFilterGroup } from '@/types/product.types';
 import { FilterPill } from './filter-pill';
 import { FilterShortcutSection } from './filter-sheet';

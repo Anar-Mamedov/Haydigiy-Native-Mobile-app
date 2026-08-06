@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Pressable } from 'react-native';
-import { MapPin, Plus, RefreshCw } from '@tamagui/lucide-icons-2';
-import { Paragraph, Spinner, XStack, YStack } from 'tamagui';
+import { MapPin, Plus, RefreshCw } from '@/components/ui/icons';
+import { Spinner, XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { CheckoutSection } from './checkout-section';
 import { CheckoutAddressPicker } from './checkout-address-picker';
 import { AppButton, AppCheckbox } from '@/components/ui';

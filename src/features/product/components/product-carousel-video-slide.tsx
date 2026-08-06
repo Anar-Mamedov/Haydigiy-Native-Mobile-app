@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable } from 'react-native';
 import { VideoView, useVideoPlayer, type VideoSource } from 'expo-video';
-import { Play } from '@tamagui/lucide-icons-2';
-import { Paragraph, YStack } from 'tamagui';
+import { Play } from '@/components/ui/icons';
+import { YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { getVideoSource } from '../utils/video';
 
 type ProductCarouselVideoSlideProps = {

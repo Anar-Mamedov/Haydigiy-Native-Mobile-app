@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Calendar, Heart, MessageCircle } from '@tamagui/lucide-icons-2';
-import { Paragraph, XStack, YStack } from 'tamagui';
+import { Calendar, Heart, MessageCircle } from '@/components/ui/icons';
+import { XStack, YStack } from 'tamagui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui/section-card';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { ProductQAItem } from '../api/product-questions.mapper';
