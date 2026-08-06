@@ -6,6 +6,7 @@ export * from '@/components/ui/app-input';
 export * from '@/components/ui/app-screen';
 export * from '@/components/ui/app-select';
 export * from '@/components/ui/app-sheet-overlay';
+export * from '@/components/ui/app-switch';
 export * from '@/components/ui/confirm-dialog';
 export * from '@/components/ui/deferred-mount';
 export * from '@/components/ui/disclosure-sheet';

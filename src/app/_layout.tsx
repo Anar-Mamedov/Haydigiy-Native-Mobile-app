@@ -9,6 +9,7 @@ import { InsiderIntegration } from '@/features/insider/components/insider-integr
 import { OtaUpdateWatcher } from '@/components/ota-update-watcher';
 import { AppUpdateProvider } from '@/features/app-update/components/app-update-provider';
 import { CartHydrator } from '@/features/cart/components/cart-hydrator';
+import { CookieConsentGate } from '@/features/consent/components/cookie-consent-gate';
 import { NotificationPermissionRequest } from '@/features/notifications/components/notification-permission-request';
 import { PhoneVerificationGate } from '@/features/profile/components/phone-verification-gate';
 import { loadWebStyles } from '../theme/web-css';
@@ -49,6 +50,8 @@ export default function RootLayout() {
           />
           <IncomingLinkHandler />
           <InsiderIntegration />
+          {/* KVKK aydınlatması diğer istemlerin önünde cevaplanmalı. */}
+          <CookieConsentGate />
           {/* Mounted after Insider so the SDK is registered before we prompt. */}
           <NotificationPermissionRequest />
           <PhoneVerificationGate />
