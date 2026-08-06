@@ -8,9 +8,9 @@ import { BRAND_COLOR } from '@/lib/theme/colors';
 import { calculateSize, submitProductFeedback } from '@/services/product.service';
 import {
   getSizeChartImageSource,
+  getSizeChartSections,
   SIZE_CHART_ASPECT_RATIO,
   SIZE_CHART_GENDER_OPTIONS,
-  SIZE_CHART_SECTION_OPTIONS,
   type SizeChartGender,
   type SizeChartSection,
 } from '../data/size-chart-assets';
@@ -113,26 +113,24 @@ export function SizeChartModal({ open, onOpenChange }: { open: boolean; onOpenCh
         </XStack>
 
         {/* Category sub-sections for gender */}
-        {activeGender !== 'cocuk' && (
-          <XStack padding={12} gap="$2" justifyContent="center">
-            {SIZE_CHART_SECTION_OPTIONS.map(({ label, value }) => (
-              <Button
-                key={value}
-                size="$2.5"
-                backgroundColor={activeSection === value ? '$brand' : '$color3'}
-                borderRadius={6}
-                onPress={() => setActiveSection(value)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: activeSection === value }}
-                accessibilityLabel={`${label} beden tablosu`}
-              >
-                <Paragraph color={activeSection === value ? 'white' : '$color11'} fontWeight="700" fontSize={12}>
-                  {label}
-                </Paragraph>
-              </Button>
-            ))}
-          </XStack>
-        )}
+        <XStack padding={12} gap="$2" justifyContent="center">
+          {getSizeChartSections(activeGender).map(({ label, value }) => (
+            <Button
+              key={value}
+              size="$2.5"
+              backgroundColor={activeSection === value ? '$brand' : '$color3'}
+              borderRadius={6}
+              onPress={() => setActiveSection(value)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeSection === value }}
+              accessibilityLabel={`${label} beden tablosu`}
+            >
+              <Paragraph color={activeSection === value ? 'white' : '$color11'} fontWeight="700" fontSize={12}>
+                {label}
+              </Paragraph>
+            </Button>
+          ))}
+        </XStack>
 
         <ScrollView contentContainerStyle={{ padding: 16, alignItems: 'center' }}>
           <Image
