@@ -74,9 +74,11 @@ export function ProductSizeSelector({
           return (
             <Pressable
               key={variant.id}
-              onPress={() => isAvailable && onSelectVariant(variant)}
+              // Tükenmiş bedenler de seçilebilir: seçilince alt bardaki aksiyon
+              // "Gelince Haber Ver"e dönüyor (web ile aynı).
+              onPress={() => onSelectVariant(variant)}
               accessibilityRole="button"
-              accessibilityLabel={`Beden ${variant.name} ${isAvailable ? 'seçilebilir' : 'stokta yok'}`}
+              accessibilityLabel={`Beden ${variant.name} ${isAvailable ? 'seçilebilir' : 'stokta yok, gelince haber ver'}`}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.8 : 1,
               })}

@@ -5,7 +5,10 @@ import { Linking, Pressable, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThumbsUp } from '@tamagui/lucide-icons-2';
 import { AppScreen, DeferredMount, EmptyState, PullToDismissScrollView } from '@/components/ui';
+import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
+import { useNotifyStock } from '../hooks/use-notify-stock';
+import { NotifyStockDialog } from '../components/notify-stock-dialog';
 import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useProductDetailsQuery } from '@/features/product/api/product.queries';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
@@ -77,6 +80,14 @@ export function ProductDetailScreen() {
 
   // States
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const isAuthenticated = useAuthStore((state) => Boolean(state.user));
+  const {
+    closeConfirmation: closeNotifyConfirmation,
+    isConfirmationOpen: isNotifyConfirmationOpen,
+    isNotifying,
+    isVariantNotified,
+    requestNotification,
+  } = useNotifyStock();
 
   // Pinned product-code badge: stays fixed under the header while the product
   // image is on screen, then disappears the moment the image scrolls off the
@@ -193,6 +204,18 @@ export function ProductDetailScreen() {
   };
 
   // Handle add to cart action
+  // Seçili beden tükendiyse birincil aksiyon sepete eklemek yerine stok
+  // bildirimi talebine dönüşür (web ile aynı davranış).
+  const isSelectedVariantOutOfStock = Boolean(
+    selectedVariant && (!selectedVariant.hasStock || selectedVariant.quantity < 1),
+  );
+
+  const handleNotifyMe = () => {
+    requestNotification(selectedVariant?.id).catch(() => {
+      // Hata hook içinde loglanıyor; kullanıcıyı ekranda engellemeye gerek yok.
+    });
+  };
+
   const handleAddToCart = () => {
     const activeProduct = product || previewProduct;
     if (!activeProduct) return;
@@ -480,17 +503,29 @@ export function ProductDetailScreen() {
         price={displayData.price}
         originalPrice={displayData.originalPrice}
         onAddToCart={handleAddToCart}
+        onNotifyMe={handleNotifyMe}
         onWhatsappPress={handleWhatsappPress}
         isApprovedForSale={displayData.isApprovedForSale}
+        isAuthenticated={isAuthenticated}
         isLastOne={selectedVariant?.quantity === 1}
+        isNotified={isVariantNotified(selectedVariant?.id)}
+        isNotifying={isNotifying}
+        isOutOfStock={isSelectedVariantOutOfStock}
       />
+
+      <NotifyStockDialog onOpenChange={closeNotifyConfirmation} open={isNotifyConfirmationOpen} />
 
       {/* Size selection bottom sheet (opened from "Sepete Ekle" when no size chosen) */}
       {showSizeSheet ? (
         <SizeSelectionSheet
           featureIcons={product?.featureIcons}
           imageUrl={displayData.imageUrl}
+          isApprovedForSale={displayData.isApprovedForSale}
+          isAuthenticated={isAuthenticated}
           isLoadingVariants={areProductOptionsLoading}
+          isNotified={isVariantNotified(selectedVariant?.id)}
+          isNotifying={isNotifying}
+          onNotifyMe={handleNotifyMe}
           onAskQuestion={openQuestions}
           onClose={() => setShowSizeSheet(false)}
           onConfirm={confirmAddToCart}

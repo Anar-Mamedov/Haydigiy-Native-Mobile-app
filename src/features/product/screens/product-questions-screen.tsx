@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Paragraph, ScrollView, Spinner, XStack, YStack } from 'tamagui';
 import { AppScreen, AppSelect, EmptyState, ScreenHeader, SearchInput, SectionCard } from '@/components/ui';
+import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
@@ -15,6 +16,8 @@ import { AskQuestionSheet } from '../components/ask-question-sheet';
 import { CriteriaSheet } from '../components/criteria-sheet';
 import { ProductCtaFooter } from '../components/product-cta-footer';
 import { SizeSelectionSheet } from '../components/size-selection-sheet';
+import { NotifyStockDialog } from '../components/notify-stock-dialog';
+import { useNotifyStock } from '../hooks/use-notify-stock';
 
 const SORT_OPTIONS = [
   { label: 'Önerilen Sıralama', value: 'recommended' },
@@ -55,6 +58,20 @@ export function ProductQuestionsScreen() {
   const [askOpen, setAskOpen] = useState(false);
   const [criteriaOpen, setCriteriaOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const isAuthenticated = useAuthStore((state) => Boolean(state.user));
+  const {
+    closeConfirmation: closeNotifyConfirmation,
+    isConfirmationOpen: isNotifyConfirmationOpen,
+    isNotifying,
+    isVariantNotified,
+    requestNotification,
+  } = useNotifyStock();
+
+  const handleNotifyMe = () => {
+    requestNotification(selectedVariant?.id).catch(() => {
+      // Hata hook içinde loglanıyor.
+    });
+  };
   const [showSizeSheet, setShowSizeSheet] = useState(false);
 
   const addToCart = useAddToCartMutation();
@@ -223,6 +240,10 @@ export function ProductQuestionsScreen() {
         <SizeSelectionSheet
           featureIcons={query.data.product.featureIcons}
           imageUrl={query.data.product.imageUrl}
+          isAuthenticated={isAuthenticated}
+          isNotified={isVariantNotified(selectedVariant?.id)}
+          isNotifying={isNotifying}
+          onNotifyMe={handleNotifyMe}
           onAskQuestion={() => {
             // Unmount the size sheet first, then open the ask sheet after it is
             // gone so the two modal sheets never stay stacked.
@@ -240,6 +261,8 @@ export function ProductQuestionsScreen() {
           variants={query.data.product.variants}
         />
       ) : null}
+
+      <NotifyStockDialog onOpenChange={closeNotifyConfirmation} open={isNotifyConfirmationOpen} />
 
       <CriteriaSheet
         criteria={QUESTION_CRITERIA}

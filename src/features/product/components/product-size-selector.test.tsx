@@ -38,16 +38,16 @@ describe('ProductSizeSelector', () => {
     expect(onSelectVariant).toHaveBeenCalledWith(variants[0]);
   });
 
-  it('does not select an out-of-stock variant', () => {
+  it('selects an out-of-stock variant too, so the footer can offer a stock notification', () => {
     const onSelectVariant = jest.fn();
 
     renderWithTamagui(
       <ProductSizeSelector variants={variants} selectedVariant={null} onSelectVariant={onSelectVariant} />,
     );
 
-    fireEvent.press(screen.getByLabelText('Beden M stokta yok'));
+    fireEvent.press(screen.getByLabelText('Beden M stokta yok, gelince haber ver'));
 
-    expect(onSelectVariant).not.toHaveBeenCalled();
+    expect(onSelectVariant).toHaveBeenCalledWith(variants[1]);
   });
 
   it('renders sizing helper actions only when their handlers are provided', () => {

@@ -5,6 +5,7 @@ import { renderWithTamagui } from '@/test/render-with-tamagui';
 const baseProps = {
   price: 199.9,
   onAddToCart: jest.fn(),
+  onNotifyMe: jest.fn(),
   onWhatsappPress: jest.fn(),
 };
 
@@ -55,5 +56,56 @@ describe('ProductStickyFooter', () => {
     rerender(<ProductStickyFooter {...baseProps} isLastOne />);
 
     expect(queryByText('Son 1 Ürün!')).toBeTruthy();
+  });
+
+  it('offers the stock notification instead of add-to-cart when the size is sold out', () => {
+    const onNotifyMe = jest.fn();
+
+    renderWithTamagui(
+      <ProductStickyFooter {...baseProps} isAuthenticated isOutOfStock onNotifyMe={onNotifyMe} />,
+    );
+
+    expect(screen.queryByLabelText('Sepete ekle')).toBeNull();
+    fireEvent.press(screen.getByLabelText('Ürün gelince haber ver'));
+
+    expect(onNotifyMe).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks a signed-out visitor to nothing and just reports the size as sold out', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} isAuthenticated={false} isOutOfStock />);
+
+    expect(screen.getByLabelText('Tükendi')).toBeDisabled();
+    expect(screen.queryByLabelText('Ürün gelince haber ver')).toBeNull();
+  });
+
+  it('confirms the request once it has been sent for that size', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} isAuthenticated isNotified isOutOfStock />);
+
+    expect(screen.getByLabelText('Stok bildirimi talebin alındı')).toBeDisabled();
+  });
+
+  it('blocks a second submit while the request is in flight', () => {
+    const onNotifyMe = jest.fn();
+
+    renderWithTamagui(
+      <ProductStickyFooter
+        {...baseProps}
+        isAuthenticated
+        isNotifying
+        isOutOfStock
+        onNotifyMe={onNotifyMe}
+      />,
+    );
+
+    expect(screen.getByText('Gönderiliyor...')).toBeTruthy();
+    expect(screen.getByLabelText('Ürün gelince haber ver')).toBeDisabled();
+  });
+
+  it('keeps add-to-cart when the product is closed for sale, even if sold out', () => {
+    renderWithTamagui(
+      <ProductStickyFooter {...baseProps} isApprovedForSale={false} isAuthenticated isOutOfStock />,
+    );
+
+    expect(screen.getByLabelText('Sepete ekle')).toBeDisabled();
   });
 });

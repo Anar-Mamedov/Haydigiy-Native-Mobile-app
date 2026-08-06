@@ -1,9 +1,10 @@
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
-import { ShoppingCart, TrendingDown } from '@tamagui/lucide-icons-2';
-import { XStack, YStack, Paragraph, Button, useTheme } from 'tamagui';
+import { TrendingDown } from '@tamagui/lucide-icons-2';
+import { XStack, Paragraph, useTheme } from 'tamagui';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ProductPrimaryAction } from './product-primary-action';
 
 const FOOTER_TOP_PADDING = 14;
 const FOOTER_BOTTOM_PADDING = 14;
@@ -17,9 +18,15 @@ interface ProductStickyFooterProps {
   price: number;
   originalPrice?: number;
   onAddToCart: () => void;
+  onNotifyMe: () => void;
   onWhatsappPress: () => void;
   isApprovedForSale?: boolean;
+  isAuthenticated?: boolean;
   isLastOne?: boolean;
+  isNotified?: boolean;
+  isNotifying?: boolean;
+  /** Seçili bedenin stoğu bittiğinde birincil aksiyon bildirim talebine döner. */
+  isOutOfStock?: boolean;
 }
 
 function WhatsappIcon({ color = '#25D366', size = 24 }: { color?: string; size?: number }) {
@@ -34,9 +41,14 @@ export function ProductStickyFooter({
   price,
   originalPrice,
   onAddToCart,
+  onNotifyMe,
   onWhatsappPress,
   isApprovedForSale = true,
+  isAuthenticated = false,
   isLastOne = false,
+  isNotified = false,
+  isNotifying = false,
+  isOutOfStock = false,
 }: ProductStickyFooterProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -112,36 +124,19 @@ export function ProductStickyFooter({
         )}
       </XStack>
 
-      {/* Buttons: WhatsApp & Add to Cart */}
+      {/* Buttons: WhatsApp & primary action */}
       <XStack flex={1} gap="$2.5" justifyContent="flex-end" alignItems="center">
-        {/* Main Sepete Ekle Button */}
-        <Button
-          flex={1}
-          height={46}
-          backgroundColor={isApprovedForSale ? '$brand' : '$color5'}
-          disabled={!isApprovedForSale}
-          onPress={onAddToCart}
-          accessibilityRole="button"
-          accessibilityLabel="Sepete ekle"
-          accessibilityState={{ disabled: !isApprovedForSale }}
-          borderRadius={8}
-          pressStyle={{ backgroundColor: '#df6810' }}
-          padding={0}
-        >
-          <YStack alignItems="center" justifyContent="center">
-            <XStack alignItems="center" gap="$2">
-              <ShoppingCart size={18} color="white" />
-              <Paragraph color="white" fontWeight="800" fontSize={14}>
-                Sepete Ekle
-              </Paragraph>
-            </XStack>
-            {isLastOne && (
-              <Paragraph color="#FEE2E2" fontSize={10} fontWeight="700" marginTop={1}>
-                Son 1 Ürün!
-              </Paragraph>
-            )}
-          </YStack>
-        </Button>
+        <ProductPrimaryAction
+          height={FOOTER_ACTION_HEIGHT}
+          isApprovedForSale={isApprovedForSale}
+          isAuthenticated={isAuthenticated}
+          isLastOne={isLastOne}
+          isNotified={isNotified}
+          isNotifying={isNotifying}
+          isOutOfStock={isOutOfStock}
+          onAddToCart={onAddToCart}
+          onNotifyMe={onNotifyMe}
+        />
 
         {/* WhatsApp Support Button */}
         <Pressable
