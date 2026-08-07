@@ -5,8 +5,14 @@ import {
   OrderDetailResponseDto,
   OrderTotalsDto,
   ReturnedItemDetailDto,
+  ReturnPaymentInfoDto,
 } from './order-detail.dtos';
-import { OrderAddress, OrderDetail, OrderDetailItem } from '@/types/order.types';
+import {
+  OrderAddress,
+  OrderDetail,
+  OrderDetailItem,
+  ReturnPaymentInfo,
+} from '@/types/order.types';
 import { formatOrderDate, formatOrderTimelineDate, formatReturnDeadline } from '../utils/order-status';
 import { isPendingReturn, normalizeReturnStatus } from '../utils/return-status';
 
@@ -105,6 +111,21 @@ function resolveInstallmentCount(dto: OrderDetailResponseDto, totals: OrderTotal
   return null;
 }
 
+function mapReturnPaymentInfo(
+  dto: ReturnPaymentInfoDto | null | undefined,
+): ReturnPaymentInfo | null {
+  if (!dto) return null;
+  const amount = typeof dto.amount === 'number' ? dto.amount : Number(dto.amount);
+  return {
+    type: dto.type?.trim() || null,
+    message: dto.message?.trim() || null,
+    amount: Number.isFinite(amount) ? amount : null,
+    couponCode: dto.coupon_code?.trim() || null,
+    expiresAt: dto.expires_at?.trim() || null,
+    refundMethodCode: dto.refund_method?.code?.trim() || null,
+  };
+}
+
 export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
   const items = toArray(dto.items).map(mapItem);
   const returnedItems = (dto.returned_items ?? []).map(mapReturnedItem);
@@ -157,6 +178,7 @@ export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
     returnRequestIds: (dto.return_requests ?? []).map((request) => request.id),
     cancellableReturnRequestId,
     hasHepsijetReturn,
+    returnPaymentInfo: mapReturnPaymentInfo(dto.return_payment_info),
     shippingAddress: mapAddress(dto.shipping_address),
     billingAddress: mapAddress(dto.billing_address),
     billingType: dto.billing_type ?? 'individual',

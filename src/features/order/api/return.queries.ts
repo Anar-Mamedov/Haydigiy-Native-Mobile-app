@@ -1,15 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { returnKeys } from './return.keys';
 import { savedAddressesQueryOptions } from '@/features/address/api/address.query-options';
-import { mapPaymentMethod, mapReturnReason, mapSavedAddress } from './return.mapper';
-import { getReturnReasonsDto } from '@/services/return.service';
+import { mapPaymentMethod, mapRefundMethods, mapReturnReason, mapSavedAddress } from './return.mapper';
+import { getRefundMethodsDto, getReturnReasonsDto } from '@/services/return.service';
 import { getPaymentMethodsDto } from '@/services/payment.service';
 import {
   getCitiesDto,
   getDistrictsDto,
   getNeighbourhoodsDto,
 } from '@/services/address.service';
-import { LocationOption, PaymentMethod, ReturnReason, SavedAddress } from '@/types/order.types';
+import {
+  LocationOption,
+  PaymentMethod,
+  RefundMethod,
+  ReturnReason,
+  SavedAddress,
+} from '@/types/order.types';
 
 /** Loads return reasons (`GET /return-requests/reasons`). */
 export function useReturnReasonsQuery(enabled = true) {
@@ -21,6 +27,19 @@ export function useReturnReasonsQuery(enabled = true) {
       const dtos = await getReturnReasonsDto();
       return dtos.map(mapReturnReason);
     },
+  });
+}
+
+/**
+ * Loads the refund methods (`GET /return-requests/refund-methods`); only for
+ * pay-on-delivery orders, where the customer may pick IBAN or a gift voucher.
+ */
+export function useRefundMethodsQuery(enabled = true) {
+  return useQuery<RefundMethod[]>({
+    queryKey: returnKeys.refundMethods(),
+    enabled,
+    staleTime: 5 * 60_000,
+    queryFn: async () => mapRefundMethods(await getRefundMethodsDto()),
   });
 }
 

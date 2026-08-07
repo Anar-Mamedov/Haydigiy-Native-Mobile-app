@@ -2,6 +2,7 @@
 export const returnKeys = {
   all: ['return'] as const,
   reasons: () => [...returnKeys.all, 'reasons'] as const,
+  refundMethods: () => [...returnKeys.all, 'refund-methods'] as const,
   paymentMethods: () => [...returnKeys.all, 'payment-methods'] as const,
   cities: () => [...returnKeys.all, 'cities'] as const,
   districts: (cityId: string) => [...returnKeys.all, 'districts', cityId] as const,

@@ -2,6 +2,8 @@ import { isAxiosError } from 'axios';
 import { apiClient } from '@/lib/axios';
 import { appEnv } from '@/lib/env';
 import {
+  RefundMethodDto,
+  RefundMethodsResponseDto,
   ReturnReasonDto,
   ReturnReasonsResponseDto,
   ReturnSubmitResponseDto,
@@ -19,6 +21,8 @@ export interface SubmitReturnRequestPayload {
   note?: string;
   iban?: string;
   ibanName?: string;
+  /** Omitted when unknown; the backend then defaults the refund to IBAN. */
+  refundMethodId?: number | null;
   items: ReturnSubmitItem[];
 }
 
@@ -29,11 +33,23 @@ export async function getReturnReasonsDto(): Promise<ReturnReasonDto[]> {
   return Array.isArray(response.data?.data) ? response.data.data : [];
 }
 
+/** Refund methods (`GET /return-requests/refund-methods`). */
+export async function getRefundMethodsDto(): Promise<RefundMethodDto[]> {
+  if (!appEnv.apiBaseUrl) return [];
+  const response = await apiClient.get<RefundMethodsResponseDto>(
+    '/return-requests/refund-methods',
+  );
+  return Array.isArray(response.data?.data) ? response.data.data : [];
+}
+
 function buildReturnFormData(payload: SubmitReturnRequestPayload): FormData {
   const form = new FormData();
   form.append('order_id', String(payload.orderId));
   form.append('cargo_company', payload.cargoCompany);
   if (payload.note?.trim()) form.append('reason', payload.note.trim());
+  if (payload.refundMethodId != null) {
+    form.append('refund_method_id', String(payload.refundMethodId));
+  }
   if (payload.iban) form.append('iban', payload.iban);
   if (payload.ibanName) form.append('iban_name', payload.ibanName);
 

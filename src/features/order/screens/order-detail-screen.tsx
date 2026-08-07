@@ -15,6 +15,7 @@ import { OrderDetailSummary } from '../components/order-detail-summary';
 import { OrderTimeline } from '../components/order-timeline';
 import { OrderItemsSection } from '../components/order-items-section';
 import { OrderReturnSection } from '../components/order-return-section';
+import { ReturnGiftVoucherCard } from '../components/return-gift-voucher-card';
 import { OrderAddressCard } from '../components/order-address-card';
 import { OrderPaymentCard } from '../components/order-payment-card';
 import { OrderReviewSheet } from '../components/order-review-sheet';
@@ -180,6 +181,7 @@ export function OrderDetailScreen() {
             title="Ürünler"
           />
           <OrderReturnSection onPressProduct={openProduct} order={order} />
+          <ReturnGiftVoucherCard info={order.returnPaymentInfo} />
 
           {isCancelable ? (
             <Button

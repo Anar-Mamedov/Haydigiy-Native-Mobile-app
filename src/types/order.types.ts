@@ -127,6 +127,19 @@ export type ReturnReason = { id: number; name: string };
 
 export type ReturnMethod = 'ptt' | 'hepsijet';
 
+/** A refund method offered for pay-on-delivery returns (`iban`, `gift_voucher`, …). */
+export type RefundMethod = { id: number; name: string; code: string };
+
+/** How a completed return was refunded; carries the coupon for gift-voucher refunds. */
+export type ReturnPaymentInfo = {
+  type: string | null;
+  message: string | null;
+  amount: number | null;
+  couponCode: string | null;
+  expiresAt: string | null;
+  refundMethodCode: string | null;
+};
+
 /** A return photo selected from the device, as an RN multipart file part. */
 export type ReturnPhoto = { uri: string; name: string; type: string };
 
@@ -228,6 +241,8 @@ export type OrderDetail = {
   cancellableReturnRequestId: number | null;
   /** True when any return line was created as a Hepsijet home pickup. */
   hasHepsijetReturn: boolean;
+  /** Refund settlement info once the return completes, else null. */
+  returnPaymentInfo: ReturnPaymentInfo | null;
   shippingAddress: OrderAddress | null;
   billingAddress: OrderAddress | null;
   billingType: string;

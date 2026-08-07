@@ -33,6 +33,21 @@ export interface ReturnRequestRefDto {
   id: number;
 }
 
+/**
+ * How the refund was settled, sent once the return is completed. For gift-voucher
+ * refunds the backend creates a customer-specific coupon after WMS approval.
+ */
+export interface ReturnPaymentInfoDto {
+  type?: string | null;
+  message?: string | null;
+  iban?: string | null;
+  iban_name?: string | null;
+  amount?: number | string | null;
+  coupon_code?: string | null;
+  expires_at?: string | null;
+  refund_method?: { id?: number | null; name?: string | null; code?: string | null } | null;
+}
+
 export interface ReturnedItemDetailDto {
   order_item_id?: number;
   name?: string;
@@ -100,6 +115,7 @@ export interface OrderDetailResponseDto {
   can_create_return_request?: boolean;
   return_block_reason?: string | null;
   return_requests?: ReturnRequestRefDto[] | null;
+  return_payment_info?: ReturnPaymentInfoDto | null;
   coupon_code?: string | null;
   billing_type?: string;
   tc_number?: string | null;

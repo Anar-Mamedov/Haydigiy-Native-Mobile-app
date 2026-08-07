@@ -22,10 +22,14 @@ jest.mock('@/components/ui', () => {
     AppInput: ({ label, ...props }: any) =>
       React.createElement(TextInput, { accessibilityLabel: label, ...props }),
     AppScreen: ({ children }: any) => React.createElement(View, null, children),
+    AppSelect: ({ label, ...props }: any) =>
+      React.createElement(View, { accessibilityLabel: label, ...props }),
     EmptyState: ({ title }: any) => React.createElement(Text, null, title),
     KeyboardAwareFormScrollView: ({ children, ...props }: any) =>
       React.createElement(View, props, children),
     SectionCard: ({ children }: any) => React.createElement(View, null, children),
+    SelectableCard: ({ title, onPress, selected }: any) =>
+      React.createElement(Text, { accessibilityLabel: title, accessibilityState: { selected }, onPress }, title),
   };
 });
 
@@ -53,7 +57,7 @@ function makeController(overrides: Record<string, unknown> = {}) {
     giftItems: [],
     handleRecreatePtt: jest.fn(),
     handleSubmit: jest.fn(),
-    iban: {},
+    iban: { setIbanError: jest.fn() },
     isError: false,
     isLoading: false,
     isRecreating: false,
@@ -73,6 +77,16 @@ function makeController(overrides: Record<string, unknown> = {}) {
     reasonsError: null,
     reasonsLoading: false,
     refetch: jest.fn(),
+    refund: {
+      isGiftVoucher: false,
+      methods: [],
+      select: jest.fn(),
+      selected: null,
+      selectedId: null,
+      showSelector: false,
+    },
+    refundError: null,
+    refundLoading: false,
     returnableItems: [],
     returnBlockReason: null,
     returnMethod: 'ptt',
@@ -84,6 +98,7 @@ function makeController(overrides: Record<string, unknown> = {}) {
     setItemReason: jest.fn(),
     setNote: mockSetNote,
     setReturnMethod: jest.fn(),
+    shouldCollectIban: false,
     shouldShowIbanSelect: false,
     successMessage: null,
     toggleItem: jest.fn(),
@@ -123,6 +138,53 @@ describe('ReturnCreateScreen', () => {
 
     expect(screen.getByTestId('return-create-keyboard-aware-scroll')).toBeTruthy();
     expect(screen.queryByText('Bu sipariş için zaten iade talebi oluşturulmuştur.')).toBeNull();
+  });
+
+  it('offers the refund-method choice and keeps the IBAN block for the IBAN option', () => {
+    mockController = makeController({
+      refund: {
+        isGiftVoucher: false,
+        methods: [
+          { id: 1, name: 'IBAN', code: 'iban' },
+          { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' },
+        ],
+        select: jest.fn(),
+        selected: { id: 1, name: 'IBAN', code: 'iban' },
+        selectedId: 1,
+        showSelector: true,
+      },
+      shouldCollectIban: true,
+      shouldShowIbanSelect: true,
+    });
+
+    renderWithTamagui(<ReturnCreateScreen />);
+
+    expect(screen.getByText('Geri Ödeme Yöntemi')).toBeTruthy();
+    expect(screen.getByLabelText('Hediye Çeki')).toBeTruthy();
+    expect(screen.getByText("İade IBAN'ı")).toBeTruthy();
+  });
+
+  it('hides the IBAN block once the gift voucher is the selected refund method', () => {
+    mockController = makeController({
+      refund: {
+        isGiftVoucher: true,
+        methods: [
+          { id: 1, name: 'IBAN', code: 'iban' },
+          { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' },
+        ],
+        select: jest.fn(),
+        selected: { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' },
+        selectedId: 2,
+        showSelector: true,
+      },
+      shouldCollectIban: false,
+      shouldShowIbanSelect: true,
+    });
+
+    renderWithTamagui(<ReturnCreateScreen />);
+
+    expect(screen.getByText('Geri Ödeme Yöntemi')).toBeTruthy();
+    expect(screen.queryByText("İade IBAN'ı")).toBeNull();
   });
 
   it('renders the web-parity blocked screen with a back-to-orders action', () => {

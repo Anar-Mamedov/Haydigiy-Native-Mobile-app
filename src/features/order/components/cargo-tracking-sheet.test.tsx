@@ -46,6 +46,7 @@ function makeOrder(overrides: Partial<OrderDetail> = {}): OrderDetail {
     returnRequestIds: [],
     cancellableReturnRequestId: null,
     hasHepsijetReturn: false,
+    returnPaymentInfo: null,
     shippingAddress: {
       name: 'Anar',
       surname: 'Mammadov',

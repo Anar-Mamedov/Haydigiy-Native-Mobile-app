@@ -7,6 +7,17 @@ export interface ReturnReasonsResponseDto {
   data?: ReturnReasonDto[];
 }
 
+/** A single refund method from `GET /return-requests/refund-methods`. */
+export interface RefundMethodDto {
+  id: number;
+  name?: string | null;
+  code: string;
+}
+
+export interface RefundMethodsResponseDto {
+  data?: RefundMethodDto[];
+}
+
 export interface ReturnItemPayloadDto {
   order_item_id: number;
   quantity: number;

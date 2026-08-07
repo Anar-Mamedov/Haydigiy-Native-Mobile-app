@@ -6,6 +6,7 @@ import { CircleAlert } from '@/components/ui/icons';
 import { AppInput, AppScreen, EmptyState, KeyboardAwareFormScrollView, SectionCard } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { OrdersHeader } from '../components/orders-header';
+import { RefundMethodSection } from '../components/refund-method-section';
 import { ReturnItemRow } from '../components/return-item-row';
 import { ReturnIbanSection } from '../components/return-iban-section';
 import { ReturnMethodSelector } from '../components/return-method-selector';
@@ -185,7 +186,16 @@ export function ReturnCreateScreen() {
             </YStack>
           )}
 
-          {ctrl.shouldShowIbanSelect ? (
+          {ctrl.refund.showSelector ? (
+            <RefundMethodSection
+              error={ctrl.refundError}
+              loading={ctrl.refundLoading}
+              onSelect={() => ctrl.iban.setIbanError(null)}
+              refund={ctrl.refund}
+            />
+          ) : null}
+
+          {ctrl.shouldCollectIban ? (
             <ReturnIbanSection
               iban={ctrl.iban}
               onAddNew={() => setNewIbanOpen(true)}

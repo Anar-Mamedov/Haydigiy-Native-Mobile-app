@@ -232,6 +232,47 @@ describe('mapOrderDetail', () => {
     expect(order.totals.hasInstallmentInfo).toBe(false);
   });
 
+  it('leaves the refund info null until the backend reports one', () => {
+    expect(mapOrderDetail(baseDetail()).returnPaymentInfo).toBeNull();
+  });
+
+  it('maps a gift-voucher refund with its coupon, amount and expiry', () => {
+    const order = mapOrderDetail(
+      baseDetail({
+        return_payment_info: {
+          type: 'gift_voucher',
+          message: 'İade kuponunuz oluşturuldu',
+          coupon_code: 'IADEHG123456',
+          amount: 750,
+          expires_at: '2027-02-07',
+          refund_method: { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' },
+        },
+      }),
+    );
+
+    expect(order.returnPaymentInfo).toEqual({
+      type: 'gift_voucher',
+      message: 'İade kuponunuz oluşturuldu',
+      amount: 750,
+      couponCode: 'IADEHG123456',
+      expiresAt: '2027-02-07',
+      refundMethodCode: 'gift_voucher',
+    });
+  });
+
+  it('normalizes a string amount and blank refund fields to null', () => {
+    const order = mapOrderDetail(
+      baseDetail({
+        return_payment_info: { type: 'iban', amount: '750.50', coupon_code: '  ', message: null },
+      }),
+    );
+
+    expect(order.returnPaymentInfo?.amount).toBe(750.5);
+    expect(order.returnPaymentInfo?.couponCode).toBeNull();
+    expect(order.returnPaymentInfo?.message).toBeNull();
+    expect(order.returnPaymentInfo?.refundMethodCode).toBeNull();
+  });
+
   it('tags returned items and surfaces their status note', () => {
     const order = mapOrderDetail(
       baseDetail({
