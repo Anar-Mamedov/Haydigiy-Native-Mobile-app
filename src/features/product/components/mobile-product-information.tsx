@@ -5,6 +5,8 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { Image } from 'expo-image';
 import { Pressable } from 'react-native';
 import { MarkdownContent } from '@/components/ui/markdown-content';
+import { SizeMeasurementsTable } from './size-measurements-table';
+import { SizeMeasurement } from '@/types/product.types';
 
 type Property = Readonly<{
   name: string;
@@ -17,6 +19,7 @@ type MobileProductInformationProps = Readonly<{
     imageUrl: string;
   }>;
   properties?: readonly Property[];
+  sizeMeasurements?: SizeMeasurement[];
   onWashingInstructionsPress?: () => void;
 }>;
 
@@ -29,6 +32,7 @@ function getPropertyKey(property: Property) {
 export function MobileProductInformation({
   productData,
   properties = [],
+  sizeMeasurements,
   onWashingInstructionsPress,
 }: MobileProductInformationProps) {
   const [showMore, setShowMore] = useState(false);
@@ -38,8 +42,9 @@ export function MobileProductInformation({
   const description = productData.description.trim();
   const hasDescription = description.length > 0;
   const hasProperties = properties.length > 0;
+  const hasSizeMeasurements = Array.isArray(sizeMeasurements) && sizeMeasurements.length > 0;
 
-  if (!hasDescription && !hasProperties) {
+  if (!hasDescription && !hasProperties && !hasSizeMeasurements) {
     return null;
   }
 
@@ -128,6 +133,9 @@ export function MobileProductInformation({
           )}
         </YStack>
       )}
+
+      {/* Size Measurements Table */}
+      <SizeMeasurementsTable measurements={sizeMeasurements} />
 
       {/* Washing Instructions Card Button */}
       {onWashingInstructionsPress && (

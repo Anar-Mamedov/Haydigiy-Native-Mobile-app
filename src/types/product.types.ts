@@ -147,6 +147,20 @@ export type ProductVariantOnModel = {
   name?: string;
 };
 
+/** Bir bedene ait tek ölçü (ör. "Göğüs" → "88 cm"). */
+export type SizeMeasurementEntry = {
+  /** Kolonları eşlemek için kararlı anahtar (`property_id`, yoksa ölçü adı). */
+  key: string;
+  name: string;
+  value: string;
+};
+
+/** Bir bedenin ölçü seti; ürün `properties` alanından ayrı gelir. */
+export type SizeMeasurement = {
+  sizeName: string;
+  measurements: SizeMeasurementEntry[];
+};
+
 export type Product = {
   badge?: string;
   brand: string;
@@ -186,6 +200,7 @@ export type Product = {
   totalQuantity?: number;
   isApprovedForSale?: boolean;
   properties?: { name: string; value: string }[];
+  sizeMeasurements?: SizeMeasurement[];
   model?: ProductModel | null;
   variantOnModel?: ProductVariantOnModel | null;
 };

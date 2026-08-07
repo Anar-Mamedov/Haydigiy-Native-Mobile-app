@@ -211,3 +211,21 @@ export interface PopularProductDto {
   image: string | null;
   price: number | null;
 }
+
+/** `size_measurements[].properties[]` — bir bedene ait tek bir ölçü satırı. */
+export interface ProductSizeMeasurementPropertyDto {
+  property_id?: number | null;
+  /** Ölçünün adı (Göğüs, Bel, Genişlik…). */
+  parent_name?: string | null;
+  property_name?: string | null;
+  value?: string | null;
+}
+
+/** Beden bazlı ölçüler; ürün `properties` alanından ayrı olarak dönülür. */
+export interface ProductSizeMeasurementDto {
+  variant_id?: number | null;
+  size_id?: number | null;
+  size_name?: string | null;
+  barcode?: string | null;
+  properties?: ProductSizeMeasurementPropertyDto[] | null;
+}

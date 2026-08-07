@@ -2,6 +2,7 @@ import {
   mapAvailableFilters,
   mapPopularProductDto,
   mapProductDetailDto,
+  mapSizeMeasurements,
   mapSearchProductDto,
   mergeProductDetailReviewPage,
 } from './product.mapper';
@@ -279,5 +280,87 @@ describe('mapAvailableFilters', () => {
       categoryChildren: [],
       useProductCategoryFilters: false,
     });
+  });
+});
+
+describe('mapSizeMeasurements', () => {
+  it('returns an empty list when the field is missing or malformed', () => {
+    expect(mapSizeMeasurements(undefined)).toEqual([]);
+    expect(mapSizeMeasurements(null)).toEqual([]);
+    expect(mapSizeMeasurements([])).toEqual([]);
+  });
+
+  // Gerçek yanıtta ölçünün adı `parent_name`, değeri `value` alanında geliyor.
+  it('maps the backend shape to the domain model', () => {
+    expect(
+      mapSizeMeasurements([
+        {
+          variant_id: 148299,
+          size_id: 234,
+          size_name: 'S',
+          barcode: '17745161',
+          properties: [
+            { property_id: 498, parent_name: 'Genişlik', property_name: '36 cm', value: '36 cm' },
+            {
+              property_id: 2630,
+              parent_name: 'Kumaş İçeriği',
+              property_name: '%95 Viskon %5 Likra',
+              value: '%95 Viskon %5 Likra',
+            },
+          ],
+        },
+      ]),
+    ).toEqual([
+      {
+        sizeName: 'S',
+        measurements: [
+          { key: '498', name: 'Genişlik', value: '36 cm' },
+          { key: '2630', name: 'Kumaş İçeriği', value: '%95 Viskon %5 Likra' },
+        ],
+      },
+    ]);
+  });
+
+  it('falls back to property_name when parent_name or value is missing', () => {
+    expect(
+      mapSizeMeasurements([
+        { size_name: 'M', properties: [{ property_id: 45, property_name: 'Göğüs (cm)' }] },
+      ]),
+    ).toEqual([
+      { sizeName: 'M', measurements: [{ key: '45', name: 'Göğüs (cm)', value: 'Göğüs (cm)' }] },
+    ]);
+  });
+
+  it('keys a measurement by its name when the backend sends no property_id', () => {
+    expect(
+      mapSizeMeasurements([{ size_name: 'L', properties: [{ parent_name: 'Bel', value: '76 cm' }] }]),
+    ).toEqual([{ sizeName: 'L', measurements: [{ key: 'Bel', name: 'Bel', value: '76 cm' }] }]);
+  });
+
+  // Ölçüsüz beden ekranda boş satır oluşturmamalı.
+  it('drops sizes whose measurements are empty or unusable', () => {
+    expect(
+      mapSizeMeasurements([
+        { size_name: 'S', properties: [] },
+        { size_name: 'M', properties: [{ property_id: 45, parent_name: '  ', value: '  ' }] },
+        { size_name: 'L', properties: [{ property_id: 45, parent_name: 'Bel', value: '76 cm' }] },
+      ]),
+    ).toEqual([{ sizeName: 'L', measurements: [{ key: '45', name: 'Bel', value: '76 cm' }] }]);
+  });
+
+  it('reaches the product detail model', () => {
+    const product = mapProductDetailDto({
+      id: 1,
+      name: 'Test',
+      slug: 'test',
+      price: '49.99',
+      size_measurements: [
+        { size_name: 'S', properties: [{ property_id: 498, parent_name: 'Genişlik', value: '36 cm' }] },
+      ],
+    });
+
+    expect(product.sizeMeasurements).toEqual([
+      { sizeName: 'S', measurements: [{ key: '498', name: 'Genişlik', value: '36 cm' }] },
+    ]);
   });
 });

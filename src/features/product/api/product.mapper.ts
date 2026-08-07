@@ -2,12 +2,23 @@ import {
   ProductFeatureIconDto,
   PopularProductDto,
   ProductDto,
+  ProductSizeMeasurementDto,
+  ProductSizeMeasurementPropertyDto,
   SearchProductColorDto,
   SearchProductDto,
   SearchProductsResponseDto,
 } from '@/features/product/api/product.dtos';
 import { getRequiredApiBaseUrl } from '@/lib/env';
-import { Product, ProductAvailableFilters, ProductReview, ProductSize, FeatureIcon, PopularProduct } from '@/types/product.types';
+import {
+  Product,
+  ProductAvailableFilters,
+  ProductReview,
+  ProductSize,
+  FeatureIcon,
+  PopularProduct,
+  SizeMeasurement,
+  SizeMeasurementEntry,
+} from '@/types/product.types';
 import { resolveCdnUrl } from '@/utils/cdn';
 import { ProductReviewDto, ProductReviewPageDto } from './product-reviews.dtos';
 
@@ -328,6 +339,31 @@ function extractSizes(dto: SearchProductDto): ProductSize[] {
   });
 }
 
+/** Ölçünün adı `parent_name`de gelir; yoksa `property_name`e düşülür. */
+function mapSizeMeasurementEntry(dto: ProductSizeMeasurementPropertyDto): SizeMeasurementEntry | null {
+  const name = (dto?.parent_name || dto?.property_name || '').trim();
+  const value = (dto?.value || dto?.property_name || '').trim();
+  if (!name || !value) return null;
+  const key = dto?.property_id === null || dto?.property_id === undefined ? name : String(dto.property_id);
+  return { key, name, value };
+}
+
+/**
+ * Beden bazlı ölçüleri (`size_measurements`) domain modeline çevirir. Ölçüsü
+ * olmayan bedenler düşürülür; ekranda boş satır oluşmaz.
+ */
+export function mapSizeMeasurements(dtos: ProductSizeMeasurementDto[] | null | undefined): SizeMeasurement[] {
+  if (!Array.isArray(dtos)) return [];
+  return dtos.flatMap((dto) => {
+    const measurements = (dto?.properties ?? []).flatMap((property) => {
+      const entry = mapSizeMeasurementEntry(property);
+      return entry ? [entry] : [];
+    });
+    if (measurements.length === 0) return [];
+    return [{ sizeName: (dto?.size_name || '').trim(), measurements }];
+  });
+}
+
 export function mapProductDetailDto(dto: any): Product {
   const rawImage =
     dto.medias?.[0]?.medium ||
@@ -431,6 +467,7 @@ export function mapProductDetailDto(dto: any): Product {
     totalQuantity: dto.total_quantity,
     isApprovedForSale: dto.is_approved_for_sale === undefined ? true : Number(dto.is_approved_for_sale) === 1,
     properties: propertiesMapped,
+    sizeMeasurements: mapSizeMeasurements(dto.size_measurements),
     model: dto.model ? {
       height: dto.model.height,
       weight: dto.model.weight,

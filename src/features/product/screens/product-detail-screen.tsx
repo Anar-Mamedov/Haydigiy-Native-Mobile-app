@@ -465,6 +465,7 @@ export function ProductDetailScreen() {
                   imageUrl: product.imageUrl,
                 }}
                 properties={product.properties}
+                sizeMeasurements={product.sizeMeasurements}
                 onWashingInstructionsPress={() => setShowWashing(true)}
               />
 
