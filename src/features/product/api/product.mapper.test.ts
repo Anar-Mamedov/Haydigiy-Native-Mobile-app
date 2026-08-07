@@ -7,6 +7,7 @@ import {
   mergeProductDetailReviewPage,
 } from './product.mapper';
 import { SearchProductDto } from './product.dtos';
+import { buildSizeMeasurementTable } from '../utils/size-measurement-table';
 
 const baseProductDto: SearchProductDto = {
   id: 80872,
@@ -314,8 +315,8 @@ describe('mapSizeMeasurements', () => {
       {
         sizeName: 'S',
         measurements: [
-          { key: '498', name: 'Genişlik', value: '36 cm' },
-          { key: '2630', name: 'Kumaş İçeriği', value: '%95 Viskon %5 Likra' },
+          { key: 'genişlik', name: 'Genişlik', value: '36 cm' },
+          { key: 'kumaş içeriği', name: 'Kumaş İçeriği', value: '%95 Viskon %5 Likra' },
         ],
       },
     ]);
@@ -327,14 +328,45 @@ describe('mapSizeMeasurements', () => {
         { size_name: 'M', properties: [{ property_id: 45, property_name: 'Göğüs (cm)' }] },
       ]),
     ).toEqual([
-      { sizeName: 'M', measurements: [{ key: '45', name: 'Göğüs (cm)', value: 'Göğüs (cm)' }] },
+      { sizeName: 'M', measurements: [{ key: 'göğüs (cm)', name: 'Göğüs (cm)', value: 'Göğüs (cm)' }] },
+    ]);
+  });
+
+  // Regresyon: `property_id` ölçünün DEĞERİNE ait ("Genişlik" S'te 3173, L'de 404).
+  // Id ile anahtarlanınca aynı ölçüden iki kolon oluşuyordu.
+  it('keys the same measurement identically across sizes despite differing property ids', () => {
+    const mapped = mapSizeMeasurements([
+      {
+        size_name: 'S',
+        properties: [
+          { property_id: 3173, parent_name: 'Genişlik', property_name: '55 cm', value: '55 cm' },
+          { property_id: 3563, parent_name: 'Uzunluk', property_name: '64 cm', value: '64 cm' },
+        ],
+      },
+      {
+        size_name: 'L',
+        properties: [
+          { property_id: 404, parent_name: 'Genişlik', property_name: '59 cm', value: '59 cm' },
+          { property_id: 3566, parent_name: 'Uzunluk', property_name: '68 cm', value: '68 cm' },
+        ],
+      },
+    ]);
+
+    expect(mapped[0]?.measurements.map((entry) => entry.key)).toEqual(['genişlik', 'uzunluk']);
+    expect(mapped[1]?.measurements.map((entry) => entry.key)).toEqual(['genişlik', 'uzunluk']);
+
+    const table = buildSizeMeasurementTable(mapped);
+    expect(table?.columns.map((column) => column.label)).toEqual(['Genişlik', 'Uzunluk']);
+    expect(table?.rows).toEqual([
+      { sizeName: 'S', values: ['55 cm', '64 cm'] },
+      { sizeName: 'L', values: ['59 cm', '68 cm'] },
     ]);
   });
 
   it('keys a measurement by its name when the backend sends no property_id', () => {
     expect(
       mapSizeMeasurements([{ size_name: 'L', properties: [{ parent_name: 'Bel', value: '76 cm' }] }]),
-    ).toEqual([{ sizeName: 'L', measurements: [{ key: 'Bel', name: 'Bel', value: '76 cm' }] }]);
+    ).toEqual([{ sizeName: 'L', measurements: [{ key: 'bel', name: 'Bel', value: '76 cm' }] }]);
   });
 
   // Ölçüsüz beden ekranda boş satır oluşturmamalı.
@@ -345,7 +377,7 @@ describe('mapSizeMeasurements', () => {
         { size_name: 'M', properties: [{ property_id: 45, parent_name: '  ', value: '  ' }] },
         { size_name: 'L', properties: [{ property_id: 45, parent_name: 'Bel', value: '76 cm' }] },
       ]),
-    ).toEqual([{ sizeName: 'L', measurements: [{ key: '45', name: 'Bel', value: '76 cm' }] }]);
+    ).toEqual([{ sizeName: 'L', measurements: [{ key: 'bel', name: 'Bel', value: '76 cm' }] }]);
   });
 
   it('reaches the product detail model', () => {
@@ -360,7 +392,7 @@ describe('mapSizeMeasurements', () => {
     });
 
     expect(product.sizeMeasurements).toEqual([
-      { sizeName: 'S', measurements: [{ key: '498', name: 'Genişlik', value: '36 cm' }] },
+      { sizeName: 'S', measurements: [{ key: 'genişlik', name: 'Genişlik', value: '36 cm' }] },
     ]);
   });
 });

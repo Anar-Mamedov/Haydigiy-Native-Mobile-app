@@ -339,13 +339,16 @@ function extractSizes(dto: SearchProductDto): ProductSize[] {
   });
 }
 
-/** Ölçünün adı `parent_name`de gelir; yoksa `property_name`e düşülür. */
+/**
+ * Ölçünün adı `parent_name`de gelir; yoksa `property_name`e düşülür. Anahtar ADdan
+ * üretilir: `property_id` ölçünün değerine ait olduğu için ("Genişlik" S bedeninde
+ * 3173, L bedeninde 404) id ile gruplamak aynı ölçüden iki kolon üretiyordu.
+ */
 function mapSizeMeasurementEntry(dto: ProductSizeMeasurementPropertyDto): SizeMeasurementEntry | null {
   const name = (dto?.parent_name || dto?.property_name || '').trim();
   const value = (dto?.value || dto?.property_name || '').trim();
   if (!name || !value) return null;
-  const key = dto?.property_id === null || dto?.property_id === undefined ? name : String(dto.property_id);
-  return { key, name, value };
+  return { key: name.toLocaleLowerCase('tr-TR'), name, value };
 }
 
 /**
