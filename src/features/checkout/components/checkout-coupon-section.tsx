@@ -20,14 +20,17 @@ interface CheckoutCouponSectionProps {
   isRemovingCoupon: boolean;
   coupons: Coupon[];
   isCouponsLoading: boolean;
+  /** Locks coupon actions while `/order/token` is in flight (see `isCheckoutLocked`). */
+  disabled?: boolean;
 }
 
 interface CouponCodeInputProps {
   value: string;
   onChangeText: (value: string) => void;
+  disabled?: boolean;
 }
 
-function CouponCodeInput({ value, onChangeText }: CouponCodeInputProps) {
+function CouponCodeInput({ value, onChangeText, disabled }: CouponCodeInputProps) {
   return (
     <XStack flex={1} position="relative">
       <Input
@@ -35,11 +38,13 @@ function CouponCodeInput({ value, onChangeText }: CouponCodeInputProps) {
         autoCapitalize="characters"
         backgroundColor="$background"
         borderColor="$borderColor"
+        disabled={disabled}
         flex={1}
         height={44}
         multiline={false}
         numberOfLines={1}
         onChangeText={onChangeText}
+        opacity={disabled ? 0.6 : 1}
         placeholder=""
         value={value}
       />
@@ -82,7 +87,9 @@ export function CheckoutCouponSection({
   isRemovingCoupon,
   coupons,
   isCouponsLoading,
+  disabled = false,
 }: CheckoutCouponSectionProps) {
+  const isApplyBlocked = disabled || isApplyingCoupon;
   return (
     <CheckoutSection title="Kupon Kodu">
       <YStack gap="$3">
@@ -109,24 +116,34 @@ export function CheckoutCouponSection({
             <Pressable
               accessibilityLabel="Kuponu kaldır"
               accessibilityRole="button"
-              disabled={isRemovingCoupon}
+              accessibilityState={{ disabled: disabled || isRemovingCoupon }}
+              disabled={disabled || isRemovingCoupon}
               onPress={onRemoveCoupon}
             >
-              <Paragraph color="$red10" fontSize={13} fontWeight="600">
+              <Paragraph
+                color="$red10"
+                fontSize={13}
+                fontWeight="600"
+                opacity={disabled || isRemovingCoupon ? 0.6 : 1}
+              >
                 {isRemovingCoupon ? 'Kaldırılıyor...' : 'Kaldır'}
               </Paragraph>
             </Pressable>
           </XStack>
         ) : (
           <XStack gap="$2">
-            <CouponCodeInput onChangeText={onCouponInputChange} value={couponInput} />
+            <CouponCodeInput
+              disabled={disabled}
+              onChangeText={onCouponInputChange}
+              value={couponInput}
+            />
             <AppButton
               backgroundColor="$brand"
               color="white"
-              disabled={isApplyingCoupon || !couponInput.trim()}
+              disabled={isApplyBlocked || !couponInput.trim()}
               height={44}
               onPress={() => onApplyCoupon()}
-              opacity={isApplyingCoupon || !couponInput.trim() ? 0.5 : 1}
+              opacity={isApplyBlocked || !couponInput.trim() ? 0.5 : 1}
             >
               {isApplyingCoupon ? 'Kontrol...' : 'Uygula'}
             </AppButton>
@@ -149,7 +166,8 @@ export function CheckoutCouponSection({
                 <Pressable
                   accessibilityLabel={`${coupon.couponCode} kuponunu uygula`}
                   accessibilityRole="button"
-                  disabled={isApplyingCoupon}
+                  accessibilityState={{ disabled: isApplyBlocked }}
+                  disabled={isApplyBlocked}
                   key={coupon.id}
                   onPress={() => onApplyCoupon(coupon.couponCode)}
                 >
@@ -157,6 +175,7 @@ export function CheckoutCouponSection({
                     borderColor="$brand"
                     borderRadius="$3"
                     borderWidth={1}
+                    opacity={isApplyBlocked ? 0.6 : 1}
                     paddingHorizontal="$2.5"
                     paddingVertical="$1.5"
                   >

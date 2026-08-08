@@ -11,6 +11,8 @@ interface CheckoutInstallmentsProps {
   selectedInstallment: number;
   onSelect: (count: number) => void;
   isLoading: boolean;
+  /** Locks selection while `/order/token` is in flight (see `isCheckoutLocked`). */
+  disabled?: boolean;
 }
 
 /** Tek Çekim + installment plan picker (İyzico 3DS runs for any plan ≥ 2). */
@@ -20,11 +22,13 @@ export function CheckoutInstallments({
   selectedInstallment,
   onSelect,
   isLoading,
+  disabled = false,
 }: CheckoutInstallmentsProps) {
   return (
     <CheckoutSection noBodyPadding title="Ödeme Seçenekleri">
       <CheckoutOptionRow
         accessibilityLabel="Tek çekim"
+        disabled={disabled}
         onPress={() => onSelect(1)}
         right={
           <Paragraph color="$color" fontSize={14} fontWeight="700">
@@ -48,6 +52,7 @@ export function CheckoutInstallments({
             <Separator borderColor="$borderColor" />
             <CheckoutOptionRow
               accessibilityLabel={`${plan.installment} taksit`}
+              disabled={disabled}
               onPress={() => onSelect(plan.installment)}
               right={
                 <Paragraph color="$color" fontSize={14} fontWeight="700">

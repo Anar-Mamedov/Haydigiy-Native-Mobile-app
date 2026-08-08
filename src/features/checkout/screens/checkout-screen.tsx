@@ -5,6 +5,7 @@ import { AppScreen, EmptyState, ScreenHeader } from '@/components/ui';
 import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-estimate-info';
 import { FreeShippingCampaignCard } from '@/features/cart/components/free-shipping-campaign-card';
 import { useCheckoutController } from '../hooks/use-checkout-controller';
+import { useDelayedFlag } from '../hooks/use-delayed-flag';
 import { usePlaceOrder } from '../hooks/use-place-order';
 import { CheckoutCartItems } from '../components/checkout-cart-items';
 import { CheckoutCargoSection } from '../components/checkout-cargo-section';
@@ -14,6 +15,7 @@ import { CheckoutPaymentOptions } from '../components/checkout-payment-options';
 import { CheckoutCardForm } from '../components/checkout-card-form';
 import { CheckoutInstallments } from '../components/checkout-installments';
 import { CheckoutSummaryBackdrop } from '../components/checkout-summary-backdrop';
+import { CheckoutUpdatingOverlay } from '../components/checkout-updating-overlay';
 import {
   AgreementConsentCard,
   CheckoutContractSheet,
@@ -23,6 +25,12 @@ import type { CheckoutContractKind } from '../components/checkout-contracts';
 import { CheckoutSummaryBar } from '../components/checkout-summary-bar';
 import { CheckoutPriceChangeDialog } from '../components/checkout-price-change-dialog';
 import { PaymentWebView } from '../components/payment-webview';
+
+/**
+ * Yükleme katmanı bu süreden kısa güncellemelerde hiç gösterilmez; hızlı
+ * bağlantıda her seçimde ekranın yanıp sönmesini engeller.
+ */
+const UPDATING_OVERLAY_DELAY_MS = 400;
 
 export function CheckoutScreen() {
   const router = useRouter();
@@ -64,6 +72,14 @@ export function CheckoutScreen() {
       refetchAddresses();
       refetchCart();
     }, [refetchAddresses, refetchCart]),
+  );
+
+  // Aşağıdaki erken dönüşlerden önce çağrılmalı: hook sırası her render'da sabit
+  // kalmalı. Sipariş gönderimi kendi butonunda "İşleniyor..." durumunu gösterdiği
+  // için katman yalnızca tutar güncellemesi ve kupon istekleri sırasında açılır.
+  const isUpdatingOverlayVisible = useDelayedFlag(
+    controller.isCheckoutLocked,
+    UPDATING_OVERLAY_DELAY_MS,
   );
 
   const header = <ScreenHeader onBack={controller.goBack} title="Güvenli Ödeme" />;
@@ -111,6 +127,9 @@ export function CheckoutScreen() {
   }
 
   const showCardSections = controller.isCardPayment && !controller.card.isRestrictedBin;
+  // Tutarı değiştiren seçimler, `/order/token` yanıtı gelene ve sipariş gönderimi
+  // bitene kadar kilitli kalır (bkz. `isCheckoutLocked`).
+  const isSelectionLocked = controller.isCheckoutLocked || placeOrder.isSubmitting;
   const isPreparingUpdatedInstallments =
     controller.isCardPayment &&
     controller.card.selectedInstallment > 1 &&
@@ -156,6 +175,7 @@ export function CheckoutScreen() {
 
           <CheckoutCargoSection
             companies={controller.cargoCompanies}
+            disabled={isSelectionLocked}
             hasFreeShipping={controller.hasFreeShipping}
             isLoading={controller.isCargoLoading}
             onSelect={controller.selectCargo}
@@ -165,6 +185,7 @@ export function CheckoutScreen() {
           <CheckoutDeliveryAddress
             addresses={controller.addresses}
             billingAddress={controller.billingAddress}
+            disabled={isSelectionLocked}
             isError={controller.isAddressesError}
             isLoading={controller.isAddressesLoading}
             onAddAddress={controller.goToAddAddress}
@@ -182,6 +203,7 @@ export function CheckoutScreen() {
             coupons={controller.coupons}
             couponError={controller.couponError}
             couponInput={controller.couponInput}
+            disabled={isSelectionLocked}
             isApplyingCoupon={controller.isApplyingCoupon}
             isCouponsLoading={controller.isCouponsLoading}
             isRemovingCoupon={controller.isRemovingCoupon}
@@ -191,6 +213,7 @@ export function CheckoutScreen() {
           />
 
           <CheckoutPaymentOptions
+            disabled={isSelectionLocked}
             isLoading={controller.isPaymentMethodsLoading}
             methods={controller.paymentMethods}
             onSelect={controller.selectMethod}
@@ -201,6 +224,7 @@ export function CheckoutScreen() {
           {showCardSections ? <CheckoutCardForm card={controller.card} /> : null}
           {showCardSections ? (
             <CheckoutInstallments
+              disabled={isSelectionLocked}
               installmentPlans={controller.card.installmentPlans}
               isLoading={controller.card.isLoadingInstallments}
               onSelect={controller.card.selectInstallment}
@@ -214,6 +238,8 @@ export function CheckoutScreen() {
             onOpenPreInfo={openPreInfoContract}
           />
         </ScrollView>
+
+        <CheckoutUpdatingOverlay visible={isUpdatingOverlayVisible} />
 
         <CheckoutSummaryBackdrop
           onPress={controller.toggleSummary}

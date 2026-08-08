@@ -13,6 +13,8 @@ interface CheckoutCargoSectionProps {
   onSelect: (company: CargoCompany) => void;
   hasFreeShipping: boolean;
   isLoading: boolean;
+  /** Locks selection while `/order/token` is in flight (see `isCheckoutLocked`). */
+  disabled?: boolean;
 }
 
 export function CheckoutCargoSection({
@@ -21,6 +23,7 @@ export function CheckoutCargoSection({
   onSelect,
   hasFreeShipping,
   isLoading,
+  disabled = false,
 }: CheckoutCargoSectionProps) {
   return (
     <CheckoutSection noBodyPadding title="Kargo">
@@ -43,6 +46,7 @@ export function CheckoutCargoSection({
               {index > 0 ? <Separator borderColor="$borderColor" /> : null}
               <CheckoutOptionRow
                 accessibilityLabel={company.name}
+                disabled={disabled}
                 onPress={() => onSelect(company)}
                 right={
                   hasFreeShipping ? (

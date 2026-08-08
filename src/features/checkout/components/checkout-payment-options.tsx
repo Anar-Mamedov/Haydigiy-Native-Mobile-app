@@ -14,6 +14,8 @@ interface CheckoutPaymentOptionsProps {
   /** Single-payment total used for the per-method max-order cap check. */
   orderTotal: number;
   isLoading: boolean;
+  /** Locks selection while `/order/token` is in flight (see `isCheckoutLocked`). */
+  disabled?: boolean;
 }
 
 /** True when the order (incl. fee/commission) exceeds the method's max-order cap. */
@@ -30,6 +32,7 @@ export function CheckoutPaymentOptions({
   onSelect,
   orderTotal,
   isLoading,
+  disabled = false,
 }: CheckoutPaymentOptionsProps) {
   return (
     <CheckoutSection noBodyPadding title="Ödeme Seçenekleri">
@@ -43,13 +46,15 @@ export function CheckoutPaymentOptions({
         </Paragraph>
       ) : (
         methods.map((method, index) => {
-          const blocked = isMethodOverLimit(method, orderTotal);
+          // `overLimit` drives the cap warning; the row is also locked while the
+          // screen waits for `/order/token`, but that must not show the warning.
+          const overLimit = isMethodOverLimit(method, orderTotal);
           return (
             <YStack key={method.id}>
               {index > 0 ? <Separator borderColor="$borderColor" /> : null}
               <CheckoutOptionRow
                 accessibilityLabel={method.name}
-                disabled={blocked}
+                disabled={overLimit || disabled}
                 onPress={() => onSelect(method)}
                 paddingVertical={15}
                 right={
@@ -90,13 +95,13 @@ export function CheckoutPaymentOptions({
               >
                 <YStack flex={1}>
                   <Paragraph
-                    color={blocked ? '$color9' : '$color'}
+                    color={overLimit ? '$color9' : '$color'}
                     fontSize={14}
                     fontWeight="600"
                   >
                     {method.name}
                   </Paragraph>
-                  {blocked ? (
+                  {overLimit ? (
                     <Paragraph color="$orange10" fontSize={11}>
                       {formatCurrency(method.maxOrderTotal ?? 0)} ve üzeri siparişlerde yalnızca kart ile
                       ödeme yapılabilir.

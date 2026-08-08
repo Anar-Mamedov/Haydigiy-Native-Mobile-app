@@ -10,6 +10,8 @@ export interface AppCheckboxProps {
   /** Label content rendered next to the box (text, links, etc.). */
   children?: ReactNode;
   size?: number;
+  /** Blocks toggling and dims the control while an owning flow is busy. */
+  disabled?: boolean;
 }
 
 /**
@@ -17,13 +19,14 @@ export interface AppCheckboxProps {
  * label area. Used for consent/KVKK checkboxes across the auth forms so the
  * control is defined once instead of being re-implemented per screen.
  */
-export function AppCheckbox({ checked, onChange, accessibilityLabel, children, size = 24 }: AppCheckboxProps) {
+export function AppCheckbox({ checked, onChange, accessibilityLabel, children, size = 24, disabled = false }: AppCheckboxProps) {
   return (
-    <XStack gap="$3" alignItems="flex-start">
+    <XStack gap="$3" alignItems="flex-start" opacity={disabled ? 0.6 : 1}>
       <Pressable
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="checkbox"
-        accessibilityState={{ checked }}
+        accessibilityState={{ checked, disabled }}
+        disabled={disabled}
         onPress={() => onChange(!checked)}
         hitSlop={8}
       >

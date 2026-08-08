@@ -25,6 +25,8 @@ interface CheckoutDeliveryAddressProps {
   onAddAddress: () => void;
   onEditAddress: (address: CheckoutAddress) => void;
   onRetry: () => void;
+  /** Locks address changes while `/order/token` is in flight (see `isCheckoutLocked`). */
+  disabled?: boolean;
 }
 
 function AddressSummary({ address }: { address: CheckoutAddress }) {
@@ -50,10 +52,16 @@ function AddressSummary({ address }: { address: CheckoutAddress }) {
   );
 }
 
-function ChangeButton({ onPress }: { onPress: () => void }) {
+function ChangeButton({ onPress, disabled }: { onPress: () => void; disabled?: boolean }) {
   return (
-    <Pressable accessibilityLabel="Adresi değiştir" accessibilityRole="button" onPress={onPress}>
-      <Paragraph color="$brand" fontSize={13} fontWeight="600">
+    <Pressable
+      accessibilityLabel="Adresi değiştir"
+      accessibilityRole="button"
+      accessibilityState={{ disabled: Boolean(disabled) }}
+      disabled={disabled}
+      onPress={onPress}
+    >
+      <Paragraph color="$brand" fontSize={13} fontWeight="600" opacity={disabled ? 0.5 : 1}>
         Değiştir
       </Paragraph>
     </Pressable>
@@ -73,6 +81,7 @@ export function CheckoutDeliveryAddress({
   onAddAddress,
   onEditAddress,
   onRetry,
+  disabled = false,
 }: CheckoutDeliveryAddressProps) {
   const [shippingPickerOpen, setShippingPickerOpen] = useState(false);
   const [billingPickerOpen, setBillingPickerOpen] = useState(false);
@@ -107,9 +116,11 @@ export function CheckoutDeliveryAddress({
           <XStack
             accessibilityLabel="Yeni adres ekle"
             accessibilityRole="button"
+            accessibilityState={{ disabled }}
             alignItems="center"
             gap="$2"
-            onPress={onAddAddress}
+            onPress={disabled ? undefined : onAddAddress}
+            opacity={disabled ? 0.5 : 1}
             pressStyle={{ opacity: 0.6 }}
           >
             <Plus color="$brand" size={18} />
@@ -130,12 +141,13 @@ export function CheckoutDeliveryAddress({
                 Lütfen bir teslimat adresi seçin.
               </Paragraph>
             )}
-            <ChangeButton onPress={() => setShippingPickerOpen(true)} />
+            <ChangeButton disabled={disabled} onPress={() => setShippingPickerOpen(true)} />
           </XStack>
 
           <AppCheckbox
             accessibilityLabel="Faturamı aynı adrese gönder"
             checked={sendInvoiceToSameAddress}
+            disabled={disabled}
             onChange={onToggleInvoiceSame}
             size={20}
           >
@@ -165,7 +177,7 @@ export function CheckoutDeliveryAddress({
                     Lütfen bir fatura adresi seçin.
                   </Paragraph>
                 )}
-                <ChangeButton onPress={() => setBillingPickerOpen(true)} />
+                <ChangeButton disabled={disabled} onPress={() => setBillingPickerOpen(true)} />
               </XStack>
             </YStack>
           ) : null}

@@ -330,13 +330,20 @@ export function useCheckoutController() {
   }, [router]);
 
   // ---- Submit gating ----
+  // Tutarı değiştiren her seçim (kargo, adres, ödeme yöntemi, taksit, kupon)
+  // `/order/token` yanıtı gelene kadar kilitlenir. Yavaş bağlantıda kullanıcı,
+  // fiyat güncellenmeden arka arkaya seçim değiştirip yanlış tutarla ilerleyemez.
+  // Ekran bunu `usePlaceOrder`'ın `isSubmitting` durumuyla birleştirir.
+  const isCheckoutLocked =
+    orderTokenSync.isLoading || validateCoupon.isPending || removeCoupon.isPending;
+
   const billingResolved = sendInvoiceToSameAddress || Boolean(billingAddress);
   const isSelectedInstallmentReady =
     card.selectedInstallment <= 1 || (Boolean(card.selectedPlan) && !card.isLoadingInstallments);
   const canSubmit =
     isAgreementChecked &&
     Boolean(orderTokenSync.summary) &&
-    !orderTokenSync.isLoading &&
+    !isCheckoutLocked &&
     !orderTokenSync.errorMessage &&
     Boolean(shippingAddress) &&
     Boolean(selectedCargo) &&
@@ -433,6 +440,7 @@ export function useCheckoutController() {
     orderSummary: orderTokenSync.summary,
     isOrderSummaryLoading: orderTokenSync.isLoading,
     orderSummaryError: orderTokenSync.errorMessage,
+    isCheckoutLocked,
     // contracts + submit
     isAgreementChecked,
     setIsAgreementChecked,
