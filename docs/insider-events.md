@@ -123,3 +123,45 @@ Insider panelinde yapılması gerekenler:
    karşılaştırın; Bundle ID tam olarak `com.faprika.haydigiy.app` olmalıdır.
 3. Değişiklik sonrası App Store/TestFlight build'i yüklü bir cihaza Insider
    panelinden test push gönderin.
+
+## InApp (uygulama içi pop-up) callback'leri
+
+Insider SDK'sı `init` sırasında verilen callback üzerinden **yedi ayrı tip** yayınlar
+(`react-native-insider/src/InsiderCallbackType`):
+
+| Tip | Değer | Ne zaman gelir |
+| --- | --- | --- |
+| `NOTIFICATION_OPEN` | 0 | Push bildirimine tıklanınca |
+| `INAPP_BUTTON_CLICK` | 1 | **InApp pop-up'ındaki butona tıklanınca** |
+| `TEMP_STORE_PURCHASE` | 2 | InApp üzerinden satın alma |
+| `TEMP_STORE_ADDED_TO_CART` | 3 | InApp üzerinden sepete ekleme |
+| `TEMP_STORE_CUSTOM_ACTION` | 4 | InApp özel aksiyon |
+| `INAPP_SEEN` | 5 | InApp gösterildiğinde |
+| `SESSION_STARTED` | 6 | Oturum başladığında |
+
+Uygulama yalnızca **yönlendirme taşıyan** tipleri işler: `NOTIFICATION_OPEN` ve
+`INAPP_BUTTON_CLICK`. İkisi de aynı `ins_dl_internal` / `ins_dl_url_scheme` /
+`ins_dl_external` alanlarını gönderdiği için tek bir çözümleyici kullanılır:
+`utils/insider-url.ts` → `resolveInsiderCallbackAction`.
+
+Daha önce handler `if (type !== 0) return;` yaptığı için InApp pop-up'ındaki butona
+basıldığında **hiçbir şey olmuyordu** — SDK hedefi veriyordu ama callback sessizce
+düşüyordu. Regresyon testi: `utils/insider-url.test.ts` → "InApp buton tıklamasında
+da aynı yönlendirmeyi çözer".
+
+Callback tipi sabitleri `types/insider.types.ts` içinde tanımlıdır (SDK Expo Go'da
+yüklenemediği için statik import edilmiyor). Değerlerin SDK ile aynı kaldığını
+`types/insider-callback-type.test.ts` gerçek SDK'ya karşı doğrular.
+
+### InApp görüntülenmesini etkileyen ayarlar
+
+Native tarafta InApp **varsayılan olarak açıktır** (`Insider.h`: "Inapps are enabled
+by default"). Uygulama bunları hiç çağırmaz, dolayısıyla kapalı değildir:
+
+- `disableInAppMessages()` / `enableInAppMessages()` — geçici kapatma/açma
+- `setGDPRConsent(false)` — SDK'yı tamamen dondurur
+- `setMobileAppAccess(false)` — push ve InApp dahil tüm mobil özellikleri kapatır
+
+Expo kurulumunda `AppDelegate.swift` düzenlenmez; `expo-insider-plugin` ayarları
+`Info.plist` içindeki `Insider` sözlüğüne yazar. Mevcut değerler doğrudur:
+`OverrideUNUserNotificationCenterDelegate = true`, `EnablePushViewOnForegroundStatus = true`.

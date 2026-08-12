@@ -2,8 +2,10 @@ import {
   isHaydigiyUniversalLink,
   isInsiderSdkUrl,
   isTrustedAppUrl,
+  resolveInsiderCallbackAction,
   resolveInsiderPushAction,
 } from './insider-url';
+import { InsiderCallbackType } from '../types/insider.types';
 
 describe('Insider URL helpers', () => {
   it('recognizes the partner-specific Insider test-device URL', () => {
@@ -53,5 +55,52 @@ describe('Insider URL helpers', () => {
 
   it('rejects an insecure external URL', () => {
     expect(resolveInsiderPushAction({ ins_dl_external: 'http://example.com' })).toBeNull();
+  });
+});
+
+describe('resolveInsiderCallbackAction', () => {
+  const deepLinkPayload = { ins_dl_internal: '/product/test-urun-123456-1' };
+
+  it('push açılışında yönlendirmeyi çözer', () => {
+    expect(resolveInsiderCallbackAction(InsiderCallbackType.NOTIFICATION_OPEN, deepLinkPayload)).toEqual({
+      type: 'internal',
+      url: '/product/test-urun-123456-1',
+    });
+  });
+
+  it('InApp buton tıklamasında da aynı yönlendirmeyi çözer', () => {
+    // Regresyon: yalnızca NOTIFICATION_OPEN dinlendiğinde InApp butonu hiçbir şey yapmıyordu.
+    expect(resolveInsiderCallbackAction(InsiderCallbackType.INAPP_BUTTON_CLICK, deepLinkPayload)).toEqual({
+      type: 'internal',
+      url: '/product/test-urun-123456-1',
+    });
+  });
+
+  it('harici InApp bağlantısını external olarak çözer', () => {
+    expect(
+      resolveInsiderCallbackAction(InsiderCallbackType.INAPP_BUTTON_CLICK, {
+        ins_dl_external: 'https://ornek.com/kampanya',
+      }),
+    ).toEqual({ type: 'external', url: 'https://ornek.com/kampanya' });
+  });
+
+  it('yönlendirme taşımayan callback tipleri için null döner', () => {
+    for (const type of [
+      InsiderCallbackType.INAPP_SEEN,
+      InsiderCallbackType.SESSION_STARTED,
+      InsiderCallbackType.TEMP_STORE_PURCHASE,
+      InsiderCallbackType.TEMP_STORE_ADDED_TO_CART,
+      InsiderCallbackType.TEMP_STORE_CUSTOM_ACTION,
+    ]) {
+      expect(resolveInsiderCallbackAction(type, deepLinkPayload)).toBeNull();
+    }
+  });
+
+  it('güvenilmeyen hedefi InApp tıklamasında da reddeder', () => {
+    expect(
+      resolveInsiderCallbackAction(InsiderCallbackType.INAPP_BUTTON_CLICK, {
+        ins_dl_internal: 'https://kotu-site.com/phishing',
+      }),
+    ).toBeNull();
   });
 });

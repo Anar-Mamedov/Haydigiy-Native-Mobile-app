@@ -1,5 +1,5 @@
 import insiderConfig from '../../../../insider.config.json';
-import { InsiderPayload, InsiderPushAction } from '../types/insider.types';
+import { InsiderCallbackType, InsiderPayload, InsiderPushAction } from '../types/insider.types';
 
 const TRUSTED_WEB_PREFIXES = ['https://haydigiy.com', 'https://www.haydigiy.com'];
 const APP_SCHEME_PREFIX = 'haydigiywebviewapp://';
@@ -56,4 +56,30 @@ export function resolveInsiderPushAction(payload: InsiderPayload): InsiderPushAc
   }
 
   return null;
+}
+
+/**
+ * Yönlendirme taşıyan callback tipleri. Push açılışı ve InApp buton tıklaması
+ * aynı `ins_dl_*` alanlarını gönderir, dolayısıyla ikisi de aynı yönlendirmeyi
+ * tetiklemelidir.
+ *
+ * Yalnızca NOTIFICATION_OPEN dinlendiğinde InApp pop-up'ındaki butona basılınca
+ * hiçbir şey olmuyordu: SDK hedefi INAPP_BUTTON_CLICK ile veriyor ve bu callback
+ * sessizce düşüyordu.
+ */
+const DEEP_LINK_CALLBACK_TYPES: readonly number[] = [
+  InsiderCallbackType.NOTIFICATION_OPEN,
+  InsiderCallbackType.INAPP_BUTTON_CLICK,
+];
+
+/**
+ * Bir SDK callback'i için yapılması gereken yönlendirmeyi çözer.
+ * Yönlendirme taşımayan tipler (INAPP_SEEN, SESSION_STARTED, TEMP_STORE_*) için `null` döner.
+ */
+export function resolveInsiderCallbackAction(
+  type: number,
+  payload: InsiderPayload,
+): InsiderPushAction {
+  if (!DEEP_LINK_CALLBACK_TYPES.includes(type)) return null;
+  return resolveInsiderPushAction(payload);
 }

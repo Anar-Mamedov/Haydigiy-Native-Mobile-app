@@ -1,5 +1,26 @@
 export type InsiderPayload = Record<string, unknown>;
 
+/**
+ * SDK callback tipleri. Değerler `react-native-insider/src/InsiderCallbackType`
+ * ile birebir aynı olmak ZORUNDA; SDK bu diziyi indeksine göre yayınlıyor
+ * (`registerInsiderCallback` içindeki `callbackActions` sırası).
+ *
+ * Buraya kopyalanmasının sebebi: SDK modülü Expo Go'da yüklenemediği için
+ * lazy `require` ile çağrılıyor, sabitleri statik import etmek istemiyoruz.
+ * Kaymayı `insider-callback-type.test.ts` gerçek SDK'ya karşı doğruluyor.
+ */
+export const InsiderCallbackType = {
+  NOTIFICATION_OPEN: 0,
+  INAPP_BUTTON_CLICK: 1,
+  TEMP_STORE_PURCHASE: 2,
+  TEMP_STORE_ADDED_TO_CART: 3,
+  TEMP_STORE_CUSTOM_ACTION: 4,
+  INAPP_SEEN: 5,
+  SESSION_STARTED: 6,
+} as const;
+
+export type InsiderCallbackTypeValue = (typeof InsiderCallbackType)[keyof typeof InsiderCallbackType];
+
 export type InsiderCallback = (type: number, payload: InsiderPayload) => void;
 
 /** Chainable custom-event builder returned by `RNInsider.tagEvent()`. */
