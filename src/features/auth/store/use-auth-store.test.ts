@@ -7,6 +7,8 @@ jest.mock('@/features/insider/services/insider-tracker', () => ({
   insiderTracker: {
     identifyUser: jest.fn(),
     clearUser: jest.fn(),
+    trackUserLogin: jest.fn(),
+    trackUserLogout: jest.fn(),
   },
 }));
 
@@ -83,5 +85,56 @@ describe('useAuthStore', () => {
     useAuthStore.getState().setUser(null);
     expect(useAuthStore.getState().user).toBeNull();
     expect(trackerMock.clearUser).toHaveBeenCalled();
+  });
+
+  it('sends user_login with the given method after identifying the user', async () => {
+    const mockUser = { id: 'user-3', name: 'Anar', email: 'anar@example.com' };
+
+    await useAuthStore.getState().login('test-token-xyz', mockUser, 'otp');
+
+    expect(trackerMock.trackUserLogin).toHaveBeenCalledWith('otp');
+    // Sıra önemli: kimlik tanıtılmadan gönderilen event yanlış profile yazılır.
+    expect(trackerMock.identifyUser.mock.invocationCallOrder[0]).toBeLessThan(
+      trackerMock.trackUserLogin.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('sends user_login without a method when the caller does not pass one', async () => {
+    const mockUser = { id: 'user-4', name: 'Anar', email: 'anar@example.com' };
+
+    await useAuthStore.getState().login('test-token-xyz', mockUser);
+
+    expect(trackerMock.trackUserLogin).toHaveBeenCalledWith(undefined);
+  });
+
+  it('sends user_logout before anonymising the user on explicit logout', async () => {
+    const mockUser = { id: 'user-5', name: 'Anar', email: 'anar@example.com' };
+
+    await useAuthStore.getState().login('test-token-xyz', mockUser);
+    jest.clearAllMocks();
+
+    await useAuthStore.getState().logout();
+
+    expect(trackerMock.trackUserLogout).toHaveBeenCalledWith('user');
+    // Sıra önemli: clearUser sonrası kullanıcı anonim olur, event kimliksiz kalır.
+    expect(trackerMock.trackUserLogout.mock.invocationCallOrder[0]).toBeLessThan(
+      trackerMock.clearUser.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('marks a dropped session as session_expired instead of a user logout', () => {
+    useAuthStore.getState().setUser(null);
+
+    expect(trackerMock.trackUserLogout).toHaveBeenCalledWith('session_expired');
+    expect(trackerMock.trackUserLogout.mock.invocationCallOrder[0]).toBeLessThan(
+      trackerMock.clearUser.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('does not send user_login when setUser only refreshes the profile', () => {
+    useAuthStore.getState().setUser({ id: 'user-6', name: 'Anar', email: 'anar@example.com' });
+
+    expect(trackerMock.identifyUser).toHaveBeenCalled();
+    expect(trackerMock.trackUserLogin).not.toHaveBeenCalled();
   });
 });

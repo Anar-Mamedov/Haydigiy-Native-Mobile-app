@@ -18,11 +18,22 @@ import { extractTurkishNationalNumber, isValidTurkishMobile } from '@/utils/turk
  * harfleri ve alt çizgi ("yorum_yapıldı" SDK tarafından reddedilir).
  */
 export const REVIEW_SUBMITTED_EVENT = 'yorum_yapildi';
+export const USER_LOGIN_EVENT = 'user_login';
+export const USER_LOGOUT_EVENT = 'user_logout';
 
 export interface ReviewSubmittedInput {
   productId: string;
   rating: number;
 }
+
+/**
+ * Giriş yöntemi: `password` = şifre ile giriş, `otp` = sms/e-posta kodu,
+ * `register` = kayıt akışının sonunda otomatik açılan oturum.
+ */
+export type InsiderLoginMethod = 'password' | 'otp' | 'register';
+
+/** `user` = kullanıcının kendi çıkışı, `session_expired` = oturumun süresinin dolması. */
+export type InsiderLogoutReason = 'user' | 'session_expired';
 
 /**
  * Domain-facing Insider analytics API. Screens and data hooks call these
@@ -42,6 +53,8 @@ export interface InsiderTracker {
   trackRemoveFromWishlist(productId: string): void;
   trackPurchase(saleId: string, items: InsiderProductInput[]): void;
   trackSignUp(): void;
+  trackUserLogin(method?: InsiderLoginMethod): void;
+  trackUserLogout(reason: InsiderLogoutReason): void;
   trackReviewSubmitted(input: ReviewSubmittedInput): void;
   identifyUser(user: User): void;
   clearUser(): void;
@@ -214,6 +227,35 @@ export function createInsiderTracker(
     trackSignUp() {
       run('kayıt olma', (activeSdk) => {
         activeSdk.signUpConfirmation();
+      });
+    },
+
+    /**
+     * `identifyUser` çağrıldıktan sonra tetiklenmeli; event o anda tanımlı olan
+     * profile yazılır. `logged_in` Insider'ın segmentasyon için istediği boolean.
+     */
+    trackUserLogin(method) {
+      run('giriş eventi', (activeSdk) => {
+        const event = activeSdk
+          .tagEvent(USER_LOGIN_EVENT)
+          .addParameterWithBoolean('logged_in', true);
+        // Yöntem bilinmiyorsa parametreyi hiç göndermiyoruz; uydurma değer segmenti bozar.
+        if (method) event.addParameterWithString('login_method', method);
+        event.build();
+      });
+    },
+
+    /**
+     * `clearUser` çağrılmadan ÖNCE tetiklenmeli; aksi halde kullanıcı çoktan
+     * anonimleşmiş olur ve event kimliksiz profile düşer.
+     */
+    trackUserLogout(reason) {
+      run('çıkış eventi', (activeSdk) => {
+        activeSdk
+          .tagEvent(USER_LOGOUT_EVENT)
+          .addParameterWithBoolean('logged_in', false)
+          .addParameterWithString('logout_reason', reason)
+          .build();
       });
     },
 

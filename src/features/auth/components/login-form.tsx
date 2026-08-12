@@ -66,7 +66,7 @@ export function LoginForm({ onSuccess, onFastLoginPress, onForgotPasswordPress }
           ...response.user,
           phoneNumber: response.user.phone || nationalNumber,
         };
-        await storeLogin(response.token, userWithPhone);
+        await storeLogin(response.token, userWithPhone, 'password');
         onSuccess();
       } else {
         setServerError('Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');

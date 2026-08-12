@@ -128,7 +128,7 @@ export function OtpVerification({
 
         willCommitLogin = true;
         requestAnimationFrame(() => {
-          void storeLogin(token, userWithPhone)
+          void storeLogin(token, userWithPhone, isNewSignUp ? 'register' : 'otp')
             .then(() => {
               if (isNewSignUp) insiderTracker.trackSignUp();
             })

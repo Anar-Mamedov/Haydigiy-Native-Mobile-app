@@ -32,6 +32,8 @@ bozulmaz.
 | Satın alma (Purchase) | `itemPurchased(saleID, product)` | `use-payment-success.ts` — Kapıda Ödeme, Garanti 3D ve İyzico 3DS akışlarının tamamı; sipariş satırı başına bir event, `saleID` = sipariş no |
 | Kayıt olma (sign_up) | `signUpConfirmation` | `otp-verification.tsx` — kayıt OTP onayı ve hızlı girişte yeni hesap oluşturma |
 | Yorum yapan kullanıcı | `tagEvent('yorum_yapildi')` | `useSubmitReviewMutation` başarısı |
+| Oturum açma | `tagEvent('user_login')` | `useAuthStore.login` — şifre ile giriş, OTP ve kayıt sonrası otomatik oturum |
+| Oturum kapatma | `tagEvent('user_logout')` | `useAuthStore.logout` (kullanıcı çıkışı) ve `setUser(null)` (süresi dolan oturum) |
 
 Satın alma satırları, ödeme başarı ekranı açıldığında sepet çoktan boşalmış
 olabileceği için sipariş gönderilirken alınan snapshot'tan okunur
@@ -47,6 +49,34 @@ olabileceği için sipariş gönderilirken alınan snapshot'tan okunur
   - Identifier'lar: `addUserID` (CRM id), `addEmail`, `addPhoneNumber` →
     `getCurrentUser().login(identifiers)`.
 - **Logout ve süresi dolan oturum** → `getCurrentUser().logout()`.
+
+## user_login / user_logout custom eventleri
+
+Insider ekibinin talebi üzerine oturum açma/kapatma ayrıca custom event olarak da
+gönderilir. Her ikisi de `useAuthStore` üzerinden tetiklenir; ekranların ayrıca
+event göndermesi gerekmez.
+
+| Event | Parametre | Tip | Değerler |
+| --- | --- | --- | --- |
+| `user_login` | `logged_in` | Boolean | `true` |
+| `user_login` | `login_method` | String | `password`, `otp`, `register` |
+| `user_logout` | `logged_in` | Boolean | `false` |
+| `user_logout` | `logout_reason` | String | `user`, `session_expired` |
+
+`login_method` yalnızca çağıran taraf yöntemi bildirdiğinde gönderilir; bilinmiyorsa
+parametre hiç eklenmez (uydurma değer segmentasyonu bozar).
+
+**Sıralama iki yönde de kritiktir ve testlerle korunur:**
+
+- `user_login`, `identifyUser` çağrıldıktan **sonra** gider — aksi halde event
+  kimliksiz profile yazılır.
+- `user_logout`, `clearUser` çağrılmadan **önce** gider — aksi halde kullanıcı
+  çoktan anonimleşmiş olur.
+
+Profil güncellemesi (`setUser(user)`) yalnızca attribute'ları tazeler, `user_login`
+göndermez. Hesap silme akışı ortak `logout()` üzerinden gittiği için şu an
+`logout_reason: 'user'` ile düşer; ayrı bir sebep isteniyorsa `InsiderLogoutReason`
+tipine yeni değer eklemek yeterlidir.
 
 ## yorum_yapildi custom eventi
 

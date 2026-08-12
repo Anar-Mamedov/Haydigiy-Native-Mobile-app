@@ -1,6 +1,8 @@
 import {
   createInsiderTracker,
   REVIEW_SUBMITTED_EVENT,
+  USER_LOGIN_EVENT,
+  USER_LOGOUT_EVENT,
   toE164TurkishPhone,
 } from './insider-tracker';
 import {
@@ -314,6 +316,40 @@ describe('insider tracker', () => {
     const { tracker, sdk } = createSdkHarness();
     tracker.trackSignUp();
     expect(sdk.signUpConfirmation).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends user_login with the logged_in boolean and the login method', () => {
+    const { tracker, sdk, eventBuilder } = createSdkHarness();
+    tracker.trackUserLogin('password');
+
+    expect(sdk.tagEvent).toHaveBeenCalledWith(USER_LOGIN_EVENT);
+    expect(USER_LOGIN_EVENT).toMatch(/^[a-z_]+$/);
+    expect(eventBuilder.addParameterWithBoolean).toHaveBeenCalledWith('logged_in', true);
+    expect(eventBuilder.addParameterWithString).toHaveBeenCalledWith('login_method', 'password');
+    expect(eventBuilder.build).toHaveBeenCalledTimes(1);
+  });
+
+  it('omits login_method when the caller does not know it', () => {
+    const { tracker, eventBuilder } = createSdkHarness();
+    tracker.trackUserLogin();
+
+    expect(eventBuilder.addParameterWithBoolean).toHaveBeenCalledWith('logged_in', true);
+    expect(eventBuilder.addParameterWithString).not.toHaveBeenCalled();
+    expect(eventBuilder.build).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends user_logout with the logged_in boolean and the logout reason', () => {
+    const { tracker, sdk, eventBuilder } = createSdkHarness();
+    tracker.trackUserLogout('session_expired');
+
+    expect(sdk.tagEvent).toHaveBeenCalledWith(USER_LOGOUT_EVENT);
+    expect(USER_LOGOUT_EVENT).toMatch(/^[a-z_]+$/);
+    expect(eventBuilder.addParameterWithBoolean).toHaveBeenCalledWith('logged_in', false);
+    expect(eventBuilder.addParameterWithString).toHaveBeenCalledWith(
+      'logout_reason',
+      'session_expired',
+    );
+    expect(eventBuilder.build).toHaveBeenCalledTimes(1);
   });
 
   it('sends yorum_yapildi as a lowercase custom event with typed parameters', () => {
