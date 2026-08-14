@@ -16,11 +16,11 @@ import { useStableCategoryOptions } from '@/features/product/hooks/use-stable-ca
 import { useTrackListingPageView } from '@/features/insider/hooks/use-insider-page-tracking';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
-import { SortSheet, SORT_OPTIONS } from '../components/sort-sheet';
+import { SortSheet } from '../components/sort-sheet';
 import { FilterSheet, FilterShortcutSection } from '../components/filter-sheet';
 import { ColorVariantsSheet } from '../components/color-variants-sheet';
 import { QuickFilterDropdown } from '../components/quick-filter-dropdown';
-import { ProductListHeader } from '../components/product-list-header';
+import { PRODUCT_FILTER_BAR_HEIGHT, ProductFilterBar } from '../components/product-filter-bar';
 import { ProductVideoModal } from '../components/product-video-modal';
 import { resolveColorVariantTarget } from '../utils/color-variant-route';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
@@ -136,8 +136,6 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
     (propertyIds ? propertyIds.split(',').length : 0) +
     (productCategories ? productCategories.split(',').length : 0) +
     (priceRange ? 1 : 0);
-
-  const activeSortLabel = SORT_OPTIONS.find((opt) => opt.value === sorting)?.label || 'Önerilen Sıralama';
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -290,6 +288,30 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
 
   return (
     <AppScreen scrollable={false} header={customHeader} padding={0} gap={0}>
+      {/* Sıralama + filtreler tek çubukta ve listeden bağımsız: liste kaysa da
+          çubuk ekranda sabit kalır. */}
+      <ProductFilterBar
+        activeFiltersCount={activeFiltersCount}
+        categoryFilterOptions={categoryFilterOptions}
+        colors={colors}
+        isSortActive={Boolean(sorting)}
+        openSection={quickFilterSection}
+        priceRange={priceRange}
+        productCategories={productCategories}
+        propertyIds={propertyIds}
+        quickFilterGroups={quickFilterGroups}
+        variants={variants}
+        onFilterPress={() => {
+          setQuickFilterSection(null);
+          setIsFilterOpen(true);
+        }}
+        onSortPress={() => {
+          setQuickFilterSection(null);
+          setIsSortOpen(true);
+        }}
+        onToggleQuickFilter={handleToggleQuickFilter}
+      />
+
       <QuickFilterDropdown
         activeFilters={{
           colors,
@@ -305,6 +327,7 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
         onClose={() => setQuickFilterSection(null)}
         quickFilterGroups={quickFilterGroups}
         section={quickFilterSection}
+        topOffset={PRODUCT_FILTER_BAR_HEIGHT}
       />
 
       {/* Initial Page Loading state */}
@@ -359,29 +382,6 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
                 onRefresh={refetch}
                 refreshing={isFetching && !isFetchingNextPage}
                 tintColor={BRAND_COLOR}
-              />
-            }
-            ListHeaderComponent={
-              <ProductListHeader
-                activeSortLabel={activeSortLabel}
-                activeFiltersCount={activeFiltersCount}
-                categoryFilterOptions={categoryFilterOptions}
-                productCategories={productCategories}
-                colors={colors}
-                variants={variants}
-                priceRange={priceRange}
-                propertyIds={propertyIds}
-                quickFilterGroups={quickFilterGroups}
-                quickFilterSection={quickFilterSection}
-                onSortPress={() => {
-                  setQuickFilterSection(null);
-                  setIsSortOpen(true);
-                }}
-                onFilterPress={() => {
-                  setQuickFilterSection(null);
-                  setIsFilterOpen(true);
-                }}
-                onToggleQuickFilter={handleToggleQuickFilter}
               />
             }
             ListEmptyComponent={

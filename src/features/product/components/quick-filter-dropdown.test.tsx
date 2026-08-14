@@ -33,6 +33,7 @@ function renderDropdown(overrides: Partial<Parameters<typeof QuickFilterDropdown
       onClose={onClose}
       quickFilterGroups={quickFilterGroups}
       section="quick:153"
+      topOffset={53}
       {...overrides}
     />,
   );

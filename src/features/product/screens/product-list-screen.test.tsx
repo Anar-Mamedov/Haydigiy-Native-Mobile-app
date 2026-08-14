@@ -167,6 +167,19 @@ describe('ProductListScreen', () => {
     expect(screen.getByText('Ürünler yükleniyor...')).toBeTruthy();
   });
 
+  it('keeps the filter bar fixed above the list instead of scrolling with it', () => {
+    // Ürünler henüz yokken de çubuk duruyorsa listenin başlığı değil, listenin
+    // üstünde sabit duran bir eleman demektir.
+    (useInfiniteSearchProductsQuery as jest.Mock).mockReturnValue({
+      isPending: true,
+    });
+
+    renderWithTamagui(<ProductListScreen slug="elbise" categoryId={40} />);
+
+    expect(screen.getByTestId('product-filter-bar')).toBeTruthy();
+    expect(screen.getByText('Sırala')).toBeTruthy();
+  });
+
   it('renders error state when fetch fails', () => {
     (useInfiniteSearchProductsQuery as jest.Mock).mockReturnValue({
       isError: true,
@@ -202,8 +215,9 @@ describe('ProductListScreen', () => {
     // API-driven quick filter shortcuts
     expect(screen.getByText('Kategori')).toBeTruthy();
 
-    // Sorting & Filtering toolbar buttons
-    expect(screen.getAllByText('Önerilen Sıralama')[0]).toBeTruthy();
+    // Sorting & Filtering live in one fixed bar above the list
+    expect(screen.getByTestId('product-filter-bar')).toBeTruthy();
+    expect(screen.getByText('Sırala')).toBeTruthy();
     expect(screen.getAllByText('Filtrele')[0]).toBeTruthy();
 
     // Product cards inside grid
@@ -214,7 +228,7 @@ describe('ProductListScreen', () => {
   it('opens sort sheet when sort button is pressed', () => {
     renderWithTamagui(<ProductListScreen slug="elbise" categoryId={40} />);
 
-    fireEvent.press(screen.getAllByText('Önerilen Sıralama')[0]);
+    fireEvent.press(screen.getByLabelText('Sıralama seçenekleri'));
 
     // Check if Sort Sheet elements render
     expect(screen.getByText('Sıralama')).toBeTruthy();
@@ -297,6 +311,26 @@ describe('ProductListScreen', () => {
     fireEvent.press(screen.getAllByText('Renk')[0]);
     expect(screen.getByPlaceholderText('Renk Ara')).toBeTruthy();
     expect(screen.getByText('Kırmızı')).toBeTruthy();
+  });
+
+  it('closes the quick filter dropdown when tapping outside of it', () => {
+    renderWithTamagui(<ProductListScreen slug="elbise" categoryId={40} />);
+
+    fireEvent.press(screen.getAllByText('Renk')[0]);
+    expect(screen.getByPlaceholderText('Renk Ara')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('Filtre listesini kapat'));
+
+    expect(screen.queryByPlaceholderText('Renk Ara')).toBeNull();
+  });
+
+  it('closes the quick filter dropdown from its Uygula button', () => {
+    renderWithTamagui(<ProductListScreen slug="elbise" categoryId={40} />);
+
+    fireEvent.press(screen.getAllByText('Renk')[0]);
+    fireEvent.press(screen.getByText('Uygula'));
+
+    expect(screen.queryByPlaceholderText('Renk Ara')).toBeNull();
   });
 
   it('renders price options from API-provided price ranges', () => {

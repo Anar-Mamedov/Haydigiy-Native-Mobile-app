@@ -25,6 +25,8 @@ interface QuickFilterDropdownProps {
   onClose: () => void;
   quickFilterGroups: QuickFilterGroup[];
   section: FilterShortcutSection | null;
+  /** Panelin açılacağı dikey konum: filtre çubuğunun yüksekliği. */
+  topOffset: number;
 }
 
 function parseIdList(value?: string): number[] {
@@ -96,16 +98,16 @@ function Footer({ onClear, onClose }: { onClear: () => void; onClose: () => void
   return (
     <XStack backgroundColor="$background" borderTopColor="$borderColor" borderTopWidth={1} gap={14} padding={16}>
       <Pressable accessibilityRole="button" onPress={onClear} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.7 : 1 })}>
-        <XStack alignItems="center" borderColor="$borderColor" borderRadius={6} borderWidth={1} height={56} justifyContent="center">
+        <XStack alignItems="center" borderColor="$borderColor" borderRadius={6} borderWidth={1} height={52} justifyContent="center">
           <Paragraph color="$color" fontSize={16} fontWeight="500">
             Temizle
           </Paragraph>
         </XStack>
       </Pressable>
       <Pressable accessibilityRole="button" onPress={onClose} style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.75 : 1 })}>
-        <XStack alignItems="center" backgroundColor="$brand" borderRadius={6} height={56} justifyContent="center">
+        <XStack alignItems="center" backgroundColor="$brand" borderRadius={6} height={52} justifyContent="center">
           <Paragraph color="white" fontSize={16} fontWeight="600">
-            Kapat
+            Uygula
           </Paragraph>
         </XStack>
       </Pressable>
@@ -120,6 +122,7 @@ export function QuickFilterDropdown({
   onClose,
   quickFilterGroups,
   section,
+  topOffset,
 }: QuickFilterDropdownProps) {
   const [search, setSearch] = useState('');
   const colorIds = useMemo(() => parseIdList(activeFilters.colors), [activeFilters.colors]);
@@ -158,56 +161,74 @@ export function QuickFilterDropdown({
   };
 
   return (
-    <YStack
-      backgroundColor="$background"
-      borderColor="$borderColor"
-      borderWidth={1}
-      boxShadow="0 4px 14px rgba(0,0,0,0.16)"
-      left={16}
-      position="absolute"
-      right={12}
-      top={94}
-      zIndex={50}
-    >
-      {section === 'price' ? (
-        <PriceContent activeValue={activeFilters.price_range} availableFilters={availableFilters} onChange={onChange} search={search} setSearch={setSearch} />
-      ) : null}
-      {section === 'variants' ? (
-        <VariantContent activeIds={variantIds} availableFilters={availableFilters} onChange={onChange} search={search} setSearch={setSearch} />
-      ) : null}
-      {section === 'colors' ? (
-        <ColorContent activeIds={colorIds} availableFilters={availableFilters} onChange={onChange} search={search} setSearch={setSearch} />
-      ) : null}
-      {section === 'categories' ? (
-        <CategoryContent
-          activeIds={categoryIds}
-          availableFilters={availableFilters}
-          onChange={onChange}
-          search={search}
-          setSearch={setSearch}
-        />
-      ) : null}
-      {section.startsWith('property:') ? (
-        <PropertyContent
-          activeIds={propertyIds}
-          availableFilters={availableFilters}
-          groupKey={getPropertySectionKey(section)}
-          onChange={onChange}
-          search={search}
-          setSearch={setSearch}
-        />
-      ) : null}
-      {activeQuickFilterGroup ? (
-        <QuickFilterGroupContent
-          activeIds={propertyIds}
-          group={activeQuickFilterGroup}
-          onChange={onChange}
-          search={search}
-          setSearch={setSearch}
-        />
-      ) : null}
-      <Footer onClear={handleClear} onClose={onClose} />
-    </YStack>
+    <>
+      {/* Panelin dışına dokunmak filtreyi kapatır; liste görünür kalsın diye
+          arka plan karartılmaz. */}
+      <Pressable
+        accessibilityLabel="Filtre listesini kapat"
+        accessibilityRole="button"
+        onPress={onClose}
+        style={{
+          bottom: 0,
+          left: 0,
+          position: 'absolute',
+          right: 0,
+          top: topOffset,
+          zIndex: 40,
+        }}
+      />
+
+      <YStack
+        backgroundColor="$background"
+        borderBottomColor="$borderColor"
+        borderBottomWidth={1}
+        boxShadow="0 4px 14px rgba(0,0,0,0.16)"
+        left={0}
+        position="absolute"
+        right={0}
+        top={topOffset}
+        zIndex={50}
+      >
+        {section === 'price' ? (
+          <PriceContent activeValue={activeFilters.price_range} availableFilters={availableFilters} onChange={onChange} search={search} setSearch={setSearch} />
+        ) : null}
+        {section === 'variants' ? (
+          <VariantContent activeIds={variantIds} availableFilters={availableFilters} onChange={onChange} search={search} setSearch={setSearch} />
+        ) : null}
+        {section === 'colors' ? (
+          <ColorContent activeIds={colorIds} availableFilters={availableFilters} onChange={onChange} search={search} setSearch={setSearch} />
+        ) : null}
+        {section === 'categories' ? (
+          <CategoryContent
+            activeIds={categoryIds}
+            availableFilters={availableFilters}
+            onChange={onChange}
+            search={search}
+            setSearch={setSearch}
+          />
+        ) : null}
+        {section.startsWith('property:') ? (
+          <PropertyContent
+            activeIds={propertyIds}
+            availableFilters={availableFilters}
+            groupKey={getPropertySectionKey(section)}
+            onChange={onChange}
+            search={search}
+            setSearch={setSearch}
+          />
+        ) : null}
+        {activeQuickFilterGroup ? (
+          <QuickFilterGroupContent
+            activeIds={propertyIds}
+            group={activeQuickFilterGroup}
+            onChange={onChange}
+            search={search}
+            setSearch={setSearch}
+          />
+        ) : null}
+        <Footer onClear={handleClear} onClose={onClose} />
+      </YStack>
+    </>
   );
 }
 
