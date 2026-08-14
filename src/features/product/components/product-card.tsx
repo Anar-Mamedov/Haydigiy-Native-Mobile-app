@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { GestureResponderEvent, Pressable } from 'react-native';
 import { Heart, Play } from '@/components/ui/icons';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
-import { ScrollView, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui/section-card';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
 import { ProductFeatureAssetTicker, ProductFeatureDescriptionTicker } from './product-feature-tags';
 import { ProductImageCarousel } from './product-image-carousel';
+import { ProductSizeStrip } from './product-size-strip';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 
 type ProductCardProps = {
@@ -288,12 +289,12 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
         </YStack>
 
         {/* Text Content Padded Container */}
-        <Pressable
-          accessibilityLabel={`Ürün detayını aç: ${product.title}`}
-          accessibilityRole="button"
-          onPress={() => onOpen(imageIndex)}
-        >
-          <YStack padding={6} width="100%">
+        <YStack padding={6} width="100%">
+          <Pressable
+            accessibilityLabel={`Ürün detayını aç: ${product.title}`}
+            accessibilityRole="button"
+            onPress={() => onOpen(imageIndex)}
+          >
             <ProductFeatureDescriptionTicker
               featureIcons={product.featureIcons}
               fontSize={11}
@@ -322,43 +323,17 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
                 ({product.reviewCount ?? 0})
               </Paragraph>
             </XStack>
+          </Pressable>
 
-            {/* Sizes Row (Horizontal Scroll with stock availability checking) */}
-            {product.sizes && product.sizes.length > 0 ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                marginVertical={4}
-                contentContainerStyle={{ gap: 4, alignItems: 'center' }}
-                style={{ flexGrow: 0 }}
-              >
-                {product.sizes.map((size, idx) => (
-                  <YStack
-                    key={idx}
-                    borderWidth={1}
-                    borderColor={size.hasStock ? '$borderColor' : '$color4'}
-                    borderRadius={4}
-                    paddingHorizontal={6}
-                    paddingVertical={2}
-                    backgroundColor={size.hasStock ? PRODUCT_CARD_COLORS.white : '$color2'}
-                    opacity={size.hasStock ? 1 : 0.6}
-                  >
-                    <Paragraph
-                      fontSize={12}
-                      color={size.hasStock ? PRODUCT_CARD_COLORS.textStrong : '$color8'}
-                      fontWeight="400"
-                      style={{ textDecorationLine: size.hasStock ? 'none' : 'line-through' }}
-                    >
-                      {size.name}
-                    </Paragraph>
-                  </YStack>
-                ))}
-              </ScrollView>
-            ) : (
-              <YStack marginVertical={4} />
-            )}
+          {/* Beden listesi bilerek Pressable'ın dışında: yatay kaydırma hareketi
+              kart basışıyla yarışmasın, kullanıcı ekrana sığmayan bedenleri
+              kaydırarak görebilsin. */}
+          <YStack marginVertical={4}>
+            <ProductSizeStrip sizes={product.sizes} />
+          </YStack>
 
-            {/* Kampanya Fiyatı Badge */}
+          {/* Kampanya Fiyatı Badge */}
+          <Pressable accessible={false} onPress={() => onOpen(imageIndex)}>
             <YStack marginTop={6} width="100%" boxShadow={CAMPAIGN_SHADOW} borderRadius={8}>
               <XStack
                 backgroundColor={PRODUCT_CARD_COLORS.campaign}
@@ -400,8 +375,8 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
                 </YStack>
               </XStack>
             </YStack>
-          </YStack>
-        </Pressable>
+          </Pressable>
+        </YStack>
       </YStack>
     </SectionCard>
   );

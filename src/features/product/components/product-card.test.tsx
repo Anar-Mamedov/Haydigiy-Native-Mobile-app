@@ -66,6 +66,19 @@ describe('ProductCard', () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the size strip outside the card press target so it stays swipeable', () => {
+    renderWithTamagui(<ProductCard onOpen={jest.fn()} product={product} />);
+
+    const strip = screen.getByTestId('product-size-strip');
+    expect(strip.props.horizontal).toBe(true);
+
+    // Bir Pressable'ın içinde kalırsa yatay kaydırma kart basışına takılır.
+    for (let ancestor = strip.parent; ancestor; ancestor = ancestor.parent) {
+      expect(ancestor.props.accessibilityRole).not.toBe('button');
+      expect(ancestor.props.onStartShouldSetResponder).toBeUndefined();
+    }
+  });
+
   it('opens the product when the image is pressed', () => {
     const onOpen = jest.fn();
     renderWithTamagui(<ProductCard onOpen={onOpen} product={product} />);
