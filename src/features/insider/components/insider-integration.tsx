@@ -4,6 +4,7 @@ import { Href, useRouter } from 'expo-router';
 import { resolveDeepLinkPath } from '@/utils/resolve-deep-link';
 import { insiderClient } from '../services/insider-client';
 import { InsiderCallback } from '../types/insider.types';
+import { logInsiderCallback } from '../utils/insider-diagnostics';
 import { resolveInsiderCallbackAction } from '../utils/insider-url';
 
 export function InsiderIntegration() {
@@ -16,6 +17,9 @@ export function InsiderIntegration() {
    */
   const handleInsiderCallback = useCallback<InsiderCallback>(
     (type, payload) => {
+      // InApp'in cihaza ulaşıp ulaşmadığı yalnızca buradan görülebilir.
+      logInsiderCallback(type, payload);
+
       const action = resolveInsiderCallbackAction(type, payload);
       if (!action) return;
 

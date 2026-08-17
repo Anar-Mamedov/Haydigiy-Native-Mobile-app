@@ -216,6 +216,73 @@ Callback tipi sabitleri `types/insider.types.ts` içinde tanımlıdır (SDK Expo
 yüklenemediği için statik import edilmiyor). Değerlerin SDK ile aynı kaldığını
 `types/insider-callback-type.test.ts` gerçek SDK'ya karşı doğrular.
 
+### InApp teşhis günlüğü
+
+"InApp görünmüyor" şikâyeti iki bambaşka nedenden gelir ve dışarıdan ikisi aynı
+görünür:
+
+1. **InApp cihaza hiç ulaşmıyor** (kampanya yayında değil, hedef kitle tutmuyor,
+   tetikleyici event eşleşmiyor) → SDK hiçbir callback yayınlamaz.
+2. **InApp ulaşıyor ama çizilemiyor** → SDK `INAPP_SEEN` (tip 5) yayınlar.
+
+SDK bu ayrımı yalnızca callback üzerinden verir ve uygulama yönlendirme
+taşımayan tipleri sessizce atıyordu; hiçbir iz kalmıyordu.
+`utils/insider-diagnostics.ts` artık `SESSION_STARTED`, `INAPP_SEEN` ve
+`INAPP_BUTTON_CLICK` tiplerini tek satırlık log'a çevirir. Payload'da kişisel
+veri olabileceği için **yalnızca alan adları** yazılır, değerler yazılmaz.
+
+**`INAPP_SEEN` tek başına "gösterildi" demek değildir.** Insider'ın Block InApps
+dokümanına göre gösterim anında engellenen InApp de `inapp_seen` gönderir ve bu
+durum **`dismiss_type: 9`** ile işaretlenir. Bu yüzden `dismiss_type`,
+`ins_camp_id` ve `ins_variant_id` değerleri log'a yazılır (üçü de kampanya
+kimliği/enum, kişisel veri değil); diğer alanların yalnızca adı yazılır.
+
+Cihaz log'unda `[Insider]` ile filtreleyin:
+
+- `session başladı` yok → SDK init olmuyor.
+- `session başladı` var, `INAPP_SEEN` yok → InApp cihaza ulaşmıyor (panel /
+  kampanya tarafı).
+- `INAPP_SEEN` + `ENGELLENDİ (dismiss_type=9)` → InApp ulaşıyor ama engelleniyor.
+- `INAPP_SEEN` var, `dismiss_type` 9 değil, ekranda bir şey yok → render sorunu.
+
+Not: `isDisplayInappEnabled` (SDK 6.6.0 ile gelen durum sorgulama metodu)
+**React Native SDK'sında dışa açılmamıştır** — yalnızca native Android/iOS
+tarafında var. Bu yüzden InApp'lerin açık olup olmadığı JS'ten sorgulanamıyor ve
+`dismiss_type` dolaylı kanıt olarak kullanılıyor.
+
+### SDK sürümü
+
+`react-native-insider` **8.1.0-nh** (05.08.2026). `-nh` varyantı Huawei
+servisleri olmadan derlenen sürümdür; projenin build'i buna bağlı olduğu için
+düz `8.1.0`'a geçilmemelidir. Native SDK karşılıkları: iOS `InsiderMobile
+15.1.2`, Android `16.0.9`. Native bağımlılık değiştiği için **EAS Update ile
+gitmez, yeni build gerekir.**
+
+### Doğrulanan kurulum şartları
+
+| Şart | Durum |
+| --- | --- |
+| Uygulama InApp'leri kapatmıyor (`disableInAppMessages`, `disableTemplatesForIOS`, `removeInapp`, `setGDPRConsent(false)`, `setMobileAppAccess(false)`) | ✅ hiçbiri çağrılmıyor |
+| iOS SDK varsayılanı (`Insider.h`: "Inapps are enabled by default") | ✅ açık |
+| Android partner adı (`manifestPlaceholders`) | ✅ `haydigiyprod` |
+| `android:allowBackup` **`false` olmamalı** | ✅ `true` |
+| `INTERNET` + `ACCESS_NETWORK_STATE` izinleri | ✅ var |
+| Callback tip sırası SDK ile aynı | ✅ `insider-callback-type.test.ts` doğruluyor |
+
+### Bilinen sapma: init zamanlaması
+
+Insider dokümanı SDK'nın mümkün olan **en erken** anda (iOS'ta
+`didFinishLaunchingWithOptions` hemen ardından) başlatılmasını ister.
+Bu projede `insiderClient.initialize` bir React `useEffect` içinden çalışır ve
+`_layout.tsx` font yüklemesi bitene kadar `return null` verdiği için
+`InsiderIntegration` o ana kadar mount **olmaz**. Yani init, native açılıştan
+birkaç yüz milisaniye sonraya kayar.
+
+Bunun InApp'leri tek başına engellediği kanıtlanmadı; ancak "uygulama tamamen
+kapalıyken açılışta tetiklenen" InApp'ler için risk taşır. Düzeltilecekse
+headless entegrasyonlar font kapısının üstüne alınmalıdır — bu, `router`
+callback'i Stack mount olmadan tetiklenebileceği için ayrı bir doğrulama ister.
+
 ### InApp görüntülenmesini etkileyen ayarlar
 
 Native tarafta InApp **varsayılan olarak açıktır** (`Insider.h`: "Inapps are enabled
