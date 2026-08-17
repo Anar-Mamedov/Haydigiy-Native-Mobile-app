@@ -106,7 +106,9 @@ export function usePaymentSuccess(): { orderDetails: OrderDetails | null; isProc
       // Insider purchase: sipariş satırları submit anında alınan snapshot'tan
       // gelir (sepet bu noktada boşalmış olabilir); yoksa hâlâ dolu olan sepete
       // düşülür. `consume` tek seferlik olduğundan event mükerrer atılmaz.
-      const purchasedItems = consumePurchaseSnapshot() ?? useCartStore.getState().items;
+      // Snapshot MMKV'ye de yazıldığı için 3DS sırasında süreç öldürülse bile
+      // (Android'de sık) satırlar geri okunabilir.
+      const purchasedItems = (await consumePurchaseSnapshot()) ?? useCartStore.getState().items;
       const saleId = details.orderNo || token;
       if (saleId && purchasedItems.length > 0) {
         insiderTracker.trackPurchase(saleId, purchasedItems.map(cartItemToInsiderInput));

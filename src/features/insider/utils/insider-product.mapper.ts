@@ -18,6 +18,8 @@ export type InsiderProductInput = {
   salePrice?: number;
   brand?: string;
   size?: string;
+  /** Insider `color` optional attribute; kampanya kurulumlarını kolaylaştırır. */
+  color?: string;
   quantity?: number;
   stock?: number;
   productUrl?: string;
@@ -67,6 +69,7 @@ export function productToInsiderInput(
     ...resolvePricing(product.price, product.originalPrice),
     brand: product.brand || undefined,
     size: options.size,
+    color: product.color || undefined,
     quantity: options.quantity,
     stock: product.totalQuantity,
     productUrl: product.slug ? `${PRODUCT_URL_BASE}${product.slug}` : undefined,
@@ -85,6 +88,7 @@ export function buildInsiderInput(partial: {
   taxonomy?: string[];
   currency?: string;
   size?: string;
+  color?: string;
   quantity?: number;
   slug?: string;
 }): InsiderProductInput {
@@ -96,6 +100,7 @@ export function buildInsiderInput(partial: {
     price: partial.price,
     currency: partial.currency ?? 'TRY',
     size: partial.size,
+    color: partial.color,
     quantity: partial.quantity,
     productUrl: partial.slug ? `${PRODUCT_URL_BASE}${partial.slug}` : undefined,
   };
@@ -110,6 +115,7 @@ export function cartItemToInsiderInput(item: CartLineItem): InsiderProductInput 
     currency: 'TRY',
     ...resolvePricing(item.unitPrice, item.originalPrice),
     size: item.size,
+    color: item.color,
     quantity: item.quantity,
     stock: item.stock,
     productUrl: item.slug ? `${PRODUCT_URL_BASE}${item.slug}` : undefined,

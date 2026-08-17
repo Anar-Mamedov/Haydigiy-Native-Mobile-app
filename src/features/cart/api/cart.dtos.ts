@@ -3,6 +3,9 @@ export interface CartItemProductDto {
   name: string;
   slug: string;
   seller_name?: string;
+  /** Backend sepet satırında `color` ilişkisini döndürdüğünde analytics'e taşınır. */
+  color?: { name?: string | null } | null;
+  color_name?: string | null;
   media?: {
     id?: number;
     thumb?: string;

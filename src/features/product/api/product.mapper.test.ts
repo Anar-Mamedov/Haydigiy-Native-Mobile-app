@@ -24,6 +24,16 @@ const baseProductDto: SearchProductDto = {
 };
 
 describe('mapSearchProductDto', () => {
+  // Insider ürün objesinde `color` parametresi istendi; backend aynı bilgiyi
+  // hem `color: { name }` hem `color_name` alanında döndürüyor.
+  it('maps the product own colour from either backend field', () => {
+    expect(
+      mapSearchProductDto({ ...baseProductDto, color: { id: 3, name: 'Siyah', hex: '#000' } }).color,
+    ).toBe('Siyah');
+    expect(mapSearchProductDto({ ...baseProductDto, color_name: ' Mavi ' }).color).toBe('Mavi');
+    expect(mapSearchProductDto(baseProductDto).color).toBeUndefined();
+  });
+
   it('maps color option images from the same fields used by the frontend mobile list', () => {
     const product = mapSearchProductDto({
       ...baseProductDto,

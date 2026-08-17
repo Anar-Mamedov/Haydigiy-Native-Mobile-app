@@ -39,6 +39,24 @@ describe('mapCartItemDto', () => {
     });
   });
 
+  // Insider `color` ürün parametresi sepet/satın alma eventlerini de beslemeli.
+  it('carries the product colour when the backend returns it', () => {
+    const withObject = mapCartItemDto(
+      makeDto({
+        product: { id: 42, name: 'Test Ürün', slug: 'test-urun', color: { name: ' Siyah ' } },
+      }),
+    );
+    const withFlatField = mapCartItemDto(
+      makeDto({
+        product: { id: 42, name: 'Test Ürün', slug: 'test-urun', color_name: 'Mavi' },
+      }),
+    );
+
+    expect(withObject.color).toBe('Siyah');
+    expect(withFlatField.color).toBe('Mavi');
+    expect(mapCartItemDto(makeDto()).color).toBeUndefined();
+  });
+
   it('omits the original price when it is not higher than the current price', () => {
     const item = mapCartItemDto(makeDto({ old_price: '90.00', current_price: '100.00' }));
     expect(item.originalPrice).toBeUndefined();

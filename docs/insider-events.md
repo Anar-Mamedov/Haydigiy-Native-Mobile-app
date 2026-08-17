@@ -39,16 +39,79 @@ Satın alma satırları, ödeme başarı ekranı açıldığında sepet çoktan 
 olabileceği için sipariş gönderilirken alınan snapshot'tan okunur
 (`features/checkout/utils/purchase-snapshot.ts`, tek seferlik `consume`).
 
+### Snapshot neden MMKV'ye de yazılıyor
+
+3D Secure sırasında kullanıcı SMS kodu için uygulamadan çıkar. **Android arka
+plandaki süreci iOS'a göre çok daha agresif öldürür**; dönüşte uygulama sıfırdan
+başlarsa JS modül state'i (ve dolayısıyla yalnızca bellekte tutulan snapshot)
+kaybolur. Yedek yol olan sepet de işe yaramaz: `OrderService` sipariş
+kesinleştiğinde `Cart` satırlarını siler, `CartHydrator` açılışta sepeti çeker ve
+store'a boş liste yazar. Sonuç: `purchasedItems` boş kalır ve **satın alma
+eventi hiç atılmaz** — üstelik sipariş başarıyla oluşmuş olur.
+
+Bu yüzden snapshot MMKV'ye de yazılır ve süreç yeniden başlasa bile geri
+okunabilir. Satırlarda kart/kimlik verisi yoktur, dolayısıyla SecureStore değil
+MMKV doğru katmandır. Yarım kalan bir ödemenin satırları çok sonraki bir
+siparişe iliştirilmesin diye kayıt 6 saat sonra geçersiz sayılır.
+
+Regresyon testi: `purchase-snapshot.test.ts` → "survives a process restart
+through the persisted copy".
+
+## Ürün objesi parametreleri
+
+`createNewProduct` zorunlu alanları (`productID`, `name`, `taxonomy`,
+`imageURL`, `price`, `currency`) dışında şu opsiyonel alanlar gönderilir:
+`salePrice`, `quantity`, `stock`, `size`, `color`, `brand`, `productURL`.
+
+`color`, Insider ekibinin kampanya kurulumunu kolaylaştırmak için istediği
+alandır. Zincir tek yönlüdür ve veri hangi katmanda varsa oradan beslenir:
+
+| Kaynak | Alan | Durum |
+| --- | --- | --- |
+| Arama/liste (Elasticsearch) | `color: { name }` + `color_name` | ✅ gelir, `Product.color` alanına maplenir |
+| Sepet satırı (`/cart`) | `product.color` / `product.color_name` | ⏳ backend henüz döndürmüyor; okuma hazır |
+| Ürün detay (`/product/{slug}`) | `color` ilişkisi | ⏳ eager-load edilmiyor, yalnızca `color_id` geliyor |
+
+Renk bulunamazsa `setColor` hiç çağrılmaz; Insider ürün objesinde alan yer
+almaz (uydurma değer segmentasyonu bozar). Detay ve sepet uçları renk adını
+döndürmeye başladığında mobil tarafta ek değişiklik gerekmez.
+
 ## Kullanıcı attribute'ları ve kimlik
 
 `useAuthStore` üzerinden tüm oturum yolları kapsanır:
 
 - **Login / kayıt / hızlı giriş / profil güncelleme** → `insiderTracker.identifyUser(user)`:
-  - Attribute'lar: `setName`, `setSurname`, `setEmail`, `setPhoneNumber`
-    (E164: `+90…`), `setLanguage('tr')`, `setLocale('tr_TR')`.
   - Identifier'lar: `addUserID` (CRM id), `addEmail`, `addPhoneNumber` →
     `getCurrentUser().login(identifiers)`.
+  - Attribute'lar: `setName`, `setSurname`, `setEmail`, `setPhoneNumber`
+    (E164: `+90…`), `setLanguage('tr')`, `setLocale('tr_TR')`.
+- **Uygulama açılışı (kalıcı oturum)** → `InsiderIdentitySync` →
+  `identifyUser(user)`.
 - **Logout ve süresi dolan oturum** → `getCurrentUser().logout()`.
+
+### Kimlik kuralları (yanlış profile yazılmayı önleyen üç kural)
+
+1. **`addUserID` String almalı.** SDK identifier'ları `typeof === 'string'`
+   kontrolünden geçirir ve başka tipte geleni yalnızca `console.warn` ile
+   sessizce düşürür (`react-native-insider/src/InsiderIdentifier.js`). Backend
+   `user.id`'yi JSON **number** döndürdüğü için `User.id: string` sözleşmesi
+   runtime'da tutmaz. `toInsiderIdentifierValue` değeri sınırda normalize eder;
+   aksi halde CRM kimliği hiç gitmez ve profil yalnızca e-posta/telefon ile
+   eşleşmeye çalışır.
+2. **Önce `login()`, sonra attribute.** Attribute'lar o an aktif olan profile
+   yazılır. Kimlik önce bildirilmezse isim/e-posta/telefon anonim ya da cihazda
+   daha önce tanıtılmış başka bir kullanıcının profiline düşer.
+3. **Açılışta kimlik tazelenir.** Zustand `persist` oturumu MMKV'den geri
+   yüklerken `login`/`setUser` çalışmaz; kimlik yalnızca native SDK'nın kendi
+   kalıcı kaydına bağlı kalırdı. O kayıt sıfırlandığında (yeniden kurulum,
+   uygulama verisinin temizlenmesi, `logout()` tetikleyen geçici bir token okuma
+   hatası) oturum sessizce anonim devam ediyor ve **satın alma dahil tüm
+   eventler anonim profile düşüyordu**. `InsiderIdentitySync` açılışta bir kez
+   `identifyUser` çağırarak bu boşluğu kapatır.
+
+Hiçbir identifier üretilemiyorsa (id, e-posta ve telefonun üçü de yoksa)
+`login()` hiç çağrılmaz; kimliksiz bir login yalnızca login bayrağını açar,
+birleştirilecek bir anahtar sağlamaz.
 
 ## user_login / user_logout custom eventleri
 

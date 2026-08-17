@@ -62,6 +62,7 @@ function mapProductToCartItem(product: Product, size?: string): CartLineItem {
     title: product.title,
     unitPrice: product.price,
     size,
+    color: product.color,
     slug: product.slug,
     originalPrice:
       product.originalPrice && product.originalPrice > product.price

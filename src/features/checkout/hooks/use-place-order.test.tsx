@@ -143,7 +143,7 @@ describe('usePlaceOrder order-token sync', () => {
     });
 
     await waitFor(() => expect(confirmOrderDto).toHaveBeenCalled());
-    expect(consumePurchaseSnapshot()).toEqual(controller.items);
+    await expect(consumePurchaseSnapshot()).resolves.toEqual(controller.items);
   });
 
   // Web parity: İyzico installment checkout relies on the on-change background

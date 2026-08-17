@@ -43,6 +43,7 @@ export function mapCartItemDto(dto: CartItemDto): CartLineItem {
     originalPrice: oldPrice > currentPrice ? oldPrice : undefined,
     stock: Number.isFinite(stock) ? stock : undefined,
     size: dto.variant?.size?.name ?? undefined,
+    color: (product?.color?.name ?? product?.color_name)?.trim() || undefined,
   };
 }
 

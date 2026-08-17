@@ -75,6 +75,21 @@ const defaultDependencies: InsiderTrackerDependencies = {
   onError: (message, error) => console.warn(message, error),
 };
 
+/**
+ * Insider identifier'ları String bekler ve farklı tipte gelen değeri sessizce
+ * düşürür (`react-native-insider/src/InsiderIdentifier.js` → `checkParameters`
+ * yalnızca `console.warn` atar). Backend `user.id`'yi JSON number olarak
+ * döndürdüğü için `User.id: string` sözleşmesi runtime'da tutmaz ve CRM kimliği
+ * hiç gönderilmez; bu yüzden değer sınırda normalize edilir.
+ *
+ * @see https://academy.insiderone.com/docs/react-native-user-object
+ */
+export function toInsiderIdentifierValue(value: unknown): string | null {
+  if (typeof value === 'string') return value.trim() || null;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return null;
+}
+
 /** Kayıtlı telefonlar ulusal formatta (5XXXXXXXXX); Insider E164 bekler. */
 export function toE164TurkishPhone(phone: string | undefined): string | null {
   if (!phone) return null;
@@ -130,6 +145,7 @@ export function createInsiderTracker(
     }
     if (typeof input.stock === 'number' && input.stock >= 0) product.setStock(input.stock);
     if (input.size) product.setSize(input.size);
+    if (input.color) product.setColor(input.color);
     if (input.brand) product.setBrand(input.brand);
     if (input.productUrl) product.setProductURL(input.productUrl);
     return product;
@@ -275,23 +291,28 @@ export function createInsiderTracker(
         const currentUser = activeSdk.getCurrentUser();
         if (!currentUser) return;
 
+        const userId = toInsiderIdentifierValue(user.id);
+        const email = user.email?.includes('@') ? user.email.trim() : null;
+        const phone = toE164TurkishPhone(user.phoneNumber);
+
+        // Sıra kritik: attribute'lar o an aktif olan Insider profiline yazılır.
+        // Kimlik önce bildirilmezse isim/e-posta/telefon hâlâ anonim (ya da
+        // cihazda daha önce tanıtılmış başka bir) profile düşer.
+        if (userId || email || phone) {
+          const IdentifierConstructor = dependencies.loadIdentifierConstructor();
+          const identifiers = new IdentifierConstructor();
+          if (userId) identifiers.addUserID(userId);
+          if (email) identifiers.addEmail(email);
+          if (phone) identifiers.addPhoneNumber(phone);
+          currentUser.login(identifiers);
+        }
+
         if (user.name) currentUser.setName(user.name);
         if (user.surname) currentUser.setSurname(user.surname);
         currentUser.setLanguage('tr');
         currentUser.setLocale('tr_TR');
-
-        const email = user.email?.includes('@') ? user.email.trim() : null;
         if (email) currentUser.setEmail(email);
-
-        const phone = toE164TurkishPhone(user.phoneNumber);
         if (phone) currentUser.setPhoneNumber(phone);
-
-        const IdentifierConstructor = dependencies.loadIdentifierConstructor();
-        const identifiers = new IdentifierConstructor();
-        identifiers.addUserID(user.id);
-        if (email) identifiers.addEmail(email);
-        if (phone) identifiers.addPhoneNumber(phone);
-        currentUser.login(identifiers);
       });
     },
 

@@ -77,6 +77,21 @@ function extractOtherColors(dto: SearchProductDto): SearchProductColorDto[] {
   return Array.isArray(dto.other_colors.data) ? dto.other_colors.data : [];
 }
 
+/**
+ * Ürünün kendi renk adı. Backend aynı bilgiyi iki şekilde döndürüyor:
+ * arama/liste yanıtlarında hem `color_name` hem `color: { name }`. Ürün detay
+ * uçları `color` ilişkisini eager-load etmediğinde alan hiç gelmez; bu durumda
+ * `undefined` kalır ve Insider ürün objesine `color` eklenmez.
+ */
+function extractColorName(dto: {
+  color?: { name?: string | null } | null;
+  color_name?: string | null;
+}): string | undefined {
+  const name = dto.color?.name ?? dto.color_name;
+  const trimmed = typeof name === 'string' ? name.trim() : '';
+  return trimmed || undefined;
+}
+
 function getColorImagePath(color: SearchProductColorDto): string | null {
   return resolveMediumImagePath(
     color.image?.medium,
@@ -263,6 +278,7 @@ export function mapSearchProductDto(dto: SearchProductDto): Product {
     badge: dto.badge,
     brand: dto.brand_name || 'HaydiGiy',
     category: dto.category_names?.[0] || 'Giyim',
+    color: extractColorName(dto),
     currency: 'TRY',
     description: dto.description_text || '',
     id: String(dto.id),
@@ -441,6 +457,7 @@ export function mapProductDetailDto(dto: any): Product {
     category: dto.category?.name || 'Giyim',
     categorySlug: dto.category?.slug,
     categoryId: dto.category?.id,
+    color: extractColorName(dto),
     currency: 'TRY',
     description: dto.description || '',
     id: String(dto.id),

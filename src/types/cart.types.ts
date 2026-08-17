@@ -17,6 +17,8 @@ export type CartLineItem = {
   title: string;
   unitPrice: number;
   size?: string;
+  /** Satırın renk adı; analytics (Insider `color`) için taşınır, UI kullanmaz. */
+  color?: string;
   /** Server cart line identifier; required for update/remove API calls. */
   variantId?: string;
   /** Catalog slug used to deep-link back to the product detail screen. */

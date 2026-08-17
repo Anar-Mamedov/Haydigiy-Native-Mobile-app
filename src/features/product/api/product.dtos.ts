@@ -88,6 +88,9 @@ export interface SearchProductDto {
       large: string;
     };
   };
+  /** Ürünün kendi rengi; ES kaynaklı arama/liste yanıtlarında iki alan da gelir. */
+  color?: { id?: number; name?: string | null; hex?: string | null } | null;
+  color_name?: string | null;
   category_names?: string[];
   category_slugs?: string[];
   category_ids?: number[];

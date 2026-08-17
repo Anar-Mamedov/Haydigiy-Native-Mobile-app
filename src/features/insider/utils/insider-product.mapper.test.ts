@@ -79,6 +79,14 @@ describe('productToInsiderInput', () => {
     expect(input.price).toBe(199.9);
     expect(input.salePrice).toBe(149.9);
   });
+
+  it('carries the product colour so Insider receives the color attribute', () => {
+    expect(productToInsiderInput(createProduct({ color: 'Mavi' })).color).toBe('Mavi');
+  });
+
+  it('leaves the colour unset when the API did not return one', () => {
+    expect(productToInsiderInput(createProduct()).color).toBeUndefined();
+  });
 });
 
 describe('cartItemToInsiderInput', () => {
@@ -102,6 +110,10 @@ describe('cartItemToInsiderInput', () => {
 
     expect(input.price).toBe(149.9);
     expect(input.salePrice).toBe(99.9);
+  });
+
+  it('carries the line colour into the purchase/cart product object', () => {
+    expect(cartItemToInsiderInput(createCartItem({ color: 'Siyah' })).color).toBe('Siyah');
   });
 });
 

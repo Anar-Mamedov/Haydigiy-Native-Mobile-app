@@ -168,6 +168,8 @@ export type Product = {
   categories?: string[];
   categorySlug?: string;
   categoryId?: number;
+  /** Ürünün kendi renk adı (`color.name` / `color_name`); Insider `color` alanını besler. */
+  color?: string;
   currency: 'TRY';
   description: string;
   id: string;

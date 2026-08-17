@@ -77,23 +77,27 @@ function createUserMock(): jest.Mocked<InsiderUserSdk> {
   return user;
 }
 
+/**
+ * Gerçek SDK identifier'ları String bekler ve başka tipte geleni sessizce
+ * düşürür; mock aynı sözleşmeyi uygular, aksi halde tip kayması testten kaçar.
+ */
 class IdentifierMock implements InsiderIdentifierSdk {
   emails: string[] = [];
   phones: string[] = [];
   userIds: string[] = [];
 
   addEmail(email: string): this {
-    this.emails.push(email);
+    if (typeof email === 'string') this.emails.push(email);
     return this;
   }
 
   addPhoneNumber(phone: string): this {
-    this.phones.push(phone);
+    if (typeof phone === 'string') this.phones.push(phone);
     return this;
   }
 
   addUserID(userId: string): this {
-    this.userIds.push(userId);
+    if (typeof userId === 'string') this.userIds.push(userId);
     return this;
   }
 
@@ -246,6 +250,29 @@ describe('insider tracker', () => {
     expect(sdk.visitProductDetailPage).toHaveBeenCalledWith(product);
   });
 
+  // Insider ekibinin talebi: kampanya kurulumunu kolaylaştırmak için ürün
+  // objesinde `color` parametresi bulunsun.
+  it('sets the color attribute on the product object when the snapshot has one', () => {
+    const { tracker, productCalls } = createSdkHarness();
+    tracker.trackProductDetailView(createInput({ color: 'Mavi' }));
+
+    expect(productCalls[0].product.setColor).toHaveBeenCalledWith('Mavi');
+  });
+
+  it('omits the color attribute when the product has no colour information', () => {
+    const { tracker, productCalls } = createSdkHarness();
+    tracker.trackProductDetailView(createInput());
+
+    expect(productCalls[0].product.setColor).not.toHaveBeenCalled();
+  });
+
+  it('carries the color through to purchase events', () => {
+    const { tracker, productCalls } = createSdkHarness();
+    tracker.trackPurchase('HG-1001', [createInput({ color: 'Siyah', quantity: 1 })]);
+
+    expect(productCalls[0].product.setColor).toHaveBeenCalledWith('Siyah');
+  });
+
   it('sends the cart view with every valid line and skips empty carts', () => {
     const { tracker, sdk } = createSdkHarness();
 
@@ -380,6 +407,39 @@ describe('insider tracker', () => {
     expect(insiderUser.login).toHaveBeenCalledWith(identifiers[0]);
   });
 
+  // Regresyon: backend `user.id`'yi JSON number döndürüyor. SDK String olmayan
+  // identifier'ı sessizce düşürdüğü için CRM kimliği hiç gitmiyor ve eventler
+  // kullanıcının profiliyle eşleşmiyordu.
+  it('still sends the CRM user id when the backend returns it as a number', () => {
+    const { tracker, identifiers } = createSdkHarness();
+    tracker.identifyUser({ ...testUser, id: 12345 as unknown as string });
+
+    expect(identifiers[0].userIds).toEqual(['12345']);
+  });
+
+  it('identifies the user before writing attributes so they cannot land on another profile', () => {
+    const { tracker, insiderUser } = createSdkHarness();
+    const order: string[] = [];
+    insiderUser.login.mockImplementation(() => {
+      order.push('login');
+      return insiderUser;
+    });
+    insiderUser.setName.mockImplementation(() => {
+      order.push('setName');
+      return insiderUser;
+    });
+    insiderUser.setEmail.mockImplementation(() => {
+      order.push('setEmail');
+      return insiderUser;
+    });
+
+    tracker.identifyUser(testUser);
+
+    expect(order[0]).toBe('login');
+    expect(order).toContain('setName');
+    expect(order).toContain('setEmail');
+  });
+
   it('skips invalid e-mail and phone attributes but still logs in with the user id', () => {
     const { tracker, insiderUser, identifiers } = createSdkHarness();
     tracker.identifyUser({ id: 'user-2', email: '', name: 'Ali', phoneNumber: '123' });
@@ -389,6 +449,15 @@ describe('insider tracker', () => {
     expect(identifiers[0].userIds).toEqual(['user-2']);
     expect(identifiers[0].emails).toEqual([]);
     expect(identifiers[0].phones).toEqual([]);
+  });
+
+  it('does not log in without a single usable identifier', () => {
+    const { tracker, insiderUser, identifiers } = createSdkHarness();
+    tracker.identifyUser({ id: '', email: '', name: 'Ali' });
+
+    expect(identifiers).toHaveLength(0);
+    expect(insiderUser.login).not.toHaveBeenCalled();
+    expect(insiderUser.setName).toHaveBeenCalledWith('Ali');
   });
 
   it('logs the Insider user out when the session ends', () => {
