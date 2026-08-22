@@ -21,7 +21,7 @@ import {
 } from '@/types/product.types';
 import { resolveCdnUrl } from '@/utils/cdn';
 import { ProductReviewDto, ProductReviewPageDto } from './product-reviews.dtos';
-import { mapBundleItems, mapBundleSummary } from './bundle.mapper';
+import { mapBundleItems, mapBundleSummary } from '@/features/bundle/api/bundle.mapper';
 
 function getImageUrl(path: string | null | undefined): string {
   if (!path) return '';
@@ -299,6 +299,9 @@ export function mapSearchProductDto(dto: SearchProductDto): Product {
     otherColors: otherColorsMapped,
     videoPath: dto.video_path ? getImageUrl(dto.video_path) : null,
     featureIcons: featureIconsMapped,
+    // Paket ürün liste/favori kartında da tanınmalı: tek beden seçilerek sepete
+    // eklenemez, kullanıcı beden seçimi için ürün detayına gider.
+    isBundle: dto.is_bundle === true,
   };
 }
 

@@ -12,7 +12,7 @@ import {
   BundleImageDto,
   BundleItemDto,
   BundleItemVariantDto,
-} from '@/features/product/api/bundle.dtos';
+} from './bundle.dtos';
 import { BundleComponent, BundleItem, BundleSummary, BundleVariantOption } from '@/types/bundle.types';
 
 /** Bundle satırı stok/limit bilgisi göndermediğinde uygulanan üst adet sınırı. */

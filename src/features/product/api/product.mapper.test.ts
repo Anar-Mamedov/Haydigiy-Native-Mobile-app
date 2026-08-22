@@ -120,6 +120,16 @@ describe('mapSearchProductDto', () => {
       sortOrder: 4,
     });
   });
+  // Paket ürün liste/favori kartında da tanınmalı: tek beden seçilerek sepete
+  // eklenemez, kullanıcı beden seçimi için ürün detayına gider.
+  it('marks a package product coming from a list response', () => {
+    expect(mapSearchProductDto({ ...baseProductDto, is_bundle: true }).isBundle).toBe(true);
+  });
+
+  it('treats a product without the flag as a normal product', () => {
+    expect(mapSearchProductDto(baseProductDto).isBundle).toBe(false);
+    expect(mapSearchProductDto({ ...baseProductDto, is_bundle: false }).isBundle).toBe(false);
+  });
 });
 
 describe('mapPopularProductDto', () => {

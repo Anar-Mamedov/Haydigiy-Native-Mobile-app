@@ -1,4 +1,4 @@
-import { BundleComponentDto } from '@/features/product/api/bundle.dtos';
+import { BundleComponentDto } from '@/features/bundle/api/bundle.dtos';
 
 export interface OrderProductDto {
   name?: string;

@@ -208,3 +208,135 @@ describe('useReturnCreateController — iade yöntemi (IBAN / hediye çeki)', ()
     expect(mockSubmit.mock.calls[0][0].refundMethodId).toBeUndefined();
   });
 });
+
+describe('useReturnCreateController — paket (bundle) satırı', () => {
+  /**
+   * Paket, siparişte iki gerçek `order_item` satırından oluşur. İade ekranında TEK
+   * satır olarak seçilir ama istek yine gerçek satır id'leriyle gönderilir.
+   */
+  const BUNDLE_ORDER = {
+    id: 10,
+    orderNo: 'HG-TEST-2',
+    cargoCompanyName: 'PTT',
+    paymentMethodId: 6,
+    canCreateReturnRequest: true,
+    returnRequestIds: [],
+    items: [
+      {
+        id: 8801,
+        quantity: 1,
+        isNonReturnable: false,
+        returnStatus: null,
+        name: 'Kemer Detaylı Elbise',
+        bundleGroupId: '101703d9',
+        bundleProductId: 97045,
+      },
+      {
+        id: 8802,
+        quantity: 1,
+        isNonReturnable: false,
+        returnStatus: null,
+        name: 'Kruvaze Ceket',
+        bundleGroupId: '101703d9',
+        bundleProductId: 97045,
+      },
+      {
+        id: 9001,
+        quantity: 1,
+        isNonReturnable: false,
+        returnStatus: null,
+        name: 'Uzun Kollu Gömlek',
+      },
+    ],
+    displayItems: [
+      { id: 8801, quantity: 1, name: 'Deneme bundle', bundleGroupId: '101703d9', price: 2000 },
+      { id: 9001, quantity: 1, name: 'Uzun Kollu Gömlek' },
+    ],
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSubmit.mockResolvedValue({ return_code: 'IADE-2' });
+    useOrderDetailQuery.mockReturnValue({
+      data: BUNDLE_ORDER,
+      isPending: false,
+      isError: false,
+      refetch: jest.fn(),
+    });
+  });
+
+  it('offers the package as one selectable row, not one row per product', () => {
+    const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
+
+    const ids = result.current.expandedItems.map((entry) => entry.expandedId);
+
+    expect(ids).toEqual(['bundle:101703d9', '9001-0']);
+    expect(result.current.expandedItems[0].isBundle).toBe(true);
+    expect(result.current.expandedItems[0].components).toHaveLength(2);
+  });
+
+  it('submits the real order_item ids the package is made of', async () => {
+    const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
+
+    act(() => result.current.toggleItem('bundle:101703d9'));
+    act(() => result.current.setItemReason('bundle:101703d9', 5));
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(mockSubmit.mock.calls[0][0].items).toEqual([
+      { orderItemId: 8801, quantity: 1, returnReasonId: 5, photo: null },
+      { orderItemId: 8802, quantity: 1, returnReasonId: 5, photo: null },
+    ]);
+  });
+
+  it('selects and deselects the package all at once', () => {
+    const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
+
+    act(() => result.current.toggleItem('bundle:101703d9'));
+    expect(result.current.selectedItems).toEqual(['bundle:101703d9']);
+
+    act(() => result.current.toggleItem('bundle:101703d9'));
+    expect(result.current.selectedItems).toEqual([]);
+  });
+
+  it('leaves normal products on their own per-unit rows', async () => {
+    const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
+
+    act(() => result.current.toggleItem('9001-0'));
+    act(() => result.current.setItemReason('9001-0', 5));
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(mockSubmit.mock.calls[0][0].items).toEqual([
+      { orderItemId: 9001, quantity: 1, returnReasonId: 5, photo: null },
+    ]);
+  });
+
+  it('closes the whole package to returns when one component is non-returnable', () => {
+    useOrderDetailQuery.mockReturnValue({
+      data: {
+        ...BUNDLE_ORDER,
+        items: [
+          { ...BUNDLE_ORDER.items[0], isNonReturnable: true },
+          BUNDLE_ORDER.items[1],
+          BUNDLE_ORDER.items[2],
+        ],
+      },
+      isPending: false,
+      isError: false,
+      refetch: jest.fn(),
+    });
+
+    const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
+
+    const bundleEntry = result.current.expandedItems.find(
+      (entry) => entry.expandedId === 'bundle:101703d9',
+    );
+
+    expect(bundleEntry?.isNonReturnable).toBe(true);
+  });
+});

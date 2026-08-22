@@ -38,6 +38,10 @@ jest.mock('@/features/cart/store/use-cart-store', () => {
 });
 
 const mockCheckoutMutateAsync = jest.fn();
+const mockUpdateVariantQuantity = jest.fn();
+const mockRemoveVariant = jest.fn();
+const mockUpdateBundleQuantity = jest.fn();
+const mockRemoveBundle = jest.fn();
 
 jest.mock('@/features/cart/api/cart.queries', () => ({
   useCartQuery: () => ({
@@ -48,12 +52,16 @@ jest.mock('@/features/cart/api/cart.queries', () => ({
     refetch: jest.fn(async () => ({})),
   }),
   useClearCartMutation: () => ({ isPending: false, mutate: jest.fn() }),
-  useRemoveCartItemMutation: () => ({ isPending: false, mutate: jest.fn() }),
-  useUpdateBundleQuantityMutation: () => ({ isPending: false, mutate: jest.fn() }),
-  useRemoveBundleMutation: () => ({ isPending: false, mutate: jest.fn() }),
+  useRemoveCartItemMutation: () => ({ isPending: false, mutate: mockRemoveVariant }),
+  useUpdateBundleQuantityMutation: () => ({
+    isPending: false,
+    mutate: mockUpdateBundleQuantity,
+    variables: undefined,
+  }),
+  useRemoveBundleMutation: () => ({ isPending: false, mutate: mockRemoveBundle }),
   useUpdateCartItemMutation: () => ({
     isPending: false,
-    mutate: jest.fn(),
+    mutate: mockUpdateVariantQuantity,
     variables: undefined,
   }),
 }));
@@ -122,5 +130,112 @@ describe('useCartController checkout', () => {
       pathname: '/checkout',
       params: { orderToken: 'tok-1' },
     });
+  });
+});
+
+describe('useCartController — bundle satırı', () => {
+  const bundleLine: CartLineItem = {
+    imageUrl: 'https://example.com/bundle.jpg',
+    productId: '97045',
+    quantity: 1,
+    sellerName: '',
+    title: 'Deneme bundle',
+    unitPrice: 5000,
+    itemType: 'bundle',
+    bundleGroupId: '101703d9',
+  };
+
+  const variantLine = mockItems[0];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+
+  it('sends a package quantity change to the bundle endpoint', () => {
+    const { result } = renderHook(() => useCartController());
+
+    act(() => result.current.changeQuantity(bundleLine, 2));
+
+    expect(mockUpdateBundleQuantity).toHaveBeenCalledTimes(1);
+    expect(mockUpdateBundleQuantity.mock.calls[0][0]).toEqual({
+      bundleGroupId: '101703d9',
+      quantity: 2,
+    });
+    // Bundle'da `variant_id` ile çalışan uç KULLANILMAZ.
+    expect(mockUpdateVariantQuantity).not.toHaveBeenCalled();
+  });
+
+  it('removes the package as one piece through the bundle endpoint', () => {
+    const { result } = renderHook(() => useCartController());
+
+    act(() => {
+      result.current.requestRemove(bundleLine);
+    });
+    act(() => {
+      result.current.confirmRemove();
+    });
+
+    expect(mockRemoveBundle).toHaveBeenCalledWith('101703d9', expect.anything());
+    expect(mockRemoveVariant).not.toHaveBeenCalled();
+  });
+
+  it('keeps normal products on the variant endpoints', () => {
+    const { result } = renderHook(() => useCartController());
+
+    act(() => result.current.changeQuantity(variantLine, 3));
+
+    expect(mockUpdateVariantQuantity.mock.calls[0][0]).toEqual({ variantId: '200', quantity: 3 });
+    expect(mockUpdateBundleQuantity).not.toHaveBeenCalled();
+  });
+
+  it('never sends a request for a package without a group id', () => {
+    const { result } = renderHook(() => useCartController());
+
+    act(() => result.current.changeQuantity({ ...bundleLine, bundleGroupId: undefined }, 2));
+
+    expect(mockUpdateBundleQuantity).not.toHaveBeenCalled();
+    expect(mockUpdateVariantQuantity).not.toHaveBeenCalled();
+  });
+
+  it('tells the user why a quantity change failed instead of failing silently', () => {
+    const { result } = renderHook(() => useCartController());
+
+    act(() => result.current.changeQuantity(bundleLine, 2));
+    act(() =>
+      mockUpdateBundleQuantity.mock.calls[0][1].onError({
+        isAxiosError: true,
+        response: { status: 400, data: { message: 'Pakette yeterli stok yok.' } },
+      }),
+    );
+
+    expect(Alert.alert).toHaveBeenCalledWith('Hata', 'Pakette yeterli stok yok.');
+  });
+
+  it('tells the user why a removal failed', () => {
+    const { result } = renderHook(() => useCartController());
+
+    act(() => {
+      result.current.requestRemove(bundleLine);
+    });
+    act(() => {
+      result.current.confirmRemove();
+    });
+    act(() => mockRemoveBundle.mock.calls[0][1].onError(new Error('Network Error')));
+
+    // Teknik hata metni değil, kullanıcıya yazılmış Türkçe mesaj gösterilir.
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Hata',
+      'Ürün sepetten çıkarılamadı. Lütfen tekrar deneyin.',
+    );
+  });
+
+  it('applies the same failure notice to normal products', () => {
+    const { result } = renderHook(() => useCartController());
+
+    act(() => result.current.changeQuantity(variantLine, 3));
+    act(() => mockUpdateVariantQuantity.mock.calls[0][1].onError({ isAxiosError: true, response: { status: 500 } }));
+
+    expect(Alert.alert).toHaveBeenCalledWith('Hata', 'Adet güncellenemedi. Lütfen tekrar deneyin.');
   });
 });

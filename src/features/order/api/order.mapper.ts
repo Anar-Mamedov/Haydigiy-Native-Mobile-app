@@ -1,4 +1,4 @@
-import { isBundleLine, mapBundleComponents } from '@/features/product/api/bundle.mapper';
+import { isBundleLine, mapBundleComponents } from '@/features/bundle/api/bundle.mapper';
 import {
   OrderDto,
   OrderLineItemDto,

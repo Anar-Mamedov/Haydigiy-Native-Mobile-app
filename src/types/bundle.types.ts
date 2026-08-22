@@ -6,7 +6,7 @@
  * işlemlerinin `variant_id` yerine `bundle_group_id` üzerinden yürütülmesidir.
  *
  * Buradaki tipler ham API cevabı değil, ekranların tükettiği domain modelidir; ham
- * cevabı bu modele `@/features/product/api/bundle.mapper` çevirir.
+ * cevabı bu modele `@/features/bundle/api/bundle.mapper` çevirir.
  */
 
 /** Paketteki bir ürünün seçilebilir bedeni. */

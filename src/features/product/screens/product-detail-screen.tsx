@@ -1,33 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { Spinner, YStack, XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { Linking, Pressable, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable } from 'react-native';
 import { ThumbsUp } from '@/components/ui/icons';
 import { AppScreen, DeferredMount, EmptyState, PullToDismissScrollView } from '@/components/ui';
-import { useAuthStore } from '@/features/auth/store/use-auth-store';
-import { useAddBundleToCartMutation, useAddToCartMutation } from '@/features/cart/api/cart.queries';
-import { useNotifyStock } from '../hooks/use-notify-stock';
-import { NotifyStockDialog } from '../components/notify-stock-dialog';
-import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
-import { useProductDetailsQuery } from '@/features/product/api/product.queries';
-import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
 import { formatCurrency } from '@/utils/format-currency';
 import { SizeSelectionSheet } from '../components/size-selection-sheet';
 import { BundleSelectionSheet } from '../components/bundle-selection-sheet';
 import { BundleItemsPreview } from '../components/bundle-items-preview';
-import { useBundleSelection } from '../hooks/use-bundle-selection';
-import { trackViewedProduct } from '@/utils/recently-viewed';
-import { extractProductCode } from '../utils/extract-product-code';
+import { useProductDetailController } from '../hooks/use-product-detail-controller';
 import { ProductCodeBadge } from '../components/product-code-badge';
-import { isProductCodeBadgeVisible, PRODUCT_CODE_BADGE_OFFSET } from '../utils/product-code-badge';
-import { getCarouselImageHeight } from '../utils/product-carousel-geometry';
-import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
-import { useTrackProductDetailView } from '@/features/insider/hooks/use-insider-page-tracking';
-import { productToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
-import { ProductVariant, Product, ProductColorOption, SimilarProduct } from '@/types/product.types';
-import { buildProductDetailRoute } from '../utils/product-detail-route';
+import { PRODUCT_CODE_BADGE_OFFSET } from '../utils/product-code-badge';
 import { NOT_FOUND_ROUTE } from '@/features/not-found/routes';
 import { isMissingResourceApiError } from '@/utils/api-error';
 
@@ -42,13 +25,11 @@ import { ProductSpecifications } from '../components/product-specifications';
 import { SimilarProductsSection } from '../components/similar-products-section';
 import { ProductReviewsSection } from '../components/product-reviews-section';
 import { ProductQuestionsSection } from '../components/product-questions-section';
-import {
-  PRODUCT_STICKY_FOOTER_SCROLL_PADDING,
-  ProductStickyFooter,
-} from '../components/product-sticky-footer';
+import { ProductStickyFooter } from '../components/product-sticky-footer';
 import { MobileProductInformation } from '../components/mobile-product-information';
 import { ProductVideoModal } from '../components/product-video-modal';
 import { ProductImageGalleryModal } from '../components/product-image-gallery-modal';
+import { NotifyStockDialog } from '../components/notify-stock-dialog';
 import {
   SizeChartModal,
   SizeCalculatorModal,
@@ -56,272 +37,16 @@ import {
   FeedbackModal,
 } from '../components/product-detail-modals';
 
+/**
+ * Ürün detay ekranı — yalnızca sunum yapar.
+ * Sorgular, seçim durumu, modal durumları ve sepete ekleme mantığı
+ * `useProductDetailController` içindedir.
+ */
 export function ProductDetailScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  
-  // Read params for immediate rendering preview
-  const params = useLocalSearchParams<{
-    id: string;
-    title?: string;
-    price?: string;
-    imageUrl?: string;
-    brand?: string;
-    sellerName?: string;
-    shippingLabel?: string;
-    imageIndex?: string;
-  }>();
+  const controller = useProductDetailController();
+  const { bundle, displayData, product, selectedVariant } = controller;
 
-  const idOrSlug = params.id ?? '';
-  // Image index the list card was showing, so the carousel opens on the same one.
-  const initialImageIndex = params.imageIndex ? Math.max(0, parseInt(params.imageIndex, 10) || 0) : 0;
-  
-  // Queries
-  const { data: product, error, isError, isPending, refetch } = useProductDetailsQuery(idOrSlug);
-  const addToCart = useAddToCartMutation();
-  const addBundleToCart = useAddBundleToCartMutation();
-  const goToCartAfterAdd = useGoToCartAfterAdd();
-  const shippingQuery = useShippingEstimateQuery();
-
-  // Bundle (paket) ürün: normal beden seçimi yerine paket kalemi başına seçim yapılır.
-  const isBundle = Boolean(product?.isBundle) && (product?.bundleItems?.length ?? 0) > 0;
-  const bundleItems = useMemo(() => product?.bundleItems ?? [], [product?.bundleItems]);
-  const bundleSelection = useBundleSelection(bundleItems);
-
-  // States
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-  const isAuthenticated = useAuthStore((state) => Boolean(state.user));
-  const {
-    closeConfirmation: closeNotifyConfirmation,
-    isConfirmationOpen: isNotifyConfirmationOpen,
-    isNotifying,
-    isVariantNotified,
-    requestNotification,
-  } = useNotifyStock();
-
-  // Pinned product-code badge: stays fixed under the header while the product
-  // image is on screen, then disappears the moment the image scrolls off the
-  // top (mirrors the web `isCarouselVisible` behaviour). The image height is
-  // derived from the screen width (same formula as the carousel) so it does not
-  // depend on an onLayout pass that may not fire. Visibility is only flipped
-  // when it actually changes, so scrolling does not re-render per frame.
-  const { width: windowWidth } = useWindowDimensions();
-  const carouselImageHeight = getCarouselImageHeight(windowWidth);
-  const [showProductCode, setShowProductCode] = useState(true);
-  const [headerHeight, setHeaderHeight] = useState(56);
-
-  const handleProductScrollOffset = (offsetY: number) => {
-    const visible = isProductCodeBadgeVisible(carouselImageHeight, offsetY);
-    setShowProductCode((prev) => (prev === visible ? prev : visible));
-  };
-
-  // Pulling the content down while it rests at the top closes the screen
-  // (falls back to home when the PDP was opened directly, e.g. via deep link).
-  const handlePullDismiss = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/');
-    }
-  };
-
-  // Tapping the "Değerlendirme" / "Soru & Cevap" links opens dedicated screens
-  // (mirrors the web /yorum and /soru pages).
-  const reviewSlug = product?.slug ?? params.id ?? '';
-  const openReviews = () =>
-    router.push({ pathname: '/(tabs)/product-reviews', params: { slug: reviewSlug } });
-  const openQuestions = () =>
-    router.push({ pathname: '/(tabs)/product-questions', params: { slug: reviewSlug } });
-
-  // Modal states
-  const [showSizeSheet, setShowSizeSheet] = useState(false);
-  const [showBundleSheet, setShowBundleSheet] = useState(false);
-  const [showSizeChart, setShowSizeChart] = useState(false);
-
-  // Close the size sheet whenever the screen loses focus (e.g. navigating to the
-  // Q&A page from inside it) so it never lingers when the user returns.
-  useFocusEffect(useCallback(() => () => setShowSizeSheet(false), []));
-  const [showSizeCalculator, setShowSizeCalculator] = useState(false);
-  const [showWashing, setShowWashing] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  const [galleryImageIndex, setGalleryImageIndex] = useState<number | null>(null);
-
-  // Insider "ürün detay görüntüleme" (fires once per loaded product).
-  useTrackProductDetailView(product);
-
-  // Recently Viewed Tracking
-  useEffect(() => {
-    if (product) {
-      trackViewedProduct({
-        id: product.id,
-        name: product.title,
-        slug: product.slug,
-        thumb: product.imageUrl,
-        price: String(product.price),
-      });
-    }
-  }, [product]);
-
-  useEffect(() => {
-    setShowVideoModal(false);
-    setGalleryImageIndex(null);
-  }, [idOrSlug]);
-
-  // Color variants and similar products replace the current PDP (so back still
-  // returns to the origin list) with preview params, so the target renders
-  // instantly instead of showing a spinner until its detail request lands.
-  const replaceWithPreview = (target: Pick<Product, 'id' | 'slug' | 'title' | 'price' | 'imageUrl'>) => {
-    router.replace(buildProductDetailRoute(target));
-  };
-
-  const handleColorSelect = (color: ProductColorOption) => {
-    replaceWithPreview({
-      id: color.id,
-      slug: color.slug,
-      title: color.name,
-      // Sibling colors of the same model share the price when the option
-      // itself does not carry one.
-      price: color.price || displayData?.price || 0,
-      imageUrl: color.imageUrl,
-    });
-  };
-
-  const handleSimilarProductPress = (similar: SimilarProduct) => {
-    replaceWithPreview({
-      id: similar.id,
-      slug: similar.slug,
-      title: similar.name,
-      price: similar.price,
-      imageUrl: similar.imageUrl,
-    });
-  };
-
-  // Handle whatsapp action
-  const handleWhatsappPress = () => {
-    const activeProduct = product || previewProduct;
-    if (!activeProduct) return;
-
-    const message = `${activeProduct.title} - ${activeProduct.stockCode || ''} ürününe bakıyorum, destek istiyorum.\nhttps://haydigiy.com/product/${activeProduct.slug}`;
-    const url = `whatsapp://send?phone=905327805100&text=${encodeURIComponent(message)}`;
-    
-    Linking.canOpenURL(url).then((supported) => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Linking.openURL(`https://wa.me/905327805100?text=${encodeURIComponent(message)}`);
-      }
-    });
-  };
-
-  // Handle add to cart action
-  // Seçili beden tükendiyse birincil aksiyon sepete eklemek yerine stok
-  // bildirimi talebine dönüşür (web ile aynı davranış).
-  const isSelectedVariantOutOfStock = Boolean(
-    selectedVariant && (!selectedVariant.hasStock || selectedVariant.quantity < 1),
-  );
-
-  const handleNotifyMe = () => {
-    requestNotification(selectedVariant?.id).catch(() => {
-      // Hata hook içinde loglanıyor; kullanıcıyı ekranda engellemeye gerek yok.
-    });
-  };
-
-  const handleAddToCart = () => {
-    const activeProduct = product || previewProduct;
-    if (!activeProduct) return;
-
-    // Bundle'da tek varyant yoktur; beden seçimi paket kalemi başına alt sayfada yapılır.
-    if (isBundle) {
-      setShowBundleSheet(true);
-      return;
-    }
-
-    if (isPending && !product) {
-      setShowSizeSheet(true);
-      return;
-    }
-
-    const hasVariants = activeProduct.variants && activeProduct.variants.length > 0;
-
-    // No size chosen yet: open the size-selection bottom sheet (mirrors the web).
-    if (hasVariants && !selectedVariant) {
-      setShowSizeSheet(true);
-      return;
-    }
-
-    confirmAddToCart();
-  };
-
-  /**
-   * Paketi sepete ekler. Eksik beden varsa istek gönderilmez; eksik kalemler
-   * vurgulanır ve alt sayfa açık kalır (kullanıcı ne yapması gerektiğini görür).
-   */
-  const confirmAddBundleToCart = () => {
-    const activeProduct = product;
-    if (!activeProduct || !bundleSelection.isComplete) {
-      bundleSelection.flagMissingSelections();
-      return;
-    }
-
-    addBundleToCart.mutate({
-      bundleProductId: activeProduct.id,
-      selections: bundleSelection.selectionPayload,
-      quantity: 1,
-      // Bundle analitikte TEK ürün olarak raporlanır; bileşenler ayrı satır sayılmaz.
-      tracking: productToInsiderInput(activeProduct, { quantity: 1 }),
-    });
-
-    setShowBundleSheet(false);
-    goToCartAfterAdd();
-  };
-
-  // Adds the selected variant to the cart; shared by the sticky footer button and
-  // the size-selection sheet's confirm. The cart count query refreshes the tab
-  // badge via invalidation and the cart screen re-fetches the authoritative list.
-  const confirmAddToCart = () => {
-    const activeProduct = product || previewProduct;
-    if (!activeProduct) return;
-
-    const variantId = selectedVariant?.pivotId ?? selectedVariant?.id;
-    if (variantId) {
-      addToCart.mutate({
-        variantId,
-        tracking: productToInsiderInput(activeProduct, {
-          size: selectedVariant?.name,
-          quantity: 1,
-        }),
-      });
-    }
-    setShowSizeSheet(false);
-    // Skip the success modal and take the user straight to the cart.
-    goToCartAfterAdd();
-  };
-
-  // Build preview product if query is still loading but params exist
-  const previewProduct: Product | null = params.title
-    ? {
-        id: idOrSlug,
-        title: params.title,
-        price: parseFloat(params.price || '0'),
-        imageUrl: params.imageUrl || '',
-        brand: params.brand || 'HaydiGiy',
-        sellerName: params.sellerName || 'HaydiGiy',
-        shippingLabel: params.shippingLabel || '',
-        slug: idOrSlug,
-        currency: 'TRY' as const,
-        description: '',
-        rating: 0,
-        reviewCount: 0,
-        category: 'Giyim',
-      }
-    : null;
-
-  const displayData = product || previewProduct;
-  const { isFavorite, toggleFavorite } = useToggleFavorite(displayData);
-  const areProductOptionsLoading = isPending && !product;
-
-  if (isPending && !previewProduct) {
+  if (controller.isPending && !controller.previewProduct) {
     return (
       <AppScreen scrollable={false} padding={0} gap={0}>
         <ProductDetailHeader />
@@ -333,18 +58,18 @@ export function ProductDetailScreen() {
     );
   }
 
-  if (isMissingResourceApiError(error)) {
+  if (isMissingResourceApiError(controller.error)) {
     return <Redirect href={NOT_FOUND_ROUTE} />;
   }
 
-  if (isError) {
+  if (controller.isError) {
     return (
       <AppScreen scrollable={false} padding={0} gap={0}>
         <ProductDetailHeader />
         <EmptyState
           actionLabel="Tekrar Dene"
           description="Ürün bilgileri yüklenirken hata oluştu."
-          onActionPress={() => refetch()}
+          onActionPress={() => controller.refetch()}
           title="Ürün Yüklenemedi"
         />
       </AppScreen>
@@ -355,42 +80,33 @@ export function ProductDetailScreen() {
     return (
       <AppScreen scrollable={false} padding={0} gap={0}>
         <ProductDetailHeader />
-        <EmptyState
-          description="Seçilen ürün bulunamadı."
-          title="Ürün Bulunamadı"
-        />
+        <EmptyState description="Seçilen ürün bulunamadı." title="Ürün Bulunamadı" />
       </AppScreen>
     );
   }
 
-  const productCode = extractProductCode(displayData.title);
-  const productImages = displayData.images && displayData.images.length > 0
-    ? displayData.images
-    : [displayData.imageUrl].filter(Boolean);
-  const contentBottomPadding = PRODUCT_STICKY_FOOTER_SCROLL_PADDING + insets.bottom;
-
   return (
     <AppScreen scrollable={false} padding={0} gap={0}>
-      <YStack onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+      <YStack onLayout={(e) => controller.setHeaderHeight(e.nativeEvent.layout.height)}>
         <ProductDetailHeader />
       </YStack>
 
       <PullToDismissScrollView
-        onDismiss={handlePullDismiss}
-        onScrollOffsetChange={handleProductScrollOffset}
+        onDismiss={controller.handlePullDismiss}
+        onScrollOffsetChange={controller.handleProductScrollOffset}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: contentBottomPadding }}
+        contentContainerStyle={{ paddingBottom: controller.contentBottomPadding }}
         showsVerticalScrollIndicator={false}
       >
         <YStack>
           {/* Images / Carousel */}
           <ProductCarousel
-            images={productImages}
-            initialIndex={initialImageIndex}
-            isFavorite={isFavorite}
-            onImagePress={setGalleryImageIndex}
-            onToggleFavorite={toggleFavorite}
-            onVideoPress={() => setShowVideoModal(true)}
+            images={controller.productImages}
+            initialIndex={controller.initialImageIndex}
+            isFavorite={controller.isFavorite}
+            onImagePress={controller.setGalleryImageIndex}
+            onToggleFavorite={controller.toggleFavorite}
+            onVideoPress={() => controller.setShowVideoModal(true)}
             videoPath={displayData.videoPath}
             productTitle={displayData.title}
             productSlug={displayData.slug}
@@ -407,22 +123,22 @@ export function ProductDetailScreen() {
             favoritesCount={displayData.favoritesCount}
             cartCount={displayData.cartCount}
             totalQuantity={displayData.totalQuantity}
-            onReviewsPress={openReviews}
-            onQuestionsPress={openQuestions}
+            onReviewsPress={controller.openReviews}
+            onQuestionsPress={controller.openQuestions}
           />
 
           {/* Delivery shipment box — driven by the /shipping-estimate API */}
           <YStack marginHorizontal="$4" marginVertical="$2">
-            <ShippingEstimateInfo estimate={shippingQuery.data} variant="product" />
+            <ShippingEstimateInfo estimate={controller.shippingEstimate} variant="product" />
           </YStack>
 
-          {areProductOptionsLoading ? (
+          {controller.areProductOptionsLoading ? (
             <ProductSizeSelector
               isLoading
               selectedVariant={selectedVariant}
-              onSelectVariant={(v) => setSelectedVariant(v)}
-              onSizeChartPress={() => setShowSizeChart(true)}
-              onSizeCalculatorPress={() => setShowSizeCalculator(true)}
+              onSelectVariant={controller.setSelectedVariant}
+              onSizeChartPress={() => controller.setShowSizeChart(true)}
+              onSizeCalculatorPress={() => controller.setShowSizeCalculator(true)}
             />
           ) : null}
 
@@ -436,9 +152,9 @@ export function ProductDetailScreen() {
                 <ProductSizeSelector
                   isLoading
                   selectedVariant={selectedVariant}
-                  onSelectVariant={(v) => setSelectedVariant(v)}
-                  onSizeChartPress={() => setShowSizeChart(true)}
-                  onSizeCalculatorPress={() => setShowSizeCalculator(true)}
+                  onSelectVariant={controller.setSelectedVariant}
+                  onSizeChartPress={() => controller.setShowSizeChart(true)}
+                  onSizeCalculatorPress={() => controller.setShowSizeCalculator(true)}
                 />
               }
             >
@@ -448,25 +164,20 @@ export function ProductDetailScreen() {
                 currentProductId={product.id}
                 currentProductSlug={product.slug}
                 currentProductImage={product.imageUrl}
-                onColorSelect={handleColorSelect}
+                onColorSelect={controller.handleColorSelect}
                 categoryName={product.category}
                 categorySlug={product.categorySlug}
                 categoryId={product.categoryId}
-                onCategoryPress={(slug, id) => {
-                  router.push({
-                    pathname: `/kategori/${slug}`,
-                    params: { c: String(id || '') }
-                  } as any);
-                }}
+                onCategoryPress={controller.handleCategoryPress}
               />
 
               {/* Bundle: tek beden seçici yerine paket özeti; seçim alt sayfada yapılır */}
-              {isBundle && product.bundleSummary ? (
+              {bundle.isBundle && bundle.summary ? (
                 <BundleItemsPreview
-                  items={bundleItems}
-                  onPress={() => setShowBundleSheet(true)}
-                  selectedCount={bundleSelection.selectedCount}
-                  summary={product.bundleSummary}
+                  items={bundle.items}
+                  onPress={bundle.openSheet}
+                  selectedCount={bundle.selection.selectedCount}
+                  summary={bundle.summary}
                 />
               ) : (
                 /* Size selector squares */
@@ -474,9 +185,9 @@ export function ProductDetailScreen() {
                   variants={product.variants}
                   featureIcons={product.featureIcons}
                   selectedVariant={selectedVariant}
-                  onSelectVariant={(v) => setSelectedVariant(v)}
-                  onSizeChartPress={() => setShowSizeChart(true)}
-                  onSizeCalculatorPress={() => setShowSizeCalculator(true)}
+                  onSelectVariant={controller.setSelectedVariant}
+                  onSizeChartPress={() => controller.setShowSizeChart(true)}
+                  onSizeCalculatorPress={() => controller.setShowSizeCalculator(true)}
                 />
               )}
 
@@ -491,20 +202,20 @@ export function ProductDetailScreen() {
               {/* Similar Products widget */}
               <SimilarProductsSection
                 products={product.similarProducts}
-                onProductPress={handleSimilarProductPress}
+                onProductPress={controller.handleSimilarProductPress}
               />
 
               {/* Reviews score and horizontal list */}
               <ProductReviewsSection
                 reviews={product.reviews}
                 averageRating={product.rating}
-                onReviewsPress={openReviews}
+                onReviewsPress={controller.openReviews}
               />
 
               {/* Questions list */}
               <ProductQuestionsSection
                 questions={product.questions}
-                onQuestionsPress={openQuestions}
+                onQuestionsPress={controller.openQuestions}
               />
 
               {/* Product description & specifications table & washing instructions */}
@@ -515,12 +226,12 @@ export function ProductDetailScreen() {
                 }}
                 properties={product.properties}
                 sizeMeasurements={product.sizeMeasurements}
-                onWashingInstructionsPress={() => setShowWashing(true)}
+                onWashingInstructionsPress={() => controller.setShowWashing(true)}
               />
 
               {/* Feedback Button */}
               <Pressable
-                onPress={() => setShowFeedback(true)}
+                onPress={() => controller.setShowFeedback(true)}
                 style={({ pressed }) => ({
                   opacity: pressed ? 0.7 : 1,
                   marginHorizontal: 16,
@@ -553,110 +264,111 @@ export function ProductDetailScreen() {
       <ProductStickyFooter
         price={displayData.price}
         originalPrice={displayData.originalPrice}
-        onAddToCart={handleAddToCart}
-        onNotifyMe={handleNotifyMe}
-        onWhatsappPress={handleWhatsappPress}
+        onAddToCart={controller.handleAddToCart}
+        onNotifyMe={controller.handleNotifyMe}
+        onWhatsappPress={controller.handleWhatsappPress}
         isApprovedForSale={displayData.isApprovedForSale}
-        isAuthenticated={isAuthenticated}
+        isAuthenticated={controller.isAuthenticated}
         isLastOne={selectedVariant?.quantity === 1}
-        isNotified={isVariantNotified(selectedVariant?.id)}
-        isNotifying={isNotifying}
-        isOutOfStock={isSelectedVariantOutOfStock}
+        isNotified={controller.isVariantNotified(selectedVariant?.id)}
+        isNotifying={controller.isNotifying}
+        isOutOfStock={controller.isSelectedVariantOutOfStock}
       />
 
-      <NotifyStockDialog onOpenChange={closeNotifyConfirmation} open={isNotifyConfirmationOpen} />
+      <NotifyStockDialog
+        onOpenChange={controller.closeNotifyConfirmation}
+        open={controller.isNotifyConfirmationOpen}
+      />
 
       {/* Bundle beden seçim alt sayfası — paket kalemi başına beden seçilir */}
-      {isBundle && product?.bundleSummary ? (
+      {bundle.isBundle && bundle.summary ? (
         <BundleSelectionSheet
-          imageUrl={displayData?.imageUrl ?? ''}
-          isAdding={addBundleToCart.isPending}
-          isComplete={bundleSelection.isComplete}
-          isPurchasable={bundleSelection.isPurchasable}
-          items={bundleItems}
-          missingHighlight={bundleSelection.missingHighlight}
-          missingItemIds={bundleSelection.missingItemIds}
-          onClose={() => setShowBundleSheet(false)}
-          onConfirm={confirmAddBundleToCart}
-          onSelectVariant={bundleSelection.selectVariant}
-          open={showBundleSheet}
-          productName={displayData?.title ?? ''}
-          selectedCount={bundleSelection.selectedCount}
-          selections={bundleSelection.selections}
-          shippingMessage={shippingQuery.data?.message}
-          summary={product.bundleSummary}
+          errorMessage={bundle.errorMessage}
+          imageUrl={displayData.imageUrl}
+          isAdding={bundle.isAdding}
+          isComplete={bundle.selection.isComplete}
+          isPurchasable={bundle.selection.isPurchasable}
+          items={bundle.items}
+          missingHighlight={bundle.selection.missingHighlight}
+          missingItemIds={bundle.selection.missingItemIds}
+          onClose={bundle.closeSheet}
+          onConfirm={bundle.confirmAdd}
+          onSelectVariant={bundle.selection.selectVariant}
+          open={bundle.isSheetOpen}
+          productName={displayData.title}
+          selectedCount={bundle.selection.selectedCount}
+          selections={bundle.selection.selections}
+          shippingMessage={controller.shippingMessage}
+          summary={bundle.summary}
         />
       ) : null}
 
       {/* Size selection bottom sheet (opened from "Sepete Ekle" when no size chosen) */}
-      {showSizeSheet ? (
+      {controller.showSizeSheet ? (
         <SizeSelectionSheet
           featureIcons={product?.featureIcons}
           imageUrl={displayData.imageUrl}
           isApprovedForSale={displayData.isApprovedForSale}
-          isAuthenticated={isAuthenticated}
-          isLoadingVariants={areProductOptionsLoading}
-          isNotified={isVariantNotified(selectedVariant?.id)}
-          isNotifying={isNotifying}
-          onNotifyMe={handleNotifyMe}
-          onAskQuestion={openQuestions}
-          onClose={() => setShowSizeSheet(false)}
-          onConfirm={confirmAddToCart}
-          onSelectVariant={(variant) => setSelectedVariant(variant)}
+          isAuthenticated={controller.isAuthenticated}
+          isLoadingVariants={controller.areProductOptionsLoading}
+          isNotified={controller.isVariantNotified(selectedVariant?.id)}
+          isNotifying={controller.isNotifying}
+          onNotifyMe={controller.handleNotifyMe}
+          onAskQuestion={controller.openQuestions}
+          onClose={() => controller.setShowSizeSheet(false)}
+          onConfirm={controller.confirmAddToCart}
+          onSelectVariant={controller.setSelectedVariant}
           open
           priceLabel={formatCurrency(displayData.price)}
           productName={displayData.title}
           selectedVariant={selectedVariant}
-          shippingMessage={shippingQuery.data?.message}
+          shippingMessage={controller.shippingMessage}
           variants={product?.variants ?? []}
         />
       ) : null}
 
       {/* Auxiliary Modals */}
-      <SizeChartModal open={showSizeChart} onOpenChange={setShowSizeChart} />
+      <SizeChartModal open={controller.showSizeChart} onOpenChange={controller.setShowSizeChart} />
       <SizeCalculatorModal
-        open={showSizeCalculator}
-        onOpenChange={setShowSizeCalculator}
-        onCalculateComplete={(sizeName) => {
-          // Pre-select the matching size in the background, but keep the sheet
-          // open so the user can see the recommended size result.
-          if (product?.variants) {
-            const matched = product.variants.find(
-              (v) => v.name.toLowerCase() === sizeName.toLowerCase()
-            );
-            if (matched) setSelectedVariant(matched);
-          }
-        }}
+        open={controller.showSizeCalculator}
+        onOpenChange={controller.setShowSizeCalculator}
+        onCalculateComplete={controller.applyCalculatedSize}
       />
-      <WashingInstructionsModal open={showWashing} onOpenChange={setShowWashing} />
+      <WashingInstructionsModal
+        open={controller.showWashing}
+        onOpenChange={controller.setShowWashing}
+      />
       <FeedbackModal
-        open={showFeedback}
-        onOpenChange={setShowFeedback}
+        open={controller.showFeedback}
+        onOpenChange={controller.setShowFeedback}
         productId={displayData.id}
         productSlug={displayData.slug}
       />
       <ProductImageGalleryModal
-        images={productImages}
-        initialIndex={galleryImageIndex ?? 0}
-        onClose={() => setGalleryImageIndex(null)}
-        open={galleryImageIndex !== null}
+        images={controller.productImages}
+        initialIndex={controller.galleryImageIndex ?? 0}
+        onClose={() => controller.setGalleryImageIndex(null)}
+        open={controller.galleryImageIndex !== null}
       />
       {displayData.videoPath ? (
         <ProductVideoModal
-          onOpenChange={setShowVideoModal}
-          open={showVideoModal}
+          onOpenChange={controller.setShowVideoModal}
+          open={controller.showVideoModal}
           videoUri={displayData.videoPath}
           product={displayData}
           onPrimaryCta={() => {
-            setShowVideoModal(false);
-            handleAddToCart();
+            controller.setShowVideoModal(false);
+            controller.handleAddToCart();
           }}
         />
       ) : null}
 
       {/* Product code badge pinned under the header while the carousel is visible */}
-      {showProductCode && productCode ? (
-        <ProductCodeBadge code={productCode} top={headerHeight + PRODUCT_CODE_BADGE_OFFSET} />
+      {controller.showProductCode && controller.productCode ? (
+        <ProductCodeBadge
+          code={controller.productCode}
+          top={controller.headerHeight + PRODUCT_CODE_BADGE_OFFSET}
+        />
       ) : null}
     </AppScreen>
   );

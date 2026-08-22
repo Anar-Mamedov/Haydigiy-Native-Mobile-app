@@ -1,4 +1,4 @@
-import { BundleComponentDto, BundleDto } from '@/features/product/api/bundle.dtos';
+import { BundleComponentDto, BundleDto } from '@/features/bundle/api/bundle.dtos';
 
 export interface CartItemProductDto {
   id?: number;

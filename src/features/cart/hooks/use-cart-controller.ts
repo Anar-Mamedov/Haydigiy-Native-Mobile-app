@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { isAxiosError } from 'axios';
 import {
   calculateCartItemCount,
   calculateCartSubtotal,
@@ -21,6 +20,7 @@ import { useAddFavoriteMutation } from '@/features/favorite/api/favorite.queries
 import { cartItemToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { isAuthenticated } from '@/features/auth/api/auth-session';
 import { CartCampaign, CartLineItem } from '@/types/cart.types';
+import { getApiErrorMessage } from '@/utils/api-error';
 import {
   CartLineTarget,
   getCartLineMaxQuantity,
@@ -29,14 +29,6 @@ import {
 
 const isOutOfStock = (message: string) =>
   message.toLocaleLowerCase('tr-TR').includes('stokta yok');
-
-function getApiErrorMessage(error: unknown, fallback: string): string {
-  if (isAxiosError(error)) {
-    const message = (error.response?.data as { message?: string } | undefined)?.message;
-    return message ?? fallback;
-  }
-  return fallback;
-}
 
 /**
  * Orchestrates the fully server-backed cart screen. Reads come from TanStack
@@ -110,6 +102,15 @@ export function useCartController() {
     ? `bundle:${updateBundleMutation.variables?.bundleGroupId}`
     : undefined;
 
+  /**
+   * Sepet yazma işlemleri sessizce başarısız olmaz. Mutasyon iyimser güncellemeyi
+   * geri alır; kullanıcı da nedenini burada görür. Paket ve normal ürün satırları
+   * aynı davranışı paylaşır.
+   */
+  const alertWriteFailure = useCallback((error: unknown, fallback: string) => {
+    Alert.alert('Hata', getApiErrorMessage(error, fallback));
+  }, []);
+
   const changeQuantity = useCallback(
     (item: CartLineItem, quantity: number) => {
       if (quantity < 1) return;
@@ -119,16 +120,21 @@ export function useCartController() {
 
       const maxQuantity = getCartLineMaxQuantity(item);
       const capped = maxQuantity > 0 ? Math.min(quantity, maxQuantity) : quantity;
+      const onError = (error: unknown) =>
+        alertWriteFailure(error, 'Adet güncellenemedi. Lütfen tekrar deneyin.');
 
       // Bundle'da variant_id ile çalışan /cart/update kullanılmaz.
       if (target.kind === 'bundle') {
-        updateBundleMutation.mutate({ bundleGroupId: target.bundleGroupId, quantity: capped });
+        updateBundleMutation.mutate(
+          { bundleGroupId: target.bundleGroupId, quantity: capped },
+          { onError },
+        );
         return;
       }
 
-      updateMutation.mutate({ variantId: target.variantId, quantity: capped });
+      updateMutation.mutate({ variantId: target.variantId, quantity: capped }, { onError });
     },
-    [updateBundleMutation, updateMutation],
+    [alertWriteFailure, updateBundleMutation, updateMutation],
   );
 
   const requestRemove = useCallback((item: CartLineItem) => {
@@ -145,14 +151,17 @@ export function useCartController() {
       const target = getCartLineTarget(item);
       if (!target) return false;
 
+      const onError = (error: unknown) =>
+        alertWriteFailure(error, 'Ürün sepetten çıkarılamadı. Lütfen tekrar deneyin.');
+
       if (target.kind === 'bundle') {
-        removeBundleMutation.mutate(target.bundleGroupId);
+        removeBundleMutation.mutate(target.bundleGroupId, { onError });
       } else {
-        removeMutation.mutate(target.variantId);
+        removeMutation.mutate(target.variantId, { onError });
       }
       return true;
     },
-    [removeBundleMutation, removeMutation],
+    [alertWriteFailure, removeBundleMutation, removeMutation],
   );
 
   const confirmRemove = useCallback(() => {

@@ -8,6 +8,9 @@ import { formatCurrency } from '@/utils/format-currency';
 const IMAGE_WIDTH = 64;
 const IMAGE_HEIGHT = 86;
 const LOW_STOCK_THRESHOLD = 3;
+/** Beden butonunun en küçük dokunma hedefi (mobil erişilebilirlik alt sınırı). */
+const SIZE_CHIP_MIN_HEIGHT = 44;
+const SIZE_CHIP_MIN_WIDTH = 52;
 
 export type BundleItemRowProps = {
   item: BundleItem;
@@ -122,7 +125,8 @@ export function BundleItemRow({
                     disabled={!variant.hasStock}
                     justifyContent="center"
                     key={variant.key}
-                    minWidth={46}
+                    minHeight={SIZE_CHIP_MIN_HEIGHT}
+                    minWidth={SIZE_CHIP_MIN_WIDTH}
                     onPress={() => variant.hasStock && onSelectVariant(item.bundleItemId, variant.variantId)}
                     opacity={variant.hasStock ? 1 : 0.5}
                     paddingHorizontal="$2.5"

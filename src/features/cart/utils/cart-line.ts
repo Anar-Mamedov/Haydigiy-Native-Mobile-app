@@ -7,7 +7,7 @@
  * iki paketin aynı `undefined` kimliği paylaşmasına yol açar.
  */
 
-import { BUNDLE_MAX_QUANTITY } from '@/features/product/api/bundle.mapper';
+import { BUNDLE_MAX_QUANTITY } from '@/features/bundle/api/bundle.mapper';
 import { CartLineItem } from '@/types/cart.types';
 
 /** Adet ve silme isteklerinin hangi uca gideceğini belirleyen hedef. */

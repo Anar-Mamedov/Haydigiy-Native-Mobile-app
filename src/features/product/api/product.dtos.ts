@@ -96,6 +96,8 @@ export interface SearchProductDto {
   category_ids?: number[];
   brand_name?: string;
   has_stock?: boolean;
+  /** Liste/arama/favori cevaplarında paket ürünü işaretler (detaydaki `is_bundle` ile aynı). */
+  is_bundle?: boolean;
   shipping_label?: string;
   badge?: string;
   seller_name?: string;

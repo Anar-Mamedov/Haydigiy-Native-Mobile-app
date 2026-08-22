@@ -1,6 +1,6 @@
 import { CartCampaignDto, CartItemDto } from './cart.dtos';
 import { CartCampaign, CartLineItem } from '@/types/cart.types';
-import { isBundleLine, mapBundleComponents } from '@/features/product/api/bundle.mapper';
+import { isBundleLine, mapBundleComponents } from '@/features/bundle/api/bundle.mapper';
 
 function toNumber(value: string | null | undefined): number {
   const parsed = Number.parseFloat(value ?? '');

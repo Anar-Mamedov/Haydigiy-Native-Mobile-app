@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Package, ShoppingBag, Truck } from '@/components/ui/icons';
+import { AlertCircle, Package, ShoppingBag, Truck } from '@/components/ui/icons';
 import { ScrollView, Sheet, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton } from '@/components/ui/app-button';
@@ -27,6 +27,8 @@ export type BundleSelectionSheetProps = {
   isComplete: boolean;
   isPurchasable: boolean;
   isAdding?: boolean;
+  /** Sepete ekleme başarısız olduysa kullanıcıya gösterilecek mesaj. */
+  errorMessage?: string | null;
   onConfirm: () => void;
 };
 
@@ -65,6 +67,7 @@ export function BundleSelectionSheet({
   isComplete,
   isPurchasable,
   isAdding = false,
+  errorMessage = null,
   onConfirm,
 }: BundleSelectionSheetProps) {
   const insets = useSafeAreaInsets();
@@ -193,6 +196,27 @@ export function BundleSelectionSheet({
             <Paragraph color="$red10" fontSize={12} fontWeight="600">
               Ürün şu an satışa kapalıdır, daha sonra tekrar deneyiniz.
             </Paragraph>
+          ) : null}
+
+          {/* Sepete ekleme hatası sessizce yutulmaz; kullanıcı sheet'te görür ve tekrar dener. */}
+          {errorMessage ? (
+            <XStack
+              accessibilityLiveRegion="polite"
+              accessibilityRole="alert"
+              accessible
+              alignItems="flex-start"
+              backgroundColor="$red2"
+              borderColor="$red6"
+              borderRadius="$4"
+              borderWidth={1}
+              gap="$2"
+              padding="$2.5"
+            >
+              <AlertCircle color="$red10" size={16} />
+              <Paragraph color="$red10" flex={1} fontSize={12} fontWeight="600">
+                {errorMessage}
+              </Paragraph>
+            </XStack>
           ) : null}
 
           <YStack gap="$2">
