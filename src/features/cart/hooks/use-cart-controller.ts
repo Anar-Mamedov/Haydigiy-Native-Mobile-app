@@ -10,7 +10,9 @@ import {
 import {
   useCartQuery,
   useClearCartMutation,
+  useRemoveBundleMutation,
   useRemoveCartItemMutation,
+  useUpdateBundleQuantityMutation,
   useUpdateCartItemMutation,
 } from '@/features/cart/api/cart.queries';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
@@ -19,6 +21,11 @@ import { useAddFavoriteMutation } from '@/features/favorite/api/favorite.queries
 import { cartItemToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { isAuthenticated } from '@/features/auth/api/auth-session';
 import { CartCampaign, CartLineItem } from '@/types/cart.types';
+import {
+  CartLineTarget,
+  getCartLineMaxQuantity,
+  getCartLineTarget,
+} from '@/features/cart/utils/cart-line';
 
 const isOutOfStock = (message: string) =>
   message.toLocaleLowerCase('tr-TR').includes('stokta yok');
@@ -48,6 +55,8 @@ export function useCartController() {
 
   const updateMutation = useUpdateCartItemMutation();
   const removeMutation = useRemoveCartItemMutation();
+  const updateBundleMutation = useUpdateBundleQuantityMutation();
+  const removeBundleMutation = useRemoveBundleMutation();
   const clearMutation = useClearCartMutation();
   const checkoutMutation = useCheckoutMutation();
   const addFavorite = useAddFavoriteMutation();
@@ -91,19 +100,35 @@ export function useCartController() {
   const subtotal = calculateCartSubtotal(items);
   const total = subtotal;
 
-  const updatingVariantId =
-    updateMutation.isPending ? updateMutation.variables?.variantId : undefined;
+  /**
+   * Güncellenmekte olan satırın kimliği. Bundle satırlarının `variant_id`'si
+   * olmadığı için satır kimliği (`getCartLineKey`) üzerinden takip edilir.
+   */
+  const updatingLineKey = updateMutation.isPending
+    ? `variant:${updateMutation.variables?.variantId}`
+    : updateBundleMutation.isPending
+    ? `bundle:${updateBundleMutation.variables?.bundleGroupId}`
+    : undefined;
 
   const changeQuantity = useCallback(
     (item: CartLineItem, quantity: number) => {
-      if (quantity < 1 || !item.variantId) return;
-      const capped =
-        typeof item.stock === 'number' && item.stock > 0
-          ? Math.min(quantity, item.stock)
-          : quantity;
-      updateMutation.mutate({ variantId: item.variantId, quantity: capped });
+      if (quantity < 1) return;
+
+      const target = getCartLineTarget(item);
+      if (!target) return;
+
+      const maxQuantity = getCartLineMaxQuantity(item);
+      const capped = maxQuantity > 0 ? Math.min(quantity, maxQuantity) : quantity;
+
+      // Bundle'da variant_id ile çalışan /cart/update kullanılmaz.
+      if (target.kind === 'bundle') {
+        updateBundleMutation.mutate({ bundleGroupId: target.bundleGroupId, quantity: capped });
+        return;
+      }
+
+      updateMutation.mutate({ variantId: target.variantId, quantity: capped });
     },
-    [updateMutation],
+    [updateBundleMutation, updateMutation],
   );
 
   const requestRemove = useCallback((item: CartLineItem) => {
@@ -114,16 +139,30 @@ export function useCartController() {
     setRemoveTarget(null);
   }, []);
 
+  /** Satırı kendi ucundan siler: bundle `bundle_group_id`, normal ürün `variant_id`. */
+  const removeLine = useCallback(
+    (item: CartLineItem) => {
+      const target = getCartLineTarget(item);
+      if (!target) return false;
+
+      if (target.kind === 'bundle') {
+        removeBundleMutation.mutate(target.bundleGroupId);
+      } else {
+        removeMutation.mutate(target.variantId);
+      }
+      return true;
+    },
+    [removeBundleMutation, removeMutation],
+  );
+
   const confirmRemove = useCallback(() => {
-    const variantId = removeTarget?.variantId;
-    if (!variantId) return;
-    removeMutation.mutate(variantId);
+    if (!removeTarget) return;
+    if (!removeLine(removeTarget)) return;
     setRemoveTarget(null);
-  }, [removeMutation, removeTarget]);
+  }, [removeLine, removeTarget]);
 
   const confirmRemoveAndFavorite = useCallback(() => {
-    const variantId = removeTarget?.variantId;
-    if (!removeTarget || !variantId) return;
+    if (!removeTarget) return;
     addFavorite.mutate(
       {
         productId: removeTarget.productId,
@@ -131,9 +170,9 @@ export function useCartController() {
       },
       { onError: () => undefined },
     );
-    removeMutation.mutate(variantId);
+    if (!removeLine(removeTarget)) return;
     setRemoveTarget(null);
-  }, [addFavorite, removeMutation, removeTarget]);
+  }, [addFavorite, removeLine, removeTarget]);
 
   const requestClear = useCallback(() => {
     if (items.length === 0) return;
@@ -141,16 +180,17 @@ export function useCartController() {
   }, [items.length]);
 
   const confirmClear = useCallback(() => {
-    // Snapshot the variant ids *before* the optimistic clear empties the store,
+    // Snapshot the line targets *before* the optimistic clear empties the store,
     // so every line is actually removed on the backend (not just hidden locally).
-    const variantIds = items
-      .map((item) => Number(item.variantId))
-      .filter((id) => Number.isFinite(id) && id > 0);
+    // Bundle satırları bundle ucuna, normal satırlar variant ucuna yönlenir.
+    const targets = items
+      .map(getCartLineTarget)
+      .filter((target): target is CartLineTarget => target !== null);
 
     setIsClearDialogOpen(false);
-    if (variantIds.length === 0) return;
+    if (targets.length === 0) return;
 
-    clearMutation.mutate(variantIds, {
+    clearMutation.mutate(targets, {
       onError: () => {
         Alert.alert(
           'Hata',
@@ -171,6 +211,15 @@ export function useCartController() {
   const openProduct = useCallback(
     (item: CartLineItem) => {
       router.push(`/product/${item.slug ?? item.productId}` as never);
+    },
+    [router],
+  );
+
+  /** Paket içeriğindeki bir ürüne dokunulduğunda o ürünün detayına gider. */
+  const openProductBySlug = useCallback(
+    (slug: string | null) => {
+      if (!slug) return;
+      router.push(`/product/${slug}` as never);
     },
     [router],
   );
@@ -245,7 +294,7 @@ export function useCartController() {
     removedMessage,
     dismissRemovedMessage,
     // Mutation state
-    updatingVariantId,
+    updatingLineKey,
     // Dialog / UI state
     removeTarget,
     isClearDialogOpen,
@@ -262,6 +311,7 @@ export function useCartController() {
     confirmClear,
     toggleSummary,
     openProduct,
+    openProductBySlug,
     goBack,
     checkout,
   };

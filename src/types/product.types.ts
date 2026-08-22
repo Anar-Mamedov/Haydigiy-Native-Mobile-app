@@ -1,3 +1,5 @@
+import { BundleItem, BundleSummary } from '@/types/bundle.types';
+
 export type ProductSize = {
   name: string;
   hasStock: boolean;
@@ -205,4 +207,13 @@ export type Product = {
   sizeMeasurements?: SizeMeasurement[];
   model?: ProductModel | null;
   variantOnModel?: ProductVariantOnModel | null;
+  /**
+   * Ürün bir paket (bundle) mi? Bundle listede normal ürün gibi görünür ama detayda
+   * paketteki HER ürün için ayrı beden seçilir ve sepete bundle ucundan eklenir.
+   */
+  isBundle?: boolean;
+  /** Paketteki ürünler — yalnızca `isBundle` true iken dolu. */
+  bundleItems?: BundleItem[];
+  /** Paket fiyat/satılabilirlik özeti — yalnızca `isBundle` true iken dolu. */
+  bundleSummary?: BundleSummary;
 };

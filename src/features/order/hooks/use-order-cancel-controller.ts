@@ -1,3 +1,4 @@
+import { buildOrderItemGroups, type OrderItemGroup } from '@/features/order/utils/order-item-groups';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -12,9 +13,10 @@ import {
   getCancelErrorMessage,
   getCancellationBlockedPreview,
 } from '@/services/order.service';
-import { CancelItem, CancelPreview, OrderDetailItem } from '@/types/order.types';
+import { CancelItem, CancelPreview} from '@/types/order.types';
 
-export type ExpandedCancelItem = { item: OrderDetailItem; expandedId: string };
+/** İptal ekranının satırı: normal ürün ya da tek parça olarak seçilen bundle. */
+export type ExpandedCancelItem = OrderItemGroup;
 
 type Options = { preselectItemId: number | null; selectAll: boolean; enabled: boolean };
 
@@ -40,14 +42,14 @@ export function useOrderCancelController(orderId: string, options: Options) {
   const [focusToken, setFocusToken] = useState(0);
   const appliedTokenRef = useRef(-1);
 
-  const expandedItems = useMemo<ExpandedCancelItem[]>(() => {
-    const out: ExpandedCancelItem[] = [];
-    (order?.items ?? []).forEach((item) => {
-      const units = Math.max(1, item.quantity);
-      for (let i = 0; i < units; i += 1) out.push({ item, expandedId: `${item.id}-${i}` });
-    });
-    return out;
-  }, [order?.items]);
+  /**
+   * Seçilebilir satırlar. Normal ürünler adet kadar ayrı satıra bölünür; bundle'ın
+   * içindeki ürünler TEK satırda toplanır (paket ya bütün iptal edilir ya da hiç).
+   */
+  const expandedItems = useMemo<ExpandedCancelItem[]>(
+    () => buildOrderItemGroups(order?.items, order?.displayItems),
+    [order?.items, order?.displayItems],
+  );
 
   const isCancelable = order ? isOrderCancellableStatus(order.status, order.statusId) : false;
 
@@ -76,7 +78,10 @@ export function useOrderCancelController(orderId: string, options: Options) {
     appliedTokenRef.current = focusToken;
 
     if (options.preselectItemId) {
-      const target = expandedItems.find((entry) => entry.item.id === options.preselectItemId);
+      // Bundle bileşeni seçildiyse paketin tamamı işaretlenir.
+      const target = expandedItems.find((entry) =>
+        entry.members.some((member) => member.orderItemId === options.preselectItemId),
+      );
       setSelectedIds(target ? [target.expandedId] : []);
     } else if (options.selectAll && isCancelable) {
       setSelectedIds(expandedItems.map((entry) => entry.expandedId));
@@ -120,13 +125,22 @@ export function useOrderCancelController(orderId: string, options: Options) {
     setItemReasons((prev) => ({ ...prev, [expandedId]: reasonId }));
   }, []);
 
+  /**
+   * Seçilen satırları isteğe çevirir. Bundle satırı burada kendi gerçek `order_item`
+   * kayıtlarına açılır; paketin tüm bileşenleri aynı iptal nedeniyle gönderilir.
+   */
   const buildItems = useCallback(
     (ids: string[], reasonResolver: (id: string) => number | undefined): CancelItem[] =>
       ids.flatMap((id) => {
         const entry = expandedItems.find((item) => item.expandedId === id);
         const reasonId = reasonResolver(id);
         if (!entry || !reasonId) return [];
-        return [{ orderItemId: entry.item.id, quantity: 1, cancellationReasonId: reasonId }];
+
+        return entry.members.map((member) => ({
+          orderItemId: member.orderItemId,
+          quantity: member.quantity,
+          cancellationReasonId: reasonId,
+        }));
       }),
     [expandedItems],
   );

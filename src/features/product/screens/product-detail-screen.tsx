@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Spinner, YStack, XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThumbsUp } from '@/components/ui/icons';
 import { AppScreen, DeferredMount, EmptyState, PullToDismissScrollView } from '@/components/ui';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
-import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
+import { useAddBundleToCartMutation, useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useNotifyStock } from '../hooks/use-notify-stock';
 import { NotifyStockDialog } from '../components/notify-stock-dialog';
 import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
@@ -15,6 +15,9 @@ import { useProductDetailsQuery } from '@/features/product/api/product.queries';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
 import { formatCurrency } from '@/utils/format-currency';
 import { SizeSelectionSheet } from '../components/size-selection-sheet';
+import { BundleSelectionSheet } from '../components/bundle-selection-sheet';
+import { BundleItemsPreview } from '../components/bundle-items-preview';
+import { useBundleSelection } from '../hooks/use-bundle-selection';
 import { trackViewedProduct } from '@/utils/recently-viewed';
 import { extractProductCode } from '../utils/extract-product-code';
 import { ProductCodeBadge } from '../components/product-code-badge';
@@ -76,8 +79,14 @@ export function ProductDetailScreen() {
   // Queries
   const { data: product, error, isError, isPending, refetch } = useProductDetailsQuery(idOrSlug);
   const addToCart = useAddToCartMutation();
+  const addBundleToCart = useAddBundleToCartMutation();
   const goToCartAfterAdd = useGoToCartAfterAdd();
   const shippingQuery = useShippingEstimateQuery();
+
+  // Bundle (paket) ürün: normal beden seçimi yerine paket kalemi başına seçim yapılır.
+  const isBundle = Boolean(product?.isBundle) && (product?.bundleItems?.length ?? 0) > 0;
+  const bundleItems = useMemo(() => product?.bundleItems ?? [], [product?.bundleItems]);
+  const bundleSelection = useBundleSelection(bundleItems);
 
   // States
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
@@ -126,6 +135,7 @@ export function ProductDetailScreen() {
 
   // Modal states
   const [showSizeSheet, setShowSizeSheet] = useState(false);
+  const [showBundleSheet, setShowBundleSheet] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
 
   // Close the size sheet whenever the screen loses focus (e.g. navigating to the
@@ -221,6 +231,12 @@ export function ProductDetailScreen() {
     const activeProduct = product || previewProduct;
     if (!activeProduct) return;
 
+    // Bundle'da tek varyant yoktur; beden seçimi paket kalemi başına alt sayfada yapılır.
+    if (isBundle) {
+      setShowBundleSheet(true);
+      return;
+    }
+
     if (isPending && !product) {
       setShowSizeSheet(true);
       return;
@@ -235,6 +251,29 @@ export function ProductDetailScreen() {
     }
 
     confirmAddToCart();
+  };
+
+  /**
+   * Paketi sepete ekler. Eksik beden varsa istek gönderilmez; eksik kalemler
+   * vurgulanır ve alt sayfa açık kalır (kullanıcı ne yapması gerektiğini görür).
+   */
+  const confirmAddBundleToCart = () => {
+    const activeProduct = product;
+    if (!activeProduct || !bundleSelection.isComplete) {
+      bundleSelection.flagMissingSelections();
+      return;
+    }
+
+    addBundleToCart.mutate({
+      bundleProductId: activeProduct.id,
+      selections: bundleSelection.selectionPayload,
+      quantity: 1,
+      // Bundle analitikte TEK ürün olarak raporlanır; bileşenler ayrı satır sayılmaz.
+      tracking: productToInsiderInput(activeProduct, { quantity: 1 }),
+    });
+
+    setShowBundleSheet(false);
+    goToCartAfterAdd();
   };
 
   // Adds the selected variant to the cart; shared by the sticky footer button and
@@ -421,15 +460,25 @@ export function ProductDetailScreen() {
                 }}
               />
 
-              {/* Size selector squares */}
-              <ProductSizeSelector
-                variants={product.variants}
-                featureIcons={product.featureIcons}
-                selectedVariant={selectedVariant}
-                onSelectVariant={(v) => setSelectedVariant(v)}
-                onSizeChartPress={() => setShowSizeChart(true)}
-                onSizeCalculatorPress={() => setShowSizeCalculator(true)}
-              />
+              {/* Bundle: tek beden seçici yerine paket özeti; seçim alt sayfada yapılır */}
+              {isBundle && product.bundleSummary ? (
+                <BundleItemsPreview
+                  items={bundleItems}
+                  onPress={() => setShowBundleSheet(true)}
+                  selectedCount={bundleSelection.selectedCount}
+                  summary={product.bundleSummary}
+                />
+              ) : (
+                /* Size selector squares */
+                <ProductSizeSelector
+                  variants={product.variants}
+                  featureIcons={product.featureIcons}
+                  selectedVariant={selectedVariant}
+                  onSelectVariant={(v) => setSelectedVariant(v)}
+                  onSizeChartPress={() => setShowSizeChart(true)}
+                  onSizeCalculatorPress={() => setShowSizeCalculator(true)}
+                />
+              )}
 
               {/* Specifications highlights & mannequin details */}
               <ProductSpecifications
@@ -516,6 +565,28 @@ export function ProductDetailScreen() {
       />
 
       <NotifyStockDialog onOpenChange={closeNotifyConfirmation} open={isNotifyConfirmationOpen} />
+
+      {/* Bundle beden seçim alt sayfası — paket kalemi başına beden seçilir */}
+      {isBundle && product?.bundleSummary ? (
+        <BundleSelectionSheet
+          imageUrl={displayData?.imageUrl ?? ''}
+          isAdding={addBundleToCart.isPending}
+          isComplete={bundleSelection.isComplete}
+          isPurchasable={bundleSelection.isPurchasable}
+          items={bundleItems}
+          missingHighlight={bundleSelection.missingHighlight}
+          missingItemIds={bundleSelection.missingItemIds}
+          onClose={() => setShowBundleSheet(false)}
+          onConfirm={confirmAddBundleToCart}
+          onSelectVariant={bundleSelection.selectVariant}
+          open={showBundleSheet}
+          productName={displayData?.title ?? ''}
+          selectedCount={bundleSelection.selectedCount}
+          selections={bundleSelection.selections}
+          shippingMessage={shippingQuery.data?.message}
+          summary={product.bundleSummary}
+        />
+      ) : null}
 
       {/* Size selection bottom sheet (opened from "Sepete Ekle" when no size chosen) */}
       {showSizeSheet ? (

@@ -4,10 +4,16 @@ import { ChevronDown, Image as ImagePlaceholderIcon, Square, SquareCheck } from 
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { OrderDetailItem } from '@/types/order.types';
+import { BundleComponent } from '@/types/bundle.types';
+import { BundleContents } from '@/components/bundle/bundle-contents';
 import { formatOrderPrice } from '../utils/order-status';
 
 type CancelItemRowProps = {
   item: OrderDetailItem;
+  /** Satır bir paket mi? Paket bütün olarak iptal edilir, ürünleri tek tek seçilemez. */
+  isBundle?: boolean;
+  /** Paket içeriği — yalnızca gösterim. */
+  bundleComponents?: BundleComponent[];
   selected: boolean;
   disabled: boolean;
   reasonLabel?: string;
@@ -18,6 +24,8 @@ type CancelItemRowProps = {
 /** A single cancellable unit: checkbox + product + (when selected) reason picker. */
 export function CancelItemRow({
   item,
+  isBundle = false,
+  bundleComponents = [],
   selected,
   disabled,
   reasonLabel,
@@ -55,6 +63,7 @@ export function CancelItemRow({
           height={72}
           justifyContent="center"
           overflow="hidden"
+          position="relative"
           width={72}
         >
           {item.image ? (
@@ -62,13 +71,33 @@ export function CancelItemRow({
           ) : (
             <ImagePlaceholderIcon color="$color9" size={26} />
           )}
+          {isBundle ? (
+            <XStack
+              alignItems="center"
+              backgroundColor="$brand"
+              bottom={0}
+              justifyContent="center"
+              left={0}
+              paddingVertical={2}
+              position="absolute"
+              right={0}
+            >
+              <Paragraph color="white" fontSize={9} fontWeight="800">
+                PAKET
+              </Paragraph>
+            </XStack>
+          ) : null}
         </YStack>
 
         <YStack flex={1} gap="$1">
           <Paragraph color="$color" fontSize={14} fontWeight="600" numberOfLines={2}>
             {item.name}
           </Paragraph>
-          {item.variantName ? (
+          {isBundle ? (
+            <Paragraph color="$color10" fontSize={12}>
+              {item.variantName || `${bundleComponents.length} ürün`}
+            </Paragraph>
+          ) : item.variantName ? (
             <Paragraph color="$color10" fontSize={12}>
               Beden: {item.variantName}
             </Paragraph>
@@ -78,6 +107,16 @@ export function CancelItemRow({
           </Paragraph>
         </YStack>
       </XStack>
+
+      {/* Paket içeriği — paket bütün olarak iptal edilir, ürünleri tek tek seçilemez */}
+      {isBundle && bundleComponents.length > 0 ? (
+        <YStack gap="$1.5">
+          <Paragraph color="$color10" fontSize={11} fontWeight="700">
+            Paket içeriği ({bundleComponents.length} ürün) — paket bütün olarak iptal edilir
+          </Paragraph>
+          <BundleContents collapsible={false} components={bundleComponents} />
+        </YStack>
+      ) : null}
 
       {selected ? (
         <YStack gap="$1.5">

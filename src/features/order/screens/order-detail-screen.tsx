@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, ScrollView, Spinner, XStack, YStack } from 'tamagui';
@@ -14,6 +14,7 @@ import { OrdersHeader } from '../components/orders-header';
 import { OrderDetailSummary } from '../components/order-detail-summary';
 import { OrderTimeline } from '../components/order-timeline';
 import { OrderItemsSection } from '../components/order-items-section';
+import { buildOrderItemGroups } from '../utils/order-item-groups';
 import { OrderReturnSection } from '../components/order-return-section';
 import { ReturnGiftVoucherCard } from '../components/return-gift-voucher-card';
 import { OrderAddressCard } from '../components/order-address-card';
@@ -55,6 +56,17 @@ export function OrderDetailScreen() {
   const isCancelable = order ? isOrderCancellableStatus(order.status, order.statusId) : false;
   const canCreateReturn = !isCancelable && (order?.canCreateReturnRequest ?? false);
   const hasReturnableItems = order?.items.some((item) => !item.isNonReturnable) ?? false;
+
+  /**
+   * Müşteri görünümü satırları: bundle TEK satır olarak basılır, içindeki ürünler
+   * altında listelenir. İptal/iade istekleri hâlâ gerçek `order.items` kayıtlarına
+   * gider — `?item_id=` bir paket bileşenine denk geldiğinde ilgili ekran paketin
+   * tamamını seçer (bkz. buildOrderItemGroups).
+   */
+  const displayRows = useMemo(
+    () => buildOrderItemGroups(order?.items, order?.displayItems).map((group) => group.item),
+    [order?.items, order?.displayItems],
+  );
   const showReturnEntry = canCreateReturn && hasReturnableItems;
   const returnBlockMessage = order ? getReturnBlockBannerMessage(order, isCancelable) : null;
   // Web paritesi: satır iptal de iade de edilemiyorsa "Tekrar Satın Al" gösterilir.
@@ -62,6 +74,12 @@ export function OrderDetailScreen() {
 
   const addToCart = useAddToCartMutation();
   const handleRepurchase = (item: OrderDetailItem) => {
+    // Paket tek varyantla sepete eklenemez; bedenler yeniden seçilsin diye detaya gidilir.
+    if (item.isBundle) {
+      if (item.slug) openProduct(item.slug);
+      return;
+    }
+
     if (!item.variantId) {
       Alert.alert('Hata', 'Ürün sepete eklenemedi. Lütfen ürün sayfasından ekleyin.');
       return;
@@ -169,8 +187,9 @@ export function OrderDetailScreen() {
                 </XStack>
               ) : undefined
             }
-            items={order.items}
+            items={displayRows}
             onCancelItem={(item) => goToCancel(`?item_id=${item.id}`)}
+            onPressBundleComponent={(component) => component.slug && openProduct(component.slug)}
             onPressProduct={openProduct}
             onRepurchaseItem={handleRepurchase}
             onReturnItem={(item) => goToReturn(`?item_id=${item.id}`)}

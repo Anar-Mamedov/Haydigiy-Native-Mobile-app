@@ -29,6 +29,7 @@ jest.mock('@/features/product/api/product.queries', () => ({
 
 jest.mock('@/features/cart/api/cart.queries', () => ({
   useAddToCartMutation: () => ({ mutate: jest.fn() }),
+  useAddBundleToCartMutation: () => ({ mutate: jest.fn(), isPending: false }),
 }));
 
 jest.mock('@/features/cart/hooks/use-go-to-cart-after-add', () => ({

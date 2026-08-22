@@ -1,5 +1,6 @@
 import { CartCampaignDto, CartItemDto } from './cart.dtos';
 import { CartCampaign, CartLineItem } from '@/types/cart.types';
+import { isBundleLine, mapBundleComponents } from '@/features/product/api/bundle.mapper';
 
 function toNumber(value: string | null | undefined): number {
   const parsed = Number.parseFloat(value ?? '');
@@ -31,9 +32,17 @@ export function mapCartItemDto(dto: CartItemDto): CartLineItem {
   const oldPrice = toNumber(dto.old_price);
   const stock = Number.parseInt(dto.stock_quantity ?? '', 10);
 
+  const isBundle = isBundleLine(dto);
+
   return {
-    variantId: String(dto.variant_id),
-    productId: product?.id != null ? String(product.id) : String(dto.variant_id),
+    // Bundle satırının `variant_id`'si yoktur; kimlik `bundleGroupId` üzerinden taşınır.
+    variantId: dto.variant_id != null ? String(dto.variant_id) : undefined,
+    productId:
+      product?.id != null
+        ? String(product.id)
+        : dto.bundle_product_id != null
+        ? String(dto.bundle_product_id)
+        : String(dto.variant_id ?? ''),
     title: product?.name ?? '',
     slug: product?.slug ?? '',
     imageUrl: product?.media?.thumb ?? '',
@@ -44,6 +53,14 @@ export function mapCartItemDto(dto: CartItemDto): CartLineItem {
     stock: Number.isFinite(stock) ? stock : undefined,
     size: dto.variant?.size?.name ?? undefined,
     color: (product?.color?.name ?? product?.color_name)?.trim() || undefined,
+    ...(isBundle
+      ? {
+          itemType: 'bundle' as const,
+          bundleGroupId: dto.bundle_group_id ?? undefined,
+          bundleProductId: dto.bundle_product_id != null ? String(dto.bundle_product_id) : undefined,
+          bundleComponents: mapBundleComponents(dto.bundle?.components),
+        }
+      : { itemType: 'product' as const }),
   };
 }
 

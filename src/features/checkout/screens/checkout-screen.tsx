@@ -163,6 +163,7 @@ export function CheckoutScreen() {
           <CheckoutCartItems
             expanded={controller.isCartExpanded}
             items={controller.items}
+            onPressBundleComponent={(component) => controller.openProductBySlug(component.slug)}
             onPressItem={controller.openProduct}
             onToggle={controller.toggleCart}
           />

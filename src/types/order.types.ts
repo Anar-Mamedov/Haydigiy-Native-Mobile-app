@@ -1,3 +1,5 @@
+import { BundleComponent } from '@/types/bundle.types';
+
 export type OrderProductKind = 'normal' | 'returned' | 'cancelled';
 
 export type OrderProduct = {
@@ -6,6 +8,11 @@ export type OrderProduct = {
   image: string | null;
   slug: string;
   kind: OrderProductKind;
+  /** Satır bir paket mi? Listede tek ürün olarak görünür, içeriği altında listelenir. */
+  isBundle?: boolean;
+  bundleGroupId?: string;
+  /** Paket içeriği — yalnızca gösterim amaçlıdır. */
+  bundleComponents?: BundleComponent[];
 };
 
 export type Order = {
@@ -81,6 +88,17 @@ export type OrderDetailItem = {
   isNonReturnable?: boolean;
   /** `available` | `gift_product` | other backend label. */
   returnStatus?: string;
+  /**
+   * Bundle bileşeni olan satırlarda dolu. Aynı `bundleGroupId`'ye sahip satırlar
+   * tek bir paketi oluşturur ve iptal/iade ekranlarında birlikte seçilir.
+   */
+  bundleProductId?: number;
+  bundleItemId?: number;
+  bundleGroupId?: string;
+  /** Satır bir paketin kendisi mi (müşteri görünümünde tek satır)? */
+  isBundle?: boolean;
+  /** Paket içeriği — yalnızca gösterim; ayrı sipariş satırı değildir. */
+  bundleComponents?: BundleComponent[];
   // ---- Return metadata (kind === 'returned', web order-detail parity) ----
   returnRequestId?: number | null;
   returnCode?: string | null;
@@ -250,6 +268,11 @@ export type OrderDetail = {
   taxNumber: string | null;
   taxOffice: string | null;
   items: OrderDetailItem[];
+  /**
+   * Müşteri görünümü: bundle burada TEK satır olarak gelir. İptal/iade gibi ürün
+   * bazlı işlemler daima `items` üzerinden yapılır, bu liste yalnızca gösterim içindir.
+   */
+  displayItems?: OrderDetailItem[];
   returnedItems: OrderDetailItem[];
   cancelledItems: OrderDetailItem[];
   totals: OrderTotalsView;

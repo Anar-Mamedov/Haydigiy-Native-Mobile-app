@@ -142,6 +142,12 @@ export function FavoritesScreen() {
   };
 
   const handleAddToCart = (product: Product, size: string) => {
+    // Bundle tek varyantla sepete eklenemez; paketteki her ürün için beden seçilmeli.
+    if (product.isBundle) {
+      router.push(`/product/${product.slug ?? product.id}` as never);
+      return;
+    }
+
     const variant = product.variants?.find((candidate) => candidate.name === size);
     const variantId = variant?.pivotId ?? variant?.id;
     if (variantId) {

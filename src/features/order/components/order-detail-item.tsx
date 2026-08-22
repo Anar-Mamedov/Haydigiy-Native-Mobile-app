@@ -12,6 +12,8 @@ import {
 import { Button, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { OrderDetailItem as OrderDetailItemModel } from '@/types/order.types';
+import { BundleComponent } from '@/types/bundle.types';
+import { BundleContents } from '@/components/bundle/bundle-contents';
 import { formatOrderPrice } from '../utils/order-status';
 
 const THUMB_SIZE = 80;
@@ -31,6 +33,8 @@ type OrderDetailItemProps = {
   /** Web paritesi: iptal/iade artık mümkün değilse "Tekrar Satın Al" gösterilir. */
   repurchasable?: boolean;
   onRepurchase?: () => void;
+  /** Paket içeriğindeki bir ürüne dokunulduğunda o ürünün detayına gider. */
+  onPressBundleComponent?: (component: BundleComponent) => void;
 };
 
 /** A single order line (image, name, size, quantity, price) used in detail sections. */
@@ -45,8 +49,16 @@ export function OrderDetailItem({
   onReturn,
   repurchasable,
   onRepurchase,
+  onPressBundleComponent,
 }: OrderDetailItemProps) {
   const inactive = item.kind !== 'normal';
+  /**
+   * Paket satırı: müşteri görünümünde TEK satırdır. Beden gösterilmez (paketin kendi
+   * bedeni yoktur), değerlendirme butonu çıkmaz (yorum ürün bazlıdır) ve içindeki
+   * ürünler altında salt gösterim olarak listelenir.
+   */
+  const isBundle = item.isBundle === true;
+  const bundleComponents = item.bundleComponents ?? [];
   // İptal edilen satırlar web'deki gibi işaretlenir: görsel üzerinde çapraz
   // kırmızı çizgi, üstü çizili isim ve sağda iptal tarihi.
   const isCancelled = item.kind === 'cancelled';
@@ -88,6 +100,22 @@ export function OrderDetailItem({
             ) : (
               <ImagePlaceholderIcon color="$color9" size={28} />
             )}
+            {isBundle ? (
+              <XStack
+                alignItems="center"
+                backgroundColor="$brand"
+                bottom={0}
+                justifyContent="center"
+                left={0}
+                paddingVertical={2}
+                position="absolute"
+                right={0}
+              >
+                <Paragraph color="white" fontSize={10} fontWeight="800">
+                  PAKET
+                </Paragraph>
+              </XStack>
+            ) : null}
             {isCancelled ? (
               <YStack
                 alignItems="center"
@@ -122,7 +150,11 @@ export function OrderDetailItem({
           >
             {item.name}
           </Paragraph>
-          {item.variantName ? (
+          {isBundle ? (
+            <Paragraph color="$color10" fontSize={12}>
+              {item.variantName || `${bundleComponents.length} ürün`}
+            </Paragraph>
+          ) : item.variantName ? (
             <Paragraph color="$color10" fontSize={12}>
               Beden: <Paragraph color="$color" fontSize={12} fontWeight="600">{item.variantName}</Paragraph>
             </Paragraph>
@@ -152,7 +184,17 @@ export function OrderDetailItem({
         ) : null}
       </XStack>
 
-      {cancelable || returnState || reviewState || repurchasable ? (
+      {/* Paket içeriği — paket tek satır, ürünleri hemen altında listelenir */}
+      {isBundle && bundleComponents.length > 0 ? (
+        <BundleContents
+          collapsible={false}
+          components={bundleComponents}
+          onPressComponent={onPressBundleComponent}
+          showPrices
+        />
+      ) : null}
+
+      {cancelable || returnState || (reviewState && !isBundle) || repurchasable ? (
         <XStack gap="$2">
           {repurchasable ? (
             <Button
@@ -170,7 +212,7 @@ export function OrderDetailItem({
               <XStack alignItems="center" gap="$1.5">
                 <ShoppingBag color="$brand" size={16} />
                 <Paragraph color="$brand" fontSize={13} fontWeight="700">
-                  Tekrar Satın Al
+                  {isBundle ? 'Paketi Tekrar Al' : 'Tekrar Satın Al'}
                 </Paragraph>
               </XStack>
             </Button>
@@ -192,7 +234,7 @@ export function OrderDetailItem({
               <XStack alignItems="center" gap="$1.5">
                 <CircleX color="$red10" size={16} />
                 <Paragraph color="$red10" fontSize={13} fontWeight="700">
-                  Ürünü İptal Et
+                  {isBundle ? 'Paketi İptal Et' : 'Ürünü İptal Et'}
                 </Paragraph>
               </XStack>
             </Button>
@@ -214,7 +256,7 @@ export function OrderDetailItem({
               <XStack alignItems="center" gap="$1.5">
                 <Undo2 color="$brand" size={16} />
                 <Paragraph color="$brand" fontSize={13} fontWeight="700">
-                  Ürünü İade Et
+                  {isBundle ? 'Paketi İade Et' : 'Ürünü İade Et'}
                 </Paragraph>
               </XStack>
             </Button>
@@ -238,7 +280,7 @@ export function OrderDetailItem({
             </XStack>
           ) : null}
 
-          {reviewState === 'available' ? (
+          {isBundle ? null : reviewState === 'available' ? (
             <Button
               accessibilityLabel="Ürünü değerlendir"
               backgroundColor="$brand"

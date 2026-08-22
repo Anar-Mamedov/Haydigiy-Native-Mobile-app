@@ -3,6 +3,7 @@ import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { OrderDetailItem as OrderDetailItemModel } from '@/types/order.types';
+import { BundleComponent } from '@/types/bundle.types';
 import { OrderDetailItem } from './order-detail-item';
 
 type OrderItemsSectionProps = {
@@ -24,6 +25,8 @@ type OrderItemsSectionProps = {
   /** Web paritesi: iptal/iade mümkün değilse "Tekrar Satın Al" gösterilir. */
   repurchasable?: boolean;
   onRepurchaseItem?: (item: OrderDetailItemModel) => void;
+  /** Paket içeriğindeki bir ürüne dokunulduğunda o ürünün detayına gider. */
+  onPressBundleComponent?: (component: BundleComponent) => void;
 };
 
 /** Titled card listing order lines; reused for delivered / cancelled / returned. */
@@ -41,6 +44,7 @@ export function OrderItemsSection({
   onReturnItem,
   repurchasable,
   onRepurchaseItem,
+  onPressBundleComponent,
 }: OrderItemsSectionProps) {
   if (items.length === 0) return null;
 
@@ -60,6 +64,7 @@ export function OrderItemsSection({
               item={item}
               key={`${item.id}-${index}`}
               onCancel={onCancelItem ? () => onCancelItem(item) : undefined}
+              onPressBundleComponent={onPressBundleComponent}
               onPressProduct={onPressProduct}
               onRepurchase={onRepurchaseItem ? () => onRepurchaseItem(item) : undefined}
               onReturn={onReturnItem ? () => onReturnItem(item) : undefined}

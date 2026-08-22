@@ -313,6 +313,15 @@ export function useCheckoutController() {
     [router],
   );
 
+  /** Paket içeriğindeki bir ürüne dokunulduğunda o ürünün detayına gider. */
+  const openProductBySlug = useCallback(
+    (slug: string | null) => {
+      if (!slug) return;
+      router.push(`/product/${slug}` as never);
+    },
+    [router],
+  );
+
   const goToAddAddress = useCallback(() => {
     router.push('/address-form' as never);
   }, [router]);
@@ -385,6 +394,7 @@ export function useCheckoutController() {
     isCartExpanded,
     toggleCart: () => setIsCartExpanded((v) => !v),
     openProduct,
+    openProductBySlug,
     // shipping estimate + campaigns
     shippingEstimate: shippingQuery.data,
     campaigns,

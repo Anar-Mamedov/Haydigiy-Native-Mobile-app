@@ -1,3 +1,4 @@
+import { buildOrderItemGroups, type OrderItemGroup } from '@/features/order/utils/order-item-groups';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useOrderDetailQuery } from '../api/order.queries';
@@ -15,12 +16,13 @@ import { useReturnIban } from './use-return-iban';
 import { useScheduledReturn } from './use-scheduled-return';
 import { buildReturnBaseMessage, buildReturnSuccessMessage } from '../utils/return-messages';
 import { getReturnErrorMessage, SubmitReturnRequestPayload } from '@/services/return.service';
-import { OrderDetailItem, ReturnMethod, ReturnPhoto, ReturnSubmitItem } from '@/types/order.types';
+import { ReturnMethod, ReturnPhoto, ReturnSubmitItem } from '@/types/order.types';
 
 export const PHOTO_REQUIRED_REASON_ID = 2;
 const IBAN_PAYMENT_METHOD_IDS = [2, 3];
 
-export type ExpandedReturnItem = { item: OrderDetailItem; expandedId: string };
+/** İade ekranının satırı: normal ürün ya da tek parça olarak seçilen bundle. */
+export type ExpandedReturnItem = OrderItemGroup;
 
 type Options = { preselectItemId: number | null; selectAll: boolean; enabled: boolean };
 
@@ -75,21 +77,21 @@ export function useReturnCreateController(orderId: string, options: Options) {
 
   const isStorePickup = order?.cargoCompanyName === 'Mağazadan Al';
 
-  const expandedItems = useMemo<ExpandedReturnItem[]>(() => {
-    const out: ExpandedReturnItem[] = [];
-    (order?.items ?? []).forEach((item) => {
-      const units = Math.max(1, item.quantity);
-      for (let i = 0; i < units; i += 1) out.push({ item, expandedId: `${item.id}-${i}` });
-    });
-    return out;
-  }, [order?.items]);
+  /**
+   * Seçilebilir satırlar. Normal ürünler adet kadar ayrı satıra bölünür; bundle'ın
+   * içindeki ürünler TEK satırda toplanır (paket ya bütün iade edilir ya da hiç).
+   */
+  const expandedItems = useMemo<ExpandedReturnItem[]>(
+    () => buildOrderItemGroups(order?.items, order?.displayItems),
+    [order?.items, order?.displayItems],
+  );
 
   const returnableItems = useMemo(
-    () => expandedItems.filter((entry) => !entry.item.isNonReturnable),
+    () => expandedItems.filter((entry) => !entry.isNonReturnable),
     [expandedItems],
   );
   const giftItems = useMemo(
-    () => returnableItems.filter((entry) => entry.item.returnStatus === 'gift_product'),
+    () => returnableItems.filter((entry) => entry.returnStatus === 'gift_product'),
     [returnableItems],
   );
 
@@ -117,7 +119,9 @@ export function useReturnCreateController(orderId: string, options: Options) {
     let nextSelected: string[] = [];
 
     if (options.preselectItemId) {
-      const target = returnableItems.find((entry) => entry.item.id === options.preselectItemId);
+      const target = returnableItems.find((entry) =>
+        entry.members.some((member) => member.orderItemId === options.preselectItemId),
+      );
       nextSelected = target ? Array.from(new Set([target.expandedId, ...giftIds])) : [];
     } else if (options.selectAll) {
       nextSelected = returnableItems.map((entry) => entry.expandedId);
@@ -204,19 +208,25 @@ export function useReturnCreateController(orderId: string, options: Options) {
     isScheduleReady &&
     !scheduled.pickupSubmitting;
 
+  /**
+   * Seçilen satırları iade isteğine çevirir. Bundle satırı burada kendi gerçek
+   * `order_item` kayıtlarına açılır; paketin tüm bileşenleri aynı iade nedeni ve
+   * aynı fotoğrafla gönderilir (paket bütün olarak iade edilir).
+   */
   const buildItemsPayload = useCallback((): ReturnSubmitItem[] => {
     return selectedItems.flatMap((expandedId) => {
       const entry = expandedItems.find((item) => item.expandedId === expandedId);
       const reasonId = itemReasons[expandedId];
       if (!entry || !reasonId) return [];
-      return [
-        {
-          orderItemId: entry.item.id,
-          quantity: 1,
-          returnReasonId: reasonId,
-          photo: reasonId === PHOTO_REQUIRED_REASON_ID ? (itemPhotos[expandedId] ?? null) : null,
-        },
-      ];
+
+      const photo = reasonId === PHOTO_REQUIRED_REASON_ID ? (itemPhotos[expandedId] ?? null) : null;
+
+      return entry.members.map((member) => ({
+        orderItemId: member.orderItemId,
+        quantity: member.quantity,
+        returnReasonId: reasonId,
+        photo,
+      }));
     });
   }, [selectedItems, expandedItems, itemReasons, itemPhotos]);
 

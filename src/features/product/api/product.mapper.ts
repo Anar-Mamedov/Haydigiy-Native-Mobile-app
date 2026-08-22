@@ -21,6 +21,7 @@ import {
 } from '@/types/product.types';
 import { resolveCdnUrl } from '@/utils/cdn';
 import { ProductReviewDto, ProductReviewPageDto } from './product-reviews.dtos';
+import { mapBundleItems, mapBundleSummary } from './bundle.mapper';
 
 function getImageUrl(path: string | null | undefined): string {
   if (!path) return '';
@@ -274,6 +275,7 @@ export function mapSearchProductDto(dto: SearchProductDto): Product {
 
   const featureIconsMapped = mapFeatureIconDtos(dto.feature_icons);
 
+
   return {
     badge: dto.badge,
     brand: dto.brand_name || 'HaydiGiy',
@@ -451,6 +453,15 @@ export function mapProductDetailDto(dto: any): Product {
 
   const featureIconsMapped = mapFeatureIconDtos(dto.feature_icons);
 
+  // Bundle: paket kalemleri ve fiyat özeti. Normal üründe `is_bundle` gelmez ve
+  // bu alanlar undefined kalır, dolayısıyla mevcut akış hiç değişmez.
+  const isBundle = dto.is_bundle === true;
+  const isApprovedForSale = dto.is_approved_for_sale === undefined ? true : Number(dto.is_approved_for_sale) === 1;
+  const bundleItems = isBundle ? mapBundleItems(dto.bundle) : undefined;
+  const bundleSummary = isBundle
+    ? mapBundleSummary(bundleItems ?? [], dto.bundle, { isApprovedForSale })
+    : undefined;
+
   return {
     badge: dto.badge,
     brand: dto.brand_name || 'HaydiGiy',
@@ -485,7 +496,10 @@ export function mapProductDetailDto(dto: any): Product {
     cartCount: dto.cart_count,
     favoritesCount: dto.favorites_count,
     totalQuantity: dto.total_quantity,
-    isApprovedForSale: dto.is_approved_for_sale === undefined ? true : Number(dto.is_approved_for_sale) === 1,
+    isApprovedForSale,
+    isBundle,
+    bundleItems,
+    bundleSummary,
     properties: propertiesMapped,
     sizeMeasurements: mapSizeMeasurements(dto.size_measurements),
     model: dto.model ? {

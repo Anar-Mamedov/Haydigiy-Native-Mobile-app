@@ -28,6 +28,9 @@ export interface ProductQuestionsPageDto {
     total_quantity?: number;
     feature_icons?: ProductFeatureIconDto[];
     variants?: unknown[];
+    /** Paket ürünlerde true; tek varyantla sepete eklenemezler. */
+    is_bundle?: boolean;
+    slug?: string;
   };
   /** The API returns the topic tags either as a bare array or under `tags`. */
   filters?: string[] | { tags?: string[] };

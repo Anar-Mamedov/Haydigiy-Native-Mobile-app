@@ -5,6 +5,9 @@ import { ProductQuestionsPageDto } from './product-questions.dtos';
 
 export type QaProduct = {
   id: string;
+  /** Paket ürün mü? Sepete ekleme tek varyantla yapılamaz; ürün detayına yönlendirilir. */
+  isBundle?: boolean;
+  slug?: string;
   name: string;
   imageUrl: string;
   price: string;
@@ -54,6 +57,8 @@ export function mapProductQuestionsPage(dto: ProductQuestionsPageDto): ProductQu
       totalQuantity: Number(dto.product?.total_quantity) || 0,
       featureIcons: mapFeatureIconDtos(dto.product?.feature_icons),
       variants: mapVariants(dto.product?.variants as never),
+      isBundle: dto.product?.is_bundle === true,
+      slug: dto.product?.slug,
     },
     tags: mapTags(dto.filters),
     questions: (dto.questions?.data ?? []).map((question) => ({

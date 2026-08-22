@@ -1,3 +1,5 @@
+import { BundleComponentDto, BundleDto } from '@/features/product/api/bundle.dtos';
+
 export interface CartItemProductDto {
   id?: number;
   name: string;
@@ -22,6 +24,7 @@ export interface CartItemVariantDto {
 }
 
 export interface CartItemDto {
+  /** Bundle satırlarında gelmez; paket satırı `bundle_group_id` ile tanınır. */
   variant_id: number;
   quantity: number;
   old_price: string | null;
@@ -32,7 +35,14 @@ export interface CartItemDto {
   stock_quantity: string;
   in_stock: boolean;
   product: CartItemProductDto | null;
-  variant: CartItemVariantDto;
+  /** Bundle satırlarında gelmez. */
+  variant?: CartItemVariantDto | null;
+  /** Bundle satırlarında `'bundle'`; normal ürünlerde yok ya da `'product'`. */
+  item_type?: 'product' | 'bundle' | string | null;
+  bundle_product_id?: number | null;
+  /** Adet güncelleme ve silme yalnızca bu kimlikle yapılır. */
+  bundle_group_id?: string | null;
+  bundle?: (BundleDto & { components?: BundleComponentDto[] | null }) | null;
 }
 
 export interface CartCampaignDto {

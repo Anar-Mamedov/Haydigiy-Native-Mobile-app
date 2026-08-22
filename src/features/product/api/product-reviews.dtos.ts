@@ -38,6 +38,9 @@ export interface ProductReviewPageDto {
     total_quantity?: number;
     feature_icons?: ProductFeatureIconDto[];
     variants?: unknown[];
+    /** Paket ürünlerde true; tek varyantla sepete eklenemezler. */
+    is_bundle?: boolean;
+    slug?: string;
   };
   review_summary?: ReviewSummaryDto;
   filters?: ReviewFiltersDto;

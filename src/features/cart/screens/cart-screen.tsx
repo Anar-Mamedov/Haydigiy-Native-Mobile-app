@@ -11,6 +11,7 @@ import { CartSummaryBar } from '@/features/cart/components/cart-summary-bar';
 import { FreeShippingCampaignCard } from '@/features/cart/components/free-shipping-campaign-card';
 import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-estimate-info';
 import { useCartController } from '@/features/cart/hooks/use-cart-controller';
+import { getCartLineKey } from '@/features/cart/utils/cart-line';
 import { useTrackCartPageView } from '@/features/insider/hooks/use-insider-page-tracking';
 
 export function CartScreen() {
@@ -111,11 +112,12 @@ export function CartScreen() {
             <CartItemCard
               deliveryMessage={controller.shippingEstimate?.message}
               item={item}
-              key={`${item.variantId ?? item.productId}-${item.size ?? ''}`}
+              key={getCartLineKey(item)}
+              onPressBundleComponent={(component) => controller.openProductBySlug(component.slug)}
               onPressProduct={() => controller.openProduct(item)}
               onQuantityChange={(quantity) => controller.changeQuantity(item, quantity)}
               onRemovePress={() => controller.requestRemove(item)}
-              updating={controller.updatingVariantId === item.variantId}
+              updating={controller.updatingLineKey === getCartLineKey(item)}
             />
           ))}
         </ScrollView>

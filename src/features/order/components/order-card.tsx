@@ -1,6 +1,7 @@
 import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { Image as ImagePlaceholderIcon } from '@/components/ui/icons';
+import { BundleContents } from '@/components/bundle/bundle-contents';
 import { Button, ScrollView, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
@@ -70,6 +71,24 @@ function ProductThumb({
         ) : (
           <ImagePlaceholderIcon color="$color9" size={28} />
         )}
+        {/* Paket satırı: listede tek ürün görünür, paket olduğu şeritle belirtilir */}
+        {product.isBundle ? (
+          <XStack
+            alignItems="center"
+            backgroundColor="$brand"
+            bottom={0}
+            justifyContent="center"
+            left={0}
+            paddingVertical={2}
+            position="absolute"
+            right={0}
+            zIndex={10}
+          >
+            <Paragraph color="white" fontSize={10} fontWeight="800">
+              PAKET
+            </Paragraph>
+          </XStack>
+        ) : null}
       </YStack>
     </Pressable>
   );
@@ -81,6 +100,9 @@ export function OrderCard({ order, onPressDetails, onPressProduct }: OrderCardPr
   const dateLabel = formatOrderDate(order.createdAt);
   const thumbs = order.products.slice(0, MAX_THUMBS);
   const overflow = order.products.length - MAX_THUMBS;
+  const bundleProducts = order.products.filter(
+    (product) => product.isBundle && (product.bundleComponents?.length ?? 0) > 0,
+  );
 
   return (
     <SectionCard padding="$3">
@@ -198,6 +220,25 @@ export function OrderCard({ order, onPressDetails, onPressProduct }: OrderCardPr
               </Pressable>
             ) : null}
           </ScrollView>
+        ) : null}
+
+        {/* Paket içeriği — bundle'ın hangi ürünlerden oluştuğu (sepetteki ile aynı bileşen) */}
+        {bundleProducts.length > 0 ? (
+          <YStack gap="$2">
+            {bundleProducts.map((product, index) => (
+              <YStack gap="$1" key={product.bundleGroupId ?? `${product.slug}-${index}`}>
+                {bundleProducts.length > 1 ? (
+                  <Paragraph color="$color" fontSize={12} fontWeight="700" numberOfLines={1}>
+                    {product.name}
+                  </Paragraph>
+                ) : null}
+                <BundleContents
+                  components={product.bundleComponents ?? []}
+                  onPressComponent={(component) => component.slug && onPressProduct(component.slug)}
+                />
+              </YStack>
+            ))}
+          </YStack>
         ) : null}
       </YStack>
     </SectionCard>

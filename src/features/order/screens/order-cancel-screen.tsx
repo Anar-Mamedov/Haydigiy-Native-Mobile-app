@@ -124,7 +124,9 @@ export function OrderCancelScreen() {
               ) : null}
               {controller.expandedItems.map((entry) => (
                 <CancelItemRow
+                  bundleComponents={entry.components}
                   disabled={!controller.isCancelable}
+                  isBundle={entry.isBundle}
                   item={entry.item}
                   key={entry.expandedId}
                   onPressReason={() => setReasonSheetFor(entry.expandedId)}

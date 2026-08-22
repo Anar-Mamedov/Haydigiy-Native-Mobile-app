@@ -1,3 +1,4 @@
+import { isBundleLine, mapBundleComponents } from '@/features/product/api/bundle.mapper';
 import {
   OrderDto,
   OrderLineItemDto,
@@ -27,12 +28,21 @@ function toNumber(value: number | string | undefined, fallback = 0): number {
 }
 
 function mapProduct(dto: OrderProductDto): OrderProduct {
+  const isBundle = isBundleLine(dto);
+
   return {
     name: dto.name ?? '',
     variantName: dto.variant_name ?? '',
     image: dto.image ?? null,
     slug: dto.slug ?? '',
     kind: 'normal',
+    ...(isBundle
+      ? {
+          isBundle: true,
+          bundleGroupId: dto.bundle_group_id ?? undefined,
+          bundleComponents: mapBundleComponents(dto.components),
+        }
+      : {}),
   };
 }
 

@@ -115,3 +115,96 @@ describe('mapReturnRequestDto', () => {
     expect(order.returnReasons).toEqual(['Beden büyük geldi']);
   });
 });
+
+describe('mapOrderDto (bundle)', () => {
+  /** `/orders` listesindeki paket satırı: tek ürün olarak döner, içeriği `components` altındadır. */
+  const bundleProduct = {
+    name: 'Deneme bundle',
+    variant_name: '4 ürün',
+    image: 'https://cdn/deneme-bundle.webp',
+    slug: 'deneme-bundle',
+    item_type: 'bundle' as const,
+    bundle_product_id: 97045,
+    bundle_group_id: '101703d9-b539-458e-ba74-8f334359e14f',
+    components: [
+      {
+        order_item_id: 11845555,
+        product_name: 'Kemer Detaylı Yarım Kol Elbise Siyah - 52521.2204.',
+        product_slug: 'kemer-detayli-yarim-kol-elbise-siyah-525212204',
+        variant_name: 'L',
+        quantity: 1,
+        unit_price: 1250,
+        image: { id: 730230, thumb: 'https://cdn/elbise.webp' },
+      },
+      {
+        order_item_id: 11845557,
+        product_name: 'Raşel Kumaş İkili Takım Açıkhaki - 75247.801.',
+        product_slug: 'rasel-kumas-ikili-takim-acikhaki-75247801-96763',
+        variant_name: 'L',
+        quantity: 1,
+        unit_price: 1250,
+        image: { id: 759350, thumb: 'https://cdn/rasel.webp' },
+      },
+    ],
+  };
+
+  const normalProduct = {
+    name: 'Uzun Kollu Cepli Gömlek Siyah - 7841.1437.',
+    variant_name: 'STANDART',
+    image: 'https://cdn/gomlek.webp',
+    slug: 'uzun-kollu-cepli-gomlek-siyah-78411437-95236',
+    item_type: 'product' as const,
+    bundle_product_id: null,
+    bundle_group_id: null,
+    components: [],
+  };
+
+  function makeOrder() {
+    return mapOrderDto({
+      id: 1387277,
+      order_no: 'HG2208261387277',
+      status: 'Teslim Edildi',
+      total_price: '5.429,97 TL',
+      created_at: '22 Ağu 2026',
+      shipment_count: 1,
+      product_count: 5,
+      receiver: 'Anar Mamedov',
+      products: [bundleProduct, normalProduct],
+      cancelled_items: [],
+      returned_items: [],
+    } as never);
+  }
+
+  it('marks the bundle line so the card can show the PAKET badge', () => {
+    const order = makeOrder();
+    const [bundle, normal] = order.products;
+
+    expect(bundle.isBundle).toBe(true);
+    expect(bundle.bundleGroupId).toBe('101703d9-b539-458e-ba74-8f334359e14f');
+    expect(bundle.name).toBe('Deneme bundle');
+    // Normal ürün etkilenmez.
+    expect(normal.isBundle).toBeUndefined();
+    expect(normal.bundleComponents).toBeUndefined();
+  });
+
+  it('maps the package contents listed under the bundle line', () => {
+    const [bundle] = makeOrder().products;
+
+    expect(bundle.bundleComponents).toHaveLength(2);
+    // Bu uçta ad/slug `product_name`/`product_slug` olarak gelir.
+    expect(bundle.bundleComponents?.[0]).toMatchObject({
+      orderItemId: 11845555,
+      title: 'Kemer Detaylı Yarım Kol Elbise Siyah - 52521.2204.',
+      slug: 'kemer-detayli-yarim-kol-elbise-siyah-525212204',
+      variantName: 'L',
+      quantity: 1,
+      imageUrl: 'https://cdn/elbise.webp',
+    });
+    expect(bundle.bundleComponents?.[1].title).toBe('Raşel Kumaş İkili Takım Açıkhaki - 75247.801.');
+  });
+
+  it('keeps the bundle as a single line in the products list', () => {
+    // Paket 4 üründen oluşsa da listede TEK satır; içindekiler ayrı satır değildir.
+    expect(makeOrder().products).toHaveLength(2);
+  });
+});

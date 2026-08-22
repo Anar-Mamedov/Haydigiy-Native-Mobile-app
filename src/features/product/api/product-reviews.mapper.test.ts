@@ -42,6 +42,9 @@ describe('mapProductReviewPage', () => {
       totalQuantity: 3,
       featureIcons: [],
       variants: [],
+      // Paket ürün olmayan normal üründe bayrak false, slug gelmez.
+      isBundle: false,
+      slug: undefined,
     });
     expect(result.summary).toEqual({
       average: 4.2,

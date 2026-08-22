@@ -27,6 +27,22 @@ export interface OrderDetailItemDto {
   is_non_returnable?: boolean;
   /** `available` | `gift_product` | other backend label. */
   return_status?: string | null;
+  /**
+   * Bundle bileşeni olan satırlarda dolu gelir. Aynı `bundle_group_id`'ye sahip
+   * satırlar TEK bir paketi oluşturur: iptal ve iade ekranlarında ayrı seçilemezler.
+   */
+  bundle_product_id?: number | null;
+  bundle_item_id?: number | null;
+  bundle_group_id?: string | null;
+}
+
+/**
+ * Müşteri görünümü satırı: bundle burada TEK satır olarak gelir ve paketin adı,
+ * görseli, tutarı buradan okunur. İade/iptal daima `items` üzerinden yapılır.
+ */
+export interface OrderDetailDisplayItemDto extends OrderDetailItemDto {
+  item_type?: 'product' | 'bundle' | string | null;
+  total?: number | string;
 }
 
 export interface ReturnRequestRefDto {
@@ -126,6 +142,7 @@ export interface OrderDetailResponseDto {
   totals?: OrderTotalsDto;
   return_totals?: { return_total?: number | string | null } | null;
   items?: OrderDetailItemDto[] | Record<string, OrderDetailItemDto> | null;
+  display_items?: OrderDetailDisplayItemDto[] | null;
   returned_items?: ReturnedItemDetailDto[] | null;
   cancelled_items?: CancelledItemDetailDto[] | null;
 }

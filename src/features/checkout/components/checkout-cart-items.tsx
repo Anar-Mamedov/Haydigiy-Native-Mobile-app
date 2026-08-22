@@ -6,12 +6,17 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { formatCurrency } from '@/utils/format-currency';
 import { CartLineItem } from '@/types/cart.types';
+import { BundleComponent } from '@/types/bundle.types';
+import { BundleContents } from '@/components/bundle/bundle-contents';
+import { getCartLineKey, isBundleCartLine } from '@/features/cart/utils/cart-line';
 
 interface CheckoutCartItemsProps {
   items: CartLineItem[];
   expanded: boolean;
   onToggle: () => void;
   onPressItem: (item: CartLineItem) => void;
+  /** Paket içeriğindeki bir ürüne dokunulduğunda o ürünün detayına gider. */
+  onPressBundleComponent?: (component: BundleComponent) => void;
 }
 
 /** Collapsible strip of cart thumbnails, mirroring the web "Sepetimdeki Ürünler" panel. */
@@ -20,7 +25,12 @@ export function CheckoutCartItems({
   expanded,
   onToggle,
   onPressItem,
+  onPressBundleComponent,
 }: CheckoutCartItemsProps) {
+  const bundleItems = items.filter(
+    (item) => isBundleCartLine(item) && (item.bundleComponents?.length ?? 0) > 0,
+  );
+
   return (
     <SectionCard padding={0} overflow="hidden">
       <Pressable
@@ -51,7 +61,7 @@ export function CheckoutCartItems({
               <Pressable
                 accessibilityLabel={item.title}
                 accessibilityRole="button"
-                key={`${item.variantId ?? item.productId}-${item.size ?? ''}`}
+                key={getCartLineKey(item)}
                 onPress={() => onPressItem(item)}
               >
                 <YStack gap="$1.5" width={84}>
@@ -84,6 +94,23 @@ export function CheckoutCartItems({
                         x{item.quantity}
                       </Paragraph>
                     </XStack>
+                    {/* Bundle ödemede de TEK ürün olarak görünür; içeriği aşağıda listelenir */}
+                    {isBundleCartLine(item) ? (
+                      <XStack
+                        alignItems="center"
+                        backgroundColor="$brand"
+                        bottom={0}
+                        justifyContent="center"
+                        left={0}
+                        paddingVertical={2}
+                        position="absolute"
+                        right={0}
+                      >
+                        <Paragraph color="white" fontSize={9} fontWeight="800">
+                          PAKET
+                        </Paragraph>
+                      </XStack>
+                    ) : null}
                   </YStack>
                   <Paragraph color="$brand" fontSize={12} fontWeight="700" textAlign="center">
                     {formatCurrency(item.unitPrice * item.quantity)}
@@ -92,6 +119,25 @@ export function CheckoutCartItems({
               </Pressable>
             ))}
           </ScrollView>
+
+          {/* Paket içerikleri — hangi paketin hangi ürünlerden oluştuğu */}
+          {bundleItems.length > 0 ? (
+            <YStack gap="$2" paddingBottom={12} paddingHorizontal={12}>
+              {bundleItems.map((item) => (
+                <YStack gap="$1" key={`${getCartLineKey(item)}-components`}>
+                  {bundleItems.length > 1 ? (
+                    <Paragraph color="$color" fontSize={12} fontWeight="700" numberOfLines={1}>
+                      {item.title}
+                    </Paragraph>
+                  ) : null}
+                  <BundleContents
+                    components={item.bundleComponents ?? []}
+                    onPressComponent={onPressBundleComponent}
+                  />
+                </YStack>
+              ))}
+            </YStack>
+          ) : null}
         </>
       ) : null}
     </SectionCard>

@@ -49,6 +49,8 @@ jest.mock('@/features/cart/api/cart.queries', () => ({
   }),
   useClearCartMutation: () => ({ isPending: false, mutate: jest.fn() }),
   useRemoveCartItemMutation: () => ({ isPending: false, mutate: jest.fn() }),
+  useUpdateBundleQuantityMutation: () => ({ isPending: false, mutate: jest.fn() }),
+  useRemoveBundleMutation: () => ({ isPending: false, mutate: jest.fn() }),
   useUpdateCartItemMutation: () => ({
     isPending: false,
     mutate: jest.fn(),

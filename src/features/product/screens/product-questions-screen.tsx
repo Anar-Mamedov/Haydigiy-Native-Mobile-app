@@ -119,6 +119,13 @@ export function ProductQuestionsScreen() {
   const confirmAddToCart = () => {
     const product = query.data?.product;
     if (!product) return;
+
+    // Bundle tek varyantla sepete eklenemez; paketteki her ürün için beden seçilmeli.
+    if (product.isBundle) {
+      if (product.slug) router.push(`/product/${product.slug}` as never);
+      return;
+    }
+
     const variantId = selectedVariant?.pivotId ?? selectedVariant?.id;
     if (variantId) {
       addToCart.mutate({

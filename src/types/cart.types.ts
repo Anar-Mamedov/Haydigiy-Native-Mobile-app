@@ -9,6 +9,8 @@ export type CartCampaign = {
   endDate?: string | null;
 };
 
+import { BundleComponent } from '@/types/bundle.types';
+
 export type CartLineItem = {
   imageUrl: string;
   productId: string;
@@ -27,4 +29,14 @@ export type CartLineItem = {
   originalPrice?: number;
   /** Remaining stock for the selected variant; caps quantity and drives low-stock badges. */
   stock?: number;
+  /**
+   * Bundle satırlarında `'bundle'`. Paket sepette TEK satır görünür; içindeki ürünler
+   * ayrı satır değildir ve adet/silme yalnızca paketin kendisi üzerinden yapılır.
+   */
+  itemType?: 'product' | 'bundle';
+  /** Bundle satırının sepetteki kimliği; adet ve silme uçları bunu kullanır. */
+  bundleGroupId?: string;
+  bundleProductId?: string;
+  /** Paket içeriği — yalnızca gösterim amaçlıdır. */
+  bundleComponents?: BundleComponent[];
 };

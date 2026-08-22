@@ -60,6 +60,13 @@ beforeEach(() => {
 });
 
 describe('useClearCartMutation', () => {
+  /** Karışık sepette her satır kendi ucuna gider; bunlar normal ürün satırları. */
+  const VARIANT_TARGETS = [
+    { kind: 'variant' as const, variantId: '11' },
+    { kind: 'variant' as const, variantId: '22' },
+    { kind: 'variant' as const, variantId: '33' },
+  ];
+
   beforeEach(() => {
     useCartStore.setState({ items: [makeItem('11'), makeItem('22'), makeItem('33')] });
   });
@@ -67,7 +74,7 @@ describe('useClearCartMutation', () => {
   it('removes every passed variant on the backend even though the store is cleared optimistically', async () => {
     const { result } = renderHook(() => useClearCartMutation(), { wrapper });
 
-    result.current.mutate([11, 22, 33]);
+    result.current.mutate(VARIANT_TARGETS);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -84,7 +91,7 @@ describe('useClearCartMutation', () => {
 
     const { result } = renderHook(() => useClearCartMutation(), { wrapper });
 
-    result.current.mutate([11, 22, 33]);
+    result.current.mutate(VARIANT_TARGETS);
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
@@ -94,7 +101,7 @@ describe('useClearCartMutation', () => {
   it('sends the Insider cart-cleared event only on success', async () => {
     const { result } = renderHook(() => useClearCartMutation(), { wrapper });
 
-    result.current.mutate([11, 22, 33]);
+    result.current.mutate(VARIANT_TARGETS);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(trackerMock.trackCartCleared).toHaveBeenCalledTimes(1);
@@ -105,7 +112,7 @@ describe('useClearCartMutation', () => {
 
     const { result } = renderHook(() => useClearCartMutation(), { wrapper });
 
-    result.current.mutate([11, 22, 33]);
+    result.current.mutate(VARIANT_TARGETS);
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     expect(trackerMock.trackCartCleared).not.toHaveBeenCalled();

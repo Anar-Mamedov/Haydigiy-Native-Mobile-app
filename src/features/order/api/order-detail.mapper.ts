@@ -62,6 +62,9 @@ function mapItem(dto: OrderDetailItemDto): OrderDetailItem {
       Boolean(dto.product_review) || Boolean(dto.reviewed) || toNumber(dto.reviews_count) > 0,
     isNonReturnable: dto.is_non_returnable === true,
     returnStatus: dto.return_status ?? undefined,
+    bundleProductId: dto.bundle_product_id ?? undefined,
+    bundleItemId: dto.bundle_item_id ?? undefined,
+    bundleGroupId: dto.bundle_group_id ?? undefined,
   };
 }
 
@@ -128,6 +131,10 @@ function mapReturnPaymentInfo(
 
 export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
   const items = toArray(dto.items).map(mapItem);
+  // Müşteri görünümü: bundle tek satır. Gelmezse `items` kullanılır (eski siparişler bozulmaz).
+  const displayItems = Array.isArray(dto.display_items) && dto.display_items.length > 0
+    ? dto.display_items.map(mapItem)
+    : items;
   const returnedItems = (dto.returned_items ?? []).map(mapReturnedItem);
   const cancelledItems = (dto.cancelled_items ?? []).map(mapCancelledItem);
   const totals = dto.totals ?? {};
@@ -186,6 +193,7 @@ export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
     taxNumber: dto.tax_number ?? null,
     taxOffice: dto.tax_office ?? null,
     items,
+    displayItems,
     returnedItems,
     cancelledItems,
     totals: {

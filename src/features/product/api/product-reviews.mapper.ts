@@ -31,6 +31,9 @@ export type ReviewFilterValues = {
 };
 
 export type ReviewProduct = {
+  /** Paket ürün mü? Sepete ekleme tek varyantla yapılamaz; ürün detayına yönlendirilir. */
+  isBundle?: boolean;
+  slug?: string;
   id: string;
   name: string;
   imageUrl: string;
@@ -69,6 +72,8 @@ export function mapProductReviewPage(dto: ProductReviewPageDto): ProductReviewPa
       totalQuantity: Number(dto.product?.total_quantity) || 0,
       featureIcons: mapFeatureIconDtos(dto.product?.feature_icons),
       variants: mapVariants(dto.product?.variants as never),
+      isBundle: dto.product?.is_bundle === true,
+      slug: dto.product?.slug,
     },
     summary: summaryDto
       ? {

@@ -1,3 +1,5 @@
+import { BundleComponentDto } from '@/features/product/api/bundle.dtos';
+
 export interface OrderProductDto {
   name?: string;
   variant_name?: string;
@@ -5,6 +7,12 @@ export interface OrderProductDto {
   slug?: string;
   product_id?: number;
   variant_id?: number;
+  /** Bundle satırları listede TEK ürün olarak döner (`item_type: 'bundle'`). */
+  item_type?: 'product' | 'bundle' | string | null;
+  bundle_product_id?: number | null;
+  bundle_group_id?: string | null;
+  /** Paket içeriği; bu uçta ad/slug `product_name`/`product_slug` olarak gelir. */
+  components?: BundleComponentDto[] | null;
 }
 
 export interface OrderLineItemDto {

@@ -5,6 +5,9 @@ import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { QuantityStepper } from '@/components/ui';
 import { CartLineItem } from '@/types/cart.types';
+import { BundleComponent } from '@/types/bundle.types';
+import { BundleContents } from '@/components/bundle/bundle-contents';
+import { getCartLineMaxQuantity, isBundleCartLine } from '@/features/cart/utils/cart-line';
 import { formatCurrency } from '@/utils/format-currency';
 
 const LOW_STOCK_THRESHOLD = 3;
@@ -19,6 +22,8 @@ type CartItemCardProps = {
   onQuantityChange: (quantity: number) => void;
   onRemovePress: () => void;
   onPressProduct: () => void;
+  /** Paket içeriğindeki bir ürüne dokunulduğunda o ürünün detayına gider. */
+  onPressBundleComponent?: (component: BundleComponent) => void;
 };
 
 export function CartItemCard({
@@ -28,10 +33,13 @@ export function CartItemCard({
   onQuantityChange,
   onRemovePress,
   onPressProduct,
+  onPressBundleComponent,
 }: CartItemCardProps) {
   const stock = item.stock;
-  const isLastOne = stock === 1;
-  const isLowStock = typeof stock === 'number' && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
+  // Bundle satırı stok bildirmez; "Son 1 ürün"/"Stokta tükeniyor" rozetleri paket için gösterilmez.
+  const isBundle = isBundleCartLine(item);
+  const isLastOne = !isBundle && stock === 1;
+  const isLowStock = !isBundle && typeof stock === 'number' && stock > 0 && stock <= LOW_STOCK_THRESHOLD;
   const hasDiscount = item.originalPrice !== undefined && item.originalPrice > item.unitPrice;
 
   const lineTotal = item.unitPrice * item.quantity;
@@ -83,6 +91,22 @@ export function CartItemCard({
               </Paragraph>
             </XStack>
           ) : null}
+          {isBundle ? (
+            <XStack
+              alignItems="center"
+              backgroundColor="$brand"
+              bottom={0}
+              justifyContent="center"
+              left={0}
+              paddingVertical={2}
+              position="absolute"
+              right={0}
+            >
+              <Paragraph color="white" fontSize={10} fontWeight="800">
+                PAKET
+              </Paragraph>
+            </XStack>
+          ) : null}
         </YStack>
       </Pressable>
 
@@ -110,10 +134,15 @@ export function CartItemCard({
           </Pressable>
         </XStack>
 
-        {item.size ? (
+        {!isBundle && item.size ? (
           <Paragraph color="$color10" fontSize={13}>
             Beden: <Paragraph color="$color" fontWeight="600">{item.size}</Paragraph>
           </Paragraph>
+        ) : null}
+
+        {/* Paket içeriği — bundle tek satır, ürünleri yalnızca burada listelenir */}
+        {isBundle && item.bundleComponents?.length ? (
+          <BundleContents components={item.bundleComponents} onPressComponent={onPressBundleComponent} />
         ) : null}
 
         {isLowStock ? (
@@ -141,7 +170,7 @@ export function CartItemCard({
           <QuantityStepper
             accessibilityLabel={item.title}
             loading={updating}
-            max={stock}
+            max={getCartLineMaxQuantity(item) || undefined}
             onChange={onQuantityChange}
             value={item.quantity}
           />
