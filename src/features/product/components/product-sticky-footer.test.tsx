@@ -62,7 +62,7 @@ describe('ProductStickyFooter', () => {
     const onNotifyMe = jest.fn();
 
     renderWithTamagui(
-      <ProductStickyFooter {...baseProps} isAuthenticated isOutOfStock onNotifyMe={onNotifyMe} />,
+      <ProductStickyFooter {...baseProps} isOutOfStock onNotifyMe={onNotifyMe} />,
     );
 
     expect(screen.queryByLabelText('Sepete ekle')).toBeNull();
@@ -71,15 +71,17 @@ describe('ProductStickyFooter', () => {
     expect(onNotifyMe).toHaveBeenCalledTimes(1);
   });
 
-  it('asks a signed-out visitor to nothing and just reports the size as sold out', () => {
-    renderWithTamagui(<ProductStickyFooter {...baseProps} isAuthenticated={false} isOutOfStock />);
+  // Eskiden misafire devre dışı bir "Tükendi" butonu gösteriliyordu; artık
+  // bildirim herkese açık, giriş gerekliliğini `useNotifyStock` yönetiyor.
+  it('no longer hides the notification behind a disabled sold-out button', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} isOutOfStock />);
 
-    expect(screen.getByLabelText('Tükendi')).toBeDisabled();
-    expect(screen.queryByLabelText('Ürün gelince haber ver')).toBeNull();
+    expect(screen.queryByLabelText('Tükendi')).toBeNull();
+    expect(screen.getByLabelText('Ürün gelince haber ver')).toBeTruthy();
   });
 
   it('confirms the request once it has been sent for that size', () => {
-    renderWithTamagui(<ProductStickyFooter {...baseProps} isAuthenticated isNotified isOutOfStock />);
+    renderWithTamagui(<ProductStickyFooter {...baseProps} isNotified isOutOfStock />);
 
     expect(screen.getByLabelText('Stok bildirimi talebin alındı')).toBeDisabled();
   });
@@ -88,13 +90,7 @@ describe('ProductStickyFooter', () => {
     const onNotifyMe = jest.fn();
 
     renderWithTamagui(
-      <ProductStickyFooter
-        {...baseProps}
-        isAuthenticated
-        isNotifying
-        isOutOfStock
-        onNotifyMe={onNotifyMe}
-      />,
+      <ProductStickyFooter {...baseProps} isNotifying isOutOfStock onNotifyMe={onNotifyMe} />,
     );
 
     expect(screen.getByText('Gönderiliyor...')).toBeTruthy();
@@ -103,7 +99,7 @@ describe('ProductStickyFooter', () => {
 
   it('keeps add-to-cart when the product is closed for sale, even if sold out', () => {
     renderWithTamagui(
-      <ProductStickyFooter {...baseProps} isApprovedForSale={false} isAuthenticated isOutOfStock />,
+      <ProductStickyFooter {...baseProps} isApprovedForSale={false} isOutOfStock />,
     );
 
     expect(screen.getByLabelText('Sepete ekle')).toBeDisabled();

@@ -3,7 +3,6 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, Spinner, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, AppSelect, EmptyState, ScreenHeader, SearchInput, SectionCard } from '@/components/ui';
-import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
@@ -59,7 +58,6 @@ export function ProductQuestionsScreen() {
   const [askOpen, setAskOpen] = useState(false);
   const [criteriaOpen, setCriteriaOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-  const isAuthenticated = useAuthStore((state) => Boolean(state.user));
   const {
     closeConfirmation: closeNotifyConfirmation,
     isConfirmationOpen: isNotifyConfirmationOpen,
@@ -248,7 +246,6 @@ export function ProductQuestionsScreen() {
         <SizeSelectionSheet
           featureIcons={query.data.product.featureIcons}
           imageUrl={query.data.product.imageUrl}
-          isAuthenticated={isAuthenticated}
           isNotified={isVariantNotified(selectedVariant?.id)}
           isNotifying={isNotifying}
           onNotifyMe={handleNotifyMe}

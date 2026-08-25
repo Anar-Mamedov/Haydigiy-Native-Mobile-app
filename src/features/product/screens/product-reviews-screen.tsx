@@ -4,7 +4,6 @@ import { ScrollView, Spinner, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, AppSelect, EmptyState, ScreenHeader, SearchInput } from '@/components/ui';
 import { ProductReviewFilters } from '@/services/product.service';
-import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
@@ -64,7 +63,6 @@ export function ProductReviewsScreen() {
   const [criteriaOpen, setCriteriaOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-  const isAuthenticated = useAuthStore((state) => Boolean(state.user));
   const {
     closeConfirmation: closeNotifyConfirmation,
     isConfirmationOpen: isNotifyConfirmationOpen,
@@ -261,7 +259,6 @@ export function ProductReviewsScreen() {
         <SizeSelectionSheet
           featureIcons={query.data.product.featureIcons}
           imageUrl={query.data.product.imageUrl}
-          isAuthenticated={isAuthenticated}
           isNotified={isVariantNotified(selectedVariant?.id)}
           isNotifying={isNotifying}
           onNotifyMe={handleNotifyMe}

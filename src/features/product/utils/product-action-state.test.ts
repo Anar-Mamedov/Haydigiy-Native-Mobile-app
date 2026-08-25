@@ -2,7 +2,6 @@ import { resolveProductActionState } from './product-action-state';
 
 const inStock = {
   isApprovedForSale: true,
-  isAuthenticated: true,
   isNotified: false,
   isOutOfStock: false,
 };
@@ -18,13 +17,9 @@ describe('resolveProductActionState', () => {
     ).toBe('add-to-cart');
   });
 
-  it('only reports sold out to a signed-out visitor', () => {
-    expect(
-      resolveProductActionState({ ...inStock, isAuthenticated: false, isOutOfStock: true }),
-    ).toBe('sold-out-guest');
-  });
-
-  it('offers the notification for a signed-in visitor', () => {
+  // Oturum durumu artık karara girmiyor: misafir de butonu görür, girişe
+  // yönlendirme ve talebi tamamlama işi `useNotifyStock`'a ait.
+  it('offers the notification to every visitor once the size is sold out', () => {
     expect(resolveProductActionState({ ...inStock, isOutOfStock: true })).toBe('notify-available');
   });
 

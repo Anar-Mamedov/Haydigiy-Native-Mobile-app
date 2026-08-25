@@ -83,7 +83,6 @@ describe('SizeSelectionSheet — sold-out sizes', () => {
     renderWithTamagui(
       <SizeSelectionSheet
         {...sheetBaseProps}
-        isAuthenticated
         onNotifyMe={onNotifyMe}
         selectedVariant={soldOutVariant}
         variants={[inStockVariant, soldOutVariant]}
@@ -95,25 +94,24 @@ describe('SizeSelectionSheet — sold-out sizes', () => {
     expect(onNotifyMe).toHaveBeenCalledTimes(1);
   });
 
-  it('reports sold out to a signed-out visitor instead of offering the notification', () => {
+  // Misafire özel devre dışı "Tükendi" dalı kaldırıldı; bildirim herkese açık.
+  it('no longer hides the notification behind a disabled sold-out button', () => {
     renderWithTamagui(
       <SizeSelectionSheet
         {...sheetBaseProps}
-        isAuthenticated={false}
         selectedVariant={soldOutVariant}
         variants={[soldOutVariant]}
       />,
     );
 
-    expect(screen.getByTestId('sheet-out-of-stock')).toBeTruthy();
-    expect(screen.queryByTestId('sheet-notify-me')).toBeNull();
+    expect(screen.queryByTestId('sheet-out-of-stock')).toBeNull();
+    expect(screen.getByTestId('sheet-notify-me')).toBeTruthy();
   });
 
   it('confirms a request that was already sent for that size', () => {
     renderWithTamagui(
       <SizeSelectionSheet
         {...sheetBaseProps}
-        isAuthenticated
         isNotified
         selectedVariant={soldOutVariant}
         variants={[soldOutVariant]}
@@ -127,7 +125,6 @@ describe('SizeSelectionSheet — sold-out sizes', () => {
     renderWithTamagui(
       <SizeSelectionSheet
         {...sheetBaseProps}
-        isAuthenticated
         selectedVariant={inStockVariant}
         variants={[inStockVariant]}
       />,

@@ -269,7 +269,6 @@ export function ProductDetailScreen() {
         onNotifyMe={controller.handleNotifyMe}
         onWhatsappPress={controller.handleWhatsappPress}
         isApprovedForSale={displayData.isApprovedForSale}
-        isAuthenticated={controller.isAuthenticated}
         isLastOne={selectedVariant?.quantity === 1}
         isNotified={controller.isVariantNotified(selectedVariant?.id)}
         isNotifying={controller.isNotifying}
@@ -310,7 +309,6 @@ export function ProductDetailScreen() {
           featureIcons={product?.featureIcons}
           imageUrl={displayData.imageUrl}
           isApprovedForSale={displayData.isApprovedForSale}
-          isAuthenticated={controller.isAuthenticated}
           isLoadingVariants={controller.areProductOptionsLoading}
           isNotified={controller.isVariantNotified(selectedVariant?.id)}
           isNotifying={controller.isNotifying}

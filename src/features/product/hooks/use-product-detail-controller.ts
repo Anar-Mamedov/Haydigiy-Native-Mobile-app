@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, useWindowDimensions } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
@@ -64,7 +63,6 @@ export function useProductDetailController() {
 
   // States
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-  const isAuthenticated = useAuthStore((state) => Boolean(state.user));
   const {
     closeConfirmation: closeNotifyConfirmation,
     isConfirmationOpen: isNotifyConfirmationOpen,
@@ -330,7 +328,6 @@ export function useProductDetailController() {
     selectedVariant,
     setSelectedVariant,
     isSelectedVariantOutOfStock,
-    isAuthenticated,
     isNotifying,
     isNotifyConfirmationOpen,
     isVariantNotified,

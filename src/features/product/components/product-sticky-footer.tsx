@@ -23,7 +23,6 @@ interface ProductStickyFooterProps {
   onNotifyMe: () => void;
   onWhatsappPress: () => void;
   isApprovedForSale?: boolean;
-  isAuthenticated?: boolean;
   isLastOne?: boolean;
   isNotified?: boolean;
   isNotifying?: boolean;
@@ -46,7 +45,6 @@ export function ProductStickyFooter({
   onNotifyMe,
   onWhatsappPress,
   isApprovedForSale = true,
-  isAuthenticated = false,
   isLastOne = false,
   isNotified = false,
   isNotifying = false,
@@ -134,7 +132,6 @@ export function ProductStickyFooter({
         <ProductPrimaryAction
           height={actionHeight}
           isApprovedForSale={isApprovedForSale}
-          isAuthenticated={isAuthenticated}
           isLastOne={isLastOne}
           isNotified={isNotified}
           isNotifying={isNotifying}

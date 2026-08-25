@@ -27,7 +27,6 @@ type SizeSelectionSheetProps = {
   onConfirm: () => void;
   onAskQuestion?: () => void;
   isApprovedForSale?: boolean;
-  isAuthenticated?: boolean;
   isNotified?: boolean;
   isNotifying?: boolean;
   onNotifyMe?: () => void;
@@ -53,7 +52,6 @@ export function SizeSelectionSheet({
   onConfirm,
   onAskQuestion,
   isApprovedForSale = true,
-  isAuthenticated = false,
   isNotified = false,
   isNotifying = false,
   onNotifyMe,
@@ -65,7 +63,6 @@ export function SizeSelectionSheet({
   );
   const actionState = resolveProductActionState({
     isApprovedForSale,
-    isAuthenticated,
     isNotified,
     isOutOfStock: isSelectedVariantOutOfStock,
   });
@@ -183,18 +180,7 @@ export function SizeSelectionSheet({
           ) : null}
 
           <YStack gap="$2">
-            {actionState === 'sold-out-guest' ? (
-              <AppButton
-                accessibilityLabel="Tükendi"
-                backgroundColor="$color4"
-                borderColor="transparent"
-                color="$color10"
-                disabled
-                testID="sheet-out-of-stock"
-              >
-                Tükendi
-              </AppButton>
-            ) : actionState === 'notify-requested' ? (
+            {actionState === 'notify-requested' ? (
               <AppButton
                 accessibilityLabel="Stok bildirimi talebin alındı"
                 backgroundColor="$green10"

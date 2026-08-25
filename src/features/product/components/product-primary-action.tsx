@@ -7,7 +7,6 @@ import { resolveProductActionState } from '../utils/product-action-state';
 type ProductPrimaryActionProps = {
   height: number;
   isApprovedForSale: boolean;
-  isAuthenticated: boolean;
   isLastOne: boolean;
   isNotified: boolean;
   isNotifying: boolean;
@@ -20,7 +19,6 @@ type ProductPrimaryActionProps = {
 export function ProductPrimaryAction({
   height,
   isApprovedForSale,
-  isAuthenticated,
   isLastOne,
   isNotified,
   isNotifying,
@@ -30,32 +28,11 @@ export function ProductPrimaryAction({
 }: ProductPrimaryActionProps) {
   const state = resolveProductActionState({
     isApprovedForSale,
-    isAuthenticated,
     isNotified,
     isOutOfStock,
   });
 
   if (state !== 'add-to-cart') {
-    if (state === 'sold-out-guest') {
-      return (
-        <Button
-          accessibilityLabel="Tükendi"
-          accessibilityState={{ disabled: true }}
-          backgroundColor="$color4"
-          borderRadius={8}
-          borderWidth={0}
-          disabled
-          flex={1}
-          height={height}
-          testID="product-out-of-stock"
-        >
-          <Paragraph color="$color10" fontSize={14} fontWeight="800" maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1}>
-            Tükendi
-          </Paragraph>
-        </Button>
-      );
-    }
-
     if (state === 'notify-requested') {
       return (
         <Button
