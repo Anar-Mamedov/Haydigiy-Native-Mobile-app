@@ -176,6 +176,33 @@ describe('product feature tags', () => {
 
     expect(screen.getByTestId('product-feature-asset').props.transition).toMatchObject({ duration: 0 });
   });
+
+  // AGENTS.md: tema duyarlı paylaşılan bileşenler dark modda da doğrulanmalı.
+  // Ticker'da arka planı olmayan satır `$color` token'ını kullanıyor.
+  it('keeps both the feature description and the ranking badge readable in dark theme', () => {
+    renderWithTamagui(
+      <ProductFeatureDescriptionTicker
+        featureIcons={[{ id: 9, name: 'Etiket', slug: 'etiket', assetUrl: '', description: 'Tema testi' }]}
+        rankingText="En çok satan 3. ürün"
+      />,
+      'dark',
+    );
+
+    expect(screen.getByText('Tema testi')).toBeTruthy();
+
+    act(() => {
+      jest.advanceTimersByTime(3000);
+    });
+
+    expect(screen.getByText('🏅 En çok satan 3. ürün')).toBeTruthy();
+    expect(screen.getByTestId('product-feature-description-gradient')).toBeTruthy();
+  });
+
+  it('keeps the asset badge accessible in dark theme', () => {
+    renderWithTamagui(<ProductFeatureAssetTicker featureIcons={featureIcons} />, 'dark');
+
+    expect(screen.getByLabelText('Peşin Fiyatına 3 Taksit ürün etiketi')).toBeTruthy();
+  });
 });
 
 describe('buildDescriptionTickerItems', () => {
@@ -203,4 +230,5 @@ describe('buildDescriptionTickerItems', () => {
       'Butik kontrol edildi',
     ]);
   });
+
 });

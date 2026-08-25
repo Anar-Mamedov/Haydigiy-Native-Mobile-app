@@ -65,6 +65,7 @@ export function useProductDetailController() {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const {
     closeConfirmation: closeNotifyConfirmation,
+    errorMessage: notifyErrorMessage,
     isConfirmationOpen: isNotifyConfirmationOpen,
     isNotifying,
     isVariantNotified,
@@ -221,9 +222,8 @@ export function useProductDetailController() {
   );
 
   const handleNotifyMe = () => {
-    requestNotification(selectedVariant?.id).catch(() => {
-      // Hata hook içinde loglanıyor; kullanıcıyı ekranda engellemeye gerek yok.
-    });
+    // Hata da başarı da hook'un dialogunda gösteriliyor; burada yutulacak bir şey yok.
+    void requestNotification(selectedVariant?.id);
   };
 
   // Adds the selected variant to the cart; shared by the sticky footer button and
@@ -330,6 +330,7 @@ export function useProductDetailController() {
     isSelectedVariantOutOfStock,
     isNotifying,
     isNotifyConfirmationOpen,
+    notifyErrorMessage,
     isVariantNotified,
     closeNotifyConfirmation,
     handleNotifyMe,

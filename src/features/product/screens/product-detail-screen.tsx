@@ -276,6 +276,7 @@ export function ProductDetailScreen() {
       />
 
       <NotifyStockDialog
+        errorMessage={controller.notifyErrorMessage}
         onOpenChange={controller.closeNotifyConfirmation}
         open={controller.isNotifyConfirmationOpen}
       />

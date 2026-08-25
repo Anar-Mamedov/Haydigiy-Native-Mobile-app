@@ -189,4 +189,19 @@ describe('SizeSelectionSheet', () => {
       jest.useRealTimers();
     }
   });
+
+  // AGENTS.md: tema duyarlı paylaşılan bileşenler dark modda da doğrulanmalı.
+  it('keeps the sold-out actions readable in dark theme', () => {
+    renderWithTamagui(
+      <SizeSelectionSheet
+        {...sheetBaseProps}
+        selectedVariant={soldOutVariant}
+        variants={[soldOutVariant]}
+      />,
+      'dark',
+    );
+
+    expect(screen.getByTestId('sheet-notify-me')).toBeTruthy();
+    expect(screen.getByText('Gelince Haber Ver')).toBeTruthy();
+  });
 });

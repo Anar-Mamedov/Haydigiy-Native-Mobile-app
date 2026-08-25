@@ -200,4 +200,14 @@ describe('ProductCard', () => {
     expect(onOpen).not.toHaveBeenCalled();
   });
 
+  // AGENTS.md: tema duyarlı paylaşılan bileşenler dark modda da doğrulanmalı.
+  it('keeps the ranking strip readable in dark theme', () => {
+    renderWithTamagui(
+      <ProductCard onOpen={jest.fn()} product={{ ...product, rankingText: 'En Çok Satan 2. Ürün' }} />,
+      'dark',
+    );
+
+    expect(screen.getByText('🏅 En Çok Satan 2. Ürün')).toBeTruthy();
+    expect(screen.getByTestId('product-feature-description-gradient')).toBeTruthy();
+  });
 });

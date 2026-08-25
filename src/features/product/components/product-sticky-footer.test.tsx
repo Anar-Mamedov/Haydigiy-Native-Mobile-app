@@ -104,4 +104,14 @@ describe('ProductStickyFooter', () => {
 
     expect(screen.getByLabelText('Sepete ekle')).toBeDisabled();
   });
+
+  // AGENTS.md: tema duyarlı paylaşılan bileşenler dark modda da doğrulanmalı.
+  it('keeps every sold-out action readable in dark theme', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} isOutOfStock />, 'dark');
+    expect(screen.getByText('Gelince Haber Ver')).toBeTruthy();
+
+    renderWithTamagui(<ProductStickyFooter {...baseProps} isNotified isOutOfStock />, 'dark');
+    expect(screen.getByText('Talebini Aldık')).toBeTruthy();
+  });
+
 });

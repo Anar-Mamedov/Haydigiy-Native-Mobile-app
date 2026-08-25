@@ -20,6 +20,9 @@ jest.mock('@/features/auth/store/use-auth-store', () => ({
     selector({ user: mockUser }),
 }));
 
+const NOTIFY_STOCK_ERROR_MESSAGE =
+  'Bildirim talebiniz gönderilemedi. Lütfen daha sonra tekrar deneyin.';
+
 const postNotifyStockMock = postNotifyStock as jest.MockedFunction<typeof postNotifyStock>;
 
 describe('useNotifyStock', () => {
@@ -64,18 +67,50 @@ describe('useNotifyStock', () => {
     expect(postNotifyStockMock).not.toHaveBeenCalled();
   });
 
-  it('does not mark the variant as notified when the request fails', async () => {
+  it('leaves no error behind on a successful request', async () => {
+    const { result } = renderHook(() => useNotifyStock());
+
+    await act(async () => {
+      await result.current.requestNotification('4821');
+    });
+
+    expect(result.current.errorMessage).toBeNull();
+    expect(result.current.isConfirmationOpen).toBe(true);
+  });
+
+  // AGENTS.md: API istekleri sessizce başarısız olmamalı.
+  it('surfaces the failure in the dialog instead of dropping it silently', async () => {
     postNotifyStockMock.mockRejectedValueOnce(new Error('network'));
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const { result } = renderHook(() => useNotifyStock());
 
     await act(async () => {
-      await expect(result.current.requestNotification('4821')).rejects.toThrow('network');
+      await result.current.requestNotification('4821');
     });
 
     expect(result.current.isVariantNotified('4821')).toBe(false);
-    expect(result.current.isConfirmationOpen).toBe(false);
     expect(result.current.isNotifying).toBe(false);
+    expect(result.current.isConfirmationOpen).toBe(true);
+    expect(result.current.errorMessage).toBe(NOTIFY_STOCK_ERROR_MESSAGE);
+
+    warn.mockRestore();
+  });
+
+  it('clears the error once the dialog is dismissed', async () => {
+    postNotifyStockMock.mockRejectedValueOnce(new Error('network'));
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const { result } = renderHook(() => useNotifyStock());
+
+    await act(async () => {
+      await result.current.requestNotification('4821');
+    });
+
+    act(() => {
+      result.current.closeConfirmation();
+    });
+
+    expect(result.current.isConfirmationOpen).toBe(false);
+    expect(result.current.errorMessage).toBeNull();
 
     warn.mockRestore();
   });
@@ -138,6 +173,30 @@ describe('useNotifyStock', () => {
       });
 
       expect(postNotifyStockMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('surfaces a failure of the auto-sent request too', async () => {
+      postNotifyStockMock.mockRejectedValueOnce(new Error('network'));
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      mockUser = null;
+      const { rerender, result } = renderHook(() => useNotifyStock());
+
+      await act(async () => {
+        await result.current.requestNotification('4821');
+      });
+
+      mockUser = { id: 1 };
+      await act(async () => {
+        rerender(undefined);
+      });
+
+      await waitFor(() => {
+        expect(result.current.errorMessage).toBe(NOTIFY_STOCK_ERROR_MESSAGE);
+      });
+      expect(result.current.isConfirmationOpen).toBe(true);
+      expect(result.current.isVariantNotified('4821')).toBe(false);
+
+      warn.mockRestore();
     });
 
     it('does not navigate when there is no usable variant id', async () => {

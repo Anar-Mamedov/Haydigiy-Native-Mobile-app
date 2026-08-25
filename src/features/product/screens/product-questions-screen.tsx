@@ -60,6 +60,7 @@ export function ProductQuestionsScreen() {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const {
     closeConfirmation: closeNotifyConfirmation,
+    errorMessage: notifyErrorMessage,
     isConfirmationOpen: isNotifyConfirmationOpen,
     isNotifying,
     isVariantNotified,
@@ -67,9 +68,8 @@ export function ProductQuestionsScreen() {
   } = useNotifyStock();
 
   const handleNotifyMe = () => {
-    requestNotification(selectedVariant?.id).catch(() => {
-      // Hata hook içinde loglanıyor.
-    });
+    // Hata da başarı da hook'un dialogunda gösteriliyor; burada yutulacak bir şey yok.
+    void requestNotification(selectedVariant?.id);
   };
   const [showSizeSheet, setShowSizeSheet] = useState(false);
 
@@ -267,7 +267,11 @@ export function ProductQuestionsScreen() {
         />
       ) : null}
 
-      <NotifyStockDialog onOpenChange={closeNotifyConfirmation} open={isNotifyConfirmationOpen} />
+      <NotifyStockDialog
+        errorMessage={notifyErrorMessage}
+        onOpenChange={closeNotifyConfirmation}
+        open={isNotifyConfirmationOpen}
+      />
 
       <CriteriaSheet
         criteria={QUESTION_CRITERIA}

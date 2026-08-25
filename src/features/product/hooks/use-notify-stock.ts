@@ -3,6 +3,10 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { postNotifyStock } from '@/services/notify-stock.service';
 
+/** Talep gönderilemediğinde kullanıcıya gösterilecek metin. */
+const NOTIFY_STOCK_ERROR_MESSAGE =
+  'Bildirim talebiniz gönderilemedi. Lütfen daha sonra tekrar deneyin.';
+
 /** Domain modelinde varyant id'si string; backend sayı bekliyor. */
 function toVariantId(variantId: string | undefined): number | null {
   if (!variantId) return null;
@@ -30,6 +34,7 @@ export function useNotifyStock() {
   const [notifiedVariantIds, setNotifiedVariantIds] = useState<string[]>([]);
   const [isNotifying, setIsNotifying] = useState(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pendingVariantId, setPendingVariantId] = useState<string | null>(null);
 
   const isVariantNotified = useCallback(
@@ -39,16 +44,20 @@ export function useNotifyStock() {
 
   const sendNotification = useCallback(async (variantId: string, numericId: number) => {
     setIsNotifying(true);
+    setErrorMessage(null);
     try {
       await postNotifyStock(numericId);
       setNotifiedVariantIds((current) =>
         current.includes(variantId) ? current : [...current, variantId],
       );
-      setIsConfirmationOpen(true);
     } catch (error) {
+      // Hata sessiz kalmıyor: aynı dialog hata metniyle açılıyor. Giriş sonrası
+      // otomatik gönderimde kullanıcı başka bir sekmede olabildiği için kalıcı
+      // bir yüzey (dialog) seçildi; geri döndüğünde mesajı görüyor.
       console.warn('[NotifyStock] Stok bildirimi talebi gönderilemedi.', error);
-      throw error;
+      setErrorMessage(NOTIFY_STOCK_ERROR_MESSAGE);
     } finally {
+      setIsConfirmationOpen(true);
       setIsNotifying(false);
     }
   }, []);
@@ -80,14 +89,18 @@ export function useNotifyStock() {
     setPendingVariantId(null);
     if (numericId === null) return;
 
-    sendNotification(pendingVariantId, numericId).catch(() => {
-      // Hata sendNotification içinde loglanıyor; otomatik akışta kullanıcıyı
-      // ayrıca engellemeye gerek yok, buton yeniden denenebilir durumda kalır.
-    });
+    void sendNotification(pendingVariantId, numericId);
   }, [isAuthenticated, pendingVariantId, sendNotification]);
 
+  const closeConfirmation = useCallback(() => {
+    setIsConfirmationOpen(false);
+    setErrorMessage(null);
+  }, []);
+
   return {
-    closeConfirmation: useCallback(() => setIsConfirmationOpen(false), []),
+    closeConfirmation,
+    /** Dolu olduğunda talep gönderilemedi demektir; dialog hata metnini gösterir. */
+    errorMessage,
     isConfirmationOpen,
     isNotifying,
     isVariantNotified,
