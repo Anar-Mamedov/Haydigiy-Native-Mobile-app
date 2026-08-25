@@ -1,42 +1,18 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { CancelItemRow } from './cancel-item-row';
-import { BundleComponent } from '@/types/bundle.types';
 import { OrderDetailItem } from '@/types/order.types';
 
 const ITEM: OrderDetailItem = {
   id: 8801,
-  name: 'Deneme bundle',
-  variantName: '',
-  slug: 'deneme-bundle',
-  image: 'https://cdn/bundle.webp',
+  name: 'Kemer Detaylı Elbise',
+  variantName: 'L',
+  slug: 'kemer-detayli-elbise',
+  image: 'https://cdn/elbise.webp',
   quantity: 1,
-  price: 2000,
+  price: 1250,
   kind: 'normal',
 };
-
-const COMPONENTS: BundleComponent[] = [
-  {
-    key: 'c1',
-    orderItemId: 8801,
-    title: 'Kemer Detaylı Elbise',
-    slug: 'kemer-detayli-elbise',
-    imageUrl: 'https://cdn/elbise.webp',
-    variantName: 'L',
-    quantity: 1,
-    price: 1250,
-  },
-  {
-    key: 'c2',
-    orderItemId: 8802,
-    title: 'Kruvaze Ceket',
-    slug: 'kruvaze-ceket',
-    imageUrl: 'https://cdn/ceket.webp',
-    variantName: 'M',
-    quantity: 1,
-    price: 1250,
-  },
-];
 
 function renderRow(
   overrides: Partial<React.ComponentProps<typeof CancelItemRow>> = {},
@@ -60,86 +36,56 @@ function renderRow(
   return { ...utils, onToggle, onPressReason };
 }
 
-describe('CancelItemRow — paket satırı', () => {
-  const bundleProps = { isBundle: true, bundleComponents: COMPONENTS };
-
-  it('marks the row as a package', () => {
-    renderRow(bundleProps);
-
-    expect(screen.getByText('PAKET')).toBeTruthy();
-  });
-
-  it('states that the package can only be cancelled as a whole', () => {
-    renderRow(bundleProps);
-
-    expect(
-      screen.getByText('Paket içeriği (2 ürün) — paket bütün olarak iptal edilir'),
-    ).toBeTruthy();
-  });
-
-  it('always shows the package contents expanded, never as separate choices', () => {
-    renderRow(bundleProps);
+describe('CancelItemRow', () => {
+  it('shows the product name, size and price', () => {
+    renderRow();
 
     expect(screen.getByText('Kemer Detaylı Elbise')).toBeTruthy();
-    expect(screen.getByText('Kruvaze Ceket')).toBeTruthy();
-    // İçindeki ürünlerin kendi seçim kutusu YOKTUR; tek seçim paketin kendisidir.
-    expect(screen.queryByLabelText('Kemer Detaylı Elbise seç')).toBeNull();
-    expect(screen.queryByLabelText('Kruvaze Ceket seç')).toBeNull();
+    expect(screen.getByText('Beden: L')).toBeTruthy();
   });
 
-  it('selects the whole package with one tap', () => {
-    const { onToggle } = renderRow(bundleProps);
+  it('selects a single unit — a package product is cancellable on its own', () => {
+    const { onToggle } = renderRow();
 
-    fireEvent.press(screen.getByLabelText('Deneme bundle seç'));
+    fireEvent.press(screen.getByLabelText('Kemer Detaylı Elbise seç'));
 
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
-  it('falls back to the item count when the package has no size label', () => {
-    renderRow(bundleProps);
-
-    // Aynı metin paket içeriği başlığında da geçtiği için tümü aranır.
-    expect(screen.getAllByText('2 ürün').length).toBeGreaterThan(0);
-  });
-
-  it('prefers the label the backend sends for the package', () => {
-    renderRow({ ...bundleProps, item: { ...ITEM, variantName: '2 parça takım' } });
-
-    expect(screen.getByText('2 parça takım')).toBeTruthy();
-  });
-
   it('does not toggle while the row is disabled', () => {
-    const { onToggle } = renderRow({ ...bundleProps, disabled: true });
+    const { onToggle } = renderRow({ disabled: true });
 
-    fireEvent.press(screen.getByLabelText('Deneme bundle seç'));
+    fireEvent.press(screen.getByLabelText('Kemer Detaylı Elbise seç'));
 
     expect(onToggle).not.toHaveBeenCalled();
   });
 
-  it('asks for a cancellation reason once the package is selected', () => {
-    const { onPressReason } = renderRow({ ...bundleProps, selected: true });
+  it('asks for a cancellation reason once the row is selected', () => {
+    const { onPressReason } = renderRow({ selected: true });
 
     expect(screen.getByText('İptal Nedeni')).toBeTruthy();
-    fireEvent.press(screen.getByLabelText('İptal nedeni seç'));
+    fireEvent.press(screen.getByLabelText('Kemer Detaylı Elbise için iptal nedeni seç'));
 
     expect(onPressReason).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the package labels readable in the dark theme', () => {
-    renderRow(bundleProps, 'dark');
+  it('shows the picked reason instead of the placeholder', () => {
+    renderRow({ selected: true, reasonLabel: 'Vazgeçtim' });
 
-    expect(screen.getByText('PAKET')).toBeTruthy();
-    expect(screen.getByText('Deneme bundle')).toBeTruthy();
-    expect(screen.getByText('Kemer Detaylı Elbise')).toBeTruthy();
+    expect(screen.getByText('Vazgeçtim')).toBeTruthy();
+    expect(screen.queryByText('İptal nedeni seçin')).toBeNull();
   });
-});
 
-describe('CancelItemRow — normal ürün', () => {
-  it('shows the size instead of package copy', () => {
-    renderRow({ item: { ...ITEM, name: 'Uzun Kollu Gömlek', variantName: 'M' } });
+  it('hides the reason picker while the row is unselected', () => {
+    renderRow();
 
-    expect(screen.getByText('Beden: M')).toBeTruthy();
-    expect(screen.queryByText('PAKET')).toBeNull();
-    expect(screen.queryByText(/Paket içeriği/)).toBeNull();
+    expect(screen.queryByText('İptal Nedeni')).toBeNull();
+  });
+
+  it('keeps the labels readable in the dark theme', () => {
+    renderRow({ selected: true }, 'dark');
+
+    expect(screen.getByText('Kemer Detaylı Elbise')).toBeTruthy();
+    expect(screen.getByText('İptal nedeni seçin')).toBeTruthy();
   });
 });

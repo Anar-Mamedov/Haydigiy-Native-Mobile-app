@@ -30,7 +30,7 @@ const { useOrderDetailQuery } = jest.requireMock('../api/order.queries') as {
 
 /**
  * Paket, siparişte iki gerçek `order_item` satırından oluşur. İptal ekranında TEK
- * satır olarak seçilir ama istek yine gerçek satır id'leriyle gönderilir.
+ * kartta gruplanır ama içindeki her ürün tek tek seçilebilir.
  */
 const BUNDLE_ORDER = {
   id: 10,
@@ -81,43 +81,79 @@ beforeEach(() => {
 });
 
 describe('useOrderCancelController — paket (bundle) satırı', () => {
-  it('offers the package as one selectable row, not one row per product', () => {
+  it('groups the package into one card while every product stays selectable', () => {
     const { result } = setup();
 
-    const ids = result.current.expandedItems.map((entry) => entry.expandedId);
-
-    expect(ids).toEqual(['bundle:101703d9', '9001-0']);
-    expect(result.current.expandedItems[0].isBundle).toBe(true);
-    expect(result.current.expandedItems[0].components).toHaveLength(2);
+    expect(result.current.itemGroups.map((group) => group.groupId)).toEqual([
+      'bundle:101703d9',
+      'item:9001',
+    ]);
+    expect(result.current.itemGroups[0].isBundle).toBe(true);
+    expect(result.current.itemGroups[0].rows.map((row) => row.expandedId)).toEqual([
+      '8801-0',
+      '8802-0',
+    ]);
+    expect(result.current.expandedItems.map((row) => row.expandedId)).toEqual([
+      '8801-0',
+      '8802-0',
+      '9001-0',
+    ]);
   });
 
-  it('selects and deselects the whole package at once', () => {
+  it('cancels a single product out of the package', async () => {
     const { result } = setup();
 
-    act(() => result.current.toggleSelect('bundle:101703d9'));
-    expect(result.current.selectedIds).toEqual(['bundle:101703d9']);
-    expect(result.current.selectedCount).toBe(1);
-
-    act(() => result.current.toggleSelect('bundle:101703d9'));
-    expect(result.current.selectedIds).toEqual([]);
-  });
-
-  it('cancels every real order_item of the package with the same reason', async () => {
-    const { result } = setup();
-
-    act(() => result.current.toggleSelect('bundle:101703d9'));
-    act(() => result.current.setReason('bundle:101703d9', 5));
+    act(() => result.current.toggleSelect('8802-0'));
+    act(() => result.current.setReason('8802-0', 5));
 
     await act(async () => {
       await result.current.cancel();
     });
 
-    const expected = [
-      { orderItemId: 8801, quantity: 1, cancellationReasonId: 5 },
-      { orderItemId: 8802, quantity: 1, cancellationReasonId: 5 },
-    ];
+    const expected = [{ orderItemId: 8802, quantity: 1, cancellationReasonId: 5 }];
     expect(mockPreview).toHaveBeenCalledWith({ id: '10', items: expected });
     expect(mockSubmit).toHaveBeenCalledWith({ id: '10', items: expected });
+  });
+
+  it('lets each package product carry its own cancellation reason', async () => {
+    const { result } = setup();
+
+    act(() => result.current.toggleSelect('8801-0'));
+    act(() => result.current.toggleSelect('8802-0'));
+    act(() => result.current.setReason('8801-0', 5));
+    act(() => result.current.setReason('8802-0', 9));
+
+    await act(async () => {
+      await result.current.cancel();
+    });
+
+    expect(mockSubmit).toHaveBeenCalledWith({
+      id: '10',
+      items: [
+        { orderItemId: 8801, quantity: 1, cancellationReasonId: 5 },
+        { orderItemId: 8802, quantity: 1, cancellationReasonId: 9 },
+      ],
+    });
+  });
+
+  it('selects and clears the whole package from the group checkbox', () => {
+    const { result } = setup();
+
+    act(() => result.current.toggleGroup('bundle:101703d9'));
+    expect(result.current.selectedIds).toEqual(['8801-0', '8802-0']);
+    expect(result.current.selectedCount).toBe(2);
+
+    act(() => result.current.toggleGroup('bundle:101703d9'));
+    expect(result.current.selectedIds).toEqual([]);
+  });
+
+  it('completes the package when only part of it was selected', () => {
+    const { result } = setup();
+
+    act(() => result.current.toggleSelect('8801-0'));
+    act(() => result.current.toggleGroup('bundle:101703d9'));
+
+    expect(result.current.selectedIds).toEqual(['8801-0', '8802-0']);
   });
 
   it('leaves normal products on their own per-unit rows', async () => {
@@ -136,25 +172,35 @@ describe('useOrderCancelController — paket (bundle) satırı', () => {
     });
   });
 
-  it('drops the reason again when the package is deselected', () => {
+  it('drops the reason again when a package product is deselected', () => {
     const { result } = setup();
 
-    act(() => result.current.toggleSelect('bundle:101703d9'));
-    act(() => result.current.setReason('bundle:101703d9', 5));
+    act(() => result.current.toggleSelect('8801-0'));
+    act(() => result.current.setReason('8801-0', 5));
     expect(result.current.allSelectedHaveReasons).toBe(true);
 
-    act(() => result.current.toggleSelect('bundle:101703d9'));
+    act(() => result.current.toggleSelect('8801-0'));
 
-    expect(result.current.itemReasons['bundle:101703d9']).toBeUndefined();
+    expect(result.current.itemReasons['8801-0']).toBeUndefined();
   });
 
-  it('applies the default reason to a freshly selected package', () => {
+  it('drops the reasons of every product when the package is cleared', () => {
     const { result } = setup();
 
-    act(() => result.current.toggleSelect('bundle:101703d9'));
+    act(() => result.current.toggleGroup('bundle:101703d9'));
+    act(() => result.current.toggleGroup('bundle:101703d9'));
+
+    expect(result.current.itemReasons['8801-0']).toBeUndefined();
+    expect(result.current.itemReasons['8802-0']).toBeUndefined();
+  });
+
+  it('applies the default reason to a freshly selected package product', () => {
+    const { result } = setup();
+
+    act(() => result.current.toggleSelect('8801-0'));
 
     // "Vazgeçtim" varsayılan neden olarak atanır; kullanıcı isterse değiştirir.
-    expect(result.current.itemReasons['bundle:101703d9']).toBe(5);
+    expect(result.current.itemReasons['8801-0']).toBe(5);
     expect(result.current.allSelectedHaveReasons).toBe(true);
   });
 
@@ -177,8 +223,7 @@ describe('useOrderCancelController — paket (bundle) satırı', () => {
     mockPreview.mockResolvedValue({ cancellationBlocked: false, campaignWillBreak: true });
     const { result } = setup();
 
-    act(() => result.current.toggleSelect('bundle:101703d9'));
-    act(() => result.current.setReason('bundle:101703d9', 5));
+    act(() => result.current.toggleGroup('bundle:101703d9'));
 
     await act(async () => {
       await result.current.cancel();
@@ -188,7 +233,7 @@ describe('useOrderCancelController — paket (bundle) satırı', () => {
     expect(mockSubmit).not.toHaveBeenCalled();
   });
 
-  it('cancels all rows, packages expanded to their real items', async () => {
+  it('cancels every row, package products included', async () => {
     const { result } = setup();
 
     await act(async () => {

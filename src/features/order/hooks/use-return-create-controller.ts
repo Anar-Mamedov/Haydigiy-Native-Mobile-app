@@ -1,4 +1,13 @@
-import { buildOrderItemGroups, type OrderItemGroup } from '@/features/order/utils/order-item-groups';
+import {
+  buildOrderItemGroups,
+  filterGroupRows,
+  findGroupByOrderItemId,
+  flattenGroupRows,
+  getGroupRowIds,
+  getPreselectRowIds,
+  type OrderItemGroup,
+  type OrderItemSelectionRow,
+} from '@/features/order/utils/order-item-groups';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useOrderDetailQuery } from '../api/order.queries';
@@ -21,8 +30,10 @@ import { ReturnMethod, ReturnPhoto, ReturnSubmitItem } from '@/types/order.types
 export const PHOTO_REQUIRED_REASON_ID = 2;
 const IBAN_PAYMENT_METHOD_IDS = [2, 3];
 
-/** İade ekranının satırı: normal ürün ya da tek parça olarak seçilen bundle. */
-export type ExpandedReturnItem = OrderItemGroup;
+/** İade ekranının kartı: tek ürün ya da içindeki ürünler tek tek seçilebilen paket. */
+export type ReturnItemGroup = OrderItemGroup;
+/** İade ekranının seçilebilir satırı (bir adet). */
+export type ExpandedReturnItem = OrderItemSelectionRow;
 
 type Options = { preselectItemId: number | null; selectAll: boolean; enabled: boolean };
 
@@ -78,21 +89,24 @@ export function useReturnCreateController(orderId: string, options: Options) {
   const isStorePickup = order?.cargoCompanyName === 'Mağazadan Al';
 
   /**
-   * Seçilebilir satırlar. Normal ürünler adet kadar ayrı satıra bölünür; bundle'ın
-   * içindeki ürünler TEK satırda toplanır (paket ya bütün iade edilir ya da hiç).
+   * Ekranda basılan kartlar. Paket tek kartta toplanır ama içindeki her ürün kendi
+   * satırıdır: kullanıcı paketten dilediğini iade edebilir. İade edilemeyen satırlar
+   * (ör. hijyen ürünü) listeden düşer; paketin kalan ürünleri iade edilebilir kalır.
    */
-  const expandedItems = useMemo<ExpandedReturnItem[]>(
+  const itemGroups = useMemo<ReturnItemGroup[]>(
     () => buildOrderItemGroups(order?.items, order?.displayItems),
     [order?.items, order?.displayItems],
   );
 
-  const returnableItems = useMemo(
-    () => expandedItems.filter((entry) => !entry.isNonReturnable),
-    [expandedItems],
+  const returnableGroups = useMemo(
+    () => filterGroupRows(itemGroups, (row) => !row.isNonReturnable),
+    [itemGroups],
   );
-  const giftItems = useMemo(
-    () => returnableItems.filter((entry) => entry.returnStatus === 'gift_product'),
-    [returnableItems],
+  /** Seçim, neden, fotoğraf ve istek gövdesi hep bu düz satır listesi üzerinden yürür. */
+  const returnableRows = useMemo(() => flattenGroupRows(returnableGroups), [returnableGroups]);
+  const giftRows = useMemo(
+    () => returnableRows.filter((row) => row.returnStatus === 'gift_product'),
+    [returnableRows],
   );
 
   const defaultReasonId = useMemo(() => {
@@ -111,20 +125,21 @@ export function useReturnCreateController(orderId: string, options: Options) {
   );
 
   useEffect(() => {
-    if (expandedItems.length === 0) return;
+    if (itemGroups.length === 0) return;
     if (appliedTokenRef.current === focusToken) return;
     appliedTokenRef.current = focusToken;
 
-    const giftIds = giftItems.map((entry) => entry.expandedId);
+    const giftIds = giftRows.map((row) => row.expandedId);
     let nextSelected: string[] = [];
 
     if (options.preselectItemId) {
-      const target = returnableItems.find((entry) =>
-        entry.members.some((member) => member.orderItemId === options.preselectItemId),
-      );
-      nextSelected = target ? Array.from(new Set([target.expandedId, ...giftIds])) : [];
+      // Paket bileşeni açıldıysa paketin tamamı işaretlenir; kullanıcı istemediklerini kaldırır.
+      const target = findGroupByOrderItemId(returnableGroups, options.preselectItemId);
+      nextSelected = target
+        ? Array.from(new Set([...getPreselectRowIds(target), ...giftIds]))
+        : [];
     } else if (options.selectAll) {
-      nextSelected = returnableItems.map((entry) => entry.expandedId);
+      nextSelected = returnableRows.map((row) => row.expandedId);
     }
 
     setSelectedItems(nextSelected);
@@ -136,9 +151,10 @@ export function useReturnCreateController(orderId: string, options: Options) {
     setItemPhotos({});
   }, [
     focusToken,
-    expandedItems,
-    returnableItems,
-    giftItems,
+    itemGroups,
+    returnableGroups,
+    returnableRows,
+    giftRows,
     options.preselectItemId,
     options.selectAll,
     defaultReasonId,
@@ -162,7 +178,7 @@ export function useReturnCreateController(orderId: string, options: Options) {
 
   const toggleItem = useCallback(
     (expandedId: string) => {
-      const giftIds = giftItems.map((entry) => entry.expandedId);
+      const giftIds = giftRows.map((row) => row.expandedId);
       setSelectedItems((prev) => {
         if (prev.includes(expandedId)) {
           return prev.filter((id) => id !== expandedId);
@@ -170,7 +186,24 @@ export function useReturnCreateController(orderId: string, options: Options) {
         return Array.from(new Set([...prev, expandedId, ...giftIds]));
       });
     },
-    [giftItems],
+    [giftRows],
+  );
+
+  /** Paket başlığındaki kutu: tamamı seçiliyse hepsini kaldırır, değilse hepsini seçer. */
+  const toggleGroup = useCallback(
+    (groupId: string) => {
+      const group = returnableGroups.find((entry) => entry.groupId === groupId);
+      if (!group) return;
+      const rowIds = getGroupRowIds(group);
+      const giftIds = giftRows.map((row) => row.expandedId);
+
+      setSelectedItems((prev) => {
+        const allSelected = rowIds.every((id) => prev.includes(id));
+        if (allSelected) return prev.filter((id) => !rowIds.includes(id));
+        return Array.from(new Set([...prev, ...rowIds, ...giftIds]));
+      });
+    },
+    [returnableGroups, giftRows],
   );
 
   const setItemReason = useCallback((expandedId: string, reasonId: number) => {
@@ -195,7 +228,7 @@ export function useReturnCreateController(orderId: string, options: Options) {
 
   const canSubmit =
     allSelectedHaveReasons &&
-    returnableItems.length > 0 &&
+    returnableRows.length > 0 &&
     missingPhotoIds.length === 0 &&
     !submitMutation.isPending &&
     // IBAN listesi yalnızca kapıda ödeme siparişlerinde yüklenir; kartlı
@@ -209,26 +242,27 @@ export function useReturnCreateController(orderId: string, options: Options) {
     !scheduled.pickupSubmitting;
 
   /**
-   * Seçilen satırları iade isteğine çevirir. Bundle satırı burada kendi gerçek
-   * `order_item` kayıtlarına açılır; paketin tüm bileşenleri aynı iade nedeni ve
-   * aynı fotoğrafla gönderilir (paket bütün olarak iade edilir).
+   * Seçilen satırları iade isteğine çevirir; her satır kendi `order_item` kaydına,
+   * kendi iade nedenine ve kendi fotoğrafına karşılık gelir.
    */
   const buildItemsPayload = useCallback((): ReturnSubmitItem[] => {
     return selectedItems.flatMap((expandedId) => {
-      const entry = expandedItems.find((item) => item.expandedId === expandedId);
+      const row = returnableRows.find((entry) => entry.expandedId === expandedId);
       const reasonId = itemReasons[expandedId];
-      if (!entry || !reasonId) return [];
+      if (!row || !reasonId) return [];
 
       const photo = reasonId === PHOTO_REQUIRED_REASON_ID ? (itemPhotos[expandedId] ?? null) : null;
 
-      return entry.members.map((member) => ({
-        orderItemId: member.orderItemId,
-        quantity: member.quantity,
-        returnReasonId: reasonId,
-        photo,
-      }));
+      return [
+        {
+          orderItemId: row.orderItemId,
+          quantity: row.quantity,
+          returnReasonId: reasonId,
+          photo,
+        },
+      ];
     });
-  }, [selectedItems, expandedItems, itemReasons, itemPhotos]);
+  }, [selectedItems, returnableRows, itemReasons, itemPhotos]);
 
   const lastReturnRequestId = useMemo(() => {
     const ids = order?.returnRequestIds ?? [];
@@ -356,13 +390,15 @@ export function useReturnCreateController(orderId: string, options: Options) {
     canCreateReturn: order?.canCreateReturnRequest ?? true,
     returnBlockReason: order?.returnBlockReason ?? null,
     isStorePickup,
-    expandedItems,
-    returnableItems,
-    giftItems,
+    itemGroups,
+    returnableGroups,
+    returnableRows,
+    giftRows,
     selectedItems,
     itemReasons,
     itemPhotos,
     toggleItem,
+    toggleGroup,
     setItemReason,
     setItemPhoto,
     note,

@@ -1,176 +1,151 @@
 /**
- * Sipariş iptal ve iade ekranlarının satır gruplaması.
+ * Sipariş iptal ve iade ekranlarının seçim listesi.
  *
- * Bundle'ın içindeki ürünler tek tek seçilemez: paket ya bütün olarak iptal/iade edilir
- * ya da hiç edilmez. Bu yüzden aynı `bundleGroupId`'ye sahip sipariş satırları TEK bir
- * seçilebilir gruba indirilir; istek gönderilirken grup yeniden kendi gerçek `order_item`
- * kayıtlarına açılır. Normal ürünler eskisi gibi adet başına ayrı satır olur.
+ * Paket (bundle) satırları GÖRSEL olarak tek grupta toplanır, ama grubun içindeki
+ * her ürün tek tek seçilebilir: kullanıcı paketten yalnızca bir ürünü de iptal/iade
+ * edebilir, tamamını da. İstek her zaman gerçek `order_item` kayıtlarıyla gider.
+ *
+ * Normal ürünler de aynı kuralla, adet başına bir satır olarak açılır.
  */
 
-import { BundleComponent } from '@/types/bundle.types';
 import { OrderDetailItem } from '@/types/order.types';
+import {
+  getLineQuantity,
+  groupOrderLines,
+  sumLinePrices,
+  type OrderLineGroup,
+} from './order-bundle-lines';
 
-/** Gruba dahil gerçek sipariş satırı — iptal/iade isteğinde bu kayıtlar gönderilir. */
-export type OrderItemGroupMember = {
-  orderItemId: number;
-  quantity: number;
-};
-
-export type OrderItemGroup = {
-  /** Seçim anahtarı. Normal üründe `{orderItemId}-{index}`, bundle'da `bundle:{groupId}`. */
+/** Tek başına seçilebilen birim: bir `order_item` kaydının bir adedi. */
+export type OrderItemSelectionRow = {
+  /** Seçim anahtarı: `{orderItemId}-{unitIndex}`. */
   expandedId: string;
-  /** Grubun görünen temsilcisi (ad, görsel, beden, fiyat). */
+  /** Satırın kendi ürünü — paket bileşeni de kendi adı ve bedeniyle görünür. */
   item: OrderDetailItem;
-  isBundle: boolean;
-  /** Paket adedi (bundle olmayan satırda 1). */
+  orderItemId: number;
+  /** Satırın kapsadığı adet — her zaman 1. */
   quantity: number;
-  members: OrderItemGroupMember[];
-  /** Bundle ise içindeki ürünler (yalnızca gösterim). */
-  components: BundleComponent[];
-  /**
-   * Grup iade edilebilir mi? Bundle bütün olarak iade edildiği için TÜM bileşenlerin
-   * iade edilebilir olması gerekir; biri bile kapalıysa paket kapalıdır.
-   */
   isNonReturnable: boolean;
-  /** Hediye ürün akışı için. Bundle'da ancak tüm bileşenler hediyeyse `gift_product`. */
+  /** `available` | `gift_product` | diğer backend etiketi. */
   returnStatus?: string;
+  /** Satır bir paketin içinden mi geliyor? */
+  isBundleComponent: boolean;
 };
 
-function toComponent(item: OrderDetailItem, index: number): BundleComponent {
+/** Paket grubunun başlığı — paketin kendi adı, görseli ve tutarı. */
+export type OrderItemGroupHeader = {
+  title: string;
+  /** Backend'in paket için gönderdiği etiket (örn. "4 ürün"); yoksa boş. */
+  subtitle: string;
+  imageUrl: string | null;
+  /** Paketin toplam tutarı. */
+  price: number;
+  /** Kaç paket sipariş edildi. */
+  quantity: number;
+};
+
+/** Ekranda tek kart olarak basılan grup: ya tek ürün ya da bir paket. */
+export type OrderItemGroup = {
+  /** Kararlı liste anahtarı: `bundle:{groupId}` ya da `item:{orderItemId}`. */
+  groupId: string;
+  isBundle: boolean;
+  /** Yalnızca paket gruplarında dolu. */
+  header: OrderItemGroupHeader | null;
+  rows: OrderItemSelectionRow[];
+};
+
+function toSelectionRows(members: OrderDetailItem[], isBundleComponent: boolean): OrderItemSelectionRow[] {
+  return members.flatMap((member) =>
+    Array.from({ length: getLineQuantity(member) }, (_, index) => ({
+      expandedId: `${member.id}-${index}`,
+      item: member,
+      orderItemId: member.id,
+      quantity: 1,
+      isNonReturnable: member.isNonReturnable === true,
+      returnStatus: member.returnStatus,
+      isBundleComponent,
+    })),
+  );
+}
+
+function toBundleHeader(group: OrderLineGroup): OrderItemGroupHeader {
+  const display = group.display;
+  const displayPrice = display?.price ?? 0;
+
   return {
-    key: `${item.id}-${index}`,
-    orderItemId: item.id,
-    title: item.name,
-    slug: item.slug || null,
-    imageUrl: item.image ?? '',
-    variantName: item.variantName || null,
-    quantity: Math.max(1, item.quantity),
-    price: item.price > 0 ? item.price : null,
+    title: display?.name || 'Paket Ürün',
+    subtitle: display?.variantName || '',
+    imageUrl: display?.image ?? group.members[0]?.image ?? null,
+    // display_items paketin tutarını vermediyse bileşenlerden toplanır.
+    price: displayPrice > 0 ? displayPrice : sumLinePrices(group.members),
+    quantity: display?.quantity ?? 1,
+  };
+}
+
+function toItemGroup(group: OrderLineGroup): OrderItemGroup {
+  const isBundle = group.bundleGroupId !== null;
+
+  return {
+    groupId: group.key,
+    isBundle,
+    header: isBundle ? toBundleHeader(group) : null,
+    rows: toSelectionRows(group.members, isBundle),
   };
 }
 
 /**
- * Sipariş satırlarını iptal/iade ekranlarının seçilebilir gruplarına çevirir.
+ * Sipariş satırlarını iptal/iade ekranlarının seçim gruplarına çevirir.
  *
  * @param items Siparişin GERÇEK satırları — iptal ve iade daima bunlar üzerinden yapılır.
- * @param displayItems Müşteri görünümü — paketin adı/görseli/tutarı buradan alınır.
+ * @param displayItems Müşteri görünümü — paket başlığının adı/görseli/tutarı buradan alınır.
  */
 export function buildOrderItemGroups(
   items: OrderDetailItem[] | null | undefined,
   displayItems?: OrderDetailItem[] | null,
 ): OrderItemGroup[] {
-  const safeItems = Array.isArray(items) ? items : [];
-  const safeDisplayItems = Array.isArray(displayItems) ? displayItems : [];
-
-  const groups: OrderItemGroup[] = [];
-  const bundlesByGroupId = new Map<string, OrderItemGroup>();
-  // Bundle gruplarının iade durumu tüm bileşenlere bakılarak hesaplanır.
-  const flags = new Map<
-    string,
-    { allReturnable: boolean; allGift: boolean; nonGiftStatus?: string; hasDisplayPrice: boolean }
-  >();
-
-  safeItems.forEach((item) => {
-    if (!item || typeof item.id !== 'number') return;
-
-    const quantity = Math.max(1, item.quantity);
-    const groupId = item.bundleGroupId;
-
-    // --- Bundle bileşeni: aynı gruba katılır ---
-    if (groupId) {
-      let group = bundlesByGroupId.get(groupId);
-
-      if (!group) {
-        const display = safeDisplayItems.find((entry) => entry.bundleGroupId === groupId);
-
-        group = {
-          expandedId: `bundle:${groupId}`,
-          item: {
-            ...item,
-            id: item.id,
-            name: display?.name || 'Paket Ürün',
-            variantName: display?.variantName || '',
-            slug: display?.slug || '',
-            image: display?.image ?? item.image,
-            price: display?.price ?? 0,
-            quantity: display?.quantity ?? 1,
-            isBundle: true,
-            bundleComponents: [],
-          },
-          isBundle: true,
-          quantity: display?.quantity ?? 1,
-          members: [],
-          components: [],
-          isNonReturnable: false,
-          returnStatus: item.returnStatus,
-        };
-
-        bundlesByGroupId.set(groupId, group);
-        flags.set(groupId, {
-          allReturnable: true,
-          allGift: true,
-          hasDisplayPrice: (display?.price ?? 0) > 0,
-        });
-        groups.push(group);
-      }
-
-      group.members.push({ orderItemId: item.id, quantity });
-      group.components.push(toComponent(item, group.components.length));
-      // Satır bileşeni de paket içeriğini taşır: sipariş detayı doğrudan `item` render eder.
-      group.item = { ...group.item, bundleComponents: group.components };
-
-      const flag = flags.get(groupId);
-      if (flag) {
-        flag.allReturnable = flag.allReturnable && item.isNonReturnable !== true;
-        flag.allGift = flag.allGift && item.returnStatus === 'gift_product';
-        // Hediye olmayan ilk durum saklanır: paketin tamamı hediye değilse grup da hediye sayılmaz.
-        if (item.returnStatus !== 'gift_product' && flag.nonGiftStatus === undefined) {
-          flag.nonGiftStatus = item.returnStatus;
-        }
-
-        group.isNonReturnable = !flag.allReturnable;
-        group.returnStatus = flag.allGift ? 'gift_product' : flag.nonGiftStatus;
-
-        // display_items paketin tutarını vermediyse bileşenlerden toplanır.
-        if (!flag.hasDisplayPrice) {
-          group.item = {
-            ...group.item,
-            price: group.members.reduce((sum, member) => {
-              const source = safeItems.find((entry) => entry.id === member.orderItemId);
-              return sum + (source?.price ?? 0) * member.quantity;
-            }, 0),
-          };
-        }
-      }
-
-      return;
-    }
-
-    // --- Normal ürün: adet kadar ayrı satır (mevcut davranış korunur) ---
-    for (let index = 0; index < quantity; index += 1) {
-      groups.push({
-        expandedId: `${item.id}-${index}`,
-        item,
-        isBundle: false,
-        quantity: 1,
-        members: [{ orderItemId: item.id, quantity: 1 }],
-        components: [],
-        isNonReturnable: item.isNonReturnable === true,
-        returnStatus: item.returnStatus,
-      });
-    }
-  });
-
-  return groups;
+  return groupOrderLines(items, displayItems).map(toItemGroup);
 }
 
-/** Seçilen grupları gerçek `order_item` kayıtlarına açar (istek gövdesi için). */
-export function expandGroupsToMembers(
+/** Gruplardaki tüm seçilebilir satırlar, ekrandaki sırayla. */
+export function flattenGroupRows(groups: OrderItemGroup[]): OrderItemSelectionRow[] {
+  return groups.flatMap((group) => group.rows);
+}
+
+/**
+ * Satırları verilen koşula göre süzer; hiç satırı kalmayan grup listeden düşer.
+ * (İade ekranı yalnızca iade edilebilir satırları gösterir.)
+ */
+export function filterGroupRows(
   groups: OrderItemGroup[],
-  selectedIds: string[],
-): OrderItemGroupMember[] {
-  return selectedIds.flatMap((expandedId) => {
-    const group = groups.find((entry) => entry.expandedId === expandedId);
-    return group ? group.members : [];
-  });
+  predicate: (row: OrderItemSelectionRow) => boolean,
+): OrderItemGroup[] {
+  return groups
+    .map((group) => ({ ...group, rows: group.rows.filter(predicate) }))
+    .filter((group) => group.rows.length > 0);
+}
+
+/** Grubun tüm satır anahtarları — "paketin tamamını seç" için. */
+export function getGroupRowIds(group: OrderItemGroup): string[] {
+  return group.rows.map((row) => row.expandedId);
+}
+
+/** Verilen `order_item` kaydını içeren grup. */
+export function findGroupByOrderItemId(
+  groups: OrderItemGroup[],
+  orderItemId: number,
+): OrderItemGroup | null {
+  return groups.find((group) => group.rows.some((row) => row.orderItemId === orderItemId)) ?? null;
+}
+
+/**
+ * `?item_id=` ile açılan ekranda önden işaretlenecek satırlar.
+ *
+ * Sipariş detayında paket TEK satır olarak gösterildiği için "Ürünü İptal Et"
+ * paketin tamamını kasteder: paket grubunun bütün satırları işaretlenir, kullanıcı
+ * istemediklerini tek tek kaldırabilir. Normal üründe eskisi gibi tek adet seçilir.
+ */
+export function getPreselectRowIds(group: OrderItemGroup): string[] {
+  if (group.isBundle) return getGroupRowIds(group);
+  const firstRow = group.rows[0];
+  return firstRow ? [firstRow.expandedId] : [];
 }

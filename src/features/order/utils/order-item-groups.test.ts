@@ -1,4 +1,11 @@
-import { buildOrderItemGroups, expandGroupsToMembers } from './order-item-groups';
+import {
+  buildOrderItemGroups,
+  filterGroupRows,
+  findGroupByOrderItemId,
+  flattenGroupRows,
+  getGroupRowIds,
+  getPreselectRowIds,
+} from './order-item-groups';
 import { OrderDetailItem } from '@/types/order.types';
 
 /** Canlı HG2208261387277 siparişinden sadeleştirilmiş satırlar. */
@@ -39,78 +46,90 @@ const displayItems: OrderDetailItem[] = [
 ];
 
 describe('buildOrderItemGroups', () => {
-  it('collapses the five order lines into one bundle row plus one normal row', () => {
+  it('keeps the package as one visual group next to the standalone product', () => {
     const groups = buildOrderItemGroups(items, displayItems);
 
     expect(groups).toHaveLength(2);
-    expect(groups[0]).toMatchObject({ expandedId: `bundle:${BUNDLE_GROUP}`, isBundle: true });
-    expect(groups[1]).toMatchObject({ expandedId: '11845556-0', isBundle: false });
+    expect(groups[0]).toMatchObject({ groupId: `bundle:${BUNDLE_GROUP}`, isBundle: true });
+    expect(groups[1]).toMatchObject({ groupId: 'item:11845556', isBundle: false });
   });
 
-  it('shows the bundle with its own name, image and price from display_items', () => {
+  it('makes every product inside the package individually selectable', () => {
     const [bundle] = buildOrderItemGroups(items, displayItems);
 
-    expect(bundle.item.name).toBe('Deneme bundle');
-    expect(bundle.item.variantName).toBe('4 ürün');
-    expect(bundle.item.image).toBe('https://cdn/deneme-bundle.webp');
-    expect(bundle.item.price).toBe(5000);
+    expect(bundle.rows.map((row) => row.expandedId)).toEqual([
+      '11845555-0',
+      '11845557-0',
+      '11845558-0',
+      '11845559-0',
+    ]);
+    expect(bundle.rows.every((row) => row.isBundleComponent)).toBe(true);
   });
 
-  it('carries every real order_item of the bundle so it is cancelled/returned as a whole', () => {
+  it('shows each package row with its own product name and size', () => {
     const [bundle] = buildOrderItemGroups(items, displayItems);
 
-    expect(bundle.members.map((member) => member.orderItemId).sort()).toEqual([
+    expect(bundle.rows[0].item.name).toBe('Kemer Detaylı Yarım Kol Elbise Siyah');
+    expect(bundle.rows[2].item.variantName).toBe('36');
+  });
+
+  it('keeps every row pointing at its real order_item so partial requests are possible', () => {
+    const [bundle] = buildOrderItemGroups(items, displayItems);
+
+    expect(bundle.rows.map((row) => row.orderItemId)).toEqual([
       11845555, 11845557, 11845558, 11845559,
     ]);
+    expect(bundle.rows.every((row) => row.quantity === 1)).toBe(true);
   });
 
-  it('lists the package contents for display only', () => {
+  it('titles the group with the package name, image and price from display_items', () => {
     const [bundle] = buildOrderItemGroups(items, displayItems);
 
-    expect(bundle.components).toHaveLength(4);
-    expect(bundle.components[0]).toMatchObject({
-      orderItemId: 11845555,
-      title: 'Kemer Detaylı Yarım Kol Elbise Siyah',
-      variantName: 'L',
+    expect(bundle.header).toEqual({
+      title: 'Deneme bundle',
+      subtitle: '4 ürün',
+      imageUrl: 'https://cdn/deneme-bundle.webp',
+      price: 5000,
       quantity: 1,
     });
   });
 
-  it('closes the whole bundle when any component is non-returnable', () => {
+  it('blocks only the non-returnable product, not the whole package', () => {
     const withBlocked = items.map((item) =>
       item.id === 11845558 ? { ...item, isNonReturnable: true } : item,
     );
     const [bundle] = buildOrderItemGroups(withBlocked, displayItems);
 
-    expect(bundle.isNonReturnable).toBe(true);
+    expect(bundle.rows.filter((row) => row.isNonReturnable).map((row) => row.orderItemId)).toEqual([
+      11845558,
+    ]);
   });
 
-  it('treats the bundle as a gift only when every component is a gift', () => {
-    const allGift = items.map((item) =>
-      item.bundleGroupId ? { ...item, returnStatus: 'gift_product' } : item,
-    );
-    expect(buildOrderItemGroups(allGift, displayItems)[0].returnStatus).toBe('gift_product');
-
+  it('marks gift rows one by one instead of judging the whole package', () => {
     const partialGift = items.map((item) =>
       item.id === 11845555 ? { ...item, returnStatus: 'gift_product' } : item,
     );
-    expect(buildOrderItemGroups(partialGift, displayItems)[0].returnStatus).not.toBe('gift_product');
+    const [bundle] = buildOrderItemGroups(partialGift, displayItems);
+
+    expect(bundle.rows[0].returnStatus).toBe('gift_product');
+    expect(bundle.rows[1].returnStatus).toBeUndefined();
   });
 
-  it('still splits normal products by quantity', () => {
-    const groups = buildOrderItemGroups([makeItem({ id: 500, quantity: 3 })]);
+  it('splits products by quantity, inside and outside a package', () => {
+    const groups = buildOrderItemGroups([
+      makeItem({ id: 500, quantity: 3 }),
+      makeItem({ id: 600, quantity: 2, bundleGroupId: BUNDLE_GROUP }),
+    ]);
 
-    expect(groups.map((group) => group.expandedId)).toEqual(['500-0', '500-1', '500-2']);
-    expect(groups[0].members).toEqual([{ orderItemId: 500, quantity: 1 }]);
+    expect(groups[0].rows.map((row) => row.expandedId)).toEqual(['500-0', '500-1', '500-2']);
+    expect(groups[1].rows.map((row) => row.expandedId)).toEqual(['600-0', '600-1']);
   });
 
   it('groups by bundleGroupId even without display_items, falling back to summed prices', () => {
     const groups = buildOrderItemGroups(items);
-    const [bundle] = groups;
 
     expect(groups).toHaveLength(2);
-    expect(bundle.item.name).toBe('Paket Ürün');
-    expect(bundle.item.price).toBe(1250 * 4);
+    expect(groups[0].header).toMatchObject({ title: 'Paket Ürün', price: 1250 * 4 });
   });
 
   it('tolerates empty input', () => {
@@ -119,29 +138,57 @@ describe('buildOrderItemGroups', () => {
   });
 });
 
-describe('expandGroupsToMembers', () => {
+describe('grup yardımcıları', () => {
   const groups = buildOrderItemGroups(items, displayItems);
 
-  it('expands a selected bundle into all of its real order items', () => {
-    const members = expandGroupsToMembers(groups, [`bundle:${BUNDLE_GROUP}`]);
-
-    expect(members.map((member) => member.orderItemId).sort()).toEqual([
-      11845555, 11845557, 11845558, 11845559,
+  it('flattens every selectable row in screen order', () => {
+    expect(flattenGroupRows(groups).map((row) => row.orderItemId)).toEqual([
+      11845555, 11845557, 11845558, 11845559, 11845556,
     ]);
   });
 
-  it('sends the same order_item list as before when everything is selected', () => {
-    const members = expandGroupsToMembers(
-      groups,
-      groups.map((group) => group.expandedId),
+  it('drops filtered-out rows and keeps the package that still has returnable products', () => {
+    const withBlocked = buildOrderItemGroups(
+      items.map((item) => (item.id === 11845558 ? { ...item, isNonReturnable: true } : item)),
+      displayItems,
     );
 
-    expect(members.map((member) => member.orderItemId).sort()).toEqual([
-      11845555, 11845556, 11845557, 11845558, 11845559,
+    const returnable = filterGroupRows(withBlocked, (row) => !row.isNonReturnable);
+
+    expect(returnable).toHaveLength(2);
+    expect(returnable[0].rows.map((row) => row.orderItemId)).toEqual([
+      11845555, 11845557, 11845559,
     ]);
   });
 
-  it('ignores unknown ids', () => {
-    expect(expandGroupsToMembers(groups, ['nope'])).toEqual([]);
+  it('drops a group whose rows are all filtered out', () => {
+    const returnable = filterGroupRows(
+      buildOrderItemGroups(items.map((item) => ({ ...item, isNonReturnable: true })), displayItems),
+      (row) => !row.isNonReturnable,
+    );
+
+    expect(returnable).toEqual([]);
+  });
+
+  it('finds the owning group from any real order_item id', () => {
+    expect(findGroupByOrderItemId(groups, 11845558)?.groupId).toBe(`bundle:${BUNDLE_GROUP}`);
+    expect(findGroupByOrderItemId(groups, 11845556)?.groupId).toBe('item:11845556');
+    expect(findGroupByOrderItemId(groups, 42)).toBeNull();
+  });
+
+  it('lists every row id of a group for the "select the whole package" box', () => {
+    expect(getGroupRowIds(groups[0])).toEqual([
+      '11845555-0',
+      '11845557-0',
+      '11845558-0',
+      '11845559-0',
+    ]);
+  });
+
+  it('preselects the whole package but only one unit of a normal product', () => {
+    const multiUnit = buildOrderItemGroups([makeItem({ id: 700, quantity: 3 })]);
+
+    expect(getPreselectRowIds(groups[0])).toHaveLength(4);
+    expect(getPreselectRowIds(multiUnit[0])).toEqual(['700-0']);
   });
 });

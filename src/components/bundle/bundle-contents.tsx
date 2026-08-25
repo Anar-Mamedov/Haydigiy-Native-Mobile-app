@@ -28,9 +28,10 @@ export type BundleContentsProps = {
  * Bundle satırının "Paket içeriği" listesi — sepet, ödeme ve sipariş ekranlarında
  * paketin ALTINDA gösterilir.
  *
- * Buradaki ürünler ayrı bir sepet/sipariş satırı DEĞİLDİR: adet değiştirme, silme,
- * iptal ve iade yalnızca paketin kendisi üzerinden yapılır. Bileşen listesi bu yüzden
- * salt okunurdur ve hiçbir aksiyon sunmaz.
+ * Buradaki ürünler ayrı bir sepet/sipariş satırı DEĞİLDİR: adet değiştirme ve silme
+ * yalnızca paketin kendisi üzerinden yapılır. Bileşen listesi bu yüzden salt okunurdur
+ * ve hiçbir aksiyon sunmaz. (İptal/iade ekranlarında paket ürünleri tek tek seçilebilir;
+ * orada bu liste değil, `OrderItemGroupCard` içindeki seçilebilir satırlar kullanılır.)
  */
 export function BundleContents({
   components,

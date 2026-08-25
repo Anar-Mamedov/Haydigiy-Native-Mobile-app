@@ -1,4 +1,12 @@
-import { buildOrderItemGroups, type OrderItemGroup } from '@/features/order/utils/order-item-groups';
+import {
+  buildOrderItemGroups,
+  findGroupByOrderItemId,
+  flattenGroupRows,
+  getGroupRowIds,
+  getPreselectRowIds,
+  type OrderItemGroup,
+  type OrderItemSelectionRow,
+} from '@/features/order/utils/order-item-groups';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -15,8 +23,10 @@ import {
 } from '@/services/order.service';
 import { CancelItem, CancelPreview} from '@/types/order.types';
 
-/** İptal ekranının satırı: normal ürün ya da tek parça olarak seçilen bundle. */
-export type ExpandedCancelItem = OrderItemGroup;
+/** İptal ekranının kartı: tek ürün ya da içindeki ürünler tek tek seçilebilen paket. */
+export type CancelItemGroup = OrderItemGroup;
+/** İptal ekranının seçilebilir satırı (bir adet). */
+export type ExpandedCancelItem = OrderItemSelectionRow;
 
 type Options = { preselectItemId: number | null; selectAll: boolean; enabled: boolean };
 
@@ -43,12 +53,18 @@ export function useOrderCancelController(orderId: string, options: Options) {
   const appliedTokenRef = useRef(-1);
 
   /**
-   * Seçilebilir satırlar. Normal ürünler adet kadar ayrı satıra bölünür; bundle'ın
-   * içindeki ürünler TEK satırda toplanır (paket ya bütün iptal edilir ya da hiç).
+   * Ekranda basılan kartlar. Paket tek kartta toplanır ama içindeki her ürün
+   * kendi satırıdır: kullanıcı paketten dilediğini iptal edebilir.
    */
-  const expandedItems = useMemo<ExpandedCancelItem[]>(
+  const itemGroups = useMemo<CancelItemGroup[]>(
     () => buildOrderItemGroups(order?.items, order?.displayItems),
     [order?.items, order?.displayItems],
+  );
+
+  /** Seçim, neden ve istek gövdesi hep bu düz satır listesi üzerinden yürür. */
+  const expandedItems = useMemo<ExpandedCancelItem[]>(
+    () => flattenGroupRows(itemGroups),
+    [itemGroups],
   );
 
   const isCancelable = order ? isOrderCancellableStatus(order.status, order.statusId) : false;
@@ -78,18 +94,16 @@ export function useOrderCancelController(orderId: string, options: Options) {
     appliedTokenRef.current = focusToken;
 
     if (options.preselectItemId) {
-      // Bundle bileşeni seçildiyse paketin tamamı işaretlenir.
-      const target = expandedItems.find((entry) =>
-        entry.members.some((member) => member.orderItemId === options.preselectItemId),
-      );
-      setSelectedIds(target ? [target.expandedId] : []);
+      // Paket bileşeni açıldıysa paketin tamamı işaretlenir; kullanıcı istemediklerini kaldırır.
+      const target = findGroupByOrderItemId(itemGroups, options.preselectItemId);
+      setSelectedIds(target ? getPreselectRowIds(target) : []);
     } else if (options.selectAll && isCancelable) {
       setSelectedIds(expandedItems.map((entry) => entry.expandedId));
     } else {
       setSelectedIds([]);
     }
     setItemReasons({});
-  }, [focusToken, expandedItems, options.preselectItemId, options.selectAll, isCancelable]);
+  }, [focusToken, itemGroups, expandedItems, options.preselectItemId, options.selectAll, isCancelable]);
 
   // Selected units default to the "Vazgeçtim" reason until the user changes it.
   useEffect(() => {
@@ -121,14 +135,33 @@ export function useOrderCancelController(orderId: string, options: Options) {
     });
   }, []);
 
+  /** Paket başlığındaki kutu: tamamı seçiliyse hepsini kaldırır, değilse hepsini seçer. */
+  const toggleGroup = useCallback(
+    (groupId: string) => {
+      const group = itemGroups.find((entry) => entry.groupId === groupId);
+      if (!group) return;
+      const rowIds = getGroupRowIds(group);
+
+      setSelectedIds((prev) => {
+        const allSelected = rowIds.every((id) => prev.includes(id));
+        if (!allSelected) return Array.from(new Set([...prev, ...rowIds]));
+
+        setItemReasons((reasonsMap) => {
+          const next = { ...reasonsMap };
+          rowIds.forEach((id) => delete next[id]);
+          return next;
+        });
+        return prev.filter((id) => !rowIds.includes(id));
+      });
+    },
+    [itemGroups],
+  );
+
   const setReason = useCallback((expandedId: string, reasonId: number) => {
     setItemReasons((prev) => ({ ...prev, [expandedId]: reasonId }));
   }, []);
 
-  /**
-   * Seçilen satırları isteğe çevirir. Bundle satırı burada kendi gerçek `order_item`
-   * kayıtlarına açılır; paketin tüm bileşenleri aynı iptal nedeniyle gönderilir.
-   */
+  /** Seçilen satırları isteğe çevirir; her satır kendi `order_item` kaydına karşılık gelir. */
   const buildItems = useCallback(
     (ids: string[], reasonResolver: (id: string) => number | undefined): CancelItem[] =>
       ids.flatMap((id) => {
@@ -136,11 +169,13 @@ export function useOrderCancelController(orderId: string, options: Options) {
         const reasonId = reasonResolver(id);
         if (!entry || !reasonId) return [];
 
-        return entry.members.map((member) => ({
-          orderItemId: member.orderItemId,
-          quantity: member.quantity,
-          cancellationReasonId: reasonId,
-        }));
+        return [
+          {
+            orderItemId: entry.orderItemId,
+            quantity: entry.quantity,
+            cancellationReasonId: reasonId,
+          },
+        ];
       }),
     [expandedItems],
   );
@@ -266,6 +301,7 @@ export function useOrderCancelController(orderId: string, options: Options) {
   return {
     order,
     reasons,
+    itemGroups,
     expandedItems,
     isCancelable,
     selectedIds,
@@ -280,6 +316,7 @@ export function useOrderCancelController(orderId: string, options: Options) {
     warningPreview,
     showWarning: warningPreview !== null,
     toggleSelect,
+    toggleGroup,
     setReason,
     cancel,
     confirmWarning,

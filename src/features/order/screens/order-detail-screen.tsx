@@ -14,7 +14,7 @@ import { OrdersHeader } from '../components/orders-header';
 import { OrderDetailSummary } from '../components/order-detail-summary';
 import { OrderTimeline } from '../components/order-timeline';
 import { OrderItemsSection } from '../components/order-items-section';
-import { buildOrderItemGroups } from '../utils/order-item-groups';
+import { buildOrderDisplayRows } from '../utils/order-display-rows';
 import { OrderReturnSection } from '../components/order-return-section';
 import { ReturnGiftVoucherCard } from '../components/return-gift-voucher-card';
 import { OrderAddressCard } from '../components/order-address-card';
@@ -61,10 +61,10 @@ export function OrderDetailScreen() {
    * Müşteri görünümü satırları: bundle TEK satır olarak basılır, içindeki ürünler
    * altında listelenir. İptal/iade istekleri hâlâ gerçek `order.items` kayıtlarına
    * gider — `?item_id=` bir paket bileşenine denk geldiğinde ilgili ekran paketin
-   * tamamını seçer (bkz. buildOrderItemGroups).
+   * tamamını önden işaretler, kullanıcı içinden istediğini bırakabilir.
    */
   const displayRows = useMemo(
-    () => buildOrderItemGroups(order?.items, order?.displayItems).map((group) => group.item),
+    () => buildOrderDisplayRows(order?.items, order?.displayItems),
     [order?.items, order?.displayItems],
   );
   const showReturnEntry = canCreateReturn && hasReturnableItems;

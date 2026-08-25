@@ -4,14 +4,13 @@ import { Camera, Image as ImagePlaceholderIcon, X } from '@/components/ui/icons'
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppCheckbox, AppSelect } from '@/components/ui';
-import { BundleContents } from '@/components/bundle/bundle-contents';
 import { PHOTO_REQUIRED_REASON_ID, ExpandedReturnItem } from '../hooks/use-return-create-controller';
 import { ReturnPhoto, ReturnReason } from '@/types/order.types';
 
 const THUMB_SIZE = 64;
 
 type Props = {
-  entry: ExpandedReturnItem;
+  row: ExpandedReturnItem;
   selected: boolean;
   reasonId?: number;
   photo?: ReturnPhoto;
@@ -23,9 +22,14 @@ type Props = {
   onPhotoChange: (photo: ReturnPhoto | null) => void;
 };
 
-/** A single returnable order line: select, pick a reason, and attach a photo. */
+/**
+ * İade edilebilir tek bir birim: seçim, iade nedeni ve gerekiyorsa fotoğraf.
+ *
+ * Paket bileşenleri de bu satırla basılır; paketin başlığı ve "tamamını seç"
+ * kutusu `OrderItemGroupCard`'ın işidir.
+ */
 export function ReturnItemRow({
-  entry,
+  row,
   selected,
   reasonId,
   photo,
@@ -36,7 +40,7 @@ export function ReturnItemRow({
   onReasonChange,
   onPhotoChange,
 }: Props) {
-  const { item } = entry;
+  const { item } = row;
   const requiresPhoto = reasonId === PHOTO_REQUIRED_REASON_ID;
 
   const pickPhoto = async () => {
@@ -77,7 +81,6 @@ export function ReturnItemRow({
           height={THUMB_SIZE}
           justifyContent="center"
           overflow="hidden"
-          position="relative"
           width={THUMB_SIZE}
         >
           {item.image ? (
@@ -85,50 +88,18 @@ export function ReturnItemRow({
           ) : (
             <ImagePlaceholderIcon color="$color9" size={24} />
           )}
-          {/* Paket satırı: içindeki ürünler tek tek seçilemez, paket bütün iade edilir */}
-          {entry.isBundle ? (
-            <XStack
-              alignItems="center"
-              backgroundColor="$brand"
-              bottom={0}
-              justifyContent="center"
-              left={0}
-              paddingVertical={2}
-              position="absolute"
-              right={0}
-            >
-              <Paragraph color="white" fontSize={9} fontWeight="800">
-                PAKET
-              </Paragraph>
-            </XStack>
-          ) : null}
         </YStack>
         <YStack flex={1} gap="$1">
           <Paragraph color="$color" fontSize={14} fontWeight="600" numberOfLines={2}>
             {item.name}
           </Paragraph>
-          {entry.isBundle ? (
-            <Paragraph color="$color10" fontSize={12}>
-              {item.variantName || `${entry.components.length} ürün`}
-              {entry.quantity > 1 ? ` · ${entry.quantity} adet` : ''}
-            </Paragraph>
-          ) : item.variantName ? (
+          {item.variantName ? (
             <Paragraph color="$color10" fontSize={12}>
               Beden: <Paragraph color="$color" fontSize={12} fontWeight="600">{item.variantName}</Paragraph>
             </Paragraph>
           ) : null}
         </YStack>
       </XStack>
-
-      {/* Paket içeriği — paket bütün olarak iade edilir, ürünleri tek tek seçilemez */}
-      {entry.isBundle && entry.components.length > 0 ? (
-        <YStack gap="$1.5">
-          <Paragraph color="$color10" fontSize={11} fontWeight="700">
-            Paket içeriği ({entry.components.length} ürün) — paket bütün olarak iade edilir
-          </Paragraph>
-          <BundleContents collapsible={false} components={entry.components} />
-        </YStack>
-      ) : null}
 
       {selected ? (
         <YStack gap="$3">

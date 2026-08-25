@@ -8,6 +8,7 @@ import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useOrderCancelController } from '../hooks/use-order-cancel-controller';
 import { OrdersHeader } from '../components/orders-header';
 import { CancelItemRow } from '../components/cancel-item-row';
+import { OrderItemGroupCard } from '../components/order-item-group-card';
 import { CancelReasonSheet } from '../components/cancel-reason-sheet';
 import { CampaignBreakWarningSheet } from '../components/campaign-break-warning-sheet';
 import { formatOrderPrice } from '../utils/order-status';
@@ -122,20 +123,29 @@ export function OrderCancelScreen() {
                   İptal etmek istediğiniz ürünler için iptal nedenini belirtmelisiniz.
                 </Paragraph>
               ) : null}
-              {controller.expandedItems.map((entry) => (
-                <CancelItemRow
-                  bundleComponents={entry.components}
+              {/* Paket tek kartta gruplanır; içindeki ürünler tek tek seçilebilir. */}
+              {controller.itemGroups.map((group) => (
+                <OrderItemGroupCard
                   disabled={!controller.isCancelable}
-                  isBundle={entry.isBundle}
-                  item={entry.item}
-                  key={entry.expandedId}
-                  onPressReason={() => setReasonSheetFor(entry.expandedId)}
-                  onToggle={() => controller.toggleSelect(entry.expandedId)}
-                  reasonLabel={
-                    reasons.find((r) => r.id === controller.itemReasons[entry.expandedId])?.name
-                  }
-                  selected={controller.selectedIds.includes(entry.expandedId)}
-                />
+                  group={group}
+                  key={group.groupId}
+                  onToggleAll={() => controller.toggleGroup(group.groupId)}
+                  selectedIds={controller.selectedIds}
+                >
+                  {group.rows.map((row) => (
+                    <CancelItemRow
+                      disabled={!controller.isCancelable}
+                      item={row.item}
+                      key={row.expandedId}
+                      onPressReason={() => setReasonSheetFor(row.expandedId)}
+                      onToggle={() => controller.toggleSelect(row.expandedId)}
+                      reasonLabel={
+                        reasons.find((r) => r.id === controller.itemReasons[row.expandedId])?.name
+                      }
+                      selected={controller.selectedIds.includes(row.expandedId)}
+                    />
+                  ))}
+                </OrderItemGroupCard>
               ))}
             </YStack>
           </SectionCard>

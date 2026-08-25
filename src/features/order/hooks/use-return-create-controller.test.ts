@@ -212,7 +212,7 @@ describe('useReturnCreateController — iade yöntemi (IBAN / hediye çeki)', ()
 describe('useReturnCreateController — paket (bundle) satırı', () => {
   /**
    * Paket, siparişte iki gerçek `order_item` satırından oluşur. İade ekranında TEK
-   * satır olarak seçilir ama istek yine gerçek satır id'leriyle gönderilir.
+   * kartta gruplanır ama içindeki her ürün tek tek iade edilebilir.
    */
   const BUNDLE_ORDER = {
     id: 10,
@@ -265,21 +265,41 @@ describe('useReturnCreateController — paket (bundle) satırı', () => {
     });
   });
 
-  it('offers the package as one selectable row, not one row per product', () => {
+  it('groups the package into one card while every product stays selectable', () => {
     const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
 
-    const ids = result.current.expandedItems.map((entry) => entry.expandedId);
-
-    expect(ids).toEqual(['bundle:101703d9', '9001-0']);
-    expect(result.current.expandedItems[0].isBundle).toBe(true);
-    expect(result.current.expandedItems[0].components).toHaveLength(2);
+    expect(result.current.returnableGroups.map((group) => group.groupId)).toEqual([
+      'bundle:101703d9',
+      'item:9001',
+    ]);
+    expect(result.current.returnableGroups[0].isBundle).toBe(true);
+    expect(result.current.returnableGroups[0].rows.map((row) => row.expandedId)).toEqual([
+      '8801-0',
+      '8802-0',
+    ]);
   });
 
-  it('submits the real order_item ids the package is made of', async () => {
+  it('returns a single product out of the package', async () => {
     const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
 
-    act(() => result.current.toggleItem('bundle:101703d9'));
-    act(() => result.current.setItemReason('bundle:101703d9', 5));
+    act(() => result.current.toggleItem('8802-0'));
+    act(() => result.current.setItemReason('8802-0', 5));
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(mockSubmit.mock.calls[0][0].items).toEqual([
+      { orderItemId: 8802, quantity: 1, returnReasonId: 5, photo: null },
+    ]);
+  });
+
+  it('lets each package product carry its own return reason', async () => {
+    const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
+
+    act(() => result.current.toggleGroup('bundle:101703d9'));
+    act(() => result.current.setItemReason('8801-0', 5));
+    act(() => result.current.setItemReason('8802-0', 9));
 
     await act(async () => {
       await result.current.handleSubmit();
@@ -287,18 +307,27 @@ describe('useReturnCreateController — paket (bundle) satırı', () => {
 
     expect(mockSubmit.mock.calls[0][0].items).toEqual([
       { orderItemId: 8801, quantity: 1, returnReasonId: 5, photo: null },
-      { orderItemId: 8802, quantity: 1, returnReasonId: 5, photo: null },
+      { orderItemId: 8802, quantity: 1, returnReasonId: 9, photo: null },
     ]);
   });
 
-  it('selects and deselects the package all at once', () => {
+  it('selects and clears the whole package from the group checkbox', () => {
     const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
 
-    act(() => result.current.toggleItem('bundle:101703d9'));
-    expect(result.current.selectedItems).toEqual(['bundle:101703d9']);
+    act(() => result.current.toggleGroup('bundle:101703d9'));
+    expect(result.current.selectedItems).toEqual(['8801-0', '8802-0']);
 
-    act(() => result.current.toggleItem('bundle:101703d9'));
+    act(() => result.current.toggleGroup('bundle:101703d9'));
     expect(result.current.selectedItems).toEqual([]);
+  });
+
+  it('completes the package when only part of it was selected', () => {
+    const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
+
+    act(() => result.current.toggleItem('8801-0'));
+    act(() => result.current.toggleGroup('bundle:101703d9'));
+
+    expect(result.current.selectedItems).toEqual(['8801-0', '8802-0']);
   });
 
   it('leaves normal products on their own per-unit rows', async () => {
@@ -316,7 +345,7 @@ describe('useReturnCreateController — paket (bundle) satırı', () => {
     ]);
   });
 
-  it('closes the whole package to returns when one component is non-returnable', () => {
+  it('drops only the non-returnable product and keeps the rest of the package open', () => {
     useOrderDetailQuery.mockReturnValue({
       data: {
         ...BUNDLE_ORDER,
@@ -333,10 +362,18 @@ describe('useReturnCreateController — paket (bundle) satırı', () => {
 
     const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
 
-    const bundleEntry = result.current.expandedItems.find(
-      (entry) => entry.expandedId === 'bundle:101703d9',
+    const bundleGroup = result.current.returnableGroups.find(
+      (group) => group.groupId === 'bundle:101703d9',
     );
 
-    expect(bundleEntry?.isNonReturnable).toBe(true);
+    expect(bundleGroup?.rows.map((row) => row.orderItemId)).toEqual([8802]);
+  });
+
+  it('preselects the whole package when the order detail opens one of its products', () => {
+    const { result } = renderHook(() =>
+      useReturnCreateController('10', { ...OPTIONS, preselectItemId: 8801 }),
+    );
+
+    expect(result.current.selectedItems).toEqual(['8801-0', '8802-0']);
   });
 });

@@ -8,6 +8,7 @@ import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { OrdersHeader } from '../components/orders-header';
 import { RefundMethodSection } from '../components/refund-method-section';
 import { ReturnItemRow } from '../components/return-item-row';
+import { OrderItemGroupCard } from '../components/order-item-group-card';
 import { ReturnIbanSection } from '../components/return-iban-section';
 import { ReturnMethodSelector } from '../components/return-method-selector';
 import { ReturnResultSheets } from '../components/return-result-sheets';
@@ -152,7 +153,7 @@ export function ReturnCreateScreen() {
             </Paragraph>
           </SectionCard>
 
-          {ctrl.giftItems.length > 0 ? (
+          {ctrl.giftRows.length > 0 ? (
             <YStack backgroundColor="$yellow2" borderColor="$yellow6" borderRadius="$4" borderWidth={1} padding="$3">
               <Paragraph color="$yellow11" fontSize={12}>
                 Hediye ürünler iade talebine otomatik eklenir.
@@ -160,7 +161,7 @@ export function ReturnCreateScreen() {
             </YStack>
           ) : null}
 
-          {ctrl.returnableItems.length === 0 ? (
+          {ctrl.returnableGroups.length === 0 ? (
             <SectionCard padding="$3">
               <Paragraph color="$color10" fontSize={13} textAlign="center">
                 Bu sipariş için iade yapılabilecek ürün bulunamadı.
@@ -168,20 +169,30 @@ export function ReturnCreateScreen() {
             </SectionCard>
           ) : (
             <YStack gap="$3">
-              {ctrl.returnableItems.map((entry) => (
-                <ReturnItemRow
-                  entry={entry}
-                  key={entry.expandedId}
-                  onPhotoChange={(photo) => ctrl.setItemPhoto(entry.expandedId, photo)}
-                  onReasonChange={(reasonId) => ctrl.setItemReason(entry.expandedId, reasonId)}
-                  onToggle={() => ctrl.toggleItem(entry.expandedId)}
-                  photo={ctrl.itemPhotos[entry.expandedId]}
-                  reasonId={ctrl.itemReasons[entry.expandedId]}
-                  reasons={ctrl.reasons}
-                  reasonsError={ctrl.reasonsError}
-                  reasonsLoading={ctrl.reasonsLoading}
-                  selected={ctrl.selectedItems.includes(entry.expandedId)}
-                />
+              {/* Paket tek kartta gruplanır; içindeki ürünler tek tek iade edilebilir. */}
+              {ctrl.returnableGroups.map((group) => (
+                <OrderItemGroupCard
+                  group={group}
+                  key={group.groupId}
+                  onToggleAll={() => ctrl.toggleGroup(group.groupId)}
+                  selectedIds={ctrl.selectedItems}
+                >
+                  {group.rows.map((row) => (
+                    <ReturnItemRow
+                      key={row.expandedId}
+                      onPhotoChange={(photo) => ctrl.setItemPhoto(row.expandedId, photo)}
+                      onReasonChange={(reasonId) => ctrl.setItemReason(row.expandedId, reasonId)}
+                      onToggle={() => ctrl.toggleItem(row.expandedId)}
+                      photo={ctrl.itemPhotos[row.expandedId]}
+                      reasonId={ctrl.itemReasons[row.expandedId]}
+                      reasons={ctrl.reasons}
+                      reasonsError={ctrl.reasonsError}
+                      reasonsLoading={ctrl.reasonsLoading}
+                      row={row}
+                      selected={ctrl.selectedItems.includes(row.expandedId)}
+                    />
+                  ))}
+                </OrderItemGroupCard>
               ))}
             </YStack>
           )}

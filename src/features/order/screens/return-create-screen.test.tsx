@@ -54,7 +54,7 @@ function makeController(overrides: Record<string, unknown> = {}) {
     clearError: jest.fn(),
     closeSuccess: jest.fn(),
     errorMessage: null,
-    giftItems: [],
+    giftRows: [],
     handleRecreatePtt: jest.fn(),
     handleSubmit: jest.fn(),
     iban: { setIbanError: jest.fn() },
@@ -87,7 +87,8 @@ function makeController(overrides: Record<string, unknown> = {}) {
     },
     refundError: null,
     refundLoading: false,
-    returnableItems: [],
+    returnableGroups: [],
+    returnableRows: [],
     returnBlockReason: null,
     returnMethod: 'ptt',
     scheduled: {
@@ -102,6 +103,7 @@ function makeController(overrides: Record<string, unknown> = {}) {
     shouldShowIbanSelect: false,
     successMessage: null,
     toggleItem: jest.fn(),
+    toggleGroup: jest.fn(),
     note: '',
     ...overrides,
   };

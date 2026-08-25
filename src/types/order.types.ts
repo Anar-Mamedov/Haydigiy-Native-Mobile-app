@@ -90,7 +90,8 @@ export type OrderDetailItem = {
   returnStatus?: string;
   /**
    * Bundle bileşeni olan satırlarda dolu. Aynı `bundleGroupId`'ye sahip satırlar
-   * tek bir paketi oluşturur ve iptal/iade ekranlarında birlikte seçilir.
+   * tek bir paketi oluşturur; iptal/iade ekranlarında tek kartta gruplanır ama
+   * içlerindeki ürünler tek tek seçilebilir.
    */
   bundleProductId?: number;
   bundleItemId?: number;
