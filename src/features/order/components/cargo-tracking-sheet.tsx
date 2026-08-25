@@ -18,6 +18,7 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { useOrderCargoTrackingQuery } from '../api/order.queries';
 import { formatTrackingCode } from '../api/order-tracking.mapper';
+import { getCustomerTrackingCode } from '../utils/cargo-tracking';
 import {
   OrderAddress,
   OrderCargoMovement,
@@ -175,7 +176,12 @@ export function CargoTrackingSheet({ open, onOpenChange, order }: CargoTrackingS
   const [movementsExpanded, setMovementsExpanded] = useState(true);
   const query = useOrderCargoTrackingQuery(String(order.id), open);
   const tracking = query.data;
-  const trackingCode = tracking?.trackingCode ?? order.trackingCode ?? '';
+  // İç takip değeri (`HG…`) gerçek takip numarası değil; burada da gösterilmez.
+  const trackingCode =
+    getCustomerTrackingCode(
+      tracking?.trackingCode ?? order.trackingCode,
+      tracking?.orderNo ?? order.orderNo,
+    ) ?? '';
   const companyName = tracking?.cargoCompanyName ?? order.cargoCompanyName ?? '';
 
   useEffect(() => {

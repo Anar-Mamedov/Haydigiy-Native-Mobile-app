@@ -6,6 +6,7 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { OrderDetail } from '@/types/order.types';
+import { CARGO_TRACKING_PENDING_MESSAGE, getCustomerTrackingCode } from '../utils/cargo-tracking';
 
 type OrderDetailSummaryProps = {
   order: OrderDetail;
@@ -16,6 +17,8 @@ const DELIVERED_STATUSES = ['Teslim Edildi', 'Sipariş tamamlandı'];
 
 export function OrderDetailSummary({ order, onPressCargoTracking }: OrderDetailSummaryProps) {
   const statusColor = order.statusColor || BRAND_COLOR;
+  // Kargo firması gerçek takip numarasını üretene kadar alanda siparişin kendi numarası duruyor.
+  const customerTrackingCode = getCustomerTrackingCode(order.trackingCode, order.orderNo);
   const isDelivered =
     DELIVERED_STATUSES.includes(order.status) || order.statusId === 8;
 
@@ -126,17 +129,21 @@ export function OrderDetailSummary({ order, onPressCargoTracking }: OrderDetailS
                     </Paragraph>
                   </XStack>
                 ) : null}
-                {order.trackingCode ? (
+                {customerTrackingCode ? (
                   <Paragraph color="$color10" fontSize={12} numberOfLines={1}>
                     Takip:{' '}
                     <Paragraph color="$blue10" fontSize={12} fontWeight="700">
-                      {order.trackingCode}
+                      {customerTrackingCode}
                     </Paragraph>
                   </Paragraph>
-                ) : null}
+                ) : (
+                  <Paragraph color="$color10" fontSize={12}>
+                    {CARGO_TRACKING_PENDING_MESSAGE}
+                  </Paragraph>
+                )}
               </YStack>
             </XStack>
-            {order.trackingCode && onPressCargoTracking ? (
+            {customerTrackingCode && onPressCargoTracking ? (
               <Button
                 accessibilityLabel="Kargo Takip"
                 backgroundColor="$brand"

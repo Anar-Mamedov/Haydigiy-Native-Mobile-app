@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { OrderDetailSummary } from './order-detail-summary';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { OrderDetail } from '@/types/order.types';
+import { CARGO_TRACKING_PENDING_MESSAGE } from '../utils/cargo-tracking';
 
 jest.mock('@/components/ui', () => {
   const React = jest.requireActual('react');
@@ -98,6 +99,27 @@ describe('OrderDetailSummary', () => {
     expect(screen.getByText('Kargo Firması:')).toBeTruthy();
     expect(screen.getByText('Aras Kargo')).toBeTruthy();
     expect(screen.queryByText('Takip:')).toBeNull();
+    expect(screen.getByText(CARGO_TRACKING_PENDING_MESSAGE)).toBeTruthy();
+    expect(screen.queryByLabelText('Kargo Takip')).toBeNull();
+  });
+
+  // Kargo firması gerçek numarayı üretene kadar takip alanında siparişin kendi numarası
+  // duruyor; bu geçici değer müşteriye gösterilmemeli.
+  it('hides the internal placeholder tracking code and the tracking action', () => {
+    renderWithTamagui(
+      <OrderDetailSummary
+        order={makeOrder({
+          orderNo: 'HG0608261190940',
+          trackingCode: 'HG0608261190940',
+          cargoCompanyName: 'Aras Kargo',
+        })}
+        onPressCargoTracking={jest.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('HG0608261190940', { exact: true })).toBeNull();
+    expect(screen.queryByText('Takip:')).toBeNull();
+    expect(screen.getByText(CARGO_TRACKING_PENDING_MESSAGE)).toBeTruthy();
     expect(screen.queryByLabelText('Kargo Takip')).toBeNull();
   });
 
