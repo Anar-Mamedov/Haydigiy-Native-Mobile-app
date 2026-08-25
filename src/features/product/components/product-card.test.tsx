@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { ProductCard } from './product-card';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { Product } from '@/types/product.types';
@@ -64,6 +65,50 @@ describe('ProductCard', () => {
     fireEvent.press(screen.getByLabelText('Ürün detayını aç: Test Product'));
 
     expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the product when the full-width ranking strip is pressed', () => {
+    const onOpen = jest.fn();
+    renderWithTamagui(
+      <ProductCard onOpen={onOpen} product={{ ...product, rankingText: 'En Çok Satan 2. Ürün' }} />,
+    );
+
+    expect(screen.getByText('🏅 En Çok Satan 2. Ürün')).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('product-feature-description'));
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a single card press target while the ranking strip stays tappable', () => {
+    renderWithTamagui(
+      <ProductCard onOpen={jest.fn()} product={{ ...product, rankingText: 'En Çok Satan 2. Ürün' }} />,
+    );
+
+    expect(screen.getAllByLabelText('Ürün detayını aç: Test Product')).toHaveLength(1);
+  });
+
+  it('keeps the ranking strip edge to edge instead of inside the padded text block', () => {
+    renderWithTamagui(
+      <ProductCard onOpen={jest.fn()} product={{ ...product, rankingText: 'En Çok Satan 2. Ürün' }} />,
+    );
+
+    const strip = screen.getByTestId('product-feature-description');
+
+    // Şeridin kendi dolgusu ilgilendirmiyor; test ağacında aynı testID'yi taşıyan
+    // düğümler atlanıp asıl sarmalayıcılara bakılır.
+    let ancestor = strip.parent;
+    while (ancestor && ancestor.props?.testID === 'product-feature-description') {
+      ancestor = ancestor.parent;
+    }
+
+    // Şerit padding'li metin bloğuna geri taşınırsa kartın iki yanında boşluk
+    // kalır; negatif marj da şeridin `alignSelf="center"`i yüzünden kurtarmaz.
+    for (; ancestor; ancestor = ancestor.parent) {
+      const style = StyleSheet.flatten(ancestor.props?.style) ?? {};
+      expect(style.paddingLeft ?? style.paddingHorizontal ?? style.padding ?? 0).toBe(0);
+      expect(style.paddingRight ?? style.paddingHorizontal ?? style.padding ?? 0).toBe(0);
+    }
   });
 
   it('keeps the size strip outside the card press target so it stays swipeable', () => {

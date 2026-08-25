@@ -53,6 +53,17 @@ function parseSafely(value: any, fallback = 0): number {
   return isNaN(parsed) ? fallback : parsed;
 }
 
+/**
+ * Backend'in `ranking_text` alanını normalize eder: boşluk kırpar, boş metni
+ * "rozet yok" anlamına gelen `null` yapar. Böylece UI katmanı sadece dolu bir
+ * metin ya da `null` görür.
+ */
+function normalizeRankingText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
 function toMediumImagePath(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.includes('/medium/')) return path;
@@ -299,6 +310,7 @@ export function mapSearchProductDto(dto: SearchProductDto): Product {
     otherColors: otherColorsMapped,
     videoPath: dto.video_path ? getImageUrl(dto.video_path) : null,
     featureIcons: featureIconsMapped,
+    rankingText: normalizeRankingText(dto.ranking_text),
     // Paket ürün liste/favori kartında da tanınmalı: tek beden seçilerek sepete
     // eklenemez, kullanıcı beden seçimi için ürün detayına gider.
     isBundle: dto.is_bundle === true,
@@ -491,6 +503,7 @@ export function mapProductDetailDto(dto: any): Product {
     otherColors: otherColorsMapped,
     videoPath: dto.video_path ? getImageUrl(dto.video_path) : null,
     featureIcons: featureIconsMapped,
+    rankingText: normalizeRankingText(dto.ranking_text),
     variants: variantsMapped,
     reviews: reviewsMapped,
     questions: questionsMapped,

@@ -127,6 +127,8 @@ export interface SearchProductDto {
   };
   video_path?: string | null;
   feature_icons?: ProductFeatureIconDto[];
+  /** Sıralama rozeti metni; özellik açıklamalarıyla aynı ticker'da gösterilir. */
+  ranking_text?: string | null;
 }
 
 export interface SearchProductsResponseDto {

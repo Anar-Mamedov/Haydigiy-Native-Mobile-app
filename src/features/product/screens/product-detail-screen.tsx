@@ -111,6 +111,7 @@ export function ProductDetailScreen() {
             productTitle={displayData.title}
             productSlug={displayData.slug}
             featureIcons={product?.featureIcons}
+            rankingText={product?.rankingText}
           />
 
           {/* Product Primary Info */}

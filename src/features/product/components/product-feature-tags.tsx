@@ -1,10 +1,18 @@
 import { ComponentProps, useEffect, useMemo, useState } from 'react';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { RANKING_BADGE_GRADIENT } from '@/lib/theme/colors';
 import { FeatureIcon } from '@/types/product.types';
 
 const FEATURE_TAG_ROTATION_MS = 3000;
+
+/** Rozetler arası geçişin çapraz geçiş (cross-fade) süresi. */
+const FEATURE_TAG_TRANSITION_MS = 300;
+
+/** Backend hiçbir konum göndermediğinde rozetin varsayıldığı köşe. */
+const DEFAULT_TAG_POSITION = 'top-left';
 
 function hasValue(value: string | null | undefined): value is string {
   return typeof value === 'string' && value.trim().length > 0;
@@ -25,6 +33,14 @@ export function getOrderedFeatureIcons(featureIcons: FeatureIcon[] | undefined):
       return orderDelta === 0 ? a.index - b.index : orderDelta;
     })
     .map(({ icon }) => icon);
+}
+
+/**
+ * Backend'in rozet için işaretlediği konum: önce `positionHint`, o boşsa
+ * `position`. İkisi de gelmezse rozet sol üst kabul edilir.
+ */
+export function getFeatureTagPosition(icon: FeatureIcon): string {
+  return icon.positionHint?.trim() || icon.position?.trim() || DEFAULT_TAG_POSITION;
 }
 
 function useRotatingFeatureIndex(total: number) {
@@ -66,8 +82,14 @@ export function ProductFeatureAssetTicker({
   zIndex = 20,
   testID = 'product-feature-asset',
 }: ProductFeatureAssetTickerProps) {
+  // Bu ticker rozeti her zaman sabit bir sol üst noktaya çizer, dolayısıyla
+  // backend'in başka bir köşeye işaretlediği ikonlar rotasyona alınmaz; alınsaydı
+  // `top-right` için gönderilen bir etiket sol üstte görünürdü.
   const icons = useMemo(
-    () => getOrderedFeatureIcons(featureIcons).filter((icon) => hasValue(icon.assetUrl)),
+    () =>
+      getOrderedFeatureIcons(featureIcons).filter(
+        (icon) => hasValue(icon.assetUrl) && getFeatureTagPosition(icon) === DEFAULT_TAG_POSITION,
+      ),
     [featureIcons],
   );
   const activeIcon = icons[useRotatingFeatureIndex(icons.length)];
@@ -82,6 +104,8 @@ export function ProductFeatureAssetTicker({
         source={{ uri: activeIcon.assetUrl }}
         style={{ width, height }}
         testID={testID}
+        // Tek rozet varsa geçiş yok: ilk boyamada gereksiz bir solma yaşanmasın.
+        transition={icons.length > 1 ? FEATURE_TAG_TRANSITION_MS : 0}
       />
     </YStack>
   );
@@ -138,6 +162,8 @@ export function ProductFeatureDescriptionList({
 
 type ProductFeatureDescriptionTickerProps = {
   featureIcons?: FeatureIcon[];
+  /** Sıralama rozeti metni; özellik açıklamalarının ardından, son sırada döner. */
+  rankingText?: string | null;
   width?: ComponentProps<typeof XStack>['width'];
   marginHorizontal?: number;
   marginTop?: number;
@@ -150,8 +176,63 @@ type ProductFeatureDescriptionTickerProps = {
   testID?: string;
 };
 
+/**
+ * Bir ticker satırının arka planı: özellik açıklamaları backend'den düz renk
+ * alırken sıralama rozeti gradyanla çizilir.
+ */
+export type TickerBackground =
+  | { type: 'color'; color: string }
+  | { type: 'gradient'; colors: readonly [string, string, ...string[]] };
+
+export type DescriptionTickerItem = {
+  id: string;
+  text: string;
+  background: TickerBackground | null;
+};
+
+/** Sıralama rozeti satırının sabit kimliği. */
+export const RANKING_TICKER_ITEM_ID = 'ranking-text';
+
+const RANKING_TICKER_PREFIX = '🏅';
+
+/**
+ * Ticker'da dönecek satırları üretir: önce backend sırasındaki özellik
+ * açıklamaları, en sonda `rankingText` rozeti. Backend rozet için bir arka plan
+ * rengi göndermediğinden rozet her zaman marka gradyanıyla çizilir.
+ */
+export function buildDescriptionTickerItems(
+  featureIcons: FeatureIcon[] | undefined,
+  rankingText?: string | null,
+): DescriptionTickerItem[] {
+  const items: DescriptionTickerItem[] = [];
+
+  getOrderedFeatureIcons(featureIcons).forEach((icon, index) => {
+    const description = icon.description?.trim();
+    if (!description) return;
+
+    items.push({
+      id: `${icon.id}-${index}`,
+      text: description,
+      background: hasValue(icon.descriptionBgColor)
+        ? { type: 'color', color: icon.descriptionBgColor.trim() }
+        : null,
+    });
+  });
+
+  if (hasValue(rankingText)) {
+    items.push({
+      id: RANKING_TICKER_ITEM_ID,
+      text: `${RANKING_TICKER_PREFIX} ${rankingText.trim()}`,
+      background: { type: 'gradient', colors: RANKING_BADGE_GRADIENT },
+    });
+  }
+
+  return items;
+}
+
 export function ProductFeatureDescriptionTicker({
   featureIcons,
+  rankingText,
   width = '100%',
   marginHorizontal = 0,
   marginTop = 0,
@@ -163,14 +244,15 @@ export function ProductFeatureDescriptionTicker({
   numberOfLines,
   testID = 'product-feature-description',
 }: ProductFeatureDescriptionTickerProps) {
-  const descriptions = useMemo(
-    () => getOrderedFeatureIcons(featureIcons).filter((icon) => hasValue(icon.description)),
-    [featureIcons],
+  const items = useMemo(
+    () => buildDescriptionTickerItems(featureIcons, rankingText),
+    [featureIcons, rankingText],
   );
-  const activeIcon = descriptions[useRotatingFeatureIndex(descriptions.length)];
-  const description = activeIcon?.description?.trim();
+  const activeItem = items[useRotatingFeatureIndex(items.length)];
 
-  if (!activeIcon || !description) return null;
+  if (!activeItem) return null;
+
+  const background = activeItem.background;
 
   return (
     <XStack
@@ -182,19 +264,32 @@ export function ProductFeatureDescriptionTicker({
       marginTop={marginTop}
       paddingHorizontal={paddingHorizontal}
       paddingVertical={paddingVertical}
-      style={{ backgroundColor: activeIcon.descriptionBgColor ?? undefined }}
+      style={{ backgroundColor: background?.type === 'color' ? background.color : undefined }}
       testID={testID}
       width={width}
     >
+      {background?.type === 'gradient' ? (
+        // Gradyan, satırın düzenini bozmamak için metnin arkasına serilir; böylece
+        // hizalama/dolgu propları tek bir kapsayıcıda kalır.
+        <LinearGradient
+          colors={background.colors}
+          end={{ x: 1, y: 0 }}
+          start={{ x: 0, y: 0 }}
+          style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }}
+          testID={`${testID}-gradient`}
+        />
+      ) : null}
+
       <Paragraph
-        color={activeIcon.descriptionBgColor ? 'white' : '$color'}
+        color={background ? 'white' : '$color'}
         fontSize={fontSize}
         fontWeight="700"
         lineHeight={lineHeight}
         numberOfLines={numberOfLines}
         textAlign="center"
+        zIndex={1}
       >
-        {description}
+        {activeItem.text}
       </Paragraph>
     </XStack>
   );

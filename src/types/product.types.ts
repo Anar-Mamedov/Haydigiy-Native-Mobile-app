@@ -194,6 +194,11 @@ export type Product = {
   otherColors?: ProductColorOption[];
   videoPath?: string | null;
   featureIcons?: FeatureIcon[];
+  /**
+   * Sıralama rozeti metni (`ranking_text`) — ör. "Bu hafta en çok satan 3. ürün".
+   * Özellik açıklamalarıyla aynı ticker'da, en son sırada döner.
+   */
+  rankingText?: string | null;
   variants?: ProductVariant[];
   reviews?: ProductReview[];
   questions?: ProductQuestion[];

@@ -122,6 +122,14 @@ describe('mapSearchProductDto', () => {
   });
   // Paket ürün liste/favori kartında da tanınmalı: tek beden seçilerek sepete
   // eklenemez, kullanıcı beden seçimi için ürün detayına gider.
+  it('maps the backend ranking badge and drops blank values', () => {
+    expect(
+      mapSearchProductDto({ ...baseProductDto, ranking_text: '  En çok satan 3. ürün  ' }).rankingText,
+    ).toBe('En çok satan 3. ürün');
+    expect(mapSearchProductDto({ ...baseProductDto, ranking_text: '   ' }).rankingText).toBeNull();
+    expect(mapSearchProductDto(baseProductDto).rankingText).toBeNull();
+  });
+
   it('marks a package product coming from a list response', () => {
     expect(mapSearchProductDto({ ...baseProductDto, is_bundle: true }).isBundle).toBe(true);
   });
@@ -207,6 +215,15 @@ describe('mapProductDetailDto', () => {
       descriptionBgColor: '#FF8800',
       displayOrder: 1,
     });
+  });
+
+  it('maps the ranking badge coming from the detail payload', () => {
+    const baseDetailDto = { id: 80872, name: 'Keten Etek', slug: 'keten-etek-80872', price: 219.99 };
+
+    expect(mapProductDetailDto({ ...baseDetailDto, ranking_text: ' En çok favorilenen ürün ' }).rankingText).toBe(
+      'En çok favorilenen ürün',
+    );
+    expect(mapProductDetailDto(baseDetailDto).rankingText).toBeNull();
   });
 
   it('replaces embedded detail reviews with photo-capable review page data', () => {

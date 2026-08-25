@@ -21,6 +21,13 @@ export const WARNING_COLOR = '#f59e0b';
 export const BRAND_GRADIENT = ['#ff6c15', '#fe4c7f'] as const;
 
 /**
+ * Sıralama rozetinin ("En çok satan 3. ürün") üç duraklı arka plan gradyanı.
+ * Bir gradyanın tek bir Tamagui token'ı olmadığı için durakları burada
+ * merkezileştirildi; expo-linear-gradient ile tüketilir.
+ */
+export const RANKING_BADGE_GRADIENT = ['#f27a1a', '#f79a0f', '#ffbf00'] as const;
+
+/**
  * Checkout payment description badge color, used for texts such as
  * "Peşin fiyatına 3 taksit" under the secure payment badge.
  */

@@ -23,6 +23,8 @@ interface ProductCarouselProps {
   productTitle?: string;
   productSlug?: string;
   featureIcons?: FeatureIcon[];
+  /** Sıralama rozeti; açıklama ticker'ında özellik metinlerinin ardından döner. */
+  rankingText?: string | null;
   onImagePress?: (imageIndex: number) => void;
   /** Image index the carousel should open on (e.g. the one shown in the list card). */
   initialIndex?: number;
@@ -80,6 +82,7 @@ export function ProductCarousel({
   productTitle = '',
   productSlug = '',
   featureIcons = [],
+  rankingText,
   onImagePress,
   initialIndex = 0,
 }: ProductCarouselProps) {
@@ -437,6 +440,7 @@ export function ProductCarousel({
       <ProductFeatureDescriptionTicker
         featureIcons={featureIcons}
         marginHorizontal={-32}
+        rankingText={rankingText}
         width={screenWidth}
       />
     </YStack>

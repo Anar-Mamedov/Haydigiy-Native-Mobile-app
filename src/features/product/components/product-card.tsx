@@ -288,6 +288,24 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
           </Pressable>
         </YStack>
 
+        {/* Özellik/sıralama şeridi bilerek padding'li metin bloğunun DIŞINDA: şerit
+            kartı kenardan kenara kaplamalı. İçeride negatif marjla taşırmak işe
+            yaramıyor, çünkü `width="100%"` zaten padding'i dışlıyor ve şeridin
+            `alignSelf="center"`i negatif marjı geri ortalayarak boşluğu geri getiriyor.
+            `accessible={false}`: kartta ikinci bir "Ürün detayını aç" düğmesi
+            duyurulmasın, ama şeride basınca yine detay açılsın. */}
+        <Pressable accessible={false} onPress={() => onOpen(imageIndex)}>
+          <ProductFeatureDescriptionTicker
+            featureIcons={product.featureIcons}
+            fontSize={11}
+            lineHeight={15}
+            numberOfLines={1}
+            paddingHorizontal={8}
+            paddingVertical={6}
+            rankingText={product.rankingText}
+          />
+        </Pressable>
+
         {/* Text Content Padded Container */}
         <YStack padding={6} width="100%">
           <Pressable
@@ -295,18 +313,6 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
             accessibilityRole="button"
             onPress={() => onOpen(imageIndex)}
           >
-            <ProductFeatureDescriptionTicker
-              featureIcons={product.featureIcons}
-              fontSize={11}
-              lineHeight={15}
-              marginBottom={6}
-              marginHorizontal={-6}
-              marginTop={-6}
-              numberOfLines={1}
-              paddingHorizontal={8}
-              paddingVertical={6}
-            />
-
             <Paragraph color="$color10" fontSize={12} numberOfLines={1} marginBottom={2}>
               {product.category || product.brand || 'HaydiGiy'}
             </Paragraph>
