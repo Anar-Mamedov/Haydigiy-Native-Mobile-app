@@ -12,6 +12,7 @@ import {
 } from '../utils/insider-product.mapper';
 import { User } from '@/types/auth.types';
 import { extractTurkishNationalNumber, isValidTurkishMobile } from '@/utils/turkish-phone';
+import { INSIDER_LANGUAGE, INSIDER_LOCALE } from '../utils/insider-locale';
 
 /**
  * Custom event tetiklendiğinde Insider'ın beklediği ad: yalnızca küçük Latin
@@ -56,7 +57,17 @@ export interface InsiderTracker {
   trackUserLogin(method?: InsiderLoginMethod): void;
   trackUserLogout(reason: InsiderLogoutReason): void;
   trackReviewSubmitted(input: ReviewSubmittedInput): void;
+  /**
+   * Smart Recommender tıklaması. Aynı oturumda ürün için bu çağrı yapılmadan
+   * sepete ekleme ve satın alma istatistikleri panele öneriye bağlanmaz.
+   */
+  trackRecommendationClick(recommendationId: number, product: InsiderProductInput): void;
   identifyUser(user: User): void;
+  /**
+   * Dil/locale attribute'unu oturum durumundan bağımsız tanımlar. Smart Recommender
+   * ön koşulu olduğu için misafir ziyaretçilerde de tanımlı olmalı.
+   */
+  applyDefaultLocale(): void;
   clearUser(): void;
 }
 
@@ -286,6 +297,22 @@ export function createInsiderTracker(
       });
     },
 
+    trackRecommendationClick(recommendationId, product) {
+      if (!isValidInsiderProductInput(product)) return;
+      run('öneri tıklaması', (activeSdk) => {
+        activeSdk.clickSmartRecommendationProduct(recommendationId, buildProduct(activeSdk, product));
+      });
+    },
+
+    applyDefaultLocale() {
+      run('dil/locale tanımlama', (activeSdk) => {
+        const currentUser = activeSdk.getCurrentUser();
+        if (!currentUser) return;
+        currentUser.setLanguage(INSIDER_LANGUAGE);
+        currentUser.setLocale(INSIDER_LOCALE);
+      });
+    },
+
     identifyUser(user) {
       run('kullanıcı bilgisi güncelleme', (activeSdk) => {
         const currentUser = activeSdk.getCurrentUser();
@@ -309,8 +336,8 @@ export function createInsiderTracker(
 
         if (user.name) currentUser.setName(user.name);
         if (user.surname) currentUser.setSurname(user.surname);
-        currentUser.setLanguage('tr');
-        currentUser.setLocale('tr_TR');
+        currentUser.setLanguage(INSIDER_LANGUAGE);
+        currentUser.setLocale(INSIDER_LOCALE);
         if (email) currentUser.setEmail(email);
         if (phone) currentUser.setPhoneNumber(phone);
       });

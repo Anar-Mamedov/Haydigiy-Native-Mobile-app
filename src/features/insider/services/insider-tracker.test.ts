@@ -137,6 +137,10 @@ function createSdkHarness() {
     itemRemovedFromWishlist: jest.fn(),
     itemPurchased: jest.fn(),
     signUpConfirmation: jest.fn(),
+    getSmartRecommendation: jest.fn(),
+    getSmartRecommendationWithProduct: jest.fn(),
+    getSmartRecommendationWithProductIDs: jest.fn(),
+    clickSmartRecommendationProduct: jest.fn(),
   } as unknown as jest.Mocked<InsiderSdk>;
 
   const tracker = createInsiderTracker({
@@ -464,6 +468,38 @@ describe('insider tracker', () => {
     const { tracker, insiderUser } = createSdkHarness();
     tracker.clearUser();
     expect(insiderUser.logout).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Smart Recommender: sepete ekleme ve satın alma istatistikleri, aynı oturumda
+   * ürün için önce tıklama çağrısının yapılmış olmasına bağlı.
+   */
+  it('logs a recommendation click with the same product id used elsewhere', () => {
+    const { tracker, sdk, productCalls } = createSdkHarness();
+
+    tracker.trackRecommendationClick(9, createInput({ id: '1361384' }));
+
+    expect(productCalls[0].args[0]).toBe('1361384');
+    expect(sdk.clickSmartRecommendationProduct).toHaveBeenCalledWith(9, productCalls[0].product);
+  });
+
+  it('skips the recommendation click for an unusable product', () => {
+    const { tracker, sdk } = createSdkHarness();
+
+    tracker.trackRecommendationClick(9, createInput({ id: '', price: 0 }));
+
+    expect(sdk.clickSmartRecommendationProduct).not.toHaveBeenCalled();
+  });
+
+  /** Locale, Smart Recommender'ın ön koşulu; misafir ziyaretçide de tanımlı olmalı. */
+  it('sets language and locale without a signed-in user', () => {
+    const { tracker, insiderUser } = createSdkHarness();
+
+    tracker.applyDefaultLocale();
+
+    expect(insiderUser.setLanguage).toHaveBeenCalledWith('tr');
+    expect(insiderUser.setLocale).toHaveBeenCalledWith('tr_TR');
+    expect(insiderUser.login).not.toHaveBeenCalled();
   });
 });
 

@@ -5,10 +5,11 @@ import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { User } from '@/types/auth.types';
 
 jest.mock('../services/insider-tracker', () => ({
-  insiderTracker: { identifyUser: jest.fn() },
+  insiderTracker: { identifyUser: jest.fn(), applyDefaultLocale: jest.fn() },
 }));
 
 const identifyUser = insiderTracker.identifyUser as jest.Mock;
+const applyDefaultLocale = insiderTracker.applyDefaultLocale as jest.Mock;
 
 const storedUser: User = {
   id: 'user-1',
@@ -21,6 +22,7 @@ const storedUser: User = {
 describe('useInsiderIdentityRestore', () => {
   beforeEach(() => {
     identifyUser.mockClear();
+    applyDefaultLocale.mockClear();
     useAuthStore.setState({ user: null });
   });
 
@@ -38,9 +40,21 @@ describe('useInsiderIdentityRestore', () => {
     expect(identifyUser).toHaveBeenCalledWith(storedUser);
   });
 
-  it('stays a no-op for anonymous sessions', () => {
+  // Misafirde kimlik bildirilmez ama dil/locale tanımlanır: Smart Recommender
+  // öneri feed'ini locale ile eşleştiriyor ve bu attribute ön koşul.
+  it('only sets the default locale for anonymous sessions', () => {
     renderHook(() => useInsiderIdentityRestore());
 
     expect(identifyUser).not.toHaveBeenCalled();
+    expect(applyDefaultLocale).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not re-apply the default locale when a session is restored', () => {
+    useAuthStore.setState({ user: storedUser });
+
+    renderHook(() => useInsiderIdentityRestore());
+
+    // `identifyUser` dil/locale'i zaten yazıyor; ikinci çağrı gereksiz.
+    expect(applyDefaultLocale).not.toHaveBeenCalled();
   });
 });

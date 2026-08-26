@@ -20,6 +20,14 @@ import { useAuthStore } from '@/features/auth/store/use-auth-store';
 export function useInsiderIdentityRestore(): void {
   useEffect(() => {
     const { user } = useAuthStore.getState();
-    if (user) insiderTracker.identifyUser(user);
+    if (user) {
+      insiderTracker.identifyUser(user);
+      return;
+    }
+
+    // Misafir ziyaretçi: `identifyUser` hiç çalışmaz, dolayısıyla dil/locale attribute'u
+    // tanımsız kalırdı. Smart Recommender bu alanı ön koşul sayıyor (öneri feed'i locale
+    // ile eşleşiyor), bu yüzden oturum olmadan da tanımlanır.
+    insiderTracker.applyDefaultLocale();
   }, []);
 }

@@ -122,6 +122,37 @@ export interface InsiderSdk {
     customParameters?: InsiderCustomParameters,
   ): void;
   signUpConfirmation(customParameters?: InsiderCustomParameters): void;
+  /**
+   * Smart Recommender. İmzalar SDK'nın kendi tanımından alınmıştır
+   * (`react-native-insider/index.js`); dokümandaki örnekler bununla çelişiyor.
+   * Özellikle `getSmartRecommendationWithProduct` **currency almaz** — fazladan
+   * parametre verilirse SDK'nın `checkParameters` kontrolü callback'i string sanıp
+   * çağrıyı sessizce düşürür.
+   */
+  getSmartRecommendation(
+    recommendationID: number,
+    locale: string,
+    currency: string,
+    callback: (recommendation: InsiderPayload) => void,
+  ): void;
+  getSmartRecommendationWithProduct(
+    product: InsiderProductSdk,
+    recommendationID: number,
+    locale: string,
+    callback: (recommendation: InsiderPayload) => void,
+  ): void;
+  getSmartRecommendationWithProductIDs(
+    productIDs: string[],
+    recommendationID: number,
+    locale: string,
+    currency: string,
+    callback: (recommendation: InsiderPayload) => void,
+  ): void;
+  /**
+   * Öneri tıklaması. Sepete ekleme ve satın alma istatistikleri bu çağrıya bağlı:
+   * aynı oturumda ürün için önce bu tetiklenmezse panelde ilişkilendirilmez.
+   */
+  clickSmartRecommendationProduct(recommendationID: number, product: InsiderProductSdk): void;
 }
 
 /** Constructor of the identifier bag (`react-native-insider/src/InsiderIdentifier`). */

@@ -5,6 +5,7 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, ScreenHeader, SectionCard } from '@/components/ui';
 import { formatCurrency } from '@/utils/format-currency';
 import { usePaymentSuccess } from '../hooks/use-payment-success';
+import { InsiderRecommendationSection } from '@/features/insider/components/insider-recommendation-section';
 
 export function PaymentSuccessScreen() {
   const router = useRouter();
@@ -99,6 +100,8 @@ export function PaymentSuccessScreen() {
             </Button>
           </YStack>
         </SectionCard>
+
+        <InsiderRecommendationSection slot="orderSuccess" />
       </YStack>
     </AppScreen>
   );
