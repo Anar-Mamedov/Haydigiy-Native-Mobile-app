@@ -17,8 +17,12 @@ const DELIVERED_STATUSES = ['Teslim Edildi', 'Sipariş tamamlandı'];
 
 export function OrderDetailSummary({ order, onPressCargoTracking }: OrderDetailSummaryProps) {
   const statusColor = order.statusColor || BRAND_COLOR;
-  // Kargo firması gerçek takip numarasını üretene kadar alanda siparişin kendi numarası duruyor.
-  const customerTrackingCode = getCustomerTrackingCode(order.trackingCode, order.orderNo);
+  // Aras Kargo'da gerçek takip numarası üretilene kadar alanda siparişin kendi numarası duruyor.
+  const customerTrackingCode = getCustomerTrackingCode({
+    cargoCompanyName: order.cargoCompanyName,
+    orderNo: order.orderNo,
+    trackingCode: order.trackingCode,
+  });
   const isDelivered =
     DELIVERED_STATUSES.includes(order.status) || order.statusId === 8;
 

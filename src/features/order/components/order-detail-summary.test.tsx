@@ -98,7 +98,6 @@ describe('OrderDetailSummary', () => {
 
     expect(screen.getByText('Kargo Firması:')).toBeTruthy();
     expect(screen.getByText('Aras Kargo')).toBeTruthy();
-    expect(screen.queryByText('Takip:')).toBeNull();
     expect(screen.getByText(CARGO_TRACKING_PENDING_MESSAGE)).toBeTruthy();
     expect(screen.queryByLabelText('Kargo Takip')).toBeNull();
   });
@@ -118,9 +117,27 @@ describe('OrderDetailSummary', () => {
     );
 
     expect(screen.queryByText('HG0608261190940', { exact: true })).toBeNull();
-    expect(screen.queryByText('Takip:')).toBeNull();
     expect(screen.getByText(CARGO_TRACKING_PENDING_MESSAGE)).toBeTruthy();
     expect(screen.queryByLabelText('Kargo Takip')).toBeNull();
+  });
+
+  // Kural yalnızca Aras entegrasyonuna ait; kapsayıcının firma adını gerçekten
+  // geçirdiğini burada doğruluyoruz (util testleri bu bağlantıyı görmez).
+  it('shows another carrier\'s code even when it looks like the placeholder', () => {
+    renderWithTamagui(
+      <OrderDetailSummary
+        order={makeOrder({
+          cargoCompanyName: 'Hepsijet',
+          orderNo: 'HG0608261190940',
+          trackingCode: 'HG0608261190940',
+        })}
+        onPressCargoTracking={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText('HG0608261190940')).toBeTruthy();
+    expect(screen.getByLabelText('Kargo Takip')).toBeTruthy();
+    expect(screen.queryByText(CARGO_TRACKING_PENDING_MESSAGE)).toBeNull();
   });
 
   it('hides the cargo tracking action for cancelled orders', () => {

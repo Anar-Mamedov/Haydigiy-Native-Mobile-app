@@ -176,13 +176,14 @@ export function CargoTrackingSheet({ open, onOpenChange, order }: CargoTrackingS
   const [movementsExpanded, setMovementsExpanded] = useState(true);
   const query = useOrderCargoTrackingQuery(String(order.id), open);
   const tracking = query.data;
-  // İç takip değeri (`HG…`) gerçek takip numarası değil; burada da gösterilmez.
-  const trackingCode =
-    getCustomerTrackingCode(
-      tracking?.trackingCode ?? order.trackingCode,
-      tracking?.orderNo ?? order.orderNo,
-    ) ?? '';
   const companyName = tracking?.cargoCompanyName ?? order.cargoCompanyName ?? '';
+  // Aras Kargo'nun iç takip değeri (`HG…`) gerçek takip numarası değil; burada da gösterilmez.
+  const trackingCode =
+    getCustomerTrackingCode({
+      cargoCompanyName: companyName,
+      orderNo: tracking?.orderNo ?? order.orderNo,
+      trackingCode: tracking?.trackingCode ?? order.trackingCode,
+    }) ?? '';
 
   useEffect(() => {
     if (open) setMovementsExpanded(true);
