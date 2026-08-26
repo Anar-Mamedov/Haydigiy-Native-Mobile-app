@@ -6,10 +6,10 @@ import { getInsiderRecommendationId } from '../config/recommendation-campaigns';
 import { insiderTracker } from '../services/insider-tracker';
 import { InsiderRecommendedProduct } from '../utils/insider-recommendation.mapper';
 
-const push = jest.fn();
+const mockPush = jest.fn();
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: (...args: unknown[]) => push(...args) }),
+  useRouter: () => ({ push: mockPush }),
 }));
 
 jest.mock('../api/insider-recommendation.queries', () => ({
@@ -42,7 +42,7 @@ const product: InsiderRecommendedProduct = {
 };
 
 beforeEach(() => {
-  push.mockClear();
+  mockPush.mockClear();
   trackClick.mockClear();
   getIdMock.mockReturnValue(9);
   useQueryMock.mockReturnValue({
@@ -71,8 +71,10 @@ describe('InsiderRecommendationSection', () => {
     fireEvent.press(screen.getByLabelText('Önerilen ürünü aç: Kadın Bluz'));
 
     expect(trackClick).toHaveBeenCalledWith(9, expect.objectContaining({ id: '1361384' }));
-    expect(push).toHaveBeenCalledWith('/product/kadin-bluz');
-    expect(trackClick.mock.invocationCallOrder[0]).toBeLessThan(push.mock.invocationCallOrder[0]);
+    expect(mockPush).toHaveBeenCalledWith('/product/kadin-bluz');
+    expect(trackClick.mock.invocationCallOrder[0]).toBeLessThan(
+      mockPush.mock.invocationCallOrder[0],
+    );
   });
 
   // Kampanya panelde açılmadan ekranda hiçbir şey görünmemeli.

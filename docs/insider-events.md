@@ -295,3 +295,86 @@ by default"). Uygulama bunları hiç çağırmaz, dolayısıyla kapalı değildi
 Expo kurulumunda `AppDelegate.swift` düzenlenmez; `expo-insider-plugin` ayarları
 `Info.plist` içindeki `Insider` sözlüğüne yazar. Mevcut değerler doğrudur:
 `OverrideUNUserNotificationCenterDelegate = true`, `EnablePushViewOnForegroundStatus = true`.
+
+## Smart Recommender (öneri kampanyaları)
+
+Insider'ın Smart Recommender kampanyaları uygulamada dört slot üzerinden çalışır.
+Kampanya kimlikleri panelden geldiği için kod tarafı kimlik olmadan da güvenle
+çalışır: slot tanımlı değilken sorgu hiç kurulmaz, SDK çağrılmaz ve ekranda
+hiçbir şey render edilmez.
+
+### Mimari
+
+| Dosya | Sorumluluk |
+| --- | --- |
+| `config/recommendation-campaigns.ts` | Slot → kampanya ID + başlık eşlemesi. **Kampanyayı açmak için tek dokunulacak yer.** |
+| `services/insider-recommender.ts` | SDK sınırı; callback tabanlı API'yi promise'e çevirir, hata/zaman aşımı izolasyonu burada. |
+| `utils/insider-recommendation.mapper.ts` | Yanıt → domain modeli, tracker girdisi ve ürün rotası dönüşümleri. |
+| `api/insider-recommendation.queries.ts` | TanStack Query hook'u; anahtarlar `insiderKeys.recommendation(...)`. |
+| `components/insider-recommendation-slider.tsx` | Yalnızca sunum: yatay slider, loading/error/empty durumları. |
+| `components/insider-recommendation-section.tsx` | Ekrana bağlanan kapsayıcı: veri + tıklama logu + yönlendirme. |
+
+### Slot → SDK metodu eşlemesi
+
+| Slot | Ekran | SDK metodu | Paneldeki uygun algoritmalar |
+| --- | --- | --- | --- |
+| `home` | `home-screen.tsx` | `getSmartRecommendation` | Çok satanlar, trend ürünler, yeni gelenler, en çok beğenilenler, kullanıcı bazlı |
+| `productDetail` | `product-detail-screen.tsx` | `getSmartRecommendationWithProduct` | Birlikte alınanlar, birlikte görüntülenenler, benzer ürünler |
+| `cart` | `cart-screen.tsx` | `getSmartRecommendationWithProductIDs` | Birlikte alınanlar, birlikte görüntülenenler (en fazla 3 ürün kimliği) |
+| `orderSuccess` | `payment-success-screen.tsx` | `getSmartRecommendation` | Ürün gerektirmeyen algoritmalar |
+
+### Doküman ile SDK arasındaki fark (dikkat)
+
+Insider dokümanındaki örnekler SDK'nın gerçek imzalarıyla çelişiyor. Kod, SDK'nın
+kendi tanımına göre yazıldı (`react-native-insider@8.1.0-nh/index.js`):
+
+- Metot adı `getSmartRecommendationWithID` değil **`getSmartRecommendation`**.
+- **`getSmartRecommendationWithProduct` currency almaz** (4 parametre:
+  `product, recommendationID, locale, callback`). Dokümandaki örnekte olduğu gibi
+  fazladan `"currency"` gönderilirse SDK'nın `checkParameters` kontrolü callback'i
+  string sanar, yalnızca `console.warn` atıp **çağrıyı sessizce düşürür**.
+
+Regresyon testi: `insider-recommender.test.ts` → "calls the product-based method
+with exactly four arguments (no currency)".
+
+### Ön koşullar
+
+| Ön koşul | Durum |
+| --- | --- |
+| Kullanıcı objesinde `locale` | ✅ `identifyUser` oturum açanlarda, `applyDefaultLocale` misafirlerde (`InsiderIdentitySync`). Değer `tr_TR` (`utils/insider-locale.ts`). |
+| Ürün objesinde `stock` | ✅ `productToInsiderInput` → `Product.totalQuantity`; recommender ürün objesini kurarken `setStock` çağırır. |
+
+### İstatistik zinciri
+
+Tıklama (`clickSmartRecommendationProduct`) **zorunlu ilk halka**: aynı oturumda bir
+ürün için tıklama gönderilmeden o ürünün sepete ekleme ve satın alma eventleri panelde
+öneri kampanyasına bağlanmaz. `InsiderRecommendationSection` tıklamayı yönlendirmeden
+**önce** gönderir; sıralama testle korunur.
+
+Sepete ekleme ve satın alma için ayrı bir metot yok — mevcut `itemAddedToCart` ve
+`itemPurchased` çağrıları kullanılır. Eşleşme ürün kimliği üzerinden yapıldığı için
+öneri kartındaki kimlik (Insider `item_id`) ile sepet/sipariş tarafındaki kimlik aynı
+olmak zorundadır; `recommendedProductToInsiderInput` kimliği olduğu gibi taşır.
+
+### Kampanya nasıl açılır
+
+Kampanya kimlikleri sabittir ve Insider ekibi tarafından elle iletilir; bu yüzden kodda
+`config/recommendation-campaigns.ts` içinde tutulurlar.
+
+1. Insider panelinde Smart Recommender kampanyasını oluştur, algoritmayı yukarıdaki
+   tabloya uygun seç.
+2. Kampanyanın yanındaki ID'yi ilgili slotun `id` alanına yaz (`null` → sayı). Başlık da
+   aynı dosyadadır.
+3. Başka hiçbir dosyaya dokunmak gerekmez; slider o ekranda görünmeye başlar.
+
+`id` `null` (ya da `0`) olduğu sürece sorgu kurulmaz, SDK çağrılmaz ve o slotta hiçbir şey
+render edilmez — yani kampanya açılmadan da kod güvenle yayında durabilir. Bu davranışı
+`recommendation-campaigns.test.ts` koruyor.
+
+Kimlikler saf JS sabiti olduğu için değişiklik **EAS Update (OTA)** ile gidebilir; yeni
+mağaza sürümü gerekmez.
+
+Yanıt `details: false` ile kurulduysa Insider yalnızca ürün kimliklerini döner; mapper bunu
+`productIds` alanına yazar ama slider ürün bilgisi olmadan çizim yapamaz. Bu parametrenin
+nerede ayarlandığı Insider dokümanında açıklanmıyor — Insider ekibine sorulması gereken bir
+madde; gerekirse kimliklerden ürünleri kendi API'mizle çekecek yol açık.

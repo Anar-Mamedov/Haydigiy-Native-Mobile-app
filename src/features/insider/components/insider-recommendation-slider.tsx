@@ -132,7 +132,9 @@ export function InsiderRecommendationSlider({
   if (isEmpty) return null;
 
   return (
-    <YStack gap="$2" paddingTop="$5" testID="insider-recommendation-slider">
+    // `width="100%"`: `alignItems="center"` kullanan ekranlarda (ör. ödeme başarılı)
+    // genişlik içeriğe göre daralıp slider'ı bozmasın diye bileşenin kendisinde tanımlı.
+    <YStack gap="$2" paddingTop="$5" testID="insider-recommendation-slider" width="100%">
       <XStack alignItems="center" height={24} justifyContent="space-between" paddingHorizontal="$4">
         <Paragraph color="$color" fontSize={14} fontWeight="700">
           {title}
