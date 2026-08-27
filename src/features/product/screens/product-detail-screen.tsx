@@ -22,7 +22,7 @@ import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-es
 import { ProductColorSelector } from '../components/product-color-selector';
 import { ProductSizeSelector } from '../components/product-size-selector';
 import { ProductSpecifications } from '../components/product-specifications';
-import { InsiderRecommendationSection } from '@/features/insider/components/insider-recommendation-section';
+import { InsiderRecommendationSections } from '@/features/insider/components/insider-recommendation-sections';
 import { productToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { SimilarProductsSection } from '../components/similar-products-section';
 import { ProductReviewsSection } from '../components/product-reviews-section';
@@ -209,7 +209,7 @@ export function ProductDetailScreen() {
               />
 
               {/* Insider Smart Recommender: ürün bazlı öneriler */}
-              <InsiderRecommendationSection
+              <InsiderRecommendationSections
                 product={productToInsiderInput(product)}
                 slot="productDetail"
               />

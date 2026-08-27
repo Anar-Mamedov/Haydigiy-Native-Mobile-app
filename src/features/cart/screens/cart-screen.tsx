@@ -12,7 +12,7 @@ import { FreeShippingCampaignCard } from '@/features/cart/components/free-shippi
 import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-estimate-info';
 import { useCartController } from '@/features/cart/hooks/use-cart-controller';
 import { getCartLineKey } from '@/features/cart/utils/cart-line';
-import { InsiderRecommendationSection } from '@/features/insider/components/insider-recommendation-section';
+import { InsiderRecommendationSections } from '@/features/insider/components/insider-recommendation-sections';
 import { useTrackCartPageView } from '@/features/insider/hooks/use-insider-page-tracking';
 
 export function CartScreen() {
@@ -122,7 +122,7 @@ export function CartScreen() {
             />
           ))}
 
-          <InsiderRecommendationSection
+          <InsiderRecommendationSections
             productIds={items.map((item) => item.productId)}
             slot="cart"
           />

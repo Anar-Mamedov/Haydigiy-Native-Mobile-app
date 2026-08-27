@@ -307,21 +307,35 @@ hiçbir şey render edilmez.
 
 | Dosya | Sorumluluk |
 | --- | --- |
-| `config/recommendation-campaigns.ts` | Slot → kampanya ID + başlık eşlemesi. **Kampanyayı açmak için tek dokunulacak yer.** |
+| `config/recommendation-campaigns.ts` | Slot → kampanya listesi (ID, başlık, SDK metodu). **Kampanya eklemek/kaldırmak için tek dokunulacak yer.** |
 | `services/insider-recommender.ts` | SDK sınırı; callback tabanlı API'yi promise'e çevirir, hata/zaman aşımı izolasyonu burada. |
 | `utils/insider-recommendation.mapper.ts` | Yanıt → domain modeli, tracker girdisi ve ürün rotası dönüşümleri. |
 | `api/insider-recommendation.queries.ts` | TanStack Query hook'u; anahtarlar `insiderKeys.recommendation(...)`. |
 | `components/insider-recommendation-slider.tsx` | Yalnızca sunum: yatay slider, loading/error/empty durumları. |
-| `components/insider-recommendation-section.tsx` | Ekrana bağlanan kapsayıcı: veri + tıklama logu + yönlendirme. |
+| `components/insider-recommendation-section.tsx` | Tek kampanya: veri + tıklama logu + yönlendirme. |
+| `components/insider-recommendation-sections.tsx` | Ekrandaki tüm kampanyaları sırayla çizer; ekranlar bunu kullanır. |
+| `hooks/use-last-viewed-insider-product.ts` | Ana sayfadaki ürünlü kampanya için en son gezilen ürünü bağlam olarak verir. |
 
-### Slot → SDK metodu eşlemesi
+### Panelde tanımlı kampanyalar (2026-08-26)
 
-| Slot | Ekran | SDK metodu | Paneldeki uygun algoritmalar |
-| --- | --- | --- | --- |
-| `home` | `home-screen.tsx` | `getSmartRecommendation` | Çok satanlar, trend ürünler, yeni gelenler, en çok beğenilenler, kullanıcı bazlı |
-| `productDetail` | `product-detail-screen.tsx` | `getSmartRecommendationWithProduct` | Birlikte alınanlar, birlikte görüntülenenler, benzer ürünler |
-| `cart` | `cart-screen.tsx` | `getSmartRecommendationWithProductIDs` | Birlikte alınanlar, birlikte görüntülenenler (en fazla 3 ürün kimliği) |
-| `orderSuccess` | `payment-success-screen.tsx` | `getSmartRecommendation` | Ürün gerektirmeyen algoritmalar |
+| ID | Panel adı | Ekran | SDK metodu | Uygulamadaki başlık |
+| --- | --- | --- | --- | --- |
+| 1 | Ürün Detay 1 \| Birlikte Satın Alınanlar | Ürün detay | `getSmartRecommendationWithProduct` | Birlikte Satın Alınanlar |
+| 2 | Ürün Detay 2 \| Çok Satanlar | Ürün detay | `getSmartRecommendation` | Çok Satanlar |
+| 3 | Anasayfa 1 \| Son Görüntülenenler | Ana sayfa | `getSmartRecommendationWithProduct` | Son Görüntülediklerin |
+| 4 | Anasayfa 2 \| Kullanıcıya Özel | Ana sayfa | `getSmartRecommendation` | Sana Özel |
+| 5 | Sepet 1 \| Benzer Ürünler | Sepet | `getSmartRecommendationWithProductIDs` | Benzer Ürünler |
+| 6 | Sepet 2 \| Popüler Ürünler | Sepet | `getSmartRecommendation` | Popüler Ürünler |
+| 7 | Sipariş Sonrası \| Siparişinle Uyumlu | Sipariş başarılı | `getSmartRecommendation` | Siparişinle Uyumlu |
+
+**Metot ekranın değil kampanyanın özelliğidir.** Aynı ekranda iki farklı algoritma
+olabiliyor (ör. sepette biri ürün kimlikleriyle, diğeri kimliksiz çalışıyor), bu yüzden
+`method` alanı kampanya kaydında duruyor ve sorgu bu alana bakarak metodu seçiyor.
+
+**Kampanya 3 (Son Görüntülenenler) dikkat gerektiriyor:** Insider dokümanı Recently Viewed
+algoritmasını yalnızca ürünlü metotta listeliyor, ama ana sayfada ürün bağlamı yok.
+Uygulama en son gezilen ürünü (`utils/recently-viewed`) bağlam olarak gönderiyor. Hiç ürün
+gezilmemişse o kampanya için sorgu çalışmaz ve slider görünmez.
 
 ### Doküman ile SDK arasındaki fark (dikkat)
 
@@ -356,20 +370,22 @@ Sepete ekleme ve satın alma için ayrı bir metot yok — mevcut `itemAddedToCa
 öneri kartındaki kimlik (Insider `item_id`) ile sepet/sipariş tarafındaki kimlik aynı
 olmak zorundadır; `recommendedProductToInsiderInput` kimliği olduğu gibi taşır.
 
-### Kampanya nasıl açılır
+### Kampanya ekleme / çıkarma
 
-Kampanya kimlikleri sabittir ve Insider ekibi tarafından elle iletilir; bu yüzden kodda
-`config/recommendation-campaigns.ts` içinde tutulurlar.
+Kampanya kimlikleri sabit ve Insider ekibi tarafından elle iletiliyor; bu yüzden
+`config/recommendation-campaigns.ts` içinde tutuluyorlar. Yeni kampanya için ilgili slotun
+dizisine bir kayıt eklemek yeterli:
 
-1. Insider panelinde Smart Recommender kampanyasını oluştur, algoritmayı yukarıdaki
-   tabloya uygun seç.
-2. Kampanyanın yanındaki ID'yi ilgili slotun `id` alanına yaz (`null` → sayı). Başlık da
-   aynı dosyadadır.
-3. Başka hiçbir dosyaya dokunmak gerekmez; slider o ekranda görünmeye başlar.
+```ts
+{ id: 8, title: 'Yeni Kampanya', method: 'byId' }
+```
 
-`id` `null` (ya da `0`) olduğu sürece sorgu kurulmaz, SDK çağrılmaz ve o slotta hiçbir şey
-render edilmez — yani kampanya açılmadan da kod güvenle yayında durabilir. Bu davranışı
-`recommendation-campaigns.test.ts` koruyor.
+`method` seçerken panelde seçilen algoritmaya bakın: ürün bağlamı isteyen algoritmalar
+(Purchased Together, Viewed Together, Recently Viewed) `byProduct`; yalnızca Purchased/Viewed
+Together destekleyen kimlik listesi metodu `byProductIds`; geri kalanlar `byId`.
+
+Kampanya panelde kapatılırsa `id` alanını `0` yapmak yeterli — o kayıt çağrılmaz ve
+render edilmez. Ekran dosyalarına hiç dokunulmaz; kampanya listesi ekranların dışındadır.
 
 Kimlikler saf JS sabiti olduğu için değişiklik **EAS Update (OTA)** ile gidebilir; yeni
 mağaza sürümü gerekmez.

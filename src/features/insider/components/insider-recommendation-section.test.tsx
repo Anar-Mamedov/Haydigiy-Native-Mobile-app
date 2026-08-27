@@ -2,7 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { InsiderRecommendationSection } from './insider-recommendation-section';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { useInsiderRecommendationQuery } from '../api/insider-recommendation.queries';
-import { getInsiderRecommendationId } from '../config/recommendation-campaigns';
+import { InsiderRecommendationCampaign } from '../config/recommendation-campaigns';
 import { insiderTracker } from '../services/insider-tracker';
 import { InsiderRecommendedProduct } from '../utils/insider-recommendation.mapper';
 
@@ -16,18 +16,18 @@ jest.mock('../api/insider-recommendation.queries', () => ({
   useInsiderRecommendationQuery: jest.fn(),
 }));
 
-jest.mock('../config/recommendation-campaigns', () => ({
-  getInsiderRecommendationCampaign: () => ({ id: 9, title: 'Sana Özel Öneriler' }),
-  getInsiderRecommendationId: jest.fn(() => 9),
-}));
-
 jest.mock('../services/insider-tracker', () => ({
   insiderTracker: { trackRecommendationClick: jest.fn() },
 }));
 
 const useQueryMock = useInsiderRecommendationQuery as jest.Mock;
-const getIdMock = getInsiderRecommendationId as jest.Mock;
 const trackClick = insiderTracker.trackRecommendationClick as jest.Mock;
+
+const campaign: InsiderRecommendationCampaign = {
+  id: 1,
+  title: 'Birlikte Satın Alınanlar',
+  method: 'byProduct',
+};
 
 const product: InsiderRecommendedProduct = {
   id: '1361384',
@@ -44,7 +44,6 @@ const product: InsiderRecommendedProduct = {
 beforeEach(() => {
   mockPush.mockClear();
   trackClick.mockClear();
-  getIdMock.mockReturnValue(9);
   useQueryMock.mockReturnValue({
     data: { products: [product], productIds: [product.id] },
     isError: false,
@@ -54,35 +53,49 @@ beforeEach(() => {
 });
 
 describe('InsiderRecommendationSection', () => {
-  it('renders the campaign slider', () => {
-    renderWithTamagui(<InsiderRecommendationSection slot="home" />);
+  it('renders the campaign title and its products', () => {
+    renderWithTamagui(<InsiderRecommendationSection campaign={campaign} />);
 
-    expect(screen.getByText('Sana Özel Öneriler')).toBeTruthy();
+    expect(screen.getByText('Birlikte Satın Alınanlar')).toBeTruthy();
     expect(screen.getByText('Kadın Bluz')).toBeTruthy();
   });
 
   /**
-   * Tıklama logu, sepete ekleme ve satın alma istatistiklerinin ön koşulu:
-   * yönlendirmeden önce gitmeli, yoksa panelde öneriye bağlanmaz.
+   * Tıklama logu, sepete ekleme ve satın alma istatistiklerinin ön koşulu: yönlendirmeden
+   * önce ve kampanyanın kendi kimliğiyle gitmeli, yoksa panelde öneriye bağlanmaz.
    */
-  it('logs the click before navigating to the product', () => {
-    renderWithTamagui(<InsiderRecommendationSection slot="home" />);
+  it('logs the click with the campaign id before navigating', () => {
+    renderWithTamagui(<InsiderRecommendationSection campaign={{ ...campaign, id: 5 }} />);
 
     fireEvent.press(screen.getByLabelText('Önerilen ürünü aç: Kadın Bluz'));
 
-    expect(trackClick).toHaveBeenCalledWith(9, expect.objectContaining({ id: '1361384' }));
+    expect(trackClick).toHaveBeenCalledWith(5, expect.objectContaining({ id: '1361384' }));
     expect(mockPush).toHaveBeenCalledWith('/product/kadin-bluz');
     expect(trackClick.mock.invocationCallOrder[0]).toBeLessThan(
       mockPush.mock.invocationCallOrder[0],
     );
   });
 
-  // Kampanya panelde açılmadan ekranda hiçbir şey görünmemeli.
-  it('renders nothing when the campaign id is not configured yet', () => {
-    getIdMock.mockReturnValue(null);
+  it('passes the campaign and its inputs to the query', () => {
+    renderWithTamagui(
+      <InsiderRecommendationSection campaign={campaign} productIds={['10', '11']} />,
+    );
 
-    renderWithTamagui(<InsiderRecommendationSection slot="home" />);
+    expect(useQueryMock).toHaveBeenCalledWith(
+      expect.objectContaining({ campaign, productIds: ['10', '11'] }),
+    );
+  });
 
-    expect(screen.queryByText('Sana Özel Öneriler')).toBeNull();
+  it('renders nothing when the campaign returns no product', () => {
+    useQueryMock.mockReturnValue({
+      data: { products: [], productIds: [] },
+      isError: false,
+      isLoading: false,
+      refetch: jest.fn(),
+    });
+
+    renderWithTamagui(<InsiderRecommendationSection campaign={campaign} />);
+
+    expect(screen.queryByText('Birlikte Satın Alınanlar')).toBeNull();
   });
 });

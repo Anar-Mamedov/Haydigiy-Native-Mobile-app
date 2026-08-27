@@ -5,7 +5,8 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppHeader, AppScreen, EmptyState } from '@/components/ui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { useMobilePageDesignQuery } from '@/features/product/api/page-design.queries';
-import { InsiderRecommendationSection } from '@/features/insider/components/insider-recommendation-section';
+import { InsiderRecommendationSections } from '@/features/insider/components/insider-recommendation-sections';
+import { useLastViewedInsiderProduct } from '@/features/insider/hooks/use-last-viewed-insider-product';
 import { useTrackHomePageView } from '@/features/insider/hooks/use-insider-page-tracking';
 import { HomeBannerSection } from '@/features/product/components/home-banner-section';
 import { HomeHeadingSection } from '@/features/product/components/home-heading-section';
@@ -71,6 +72,9 @@ export function HomeScreen() {
   if (currentRow.length > 0) {
     rows.push(currentRow);
   }
+
+  // Ana sayfadaki "Son Görüntülenenler" kampanyası ürünlü SDK metodunu gerektiriyor.
+  const lastViewedProduct = useLastViewedInsiderProduct();
 
   const renderSection = (section: Section, width: number) => {
     switch (section.type) {
@@ -176,7 +180,7 @@ export function HomeScreen() {
               })}
             </YStack>
 
-            <InsiderRecommendationSection slot="home" />
+            <InsiderRecommendationSections product={lastViewedProduct} slot="home" />
 
             <HomeFooter />
           </YStack>

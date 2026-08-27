@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { insiderKeys } from './insider.keys';
-import {
-  InsiderRecommendationSlot,
-  getInsiderRecommendationId,
-} from '../config/recommendation-campaigns';
+import { InsiderRecommendationCampaign } from '../config/recommendation-campaigns';
 import {
   MAX_RECOMMENDATION_PRODUCT_IDS,
   insiderRecommender,
@@ -18,52 +15,57 @@ import {
 const RECOMMENDATION_STALE_TIME_MS = 5 * 60 * 1000;
 
 export type InsiderRecommendationQueryParams = {
-  slot: InsiderRecommendationSlot;
-  /** Ürün bazlı algoritmalar için; verildiğinde `getSmartRecommendationWithProduct` kullanılır. */
+  campaign: InsiderRecommendationCampaign;
+  /** `byProduct` kampanyaları için ürün bağlamı. */
   product?: InsiderProductInput | null;
-  /** Kimlik bazlı algoritmalar için; ilk üç kimlik gönderilir. */
+  /** `byProductIds` kampanyaları için ürün kimlikleri; ilk üçü gönderilir. */
   productIds?: string[];
-  /** Ekranın kendi hazır olma koşulu (veri yüklendi, sekme odakta vb.). */
+  /** Ekranın kendi hazır olma koşulu (veri yüklendi, ekran odakta vb.). */
   enabled?: boolean;
 };
 
 function buildReference(params: InsiderRecommendationQueryParams): string {
-  if (params.product) return `product:${params.product.id}`;
-  if (params.productIds?.length) {
-    return `ids:${params.productIds.slice(0, MAX_RECOMMENDATION_PRODUCT_IDS).join(',')}`;
+  if (params.campaign.method === 'byProduct') return `product:${params.product?.id ?? 'none'}`;
+  if (params.campaign.method === 'byProductIds') {
+    return `ids:${(params.productIds ?? []).slice(0, MAX_RECOMMENDATION_PRODUCT_IDS).join(',')}`;
   }
   return 'none';
 }
 
+/** Kampanyanın metodu için gereken girdi hazır mı. */
+function hasRequiredInput(params: InsiderRecommendationQueryParams): boolean {
+  if (params.campaign.method === 'byProduct') return Boolean(params.product);
+  if (params.campaign.method === 'byProductIds') return Boolean(params.productIds?.length);
+  return true;
+}
+
 /**
- * Smart Recommender sonucunu getirir. Kampanya ID'si tanımlı değilse ya da ürün bazlı
- * istek için gereken girdi henüz yoksa sorgu hiç çalışmaz — SDK boşuna çağrılmaz.
+ * Smart Recommender sonucunu getirir. Kampanyanın metodu için gereken girdi henüz yoksa
+ * sorgu hiç çalışmaz — SDK boşuna çağrılmaz.
  *
  * Servis hata fırlatmaz, en kötü durumda boş sonuç döner; öneri alanı ekranı kırmaz.
  */
 export function useInsiderRecommendationQuery(params: InsiderRecommendationQueryParams) {
-  const { slot, product, productIds, enabled = true } = params;
-  const recommendationId = getInsiderRecommendationId(slot);
-  const reference = buildReference(params);
-
-  const hasRequiredInput =
-    slot === 'productDetail'
-      ? Boolean(product)
-      : slot === 'cart'
-        ? Boolean(productIds?.length)
-        : true;
+  const { campaign, product, productIds, enabled = true } = params;
 
   return useQuery<InsiderRecommendation>({
-    queryKey: insiderKeys.recommendation(slot, recommendationId ?? 0, reference),
+    queryKey: insiderKeys.recommendation(campaign.id, buildReference(params)),
     queryFn: () => {
-      if (recommendationId === null) return Promise.resolve(EMPTY_INSIDER_RECOMMENDATION);
-      if (product) return insiderRecommender.fetchRecommendationForProduct(recommendationId, product);
-      if (productIds?.length) {
-        return insiderRecommender.fetchRecommendationForProductIds(recommendationId, productIds);
+      if (campaign.method === 'byProduct') {
+        return product
+          ? insiderRecommender.fetchRecommendationForProduct(campaign.id, product)
+          : Promise.resolve(EMPTY_INSIDER_RECOMMENDATION);
       }
-      return insiderRecommender.fetchRecommendation(recommendationId);
+
+      if (campaign.method === 'byProductIds') {
+        return productIds?.length
+          ? insiderRecommender.fetchRecommendationForProductIds(campaign.id, productIds)
+          : Promise.resolve(EMPTY_INSIDER_RECOMMENDATION);
+      }
+
+      return insiderRecommender.fetchRecommendation(campaign.id);
     },
-    enabled: enabled && recommendationId !== null && hasRequiredInput,
+    enabled: enabled && hasRequiredInput(params),
     staleTime: RECOMMENDATION_STALE_TIME_MS,
   });
 }
