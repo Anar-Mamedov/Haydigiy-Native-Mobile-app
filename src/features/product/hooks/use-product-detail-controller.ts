@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, useWindowDimensions } from 'react-native';
+import { Alert, useWindowDimensions } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
@@ -12,6 +12,7 @@ import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queri
 import { Product, ProductColorOption, ProductVariant, SimilarProduct } from '@/types/product.types';
 import { getApiErrorMessage } from '@/utils/api-error';
 import { trackViewedProduct } from '@/utils/recently-viewed';
+import { openWhatsapp } from '@/utils/whatsapp';
 import { PRODUCT_STICKY_FOOTER_SCROLL_PADDING } from '../components/product-sticky-footer';
 import { extractProductCode } from '../utils/extract-product-code';
 import { getCarouselImageHeight } from '../utils/product-carousel-geometry';
@@ -20,7 +21,6 @@ import { buildProductDetailRoute } from '../utils/product-detail-route';
 import { useBundleController } from './use-bundle-controller';
 import { useNotifyStock } from './use-notify-stock';
 
-const WHATSAPP_PHONE = '905327805100';
 const ADD_TO_CART_ERROR = 'Ürün sepete eklenemedi. Lütfen tekrar deneyin.';
 const MISSING_VARIANT_ERROR = 'Bu ürün için beden bilgisi bulunamadı, sepete eklenemedi.';
 
@@ -203,15 +203,8 @@ export function useProductDetailController() {
     if (!activeProduct) return;
 
     const message = `${activeProduct.title} - ${activeProduct.stockCode || ''} ürününe bakıyorum, destek istiyorum.\nhttps://haydigiy.com/product/${activeProduct.slug}`;
-    const url = `whatsapp://send?phone=${WHATSAPP_PHONE}&text=${encodeURIComponent(message)}`;
 
-    Linking.canOpenURL(url).then((supported) => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Linking.openURL(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`);
-      }
-    });
+    void openWhatsapp(message);
   };
 
   // Handle add to cart action

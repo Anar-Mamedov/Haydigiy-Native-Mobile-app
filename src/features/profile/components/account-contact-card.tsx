@@ -12,11 +12,11 @@ import {
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
+import { WHATSAPP_SUPPORT_PHONE_DISPLAY, buildWhatsappUrl } from '@/utils/whatsapp';
 
 const CUSTOMER_SERVICE_PHONE = '08502590449';
 const CUSTOMER_SERVICE_PHONE_DISPLAY = '+90 850 259 0 449';
-const WHATSAPP_PHONE = '905327805100';
-const WHATSAPP_PHONE_DISPLAY = '+90 532 780 51 00';
+const WHATSAPP_PHONE_DISPLAY = WHATSAPP_SUPPORT_PHONE_DISPLAY;
 const WHATSAPP_MESSAGE = 'Merhaba';
 const CUSTOMER_SERVICE_EMAIL = 'info@haydigiy.com';
 const COMPANY_ADDRESS =
@@ -111,7 +111,7 @@ export function AccountContactCard() {
             <ContactRow
               icon={<MessageCircle color="$green10" size={20} />}
               onPress={() =>
-                openUrl(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`)
+                openUrl(buildWhatsappUrl(WHATSAPP_MESSAGE))
               }
               subtitle={WHATSAPP_PHONE_DISPLAY}
               title="WhatsApp"

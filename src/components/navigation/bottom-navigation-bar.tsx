@@ -1,5 +1,5 @@
 import { ReactElement, useCallback } from 'react';
-import { Linking, Pressable } from 'react-native';
+import { Pressable } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -8,6 +8,7 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
+import { openWhatsapp } from '@/utils/whatsapp';
 
 type TabItem = {
   label: string;
@@ -78,6 +79,9 @@ function CartTabIcon({ color, size }: { color: string; size: number }) {
     </Svg>
   );
 }
+
+/** Destek sohbeti bu metinle açılır. */
+const WHATSAPP_DEFAULT_MESSAGE = 'Merhaba';
 
 function WhatsappTabIcon({ color, size }: { color: string; size: number }) {
   return (
@@ -171,10 +175,8 @@ export function BottomNavigationBar() {
     [pathname, router],
   );
 
-  const openWhatsapp = useCallback(() => {
-    Linking.openURL('https://wa.me/905327805100?text=Merhaba').catch((error) => {
-      console.warn('Failed to open WhatsApp:', error);
-    });
+  const handleWhatsappPress = useCallback(() => {
+    void openWhatsapp(WHATSAPP_DEFAULT_MESSAGE);
   }, []);
 
   return (
@@ -236,7 +238,7 @@ export function BottomNavigationBar() {
       <Pressable
         accessibilityLabel="Whatsapp"
         accessibilityRole="button"
-        onPress={openWhatsapp}
+        onPress={handleWhatsappPress}
         style={({ pressed }) => ({
           alignItems: 'center',
           flex: 1,
