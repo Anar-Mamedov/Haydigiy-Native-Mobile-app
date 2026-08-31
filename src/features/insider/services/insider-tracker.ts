@@ -8,8 +8,13 @@ import {
 } from '../types/insider.types';
 import {
   InsiderProductInput,
+  getInsiderProductMatchKeys,
   isValidInsiderProductInput,
 } from '../utils/insider-product.mapper';
+import {
+  RecommendationAttributionStore,
+  recommendationAttributionStore,
+} from './insider-recommendation-attribution';
 import { User } from '@/types/auth.types';
 import { extractTurkishNationalNumber, isValidTurkishMobile } from '@/utils/turkish-phone';
 import { INSIDER_LANGUAGE, INSIDER_LOCALE } from '../utils/insider-locale';
@@ -62,6 +67,12 @@ export interface InsiderTracker {
    * sepete ekleme ve satın alma istatistikleri panele öneriye bağlanmaz.
    */
   trackRecommendationClick(recommendationId: number, product: InsiderProductInput): void;
+  /**
+   * Öneri tıklama hafızasını kalıcı kopyadan geri yükler. Uygulama açılışında bir kez
+   * çağrılmalı; 3D Secure sırasında süreç öldürülürse satın alma eventi aksi halde
+   * tıklamayla eşleşemez.
+   */
+  restoreRecommendationAttribution(): Promise<void>;
   identifyUser(user: User): void;
   /**
    * Dil/locale attribute'unu oturum durumundan bağımsız tanımlar. Smart Recommender
@@ -76,6 +87,9 @@ interface InsiderTrackerDependencies {
   loadSdk: () => InsiderSdk;
   loadIdentifierConstructor: () => InsiderIdentifierConstructor;
   onError: (message: string, error: unknown) => void;
+  /** Tek satırlık, PII taşımayan teşhis günlüğü; cihazda zincir doğrulanabilsin diye. */
+  onDiagnostic: (message: string) => void;
+  recommendationAttribution: RecommendationAttributionStore;
 }
 
 const defaultDependencies: InsiderTrackerDependencies = {
@@ -84,6 +98,8 @@ const defaultDependencies: InsiderTrackerDependencies = {
   loadIdentifierConstructor: () =>
     require('react-native-insider/src/InsiderIdentifier').default as InsiderIdentifierConstructor,
   onError: (message, error) => console.warn(message, error),
+  onDiagnostic: (message) => console.info(message),
+  recommendationAttribution: recommendationAttributionStore,
 };
 
 /**
@@ -128,14 +144,35 @@ export function createInsiderTracker(
    * Analytics asla uygulama akışını kırmamalı: SDK yoksa sessiz no-op, hata
    * durumunda logla ve devam et.
    */
-  const run = (label: string, action: (activeSdk: InsiderSdk) => void): void => {
+  const run = (label: string, action: (activeSdk: InsiderSdk) => void): boolean => {
     try {
       const activeSdk = getSdk();
-      if (!activeSdk) return;
+      if (!activeSdk) return false;
       action(activeSdk);
+      return true;
     } catch (error) {
       dependencies.onError(`[Insider] ${label} gönderilemedi.`, error);
+      return false;
     }
+  };
+
+  /**
+   * Ürün daha önce bir öneri sliderından tıklandıysa event'i **tıklamadaki** kimlikle
+   * gönderir. Insider, Add to Cart ve Revenue istatistiklerini yalnızca kimlik
+   * eşleştiğinde öneri kampanyasına bağlar; feed `item_id` ile backend ürün kimliği
+   * ayrışırsa event panele hiç düşmez.
+   */
+  const withRecommendationId = (input: InsiderProductInput): InsiderProductInput => {
+    const click = dependencies.recommendationAttribution.resolve(
+      getInsiderProductMatchKeys(input),
+    );
+    if (!click || click.productId === input.id) return input;
+
+    dependencies.onDiagnostic(
+      `[Insider] öneri eşleşmesi · kampanya=${click.recommendationId} · ` +
+        `kimlik ${input.id} → ${click.productId}`,
+    );
+    return { ...input, id: click.productId };
   };
 
   const buildProduct = (
@@ -210,8 +247,9 @@ export function createInsiderTracker(
 
     trackAddToCart(product) {
       if (!isValidInsiderProductInput(product)) return;
+      const attributed = withRecommendationId(product);
       run('sepete ekleme', (activeSdk) => {
-        activeSdk.itemAddedToCart(buildProduct(activeSdk, product));
+        activeSdk.itemAddedToCart(buildProduct(activeSdk, attributed));
       });
     },
 
@@ -244,8 +282,9 @@ export function createInsiderTracker(
 
     trackPurchase(saleId, items) {
       if (!saleId.trim()) return;
+      const attributed = items.filter(isValidInsiderProductInput).map(withRecommendationId);
       run('satın alma', (activeSdk) => {
-        items.filter(isValidInsiderProductInput).forEach((item) => {
+        attributed.forEach((item) => {
           activeSdk.itemPurchased(saleId, buildProduct(activeSdk, item));
         });
       });
@@ -298,10 +337,35 @@ export function createInsiderTracker(
     },
 
     trackRecommendationClick(recommendationId, product) {
-      if (!isValidInsiderProductInput(product)) return;
-      run('öneri tıklaması', (activeSdk) => {
+      // Sessiz düşen tıklama, o ürünün sepete ekleme ve gelir istatistiğini de
+      // götürür; bu yüzden atlanan çağrı log'a yazılır.
+      if (!isValidInsiderProductInput(product)) {
+        dependencies.onDiagnostic(
+          `[Insider] öneri tıklaması atlandı (eksik ürün alanı) · kampanya=${recommendationId} · ` +
+            `kimlik=${product.id || '-'}`,
+        );
+        return;
+      }
+
+      const sent = run('öneri tıklaması', (activeSdk) => {
         activeSdk.clickSmartRecommendationProduct(recommendationId, buildProduct(activeSdk, product));
       });
+      if (!sent) return;
+
+      // Kimliği ancak tıklama gerçekten gittiyse hatırla; aksi halde sonraki
+      // sepete ekleme olmayan bir tıklamaya bağlanmış gibi görünürdü.
+      dependencies.recommendationAttribution.remember({
+        matchKeys: getInsiderProductMatchKeys(product),
+        productId: product.id,
+        recommendationId,
+      });
+      dependencies.onDiagnostic(
+        `[Insider] öneri tıklaması gönderildi · kampanya=${recommendationId} · kimlik=${product.id}`,
+      );
+    },
+
+    restoreRecommendationAttribution() {
+      return dependencies.recommendationAttribution.restore();
     },
 
     applyDefaultLocale() {

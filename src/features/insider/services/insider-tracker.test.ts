@@ -13,6 +13,10 @@ import {
   InsiderUserSdk,
 } from '../types/insider.types';
 import { InsiderProductInput } from '../utils/insider-product.mapper';
+import {
+  RecommendationAttributionStore,
+  RecommendationClick,
+} from './insider-recommendation-attribution';
 import { User } from '@/types/auth.types';
 
 type ProductMockCall = {
@@ -143,6 +147,9 @@ function createSdkHarness() {
     clickSmartRecommendationProduct: jest.fn(),
   } as unknown as jest.Mocked<InsiderSdk>;
 
+  const recommendationAttribution = createAttributionDouble();
+  const onDiagnostic = jest.fn();
+
   const tracker = createInsiderTracker({
     isNativeSdkAvailable: () => true,
     loadSdk: () => sdk,
@@ -154,9 +161,47 @@ function createSdkHarness() {
         }
       },
     onError: jest.fn(),
+    onDiagnostic,
+    recommendationAttribution,
   });
 
-  return { tracker, sdk, productCalls, eventBuilder, insiderUser, identifiers };
+  return {
+    tracker,
+    sdk,
+    productCalls,
+    eventBuilder,
+    insiderUser,
+    identifiers,
+    onDiagnostic,
+    recommendationAttribution,
+  };
+}
+
+/**
+ * Bellekte çalışan öneri tıklama hafızası; gerçek mağaza gibi davranır ama
+ * MMKV'ye dokunmaz.
+ */
+function createAttributionDouble(): RecommendationAttributionStore {
+  let clicks: RecommendationClick[] = [];
+
+  return {
+    clear: () => {
+      clicks = [];
+    },
+    remember: (click) => {
+      clicks = clicks.filter((existing) => existing.productId !== click.productId);
+      clicks.push({ ...click, clickedAt: 0 });
+    },
+    resolve: (keys) => {
+      const candidates = keys.filter((key): key is string => Boolean(key));
+      return (
+        [...clicks]
+          .reverse()
+          .find((click) => click.matchKeys.some((key) => candidates.includes(key))) ?? null
+      );
+    },
+    restore: async () => {},
+  };
 }
 
 function createInput(overrides: Partial<InsiderProductInput> = {}): InsiderProductInput {
@@ -187,6 +232,8 @@ describe('insider tracker', () => {
       loadSdk,
       loadIdentifierConstructor: jest.fn(),
       onError: jest.fn(),
+      onDiagnostic: jest.fn(),
+      recommendationAttribution: createAttributionDouble(),
     });
 
     tracker.trackHomePageView();
@@ -208,6 +255,8 @@ describe('insider tracker', () => {
         }) as unknown as InsiderSdk,
       loadIdentifierConstructor: jest.fn(),
       onError,
+      onDiagnostic: jest.fn(),
+      recommendationAttribution: createAttributionDouble(),
     });
 
     expect(() => tracker.trackHomePageView()).not.toThrow();
@@ -500,6 +549,101 @@ describe('insider tracker', () => {
     expect(insiderUser.setLanguage).toHaveBeenCalledWith('tr');
     expect(insiderUser.setLocale).toHaveBeenCalledWith('tr_TR');
     expect(insiderUser.login).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Insider, Smart Recommender'ın Add to Cart ve Revenue istatistiklerini yalnızca
+ * tıklamada kullanılan ürün kimliğiyle eşleştirir; kimlik tutmazsa event panele
+ * hiç düşmez.
+ *
+ * @see https://academy.insiderone.com/docs/react-native-smart-recommender#logger-for-statistics
+ */
+describe('smart recommender statistics chain', () => {
+  const recommendedInput = () =>
+    createInput({
+      id: 'P-12345',
+      productUrl: 'https://haydigiy.com/product/mavi-elbise-12345',
+    });
+
+  const cartInput = () =>
+    createInput({
+      id: '12345',
+      productUrl: 'https://haydigiy.com/product/mavi-elbise-12345',
+      quantity: 1,
+    });
+
+  it('remembers the clicked product so a later add-to-cart carries the same id', () => {
+    const { tracker, sdk, productCalls } = createSdkHarness();
+
+    tracker.trackRecommendationClick(1, recommendedInput());
+    tracker.trackAddToCart(cartInput());
+
+    expect(sdk.itemAddedToCart).toHaveBeenCalledTimes(1);
+    // Sepetteki kimlik backend'den '12345' geliyor; event tıklamadaki 'P-12345' ile gider.
+    const addToCartProduct = productCalls[productCalls.length - 1];
+    expect(addToCartProduct.args[0]).toBe('P-12345');
+  });
+
+  it('carries the clicked id into the purchase event as well', () => {
+    const { tracker, sdk, productCalls } = createSdkHarness();
+
+    tracker.trackRecommendationClick(1, recommendedInput());
+    tracker.trackPurchase('SALE-1', [cartInput()]);
+
+    expect(sdk.itemPurchased).toHaveBeenCalledTimes(1);
+    expect(productCalls[productCalls.length - 1].args[0]).toBe('P-12345');
+  });
+
+  it('leaves products that were never clicked untouched', () => {
+    const { tracker, productCalls } = createSdkHarness();
+
+    tracker.trackRecommendationClick(1, recommendedInput());
+    tracker.trackAddToCart(createInput({ id: '99999' }));
+
+    expect(productCalls[productCalls.length - 1].args[0]).toBe('99999');
+  });
+
+  it('does not remember a click the SDK never received', () => {
+    const { tracker, sdk, productCalls, recommendationAttribution } = createSdkHarness();
+    (sdk.clickSmartRecommendationProduct as jest.Mock).mockImplementation(() => {
+      throw new Error('native crash');
+    });
+
+    tracker.trackRecommendationClick(1, recommendedInput());
+
+    expect(recommendationAttribution.resolve(['mavi-elbise-12345'])).toBeNull();
+
+    tracker.trackAddToCart(cartInput());
+    expect(productCalls[productCalls.length - 1].args[0]).toBe('12345');
+  });
+
+  it('logs a dropped click instead of failing silently', () => {
+    const { tracker, sdk, onDiagnostic } = createSdkHarness();
+
+    tracker.trackRecommendationClick(1, createInput({ id: '12345', price: 0 }));
+
+    expect(sdk.clickSmartRecommendationProduct).not.toHaveBeenCalled();
+    expect(onDiagnostic).toHaveBeenCalledWith(expect.stringContaining('öneri tıklaması atlandı'));
+  });
+
+  it('logs the click that was sent so the chain can be verified on a device', () => {
+    const { tracker, onDiagnostic } = createSdkHarness();
+
+    tracker.trackRecommendationClick(4, recommendedInput());
+
+    expect(onDiagnostic).toHaveBeenCalledWith(
+      expect.stringContaining('öneri tıklaması gönderildi · kampanya=4 · kimlik=P-12345'),
+    );
+  });
+
+  it('restores the persisted click memory through the tracker boundary', async () => {
+    const { tracker, recommendationAttribution } = createSdkHarness();
+    const restore = jest.spyOn(recommendationAttribution, 'restore');
+
+    await tracker.restoreRecommendationAttribution();
+
+    expect(restore).toHaveBeenCalledTimes(1);
   });
 });
 

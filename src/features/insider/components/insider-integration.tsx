@@ -3,6 +3,7 @@ import * as Linking from 'expo-linking';
 import { Href, useRouter } from 'expo-router';
 import { resolveDeepLinkPath } from '@/utils/resolve-deep-link';
 import { insiderClient } from '../services/insider-client';
+import { insiderTracker } from '../services/insider-tracker';
 import { InsiderCallback } from '../types/insider.types';
 import { logInsiderCallback } from '../utils/insider-diagnostics';
 import { resolveInsiderCallbackAction } from '../utils/insider-url';
@@ -34,6 +35,12 @@ export function InsiderIntegration() {
     },
     [router],
   );
+
+  useEffect(() => {
+    // Öneri tıklama hafızası kalıcı; 3D Secure sırasında süreç öldürülürse satın alma
+    // eventi ancak geri yüklenen kayıtla öneri kampanyasına bağlanabilir.
+    void insiderTracker.restoreRecommendationAttribution();
+  }, []);
 
   useEffect(() => {
     if (!insiderClient.initialize(handleInsiderCallback)) return;

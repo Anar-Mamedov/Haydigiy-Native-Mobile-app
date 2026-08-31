@@ -122,6 +122,34 @@ export function cartItemToInsiderInput(item: CartLineItem): InsiderProductInput 
   };
 }
 
+/**
+ * Ürün URL'sinin son yol parçası (slug).
+ *
+ * Öneri kartındaki kimlik Insider feed'inden (`item_id`), sepetteki kimlik backend'den
+ * geliyor. İkisi ayrışırsa ürünü hâlâ eşleştirebilmek için slug ikinci bir anahtar
+ * olarak kullanılır.
+ */
+export function getInsiderProductSlug(productUrl: string | undefined | null): string | null {
+  const url = productUrl?.trim();
+  if (!url) return null;
+
+  const withoutQuery = url.split(/[?#]/)[0];
+  const slug = withoutQuery.split('/').filter(Boolean).pop();
+  if (!slug || slug === 'product') return null;
+
+  return slug;
+}
+
+/**
+ * Bir ürünü Smart Recommender tıklamasıyla eşleştirmeye yarayan anahtarlar.
+ * Kimlik ve slug birlikte taşınır; biri ayrışsa bile eşleşme kurulabilir.
+ */
+export function getInsiderProductMatchKeys(input: InsiderProductInput): string[] {
+  return [input.id, getInsiderProductSlug(input.productUrl)].filter(
+    (key): key is string => Boolean(key && key.trim()),
+  );
+}
+
 /** Insider ignores products missing id/name/price, so skip those client-side. */
 export function isValidInsiderProductInput(input: InsiderProductInput): boolean {
   return input.id.trim() !== '' && input.name.trim() !== '' && input.price > 0;

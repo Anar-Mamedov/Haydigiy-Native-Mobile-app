@@ -358,17 +358,68 @@ with exactly four arguments (no currency)".
 | Kullanıcı objesinde `locale` | ✅ `identifyUser` oturum açanlarda, `applyDefaultLocale` misafirlerde (`InsiderIdentitySync`). Değer `tr_TR` (`utils/insider-locale.ts`). |
 | Ürün objesinde `stock` | ✅ `productToInsiderInput` → `Product.totalQuantity`; recommender ürün objesini kurarken `setStock` çağırır. |
 
-### İstatistik zinciri
+### İstatistik zinciri (logger)
 
-Tıklama (`clickSmartRecommendationProduct`) **zorunlu ilk halka**: aynı oturumda bir
-ürün için tıklama gönderilmeden o ürünün sepete ekleme ve satın alma eventleri panelde
-öneri kampanyasına bağlanmaz. `InsiderRecommendationSection` tıklamayı yönlendirmeden
-**önce** gönderir; sıralama testle korunur.
+Panel dört metrik gösterir: **Impression**, **Click**, **Add to Cart**, **Revenue**.
+Impression'ı Insider `getSmartRecommendation*` çağrısında kendisi sayar; kalan üçü
+uygulamanın göndereceği event'lere bağlıdır.
+
+| Metrik | Metot | Nerede |
+| --- | --- | --- |
+| Impression | — (SDK öneriyi sunarken Insider sayar) | `insider-recommender.ts` |
+| Click | `clickSmartRecommendationProduct` | `trackRecommendationClick` |
+| Add to Cart | `itemAddedToCart` | `trackAddToCart` |
+| Revenue | `itemPurchased` | `trackPurchase` |
+
+Tıklama **zorunlu ilk halka**: aynı oturumda bir ürün için tıklama gönderilmeden o ürünün
+sepete ekleme ve satın alma eventleri panelde öneri kampanyasına bağlanmaz.
+`InsiderRecommendationSection` tıklamayı yönlendirmeden **önce** gönderir; sıralama testle
+korunur.
 
 Sepete ekleme ve satın alma için ayrı bir metot yok — mevcut `itemAddedToCart` ve
-`itemPurchased` çağrıları kullanılır. Eşleşme ürün kimliği üzerinden yapıldığı için
-öneri kartındaki kimlik (Insider `item_id`) ile sepet/sipariş tarafındaki kimlik aynı
-olmak zorundadır; `recommendedProductToInsiderInput` kimliği olduğu gibi taşır.
+`itemPurchased` çağrıları kullanılır. **Eşleşme ürün kimliği üzerinden yapılır:** event'teki
+kimlik, tıklamada gönderilen kimlikle birebir aynı olmak zorundadır, aksi halde event panele
+hiç düşmez.
+
+#### Kimlik hizalaması (`insider-recommendation-attribution.ts`)
+
+Öneri kartındaki kimlik Insider feed'inden gelen `item_id`, sepet/sipariş tarafındaki kimlik
+ise backend ürün kimliğidir. İkisinin eşit olduğu **varsayılıyordu ama garanti edilmiyordu**;
+ayrıştıkları anda Add to Cart ve Revenue istatistikleri sessizce kaybolur.
+
+Bu yüzden tıklama anında Insider'a gönderilen kimlik hatırlanır:
+
+1. `trackRecommendationClick` SDK çağrısı **başarılı olduysa** kaydı yazar
+   (kimlik + slug eşleşme anahtarları, kampanya kimliği, zaman damgası).
+2. `trackAddToCart` ve `trackPurchase` ürünü bu kayıtla eşleştirir; eşleşme varsa event
+   **tıklamadaki kimlikle** gönderilir. Kimlikler zaten aynıysa çağrı hiçbir şeyi değiştirmez.
+3. Kayıt MMKV'ye de yazılır. 3D Secure sırasında Android süreci öldürebiliyor; bellek
+   sıfırlanırsa satın alma eventi tıklamayla eşleşemezdi (`purchase-snapshot` ile aynı gerekçe).
+   Uygulama açılışında `InsiderIntegration` → `restoreRecommendationAttribution()` geri yükler.
+
+Pencere `RECOMMENDATION_CLICK_TTL_MS` (6 saat), kapasite `MAX_REMEMBERED_CLICKS` (20 kayıt).
+
+#### Cihazda doğrulama
+
+Zincirin çalıştığı cihaz log'undan izlenebilir (PII taşımaz):
+
+```
+[Insider] öneri tıklaması gönderildi · kampanya=1 · kimlik=12345
+[Insider] öneri eşleşmesi · kampanya=1 · kimlik 12345 → P-12345
+[Insider] öneri tıklaması atlandı (eksik ürün alanı) · kampanya=1 · kimlik=12345
+```
+
+Üçüncü satır önemli: ürün objesinde kimlik/ad/fiyat eksikse (`isValidInsiderProductInput`)
+tıklama gönderilmez ve o ürünün Add to Cart / Revenue istatistiği de oluşmaz. Feed fiyatsız
+ürün döndürüyorsa panelde tıklama görünmemesinin sebebi budur.
+
+#### Sürüm notu
+
+Öneri sliderları ve tıklama logger'ı `8783902` (2026-08-26) ve `1d2c01c` (2026-08-27)
+commit'leriyle geldi. En son mağaza sürümü olan **2.3.19 / build 36 bu tarihten öncedir
+(2026-08-22)**, yani tıklama/sepet/gelir istatistikleri ilk kez **2.3.20 / build 37** ile
+sahaya çıkar. Panelde bu metrikler görünmüyorsa önce yayındaki sürümün kontrol edilmesi
+gerekir.
 
 ### Kampanya ekleme / çıkarma
 

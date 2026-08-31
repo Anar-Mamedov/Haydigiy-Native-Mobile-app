@@ -1,6 +1,8 @@
 import {
   cartItemToInsiderInput,
   DEFAULT_INSIDER_TAXONOMY,
+  getInsiderProductMatchKeys,
+  getInsiderProductSlug,
   isValidInsiderProductInput,
   productToInsiderInput,
 } from './insider-product.mapper';
@@ -130,5 +132,46 @@ describe('isValidInsiderProductInput', () => {
     expect(
       isValidInsiderProductInput(productToInsiderInput(createProduct(overrides as Partial<Product>))),
     ).toBe(false);
+  });
+});
+
+describe('getInsiderProductSlug', () => {
+  it('reads the slug from a product URL', () => {
+    expect(getInsiderProductSlug('https://haydigiy.com/product/mavi-elbise-42')).toBe(
+      'mavi-elbise-42',
+    );
+    expect(getInsiderProductSlug('https://haydigiy.com/product/mavi-elbise-42?utm=insider')).toBe(
+      'mavi-elbise-42',
+    );
+  });
+
+  it('returns null when there is no usable slug', () => {
+    expect(getInsiderProductSlug(undefined)).toBeNull();
+    expect(getInsiderProductSlug('   ')).toBeNull();
+    expect(getInsiderProductSlug('https://haydigiy.com/product/')).toBeNull();
+  });
+});
+
+describe('getInsiderProductMatchKeys', () => {
+  // Tıklama ile sepet/sipariş eventinin eşleşmesi bu anahtarlar üzerinden kuruluyor.
+  it('carries both the product id and the slug', () => {
+    const keys = getInsiderProductMatchKeys(
+      productToInsiderInput(createProduct({ id: '42', slug: 'mavi-elbise-42' })),
+    );
+
+    expect(keys).toEqual(['42', 'mavi-elbise-42']);
+  });
+
+  it('falls back to the id alone when the product has no URL', () => {
+    const keys = getInsiderProductMatchKeys({
+      currency: 'TRY',
+      id: '42',
+      imageUrl: '',
+      name: 'Mavi Elbise',
+      price: 199.9,
+      taxonomy: ['Elbise'],
+    });
+
+    expect(keys).toEqual(['42']);
   });
 });
