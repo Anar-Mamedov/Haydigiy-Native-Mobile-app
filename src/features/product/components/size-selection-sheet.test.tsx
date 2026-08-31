@@ -55,6 +55,35 @@ const sheetBaseProps = {
   productName: 'Test ürün',
 };
 
+describe('SizeSelectionSheet — price', () => {
+  it('keeps the plain price label when the product has no discount', () => {
+    renderWithTamagui(
+      <SizeSelectionSheet {...sheetBaseProps} selectedVariant={null} variants={[inStockVariant]} />,
+    );
+
+    expect(screen.getByText('349,99 TL')).toBeTruthy();
+    expect(screen.queryByTestId('size-selection-sheet-discount-price')).toBeNull();
+  });
+
+  it('shows the discount box instead of the plain label when the product is discounted', () => {
+    renderWithTamagui(
+      <SizeSelectionSheet
+        {...sheetBaseProps}
+        discountRate={30}
+        firstPrice={499.99}
+        hasDiscount
+        price={349.99}
+        selectedVariant={null}
+        variants={[inStockVariant]}
+      />,
+    );
+
+    expect(screen.getByTestId('size-selection-sheet-discount-price')).toBeTruthy();
+    expect(screen.getByText('%30')).toBeTruthy();
+    expect(screen.getByText('499,99 TL')).toBeTruthy();
+  });
+});
+
 describe('SizeSelectionSheet — sold-out sizes', () => {
   beforeEach(() => {
     jest.clearAllMocks();

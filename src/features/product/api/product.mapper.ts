@@ -46,6 +46,16 @@ function getOptionalImageUrl(path: string | null | undefined): string | null {
   return imageUrl || null;
 }
 
+/**
+ * Sayıya çevrilemeyen ya da hiç gelmeyen alanlar için `0` yerine `undefined` döner;
+ * indirim alanlarında "veri yok" ile "sıfır" ayrımı korunmalıdır.
+ */
+function parseOptionalNumber(value: unknown): number | undefined {
+  if (value === null || value === undefined || value === '') return undefined;
+  const parsed = typeof value === 'number' ? value : Number.parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 function parseSafely(value: any, fallback = 0): number {
   if (value === null || value === undefined) return fallback;
   if (typeof value === 'number') return isNaN(value) ? fallback : value;
@@ -208,6 +218,9 @@ export function mapProductDto(dto: ProductDto): Product {
     imageUrl: dto.image_url,
     originalPrice: dto.original_price ? parseSafely(dto.original_price) : undefined,
     price: parseSafely(dto.price),
+    hasDiscount: dto.has_discount === true,
+    discountRate: parseOptionalNumber(dto.discount_rate),
+    firstPrice: parseOptionalNumber(dto.first_price),
     rating: parseSafely(dto.rating),
     reviewCount: parseSafely(dto.review_count),
     sellerName: dto.seller_name,
@@ -298,6 +311,9 @@ export function mapSearchProductDto(dto: SearchProductDto): Product {
     imageUrl: getImageUrl(rawImage),
     originalPrice: dto.max_price ? parseSafely(dto.max_price) : undefined,
     price: parseSafely(dto.price),
+    hasDiscount: dto.has_discount === true,
+    discountRate: parseOptionalNumber(dto.discount_rate),
+    firstPrice: parseOptionalNumber(dto.first_price),
     rating: parseSafely(dto.average_rating),
     reviewCount: parseSafely(dto.reviews_count),
     sellerName: dto.seller_name || 'HaydiGiy',
@@ -490,6 +506,9 @@ export function mapProductDetailDto(dto: any): Product {
     imageUrl: getImageUrl(rawImage),
     originalPrice: dto.other_price ? parseSafely(dto.other_price) : undefined,
     price: parseSafely(dto.price),
+    hasDiscount: dto.has_discount === true,
+    discountRate: parseOptionalNumber(dto.discount_rate),
+    firstPrice: parseOptionalNumber(dto.first_price),
     rating: parseSafely(dto.average_rating || (dto.reviews?.length ? dto.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / dto.reviews.length : 0)),
     reviewCount: parseSafely(dto.reviews_count || dto.reviews?.length || 0),
     questionsCount: parseSafely(dto.questions_count ?? questionsMapped.length),

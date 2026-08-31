@@ -8,6 +8,9 @@ export type ProductDto = {
   image_url: string;
   original_price?: number;
   price: number;
+  has_discount?: boolean;
+  discount_rate?: number | string;
+  first_price?: number | string;
   rating: number;
   review_count: number;
   seller_name: string;
@@ -66,6 +69,9 @@ export interface SearchProductDto {
   slug: string;
   price: number;
   max_price?: number;
+  has_discount?: boolean;
+  discount_rate?: number | string;
+  first_price?: number | string;
   price_range?: {
     min: number;
     max: number;

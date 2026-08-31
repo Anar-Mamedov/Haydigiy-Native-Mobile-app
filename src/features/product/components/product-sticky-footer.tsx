@@ -7,6 +7,8 @@ import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
 import { ProductPrimaryAction } from './product-primary-action';
+import { ProductDetailDiscountPrice } from './product-price';
+import { resolveProductDiscount } from '../utils/product-price';
 
 const FOOTER_TOP_PADDING = 14;
 const FOOTER_BOTTOM_PADDING = 14;
@@ -19,6 +21,12 @@ export const PRODUCT_STICKY_FOOTER_SCROLL_PADDING =
 interface ProductStickyFooterProps {
   price: number;
   originalPrice?: number;
+  /** Backend indirim bayrağı; indirimli fiyat kutusunu açar. */
+  hasDiscount?: boolean;
+  /** İndirim yüzdesi (`discount_rate`). */
+  discountRate?: number;
+  /** İndirim öncesi fiyat (`first_price`); üstü çizili gösterilir. */
+  firstPrice?: number;
   onAddToCart: () => void;
   onNotifyMe: () => void;
   onWhatsappPress: () => void;
@@ -41,6 +49,9 @@ function WhatsappIcon({ color = '#25D366', size = 24 }: { color?: string; size?:
 export function ProductStickyFooter({
   price,
   originalPrice,
+  hasDiscount,
+  discountRate,
+  firstPrice,
   onAddToCart,
   onNotifyMe,
   onWhatsappPress,
@@ -57,6 +68,7 @@ export function ProductStickyFooter({
   const scale = useFontScale(COMPACT_MAX_FONT_SCALE);
   const actionHeight = Math.round(FOOTER_ACTION_HEIGHT * scale);
 
+  const discount = resolveProductDiscount({ discountRate, firstPrice, hasDiscount, price });
   const showDiscount = originalPrice && originalPrice > price;
 
   return (
@@ -82,50 +94,63 @@ export function ProductStickyFooter({
       shadowOpacity={0.08}
       shadowRadius={6}
     >
-      {/* Price tag (left side) inside a rounded light-orange box */}
-      <XStack
-        position="relative"
-        alignItems="center"
-        borderColor="$orange5"
-        borderWidth={1}
-        backgroundColor="$orange2"
-        borderRadius={8}
-        paddingHorizontal={12}
-        paddingVertical={8}
-        gap={4}
-      >
-        <Paragraph fontSize={30} fontWeight="900" color="$brand" lineHeight={Math.round(34 * scale)} letterSpacing={-0.5} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}>
-          {Number(price).toLocaleString('tr-TR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }).replace(/\s*TL\s*$/, '')}
-        </Paragraph>
-        <Paragraph fontSize={16} fontWeight="700" color="$brand" lineHeight={Math.round(20 * scale)} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}>
-          TL
-        </Paragraph>
+      {/* Price tag (left side): indirimli üründe yeşil indirim kutusu, aksi halde
+          turuncu normal fiyat kutusu. */}
+      {discount.isDiscounted ? (
+        <ProductDetailDiscountPrice
+          discountRate={discountRate}
+          firstPrice={firstPrice}
+          hasDiscount={hasDiscount}
+          maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}
+          price={price}
+          scale={scale}
+          testID="product-sticky-footer-discount-price"
+        />
+      ) : (
+        <XStack
+          position="relative"
+          alignItems="center"
+          borderColor="$orange5"
+          borderWidth={1}
+          backgroundColor="$orange2"
+          borderRadius={8}
+          paddingHorizontal={12}
+          paddingVertical={8}
+          gap={4}
+        >
+          <Paragraph fontSize={30} fontWeight="900" color="$brand" lineHeight={Math.round(34 * scale)} letterSpacing={-0.5} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}>
+            {Number(price).toLocaleString('tr-TR', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).replace(/\s*TL\s*$/, '')}
+          </Paragraph>
+          <Paragraph fontSize={16} fontWeight="700" color="$brand" lineHeight={Math.round(20 * scale)} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}>
+            TL
+          </Paragraph>
 
-        {/* Floating Orange Discount Badge */}
-        {showDiscount && (
-          <XStack
-            position="absolute"
-            top={-8}
-            right={-8}
-            width={20}
-            height={20}
-            borderRadius={10}
-            backgroundColor="$brand"
-            alignItems="center"
-            justifyContent="center"
-            shadowColor={shadowColor as any}
-            shadowOffset={{ width: 0, height: 1 }}
-            shadowOpacity={0.2}
-            shadowRadius={1.5}
-            elevation={2}
-          >
-            <TrendingDown size={10} color="white" strokeWidth={3} />
-          </XStack>
-        )}
-      </XStack>
+          {/* Floating Orange Discount Badge */}
+          {showDiscount && (
+            <XStack
+              position="absolute"
+              top={-8}
+              right={-8}
+              width={20}
+              height={20}
+              borderRadius={10}
+              backgroundColor="$brand"
+              alignItems="center"
+              justifyContent="center"
+              shadowColor={shadowColor as any}
+              shadowOffset={{ width: 0, height: 1 }}
+              shadowOpacity={0.2}
+              shadowRadius={1.5}
+              elevation={2}
+            >
+              <TrendingDown size={10} color="white" strokeWidth={3} />
+            </XStack>
+          )}
+        </XStack>
+      )}
 
       {/* Buttons: WhatsApp & primary action */}
       <XStack flex={1} gap="$2.5" justifyContent="flex-end" alignItems="center">

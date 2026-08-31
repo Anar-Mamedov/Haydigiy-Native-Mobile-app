@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { ProductStickyFooter } from './product-sticky-footer';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
@@ -10,6 +11,45 @@ const baseProps = {
 };
 
 describe('ProductStickyFooter', () => {
+  it('keeps the regular orange price box when the product has no discount', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} />);
+
+    expect(screen.queryByTestId('product-sticky-footer-discount-price')).toBeNull();
+    expect(screen.getByText('199,90')).toBeTruthy();
+    expect(screen.getByText('TL')).toBeTruthy();
+  });
+
+  it('shows the discount box with the rate badge and the struck-through first price', () => {
+    renderWithTamagui(
+      <ProductStickyFooter {...baseProps} discountRate={20} firstPrice={249.9} hasDiscount />,
+    );
+
+    expect(screen.getByTestId('product-sticky-footer-discount-price')).toBeTruthy();
+    expect(screen.getByText('%20')).toBeTruthy();
+    expect(screen.getByText('199,90 TL')).toBeTruthy();
+
+    const firstPrice = screen.getByText('249,90 TL');
+    expect(StyleSheet.flatten(firstPrice.props.style)?.textDecorationLine).toBe('line-through');
+  });
+
+  it('falls back to the regular box when the discount flag has no usable data', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} hasDiscount />);
+
+    expect(screen.queryByTestId('product-sticky-footer-discount-price')).toBeNull();
+    expect(screen.getByText('199,90')).toBeTruthy();
+  });
+
+  it('keeps the discounted price readable after switching to the dark theme', () => {
+    renderWithTamagui(
+      <ProductStickyFooter {...baseProps} discountRate={20} firstPrice={249.9} hasDiscount />,
+      'dark',
+    );
+
+    expect(screen.getByText('%20')).toBeTruthy();
+    expect(screen.getByText('199,90 TL')).toBeTruthy();
+    expect(screen.getByText('249,90 TL')).toBeTruthy();
+  });
+
   it('adds to cart when approved for sale', () => {
     const onAddToCart = jest.fn();
 

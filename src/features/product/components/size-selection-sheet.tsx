@@ -9,6 +9,8 @@ import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { FeatureIcon, ProductVariant } from '@/types/product.types';
 import { resolveProductActionState } from '../utils/product-action-state';
 import { ProductFeatureDescriptionList } from './product-feature-tags';
+import { ProductDetailDiscountPrice } from './product-price';
+import { resolveProductDiscount } from '../utils/product-price';
 import { ProductSizeSkeletonGrid } from './product-size-skeleton';
 
 type SizeSelectionSheetProps = {
@@ -16,8 +18,16 @@ type SizeSelectionSheetProps = {
   onClose: () => void;
   productName: string;
   imageUrl: string;
-  /** Already-formatted price label, e.g. "349,99 TL". */
+  /** Already-formatted price label, e.g. "349,99 TL". Used when the product has no discount. */
   priceLabel: string;
+  /** Ham fiyat; yalnızca indirimli düzen için gerekir. */
+  price?: number;
+  /** Backend indirim bayrağı (`has_discount`). */
+  hasDiscount?: boolean;
+  /** İndirim yüzdesi (`discount_rate`). */
+  discountRate?: number;
+  /** İndirim öncesi fiyat (`first_price`). */
+  firstPrice?: number;
   shippingMessage?: string;
   featureIcons?: FeatureIcon[];
   variants: ProductVariant[];
@@ -43,6 +53,10 @@ export function SizeSelectionSheet({
   productName,
   imageUrl,
   priceLabel,
+  price,
+  hasDiscount,
+  discountRate,
+  firstPrice,
   shippingMessage,
   featureIcons,
   variants,
@@ -57,6 +71,12 @@ export function SizeSelectionSheet({
   onNotifyMe,
 }: SizeSelectionSheetProps) {
   const insets = useSafeAreaInsets();
+  const discount = resolveProductDiscount({
+    discountRate,
+    firstPrice,
+    hasDiscount,
+    price: price ?? 0,
+  });
 
   const isSelectedVariantOutOfStock = Boolean(
     selectedVariant && (!selectedVariant.hasStock || selectedVariant.quantity < 1),
@@ -89,9 +109,19 @@ export function SizeSelectionSheet({
               <Paragraph color="$color" fontSize={14} fontWeight="600" numberOfLines={2}>
                 {productName}
               </Paragraph>
-              <Paragraph color="$brand" fontSize={20} fontWeight="800">
-                {priceLabel}
-              </Paragraph>
+              {discount.isDiscounted ? (
+                <ProductDetailDiscountPrice
+                  discountRate={discountRate}
+                  firstPrice={firstPrice}
+                  hasDiscount={hasDiscount}
+                  price={price ?? 0}
+                  testID="size-selection-sheet-discount-price"
+                />
+              ) : (
+                <Paragraph color="$brand" fontSize={20} fontWeight="800">
+                  {priceLabel}
+                </Paragraph>
+              )}
               {shippingMessage ? (
                 <XStack alignItems="center" gap="$1.5">
                   <Truck color="$brand" size={14} />

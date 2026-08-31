@@ -9,6 +9,7 @@ import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
 import { ProductFeatureAssetTicker, ProductFeatureDescriptionTicker } from './product-feature-tags';
 import { ProductImageCarousel } from './product-image-carousel';
+import { ProductCardPrice } from './product-price';
 import { ProductSizeStrip } from './product-size-strip';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 
@@ -22,7 +23,6 @@ type ProductCardProps = {
 
 const PRODUCT_CARD_COLORS = {
   accent: BRAND_COLOR,
-  campaign: '#cc0407',
   danger: '#ef4444',
   emptyStar: '#d1d5db',
   favoriteInactive: '#9ca3af',
@@ -32,15 +32,7 @@ const PRODUCT_CARD_COLORS = {
 
 const CARD_SHADOW = '0 1px 2px rgba(0, 0, 0, 0.05)';
 const FLOATING_SHADOW = '0 1px 4px rgba(0, 0, 0, 0.18)';
-const CAMPAIGN_SHADOW = '0 3px 8px rgba(204, 4, 7, 0.22)';
 const FEATURE_ICON_SIZE = 60;
-
-function formatProductCardPrice(price: number) {
-  return `${Number(price).toLocaleString('tr-TR', {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 2,
-  })} TL`;
-}
 
 function stopPressPropagation(event?: GestureResponderEvent) {
   event?.stopPropagation?.();
@@ -338,48 +330,16 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
             <ProductSizeStrip sizes={product.sizes} />
           </YStack>
 
-          {/* Kampanya Fiyatı Badge */}
+          {/* Fiyat satırı: indirim varsa oran rozeti + üstü çizili eski fiyat */}
           <Pressable accessible={false} onPress={() => onOpen(imageIndex)}>
-            <YStack marginTop={6} width="100%" boxShadow={CAMPAIGN_SHADOW} borderRadius={8}>
-              <XStack
-                backgroundColor={PRODUCT_CARD_COLORS.campaign}
-                borderRadius={8}
-                overflow="hidden"
-                width="100%"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <YStack flex={1} minWidth={0} justifyContent="center" paddingHorizontal={4} paddingVertical={4}>
-                  <Paragraph
-                    color={PRODUCT_CARD_COLORS.white}
-                    fontSize={11}
-                    fontWeight="600"
-                    lineHeight={14}
-                    numberOfLines={1}
-                  >
-                    Kampanya Fiyatı:
-                  </Paragraph>
-                </YStack>
-                <YStack
-                  backgroundColor={PRODUCT_CARD_COLORS.white}
-                  borderBottomRightRadius={8}
-                  borderTopRightRadius={8}
-                  flexShrink={0}
-                  justifyContent="center"
-                  paddingHorizontal={4}
-                  paddingVertical={4}
-                >
-                  <Paragraph
-                    color={PRODUCT_CARD_COLORS.campaign}
-                    fontSize={11}
-                    fontWeight="700"
-                    lineHeight={14}
-                    textAlign="right"
-                  >
-                    {formatProductCardPrice(product.price)}
-                  </Paragraph>
-                </YStack>
-              </XStack>
+            <YStack marginTop={6} width="100%">
+              <ProductCardPrice
+                discountRate={product.discountRate}
+                firstPrice={product.firstPrice}
+                hasDiscount={product.hasDiscount}
+                price={product.price}
+                testID="product-card-price"
+              />
             </YStack>
           </Pressable>
         </YStack>

@@ -178,6 +178,12 @@ export type Product = {
   imageUrl: string;
   originalPrice?: number;
   price: number;
+  /** Backend indirim bayrağı (`has_discount`); indirimli fiyat düzenini açar. */
+  hasDiscount?: boolean;
+  /** İndirim yüzdesi (`discount_rate`) — ör. 20 → "-%20". */
+  discountRate?: number;
+  /** İndirim öncesi fiyat (`first_price`); `price` üstünde üstü çizili gösterilir. */
+  firstPrice?: number;
   rating: number;
   reviewCount: number;
   /** Total Q&A count from the API (`questions_count`), not the embedded subset length. */

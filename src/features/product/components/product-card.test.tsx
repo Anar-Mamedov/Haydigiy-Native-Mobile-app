@@ -52,10 +52,54 @@ describe('ProductCard', () => {
 
     expect(screen.getByText('Elbise')).toBeTruthy();
     expect(screen.getByText('Test Product')).toBeTruthy();
-    expect(screen.getByText('Kampanya Fiyatı:')).toBeTruthy();
     expect(screen.getByText('150,00 TL')).toBeTruthy();
     expect(screen.getByText('S')).toBeTruthy();
     expect(screen.getByText('M')).toBeTruthy();
+  });
+
+  it('shows only the current price when the product has no discount', () => {
+    renderWithTamagui(<ProductCard onOpen={jest.fn()} product={product} />);
+
+    expect(screen.getByText('150,00 TL')).toBeTruthy();
+    expect(screen.queryByText(/^-%/)).toBeNull();
+    expect(screen.queryByText('Kampanya Fiyatı:')).toBeNull();
+  });
+
+  it('shows the discount rate badge and the struck-through first price when discounted', () => {
+    renderWithTamagui(
+      <ProductCard
+        onOpen={jest.fn()}
+        product={{ ...product, discountRate: 25, firstPrice: 200, hasDiscount: true }}
+      />,
+    );
+
+    expect(screen.getByText('-%25')).toBeTruthy();
+    expect(screen.getByText('150,00 TL')).toBeTruthy();
+
+    const firstPrice = screen.getByText('200,00 TL');
+    expect(StyleSheet.flatten(firstPrice.props.style)?.textDecorationLine).toBe('line-through');
+  });
+
+  it('falls back to the plain price when the discount flag arrives without usable data', () => {
+    renderWithTamagui(
+      <ProductCard onOpen={jest.fn()} product={{ ...product, hasDiscount: true }} />,
+    );
+
+    expect(screen.getByText('150,00 TL')).toBeTruthy();
+    expect(screen.queryByText(/^-%/)).toBeNull();
+  });
+
+  it('keeps the discounted price row readable after switching to the dark theme', () => {
+    const discounted: Product = { ...product, discountRate: 25, firstPrice: 200, hasDiscount: true };
+
+    renderWithTamagui(<ProductCard onOpen={jest.fn()} product={discounted} />, 'dark');
+
+    expect(screen.getByText('-%25')).toBeTruthy();
+    expect(screen.getByText('150,00 TL')).toBeTruthy();
+    expect(screen.getByText('200,00 TL')).toBeTruthy();
+    expect(
+      screen.getByLabelText('İndirimli fiyat 150,00 TL, eski fiyat 200,00 TL, yüzde 25 indirim'),
+    ).toBeTruthy();
   });
 
   it('opens the product when the card is pressed', () => {

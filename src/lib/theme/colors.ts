@@ -34,6 +34,23 @@ export const RANKING_BADGE_GRADIENT = ['#f27a1a', '#f79a0f', '#ffbf00'] as const
 export const PAYMENT_DESCRIPTION_BADGE_COLOR = '#18b85f';
 
 /**
+ * İndirimli fiyat vurgusu. Açık temada web ile birebir aynı yeşil kullanılır; koyu
+ * temada aynı ton yeterli kontrast vermediği için daha açık bir yeşile geçilir.
+ * Bu iki değer `tamagui.config.ts` içinde `$discount` teması olarak tanımlanır, bu
+ * yüzden Tamagui prop'larında `$discount` tercih edilmeli; buradaki sabitler yalnızca
+ * token çözümlemeyen API'ler (SVG fill, RefreshControl vb.) içindir.
+ */
+export const DISCOUNT_COLOR = '#008040';
+export const DISCOUNT_COLOR_DARK = '#2eb872';
+
+/**
+ * İndirim oranı rozetinin ("-%20") kırmızı arka planı. Rozet kendi zeminini
+ * taşıdığı ve üzerindeki metin her iki temada da beyaz kaldığı için tek bir
+ * değerdir.
+ */
+export const DISCOUNT_RATE_BADGE_COLOR = '#cc0407';
+
+/**
  * Dim scrim shown behind expandable panels/overlays (e.g. the checkout summary).
  * A scrim is a fixed semi-transparent black in both light and dark themes, so it
  * has no theme token; centralized here instead of being hard-coded per overlay.

@@ -273,6 +273,9 @@ export function ProductDetailScreen() {
       <ProductStickyFooter
         price={displayData.price}
         originalPrice={displayData.originalPrice}
+        hasDiscount={displayData.hasDiscount}
+        discountRate={displayData.discountRate}
+        firstPrice={displayData.firstPrice}
         onAddToCart={controller.handleAddToCart}
         onNotifyMe={controller.handleNotifyMe}
         onWhatsappPress={controller.handleWhatsappPress}
@@ -328,6 +331,10 @@ export function ProductDetailScreen() {
           onSelectVariant={controller.setSelectedVariant}
           open
           priceLabel={formatCurrency(displayData.price)}
+          price={displayData.price}
+          hasDiscount={displayData.hasDiscount}
+          discountRate={displayData.discountRate}
+          firstPrice={displayData.firstPrice}
           productName={displayData.title}
           selectedVariant={selectedVariant}
           shippingMessage={controller.shippingMessage}

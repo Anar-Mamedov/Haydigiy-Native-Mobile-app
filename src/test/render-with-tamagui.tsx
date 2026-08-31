@@ -3,14 +3,31 @@ import { render } from '@testing-library/react-native';
 import { defaultConfig } from '@tamagui/config/v5';
 import { createTamagui, TamaguiProvider, Theme } from 'tamagui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BRAND_COLOR, SHEET_OVERLAY_COLOR } from '@/lib/theme/colors';
+import {
+  BRAND_COLOR,
+  DISCOUNT_COLOR,
+  DISCOUNT_COLOR_DARK,
+  SHEET_OVERLAY_COLOR,
+} from '@/lib/theme/colors';
 
 const testConfig = createTamagui({
   ...defaultConfig,
   themes: {
     ...defaultConfig.themes,
-    light: { ...defaultConfig.themes.light, brand: BRAND_COLOR, overlay: SHEET_OVERLAY_COLOR },
-    dark: { ...defaultConfig.themes.dark, brand: BRAND_COLOR, overlay: SHEET_OVERLAY_COLOR },
+    light: {
+      ...defaultConfig.themes.light,
+      brand: BRAND_COLOR,
+      discount: DISCOUNT_COLOR,
+      discountBadge: DISCOUNT_COLOR,
+      overlay: SHEET_OVERLAY_COLOR,
+    },
+    dark: {
+      ...defaultConfig.themes.dark,
+      brand: BRAND_COLOR,
+      discount: DISCOUNT_COLOR_DARK,
+      discountBadge: DISCOUNT_COLOR,
+      overlay: SHEET_OVERLAY_COLOR,
+    },
   },
 });
 

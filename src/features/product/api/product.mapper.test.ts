@@ -130,6 +130,38 @@ describe('mapSearchProductDto', () => {
     expect(mapSearchProductDto(baseProductDto).rankingText).toBeNull();
   });
 
+  it('maps the backend discount fields for the list card', () => {
+    const product = mapSearchProductDto({
+      ...baseProductDto,
+      has_discount: true,
+      discount_rate: 25,
+      first_price: 199.99,
+    });
+
+    expect(product.hasDiscount).toBe(true);
+    expect(product.discountRate).toBe(25);
+    expect(product.firstPrice).toBe(199.99);
+  });
+
+  it('parses string discount values and leaves missing ones undefined', () => {
+    const product = mapSearchProductDto({
+      ...baseProductDto,
+      has_discount: true,
+      discount_rate: '25',
+      first_price: '199,99',
+    });
+
+    expect(product.discountRate).toBe(25);
+    // Backend virgüllü bir değer gönderirse sayıya çevrilemeyen kısım atılır;
+    // önemli olan NaN sızdırmamak.
+    expect(Number.isNaN(product.firstPrice as number)).toBe(false);
+
+    const plain = mapSearchProductDto(baseProductDto);
+    expect(plain.hasDiscount).toBe(false);
+    expect(plain.discountRate).toBeUndefined();
+    expect(plain.firstPrice).toBeUndefined();
+  });
+
   it('marks a package product coming from a list response', () => {
     expect(mapSearchProductDto({ ...baseProductDto, is_bundle: true }).isBundle).toBe(true);
   });
@@ -161,6 +193,35 @@ describe('mapPopularProductDto', () => {
 });
 
 describe('mapProductDetailDto', () => {
+  it('maps the backend discount fields for the detail price box', () => {
+    const product = mapProductDetailDto({
+      id: 80872,
+      name: 'Keten Gorunumlu Etek Pantolon Siyah',
+      slug: 'keten-gorunumlu-etek-pantolon-siyah-80872',
+      price: 149.99,
+      has_discount: true,
+      discount_rate: 25,
+      first_price: 199.99,
+    });
+
+    expect(product.hasDiscount).toBe(true);
+    expect(product.discountRate).toBe(25);
+    expect(product.firstPrice).toBe(199.99);
+  });
+
+  it('leaves the discount fields empty for a product without a discount', () => {
+    const product = mapProductDetailDto({
+      id: 80872,
+      name: 'Keten Gorunumlu Etek Pantolon Siyah',
+      slug: 'keten-gorunumlu-etek-pantolon-siyah-80872',
+      price: 149.99,
+    });
+
+    expect(product.hasDiscount).toBe(false);
+    expect(product.discountRate).toBeUndefined();
+    expect(product.firstPrice).toBeUndefined();
+  });
+
   it('maps review photos for the product detail comments carousel', () => {
     const product = mapProductDetailDto({
       id: 80872,

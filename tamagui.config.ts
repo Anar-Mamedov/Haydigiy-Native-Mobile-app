@@ -1,7 +1,12 @@
 import { defaultConfig } from '@tamagui/config/v5';
 import { createAnimations } from '@tamagui/animations-react-native';
 import { createTamagui } from 'tamagui';
-import { BRAND_COLOR, SHEET_OVERLAY_COLOR } from './src/lib/theme/colors';
+import {
+  BRAND_COLOR,
+  DISCOUNT_COLOR,
+  DISCOUNT_COLOR_DARK,
+  SHEET_OVERLAY_COLOR,
+} from './src/lib/theme/colors';
 
 // Use Tamagui's React Native Animated driver instead of the Reanimated driver.
 // With Reanimated 4 + RN 0.83 New Architecture, RN's dev render-logging
@@ -40,8 +45,20 @@ export const config = createTamagui({
   ...defaultConfig,
   themes: {
     ...defaultConfig.themes,
-    light: { ...defaultConfig.themes.light, brand: BRAND_COLOR, overlay: SHEET_OVERLAY_COLOR },
-    dark: { ...defaultConfig.themes.dark, brand: BRAND_COLOR, overlay: SHEET_OVERLAY_COLOR },
+    light: {
+      ...defaultConfig.themes.light,
+      brand: BRAND_COLOR,
+      discount: DISCOUNT_COLOR,
+      discountBadge: DISCOUNT_COLOR,
+      overlay: SHEET_OVERLAY_COLOR,
+    },
+    dark: {
+      ...defaultConfig.themes.dark,
+      brand: BRAND_COLOR,
+      discount: DISCOUNT_COLOR_DARK,
+      discountBadge: DISCOUNT_COLOR,
+      overlay: SHEET_OVERLAY_COLOR,
+    },
   },
   settings: {
     ...defaultConfig.settings,
