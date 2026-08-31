@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Sheet, YStack, XStack, Button, Input } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { X, Table, Calculator, WashingMachine, MessageSquare, Check } from '@/components/ui/icons';
+import { X, Table, WashingMachine, MessageSquare, Check } from '@/components/ui/icons';
 import { Pressable, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { BRAND_COLOR } from '@/lib/theme/colors';
-import { calculateSize, submitProductFeedback } from '@/services/product.service';
+import { submitProductFeedback } from '@/services/product.service';
 import {
   getSizeChartImageSource,
   getSizeChartSections,
@@ -140,177 +140,6 @@ export function SizeChartModal({ open, onOpenChange }: { open: boolean; onOpenCh
             style={{ width: '100%', aspectRatio: SIZE_CHART_ASPECT_RATIO }}
             contentFit="contain"
           />
-        </ScrollView>
-      </Sheet.Frame>
-    </Sheet>
-  );
-}
-
-// --- 2. SIZE CALCULATOR MODAL ---
-export function SizeCalculatorModal({
-  open,
-  onOpenChange,
-  onCalculateComplete,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCalculateComplete?: (size: string) => void;
-}) {
-  const [height, setHeight] = useState('');
-  const [weight, setWeight] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | 'child'>('female');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
-
-  const handleCalculate = async () => {
-    const h = parseInt(height, 10);
-    const w = parseInt(weight, 10);
-    if (!height || !weight || isNaN(h) || isNaN(w) || h < 50 || h > 250 || w < 10 || w > 200) {
-      setError('Lütfen geçerli boy (50–250 cm) ve kilo (10–200 kg) girin.');
-      return;
-    }
-    setError(null);
-    setResult(null);
-    setLoading(true);
-
-    try {
-      const res = await calculateSize(h, w, gender);
-      if (res?.status === 'success' && res?.data?.recommended_size) {
-        setResult(res.data.recommended_size);
-        if (onCalculateComplete) {
-          onCalculateComplete(res.data.recommended_size);
-        }
-      } else {
-        setError('Beden hesaplanamadı.');
-      }
-    } catch {
-      setError('Beden hesaplanırken bir hata oluştu.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[48]} dismissOnSnapToBottom modal unmountChildrenWhenHidden>
-      <AppSheetOverlay />
-      <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={16} borderTopRightRadius={16} overflow="hidden">
-        <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={16} paddingVertical={12} borderBottomWidth={1} borderBottomColor="$borderColor">
-          <XStack alignItems="center" gap="$2">
-            <Calculator size={18} color="$brand" />
-            <Paragraph fontSize={16} fontWeight="700">Bedenimi Hesapla</Paragraph>
-          </XStack>
-          <Button backgroundColor="transparent" chromeless circular icon={<X size={18} />} onPress={() => onOpenChange(false)} size="$3" />
-        </XStack>
-
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-          <XStack gap="$3">
-            <YStack flex={1} gap="$1.5">
-              <Paragraph fontSize={12} color="$color10" fontWeight="600">Boy (cm)</Paragraph>
-              <Input
-                value={height}
-                onChangeText={setHeight}
-                placeholder="Örn: 172"
-                keyboardType="numeric"
-                height={44}
-                borderColor="$borderColor"
-                borderWidth={1}
-                borderRadius={8}
-                paddingHorizontal={12}
-                color="$color"
-                backgroundColor="$background"
-              />
-            </YStack>
-            <YStack flex={1} gap="$1.5">
-              <Paragraph fontSize={12} color="$color10" fontWeight="600">Kilo (kg)</Paragraph>
-              <Input
-                value={weight}
-                onChangeText={setWeight}
-                placeholder="Örn: 59"
-                keyboardType="numeric"
-                height={44}
-                borderColor="$borderColor"
-                borderWidth={1}
-                borderRadius={8}
-                paddingHorizontal={12}
-                color="$color"
-                backgroundColor="$background"
-              />
-            </YStack>
-          </XStack>
-
-          <YStack gap="$1.5">
-            <Paragraph fontSize={12} color="$color10" fontWeight="600">Cinsiyet</Paragraph>
-            <XStack gap="$2">
-              {(['female', 'male', 'child'] as const).map((g) => (
-                <Button
-                  key={g}
-                  flex={1}
-                  backgroundColor={gender === g ? '$brand' : '$color3'}
-                  borderRadius={8}
-                  onPress={() => setGender(g)}
-                >
-                  <Paragraph color={gender === g ? 'white' : '$color11'} fontWeight="700" fontSize={12}>
-                    {g === 'female' ? 'Kadın' : g === 'male' ? 'Erkek' : 'Çocuk'}
-                  </Paragraph>
-                </Button>
-              ))}
-            </XStack>
-          </YStack>
-
-          <Button
-            backgroundColor="$brand"
-            borderRadius={8}
-            onPress={handleCalculate}
-            disabled={loading}
-            height={46}
-            marginTop="$2"
-          >
-            <Paragraph color="white" fontWeight="800">
-              {loading ? 'Hesaplanıyor...' : 'Hesapla'}
-            </Paragraph>
-          </Button>
-
-          {error && <Paragraph color="$red10" fontSize={13} textAlign="center">{error}</Paragraph>}
-
-          {result && (
-            <YStack
-              gap="$2.5"
-              marginTop="$3"
-              padding="$4"
-              backgroundColor="$orange3"
-              borderRadius={12}
-              accessible
-              accessibilityRole="text"
-              accessibilityLiveRegion="polite"
-              accessibilityLabel={`Sizin için önerilen beden: ${result}`}
-            >
-              <Paragraph color="$color" fontSize={14} fontWeight="600" textAlign="center">Sizin İçin Önerilen Beden:</Paragraph>
-              <YStack
-                alignSelf="stretch"
-                alignItems="center"
-                justifyContent="center"
-                backgroundColor="$background"
-                borderColor="$brand"
-                borderWidth={1}
-                borderRadius={14}
-                paddingVertical="$3"
-                paddingHorizontal="$4"
-                minHeight={56}
-              >
-                <Paragraph
-                  color="$brand"
-                  fontSize={24}
-                  fontWeight="900"
-                  textAlign="center"
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                >
-                  {result}
-                </Paragraph>
-              </YStack>
-            </YStack>
-          )}
         </ScrollView>
       </Sheet.Frame>
     </Sheet>

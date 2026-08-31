@@ -27,5 +27,6 @@ export * from '@/components/ui/search-input';
 export * from '@/components/ui/section-card';
 export * from '@/components/ui/selectable-card';
 export * from '@/components/ui/segmented-control';
+export * from '@/components/ui/sheet-bottom-cover';
 export * from '@/components/ui/theme-toggle';
 export * from '@/components/ui/app-header';

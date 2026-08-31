@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
-import { SizeCalculatorModal } from './product-detail-modals';
+import { StyleSheet } from 'react-native';
+import { SizeCalculatorModal } from './size-calculator-modal';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { calculateSize } from '@/services/product.service';
 
@@ -11,15 +12,17 @@ jest.mock('@/services/product.service', () => ({
 jest.mock('tamagui', () => {
   const actual = jest.requireActual('tamagui');
   const React = jest.requireActual('react');
+  const { View } = jest.requireActual('react-native');
 
-  const SheetRoot = function SheetRoot({ children, open }: any) {
-    return open ? React.createElement(React.Fragment, null, children) : null;
+  const SheetRoot = function SheetRoot({ children, open, ...props }: any) {
+    if (!open) return null;
+    return React.createElement(View, { testID: 'size-calculator-sheet', ...props }, children);
   };
   SheetRoot.Overlay = function SheetOverlay() {
     return null;
   };
   SheetRoot.Frame = function SheetFrame({ children, ...props }: any) {
-    return React.createElement(actual.YStack, props, children);
+    return React.createElement(View, props, children);
   };
 
   return { ...actual, Sheet: SheetRoot };
@@ -30,6 +33,39 @@ const mockCalculateSize = calculateSize as jest.MockedFunction<typeof calculateS
 describe('SizeCalculatorModal', () => {
   beforeEach(() => {
     mockCalculateSize.mockReset();
+  });
+
+  // Regression: the sheet used to stay put when the keyboard opened, so the boy/kilo
+  // inputs ended up hidden behind the native keyboard.
+  it('keeps the boy/kilo form above the keyboard inside the sheet', () => {
+    renderWithTamagui(<SizeCalculatorModal onOpenChange={jest.fn()} open />);
+
+    expect(screen.getByTestId('size-calculator-sheet').props.moveOnKeyboardChange).toBe(true);
+    expect(screen.getByTestId('size-calculator-sheet').props.snapPointsMode).toBe('fit');
+
+    const scroller = screen.getByTestId('size-calculator-keyboard-aware-scroll');
+    expect(scroller.props.keyboardShouldPersistTaps).toBe('handled');
+    expect(scroller.props.bounces).toBe(false);
+    expect(scroller.props.alwaysBounceVertical).toBe(false);
+    expect(scroller.props.overScrollMode).toBe('never');
+  });
+
+  it('covers the area below the sheet so the tab bar gap follows the theme', () => {
+    renderWithTamagui(<SizeCalculatorModal onOpenChange={jest.fn()} open />);
+
+    const frame = screen.getByTestId('size-calculator-sheet-frame');
+    expect(frame.props.adjustPaddingForOffscreenContent).toBe(true);
+    expect(frame.props.overflow).toBe('visible');
+    expect(
+      StyleSheet.flatten(screen.getByTestId('size-calculator-sheet-bottom-cover').props.style)?.height,
+    ).toBe(84);
+  });
+
+  it('labels both measurement inputs for screen readers', () => {
+    renderWithTamagui(<SizeCalculatorModal onOpenChange={jest.fn()} open />);
+
+    expect(screen.getByLabelText('Boy (cm)')).toBeTruthy();
+    expect(screen.getByLabelText('Kilo (kg)')).toBeTruthy();
   });
 
   it('shows the recommended size and keeps the sheet open after calculating', async () => {

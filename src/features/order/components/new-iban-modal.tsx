@@ -1,8 +1,13 @@
 import { useState } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Sheet, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { AppCheckbox, AppInput, AppSheetOverlay, KeyboardAwareSheetScrollView } from '@/components/ui';
+import {
+  AppCheckbox,
+  AppInput,
+  AppSheetOverlay,
+  KeyboardAwareSheetScrollView,
+  SheetBottomCover,
+} from '@/components/ui';
 import { useAddPaymentMethodMutation } from '../api/return.mutations';
 import { formatIbanInput, getIbanDigits, isValidIban, normalizeIban } from '@/utils/iban';
 import { getReturnErrorMessage } from '@/services/return.service';
@@ -14,17 +19,13 @@ type Props = {
   onSuccess: () => void;
 };
 
-const BOTTOM_TAB_BAR_COVER_HEIGHT = 64;
-
 /** Adds a new refund IBAN (`POST /payment-methods`) from within the return flow. */
 export function NewIbanModal({ open, onClose, onSuccess }: Props) {
-  const insets = useSafeAreaInsets();
   const [iban, setIban] = useState('');
   const [ibanName, setIbanName] = useState('');
   const [isDefault, setIsDefault] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const addMutation = useAddPaymentMethodMutation();
-  const bottomCoverHeight = BOTTOM_TAB_BAR_COVER_HEIGHT + insets.bottom;
 
   const reset = () => {
     setIban('');
@@ -82,16 +83,7 @@ export function NewIbanModal({ open, onClose, onSuccess }: Props) {
         maxHeight="92%"
         overflow="visible"
       >
-        <YStack
-          backgroundColor="$background"
-          bottom={-bottomCoverHeight}
-          height={bottomCoverHeight}
-          left={0}
-          pointerEvents="none"
-          position="absolute"
-          right={0}
-          testID="new-iban-sheet-bottom-cover"
-        />
+        <SheetBottomCover testID="new-iban-sheet-bottom-cover" />
         <KeyboardAwareSheetScrollView testID="new-iban-keyboard-aware-scroll">
           <YStack gap="$3" padding="$5">
             <Paragraph color="$color" fontSize={17} fontWeight="800">

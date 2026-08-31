@@ -34,10 +34,10 @@ import { ProductImageGalleryModal } from '../components/product-image-gallery-mo
 import { NotifyStockDialog } from '../components/notify-stock-dialog';
 import {
   SizeChartModal,
-  SizeCalculatorModal,
   WashingInstructionsModal,
   FeedbackModal,
 } from '../components/product-detail-modals';
+import { SizeCalculatorModal } from '../components/size-calculator-modal';
 
 /**
  * Ürün detay ekranı — yalnızca sunum yapar.
