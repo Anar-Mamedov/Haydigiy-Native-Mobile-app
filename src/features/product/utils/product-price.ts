@@ -60,15 +60,26 @@ export function resolveProductDiscount({
   };
 }
 
-/** Ürün fiyatını liste ve detay yüzeylerinin ortak "1.234,56 TL" biçimine çevirir. */
-export function formatProductPrice(value: number | null | undefined): string {
+/**
+ * Fiyatın yalnızca sayı kısmını "1.234,56" biçimine çevirir. Para birimini ayrı
+ * bir yazı boyutuyla dizen yüzeyler (sticky footer) bu biçimi kullanır.
+ */
+export function formatProductPriceAmount(value: number | null | undefined): string {
   const amount = toFiniteNumber(value);
   if (amount === undefined) return '';
 
-  return `${amount.toLocaleString('tr-TR', {
+  return amount.toLocaleString('tr-TR', {
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
-  })} TL`;
+  });
+}
+
+/** Ürün fiyatını liste ve detay yüzeylerinin ortak "1.234,56 TL" biçimine çevirir. */
+export function formatProductPrice(value: number | null | undefined): string {
+  const amount = formatProductPriceAmount(value);
+  if (!amount) return '';
+
+  return `${amount} TL`;
 }
 
 /** İndirim oranını rozet metnine çevirir (ör. 20 → "-%20"). */

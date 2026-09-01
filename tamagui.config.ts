@@ -3,8 +3,11 @@ import { createAnimations } from '@tamagui/animations-react-native';
 import { createTamagui } from 'tamagui';
 import {
   BRAND_COLOR,
+  DISCOUNT_BACKGROUND_COLOR,
+  DISCOUNT_BACKGROUND_COLOR_DARK,
   DISCOUNT_COLOR,
   DISCOUNT_COLOR_DARK,
+  SAVINGS_BADGE_COLOR,
   SHEET_OVERLAY_COLOR,
 } from './src/lib/theme/colors';
 
@@ -49,14 +52,18 @@ export const config = createTamagui({
       ...defaultConfig.themes.light,
       brand: BRAND_COLOR,
       discount: DISCOUNT_COLOR,
+      discountBackground: DISCOUNT_BACKGROUND_COLOR,
       discountBadge: DISCOUNT_COLOR,
+      savingsBadge: SAVINGS_BADGE_COLOR,
       overlay: SHEET_OVERLAY_COLOR,
     },
     dark: {
       ...defaultConfig.themes.dark,
       brand: BRAND_COLOR,
       discount: DISCOUNT_COLOR_DARK,
+      discountBackground: DISCOUNT_BACKGROUND_COLOR_DARK,
       discountBadge: DISCOUNT_COLOR,
+      savingsBadge: SAVINGS_BADGE_COLOR,
       overlay: SHEET_OVERLAY_COLOR,
     },
   },

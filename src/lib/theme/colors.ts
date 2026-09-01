@@ -44,11 +44,27 @@ export const DISCOUNT_COLOR = '#008040';
 export const DISCOUNT_COLOR_DARK = '#2eb872';
 
 /**
+ * İndirim ve paket fiyat kartlarının hafif yeşil zemini. Koyu temada daha açık
+ * vurgu rengi biraz daha yüksek alfa ile kullanılır; böylece kart zemini kaybolmaz.
+ */
+export const DISCOUNT_BACKGROUND_COLOR = 'rgba(0, 128, 64, 0.10)';
+export const DISCOUNT_BACKGROUND_COLOR_DARK = 'rgba(46, 184, 114, 0.16)';
+
+/**
  * İndirim oranı rozetinin ("-%20") kırmızı arka planı. Rozet kendi zeminini
  * taşıdığı ve üzerindeki metin her iki temada da beyaz kaldığı için tek bir
  * değerdir.
  */
 export const DISCOUNT_RATE_BADGE_COLOR = '#cc0407';
+
+/** Paket fiyat kartındaki "Pakette kazanç" rozetinin sabit zemini. */
+export const SAVINGS_BADGE_COLOR = '#cc0407';
+
+/**
+ * WhatsApp marka yeşili. Marka rengi olduğu için temaya göre değişmez; yalnızca
+ * WhatsApp destek aksiyonunda kullanılır.
+ */
+export const WHATSAPP_BRAND_COLOR = '#25D366';
 
 /**
  * Dim scrim shown behind expandable panels/overlays (e.g. the checkout summary).

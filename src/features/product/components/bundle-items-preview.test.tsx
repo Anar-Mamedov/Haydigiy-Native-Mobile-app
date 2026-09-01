@@ -90,12 +90,16 @@ describe('BundleItemsPreview', () => {
     renderPreview();
 
     expect(screen.getByText('Pakette ₺500,00 kazanç')).toBeTruthy();
+    expect(screen.getByTestId('bundle-preview-discount-badge')).toBeTruthy();
+    expect(screen.getByText('%20')).toBeTruthy();
   });
 
   it('promises no saving when the package is not cheaper', () => {
     renderPreview({ summary: makeSummary({ savings: 0, savingsPercent: 0, bundlePrice: 2500 }) });
 
     expect(screen.queryByText(/kazanç/)).toBeNull();
+    expect(screen.queryByTestId('bundle-preview-discount-badge')).toBeNull();
+    expect(screen.queryByText('%0')).toBeNull();
   });
 
   it('opens the size sheet when tapped', () => {

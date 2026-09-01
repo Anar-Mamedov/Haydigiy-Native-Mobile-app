@@ -165,7 +165,10 @@ describe('BundleSelectionSheet', () => {
     renderSheet();
 
     expect(screen.getByText('₺2.000,00')).toBeTruthy();
-    expect(screen.getByText('₺500,00 (%20)')).toBeTruthy();
+    expect(screen.getByText('Pakette kazanç:')).toBeTruthy();
+    expect(screen.getByText('₺500,00')).toBeTruthy();
+    expect(screen.getByTestId('bundle-summary-discount-badge')).toBeTruthy();
+    expect(screen.getByText('%20')).toBeTruthy();
   });
 
   describe('satışa kapalı paket', () => {

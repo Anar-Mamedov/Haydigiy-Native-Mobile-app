@@ -2,12 +2,27 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { ProductStickyFooter } from './product-sticky-footer';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
+import { BundleSummary } from '@/types/bundle.types';
+import {
+  DISCOUNT_BACKGROUND_COLOR,
+  DISCOUNT_BACKGROUND_COLOR_DARK,
+} from '@/lib/theme/colors';
 
 const baseProps = {
   price: 199.9,
   onAddToCart: jest.fn(),
   onNotifyMe: jest.fn(),
   onWhatsappPress: jest.fn(),
+};
+
+const bundleSummary: BundleSummary = {
+  bundlePrice: 2000,
+  isSellable: true,
+  itemCount: 2,
+  itemsTotal: 2500,
+  maxQuantity: 10,
+  savings: 500,
+  savingsPercent: 20,
 };
 
 describe('ProductStickyFooter', () => {
@@ -24,7 +39,9 @@ describe('ProductStickyFooter', () => {
       <ProductStickyFooter {...baseProps} discountRate={20} firstPrice={249.9} hasDiscount />,
     );
 
-    expect(screen.getByTestId('product-sticky-footer-discount-price')).toBeTruthy();
+    expect(screen.getByTestId('product-sticky-footer-discount-price')).toHaveStyle({
+      backgroundColor: DISCOUNT_BACKGROUND_COLOR,
+    });
     expect(screen.getByText('%20')).toBeTruthy();
     expect(screen.getByText('199,90 TL')).toBeTruthy();
 
@@ -39,6 +56,58 @@ describe('ProductStickyFooter', () => {
     expect(screen.getByText('199,90')).toBeTruthy();
   });
 
+  it('uses the bundle summary instead of the generic product price for a package', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} bundleSummary={bundleSummary} />);
+
+    expect(screen.getByTestId('product-sticky-footer-bundle-price')).toBeTruthy();
+    expect(screen.getByText('₺2.500,00')).toBeTruthy();
+    expect(screen.getByText('₺2.000,00')).toBeTruthy();
+    expect(screen.getByText('%20')).toBeTruthy();
+    expect(screen.queryByText('199,90')).toBeNull();
+  });
+
+  // AGENTS.md: tema duyarlı yüzeyler dark modda da doğrulanmalı.
+  it('keeps the bundle price readable after switching to the dark theme', () => {
+    renderWithTamagui(
+      <ProductStickyFooter {...baseProps} bundleSummary={bundleSummary} />,
+      'dark',
+    );
+
+    expect(screen.getByTestId('product-sticky-footer-bundle-price')).toHaveStyle({
+      backgroundColor: DISCOUNT_BACKGROUND_COLOR_DARK,
+    });
+    expect(screen.getByText('₺2.000,00')).toBeTruthy();
+    expect(screen.getByText('₺2.500,00')).toBeTruthy();
+    expect(screen.getByText('%20')).toBeTruthy();
+  });
+
+  it('announces the bundle price as one sentence for screen readers', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} bundleSummary={bundleSummary} />);
+
+    expect(
+      screen.getByLabelText(
+        'Paket fiyatı ₺2.000,00, ayrı alım toplamı ₺2.500,00, yüzde 20 indirim',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('does not show a zero-percent badge when a package has no saving', () => {
+    renderWithTamagui(
+      <ProductStickyFooter
+        {...baseProps}
+        bundleSummary={{
+          ...bundleSummary,
+          bundlePrice: 2500,
+          savings: 0,
+          savingsPercent: 0,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('₺2.500,00')).toBeTruthy();
+    expect(screen.queryByText('%0')).toBeNull();
+  });
+
   it('keeps the discounted price readable after switching to the dark theme', () => {
     renderWithTamagui(
       <ProductStickyFooter {...baseProps} discountRate={20} firstPrice={249.9} hasDiscount />,
@@ -48,6 +117,16 @@ describe('ProductStickyFooter', () => {
     expect(screen.getByText('%20')).toBeTruthy();
     expect(screen.getByText('199,90 TL')).toBeTruthy();
     expect(screen.getByText('249,90 TL')).toBeTruthy();
+    expect(screen.getByTestId('product-sticky-footer-discount-price')).toHaveStyle({
+      backgroundColor: DISCOUNT_BACKGROUND_COLOR_DARK,
+    });
+  });
+
+  it('renders no stray zero when the product has no original price to compare', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} originalPrice={0} />);
+
+    expect(screen.getByText('199,90')).toBeTruthy();
+    expect(screen.queryByText('0')).toBeNull();
   });
 
   it('adds to cart when approved for sale', () => {

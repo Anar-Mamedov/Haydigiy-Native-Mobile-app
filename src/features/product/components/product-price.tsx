@@ -1,7 +1,7 @@
-import { XStack, YStack } from 'tamagui';
+import { XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { TrendingDown } from '@/components/ui/icons';
 import { DISCOUNT_RATE_BADGE_COLOR } from '@/lib/theme/colors';
+import { DiscountPriceBox } from './discount-price-box';
 import {
   formatDiscountRate,
   formatProductPrice,
@@ -127,67 +127,14 @@ export function ProductDetailDiscountPrice({
   const firstPriceLabel = discount.firstPrice ? formatProductPrice(discount.firstPrice) : '';
 
   return (
-    <YStack
+    <DiscountPriceBox
       accessibilityLabel={buildAccessibilityLabel(priceLabel, firstPriceLabel, discount.discountRate)}
-      accessibilityRole="text"
-      accessible
-      borderColor="$discount"
-      borderRadius={8}
-      borderWidth={1}
-      paddingHorizontal={10}
-      paddingVertical={6}
-      position="relative"
+      discountRate={discount.discountRate}
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
+      priceLabel={priceLabel}
+      previousPriceLabel={firstPriceLabel}
+      scale={scale}
       testID={testID}
-    >
-      <XStack alignItems="baseline" gap={6}>
-        {firstPriceLabel ? (
-          <Paragraph
-            color="$color10"
-            fontSize={13}
-            fontWeight="600"
-            lineHeight={Math.round(17 * scale)}
-            maxFontSizeMultiplier={maxFontSizeMultiplier}
-            textDecorationLine="line-through"
-          >
-            {firstPriceLabel}
-          </Paragraph>
-        ) : null}
-        <Paragraph
-          color="$discount"
-          fontSize={20}
-          fontWeight="900"
-          letterSpacing={-0.5}
-          lineHeight={Math.round(24 * scale)}
-          maxFontSizeMultiplier={maxFontSizeMultiplier}
-        >
-          {priceLabel}
-        </Paragraph>
-      </XStack>
-
-      {discount.discountRate !== undefined ? (
-        <XStack
-          alignItems="center"
-          backgroundColor="$discountBadge"
-          borderRadius={999}
-          gap={2}
-          paddingHorizontal={8}
-          paddingVertical={2}
-          position="absolute"
-          right={-8}
-          top={-10}
-        >
-          <TrendingDown color="white" size={12} strokeWidth={2.5} />
-          <Paragraph
-            color="white"
-            fontSize={11}
-            fontWeight="800"
-            lineHeight={15}
-            maxFontSizeMultiplier={maxFontSizeMultiplier}
-          >
-            %{discount.discountRate.toLocaleString('tr-TR')}
-          </Paragraph>
-        </XStack>
-      ) : null}
-    </YStack>
+    />
   );
 }

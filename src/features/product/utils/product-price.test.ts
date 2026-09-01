@@ -1,6 +1,7 @@
 import {
   formatDiscountRate,
   formatProductPrice,
+  formatProductPriceAmount,
   resolveProductDiscount,
 } from './product-price';
 
@@ -55,6 +56,20 @@ describe('resolveProductDiscount', () => {
         price: 400,
       }),
     ).toEqual({ isDiscounted: false });
+  });
+});
+
+describe('formatProductPriceAmount', () => {
+  it('formats only the number so the currency can be typeset separately', () => {
+    expect(formatProductPriceAmount(1234.5)).toBe('1.234,50');
+    expect(formatProductPriceAmount(199.9)).toBe('199,90');
+    expect(formatProductPriceAmount(0)).toBe('0,00');
+  });
+
+  it('returns an empty string for missing or invalid amounts', () => {
+    expect(formatProductPriceAmount(null)).toBe('');
+    expect(formatProductPriceAmount(undefined)).toBe('');
+    expect(formatProductPriceAmount(Number.NaN)).toBe('');
   });
 });
 

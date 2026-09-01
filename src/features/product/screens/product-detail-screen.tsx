@@ -271,6 +271,7 @@ export function ProductDetailScreen() {
 
       {/* Sticky footer price & CTA buttons */}
       <ProductStickyFooter
+        bundleSummary={bundle.isBundle ? bundle.summary : null}
         price={displayData.price}
         originalPrice={displayData.originalPrice}
         hasDiscount={displayData.hasDiscount}

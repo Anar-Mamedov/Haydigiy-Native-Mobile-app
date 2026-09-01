@@ -1,12 +1,25 @@
 import { Truck, CircleX, CircleCheck } from '@/components/ui/icons';
 import {
   formatOrderDate,
+  formatOrderPrice,
   formatOrderTimelineDate,
   formatReturnDeadline,
   getOrderStatusIcon,
   getOrderStatusText,
   PENDING_PAYMENT_STATUS_TEXT,
 } from './order-status';
+
+describe('formatOrderPrice', () => {
+  it('keeps order and cancellation prices at two decimal places', () => {
+    expect(formatOrderPrice(199)).toBe('199.00 TL');
+    expect(formatOrderPrice('199.9')).toBe('199.90 TL');
+  });
+
+  it('falls back safely for missing or malformed prices', () => {
+    expect(formatOrderPrice(null)).toBe('0.00 TL');
+    expect(formatOrderPrice('geçersiz')).toBe('0.00 TL');
+  });
+});
 
 describe('formatReturnDeadline', () => {
   it('adds 13 days to an ISO delivery date and formats DD.MM.YYYY', () => {

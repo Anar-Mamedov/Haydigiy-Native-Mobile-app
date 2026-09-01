@@ -32,15 +32,18 @@ describe('BundlePriceSummary', () => {
     renderSummary();
 
     expect(screen.getByText('₺2.500,00')).toBeTruthy();
-    expect(screen.getByText('Pakette kazanç')).toBeTruthy();
-    expect(screen.getByText('₺500,00 (%20)')).toBeTruthy();
+    expect(screen.getByText('Pakette kazanç:')).toBeTruthy();
+    expect(screen.getByText('₺500,00')).toBeTruthy();
+    expect(screen.getByTestId('bundle-summary-discount-badge')).toBeTruthy();
+    expect(screen.getByText('%20')).toBeTruthy();
   });
 
   it('promises no discount when the package is not cheaper', () => {
     // Kullanıcıya olmayan bir indirim vaat edilmez.
     renderSummary({ savings: 0, savingsPercent: 0, bundlePrice: 2500 });
 
-    expect(screen.queryByText('Pakette kazanç')).toBeNull();
+    expect(screen.queryByText('Pakette kazanç:')).toBeNull();
+    expect(screen.queryByTestId('bundle-summary-discount-badge')).toBeNull();
     expect(screen.queryByText(/%/)).toBeNull();
     expect(screen.getByText('₺2.500,00')).toBeTruthy();
   });
@@ -48,7 +51,9 @@ describe('BundlePriceSummary', () => {
   it('omits the percentage when the backend reports none', () => {
     renderSummary({ savings: 500, savingsPercent: 0 });
 
+    expect(screen.getByText('Pakette kazanç:')).toBeTruthy();
     expect(screen.getByText('₺500,00')).toBeTruthy();
+    expect(screen.queryByTestId('bundle-summary-discount-badge')).toBeNull();
     expect(screen.queryByText(/%/)).toBeNull();
   });
 
@@ -56,7 +61,7 @@ describe('BundlePriceSummary', () => {
     renderSummary({}, 'dark');
 
     expect(screen.getByText('Paket Fiyatı')).toBeTruthy();
-    expect(screen.getByText('Pakette kazanç')).toBeTruthy();
+    expect(screen.getByText('Pakette kazanç:')).toBeTruthy();
     expect(screen.getByText('₺2.000,00')).toBeTruthy();
   });
 });

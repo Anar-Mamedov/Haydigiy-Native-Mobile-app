@@ -2,6 +2,8 @@ import { Image } from 'expo-image';
 import { ChevronRight, Package } from '@/components/ui/icons';
 import { ScrollView, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { DiscountRateBadge } from '@/components/ui/discount-rate-badge';
+import { resolveBundleSavings } from '@/features/bundle/bundle.savings';
 import { BundleItem, BundleSummary } from '@/types/bundle.types';
 import { formatCurrency } from '@/utils/format-currency';
 
@@ -26,6 +28,7 @@ export function BundleItemsPreview({ items, summary, selectedCount, onPress }: B
 
   const isSaleClosed = !summary.isSellable;
   const isComplete = selectedCount === items.length;
+  const { discountRate, hasSavings } = resolveBundleSavings(summary);
 
   const statusLabel = isSaleClosed
     ? 'Bu paket şu an satışa kapalı'
@@ -38,8 +41,9 @@ export function BundleItemsPreview({ items, summary, selectedCount, onPress }: B
       accessibilityHint="Paketteki ürünler için beden seçmek üzere açar"
       accessibilityLabel={`Paket içeriği, ${items.length} ürün`}
       accessibilityRole="button"
-      backgroundColor="$background"
-      borderColor="$brand"
+      accessible
+      backgroundColor="$discountBackground"
+      borderColor="$discount"
       borderRadius="$5"
       borderWidth={1}
       gap="$2.5"
@@ -47,16 +51,26 @@ export function BundleItemsPreview({ items, summary, selectedCount, onPress }: B
       marginVertical="$2"
       onPress={onPress}
       padding="$3"
+      position="relative"
       pressStyle={{ opacity: 0.85 }}
     >
+      <DiscountRateBadge
+        position="absolute"
+        rate={discountRate}
+        right={-10}
+        testID="bundle-preview-discount-badge"
+        top={-10}
+        zIndex={1}
+      />
+
       <XStack alignItems="center" gap="$2" justifyContent="space-between">
         <XStack alignItems="center" flex={1} gap="$1.5">
-          <Package color="$brand" size={16} />
+          <Package color="$discount" size={16} />
           <Paragraph color="$color" fontSize={14} fontWeight="800">
             Bu paket {items.length} üründen oluşuyor
           </Paragraph>
         </XStack>
-        <ChevronRight color="$brand" size={16} />
+        <ChevronRight color="$discount" size={16} />
       </XStack>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -64,7 +78,7 @@ export function BundleItemsPreview({ items, summary, selectedCount, onPress }: B
           {items.map((item) => (
             <YStack
               backgroundColor="$backgroundHover"
-              borderColor="$borderColor"
+              borderColor="$green5"
               borderRadius="$3"
               borderWidth={1}
               height={THUMB_HEIGHT}
@@ -84,17 +98,25 @@ export function BundleItemsPreview({ items, summary, selectedCount, onPress }: B
 
       <XStack alignItems="center" gap="$2" justifyContent="space-between">
         <Paragraph
-          color={isSaleClosed ? '$color10' : isComplete ? '$green10' : '$brand'}
+          color={isSaleClosed ? '$color10' : isComplete ? '$discount' : '$brand'}
           flex={1}
           fontSize={12}
           fontWeight="700"
         >
           {statusLabel}
         </Paragraph>
-        {summary.savings > 0 ? (
-          <Paragraph color="$green10" fontSize={11} fontWeight="800">
-            Pakette {formatCurrency(summary.savings)} kazanç
-          </Paragraph>
+        {hasSavings ? (
+          <XStack
+            backgroundColor="$savingsBadge"
+            borderRadius={6}
+            flexShrink={0}
+            paddingHorizontal="$2"
+            paddingVertical={3}
+          >
+            <Paragraph color="white" fontSize={11} fontWeight="800">
+              Pakette {formatCurrency(summary.savings)} kazanç
+            </Paragraph>
+          </XStack>
         ) : null}
       </XStack>
     </YStack>
