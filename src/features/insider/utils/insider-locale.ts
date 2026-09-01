@@ -9,8 +9,15 @@
  * @see https://academy.insiderone.com/docs/react-native-smart-recommender
  */
 
-/** `InsiderUser.setLanguage` değeri. */
-export const INSIDER_LANGUAGE = 'tr';
+/**
+ * `InsiderUser.setLanguage` değeri.
+ *
+ * ISO 639-1 kısa kodu (`tr`) değil, dil+bölge formatı beklenir. Insider'ın data
+ * validation raporu app'ten gelen kayıtlarda `tr` gördüğü için bunu bildirdi;
+ * panelin sözleşmesi `tr_TR`. `INSIDER_LOCALE` ile bugün aynı değere sahip ama
+ * ayrı Insider alanları oldukları için ayrı sabit olarak tutuluyorlar.
+ */
+export const INSIDER_LANGUAGE = 'tr_TR';
 
 /** `InsiderUser.setLocale` ve Smart Recommender `locale` parametresi. */
 export const INSIDER_LOCALE = 'tr_TR';

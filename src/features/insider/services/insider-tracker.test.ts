@@ -451,7 +451,7 @@ describe('insider tracker', () => {
     expect(insiderUser.setSurname).toHaveBeenCalledWith('Yılmaz');
     expect(insiderUser.setEmail).toHaveBeenCalledWith('user@example.com');
     expect(insiderUser.setPhoneNumber).toHaveBeenCalledWith('+905321234567');
-    expect(insiderUser.setLanguage).toHaveBeenCalledWith('tr');
+    expect(insiderUser.setLanguage).toHaveBeenCalledWith('tr_TR');
 
     expect(identifiers).toHaveLength(1);
     expect(identifiers[0].userIds).toEqual(['user-1']);
@@ -546,7 +546,7 @@ describe('insider tracker', () => {
 
     tracker.applyDefaultLocale();
 
-    expect(insiderUser.setLanguage).toHaveBeenCalledWith('tr');
+    expect(insiderUser.setLanguage).toHaveBeenCalledWith('tr_TR');
     expect(insiderUser.setLocale).toHaveBeenCalledWith('tr_TR');
     expect(insiderUser.login).not.toHaveBeenCalled();
   });

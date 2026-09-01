@@ -84,7 +84,7 @@ döndürmeye başladığında mobil tarafta ek değişiklik gerekmez.
   - Identifier'lar: `addUserID` (CRM id), `addEmail`, `addPhoneNumber` →
     `getCurrentUser().login(identifiers)`.
   - Attribute'lar: `setName`, `setSurname`, `setEmail`, `setPhoneNumber`
-    (E164: `+90…`), `setLanguage('tr')`, `setLocale('tr_TR')`.
+    (E164: `+90…`), `setLanguage('tr_TR')`, `setLocale('tr_TR')`.
 - **Uygulama açılışı (kalıcı oturum)** → `InsiderIdentitySync` →
   `identifyUser(user)`.
 - **Logout ve süresi dolan oturum** → `getCurrentUser().logout()`.
