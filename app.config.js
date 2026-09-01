@@ -41,6 +41,14 @@ module.exports = ({ config }) => ({
         ios: {
           useFrameworks: 'static',
         },
+        android: {
+          // R8 kapaliyken Play Console "uygulama optimizasyonu" raporunda kod karartma
+          // orani %3'te kaliyor; Play, %25'in altindaki uygulamalarin gorunurlugunu
+          // kisitliyor. Bu bayrak android/app/build.gradle'daki minifyEnabled'i acar.
+          // Keep kurallari react-native, expo-modules-core, expo-updates, reanimated,
+          // worklets, svg ve expo-insider-plugin tarafindan saglaniyor; ek kural gerekmiyor.
+          enableMinifyInReleaseBuilds: true,
+        },
       },
     ],
     [

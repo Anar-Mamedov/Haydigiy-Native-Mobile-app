@@ -87,11 +87,18 @@ export function FavoriteCard({
           padding="$2"
           position="relative"
         >
+          {/* Deliberately no blurRadius: expo-image maps it to Glide's
+              BlurTransformation, which blurs through RenderScript
+              (ScriptIntrinsicBlur). That segfaults inside libRSDriver.so on
+              Android 12+ and was the app's second-largest crash cluster in Play
+              Console (rsdScriptSetGlobalVar / rsdScriptSetGlobalObj). The
+              out-of-stock overlay below already covers the whole image, so the
+              blur was invisible anyway. Do not reintroduce it. */}
           <Image
             source={{ uri: product.imageUrl }}
             style={{ width: '100%', height: '100%' }}
             contentFit="contain"
-            blurRadius={hasStock ? 0 : 6}
+            testID="favorite-card-image"
           />
 
           {pricing.isDiscounted && (

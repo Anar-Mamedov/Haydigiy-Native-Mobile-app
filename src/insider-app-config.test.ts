@@ -16,10 +16,15 @@ describe('Insider Expo configuration', () => {
     // Insider push extension'ları Podfile'da `use_frameworks!` ile geldiği için
     // ana hedefin de framework modunda olması gerekir; `dynamic` ise RN New
     // Architecture'ı kırar. Tek geçerli değer `static` (regresyon koruması).
-    expect(buildPropertiesPlugin?.[1]).toEqual({
-      ios: {
-        useFrameworks: 'static',
-      },
+    expect(buildPropertiesPlugin?.[1].ios).toEqual({
+      useFrameworks: 'static',
+    });
+
+    // R8 kapalıyken Play Console'un "uygulama optimizasyonu" raporunda kod
+    // karartma oranı %3'te kalıyor ve Play, %25'in altındaki uygulamaların
+    // görünürlüğünü kısıtlıyor (regresyon koruması).
+    expect(buildPropertiesPlugin?.[1].android).toEqual({
+      enableMinifyInReleaseBuilds: true,
     });
     expect(insiderPlugin?.[1]).toEqual(
       expect.objectContaining({
