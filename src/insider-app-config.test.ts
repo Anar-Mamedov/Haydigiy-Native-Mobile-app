@@ -25,7 +25,13 @@ describe('Insider Expo configuration', () => {
     // görünürlüğünü kısıtlıyor (regresyon koruması).
     expect(buildPropertiesPlugin?.[1].android).toEqual({
       enableMinifyInReleaseBuilds: true,
+      enableShrinkResourcesInReleaseBuilds: true,
     });
+
+    // Play Console "Optimizasyon etkin değil" maddesi; RN şablonunun
+    // `-dontoptimize` içeren varsayılan ProGuard dosyasını değiştiren yerel
+    // plugin kayıtlı kalmalı.
+    expect(config.plugins).toContain('./plugins/with-r8-optimization');
     expect(insiderPlugin?.[1]).toEqual(
       expect.objectContaining({
         appGroup: 'group.com.faprika.haydigiy.app',

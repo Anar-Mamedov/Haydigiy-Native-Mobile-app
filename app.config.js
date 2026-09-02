@@ -48,9 +48,16 @@ module.exports = ({ config }) => ({
           // Keep kurallari react-native, expo-modules-core, expo-updates, reanimated,
           // worklets, svg ve expo-insider-plugin tarafindan saglaniyor; ek kural gerekmiyor.
           enableMinifyInReleaseBuilds: true,
+          // Play Console "R8 optimizasyonu" onerisindeki "Kullanilmayan kaynaklari
+          // kaldirma etkin degil" maddesi. minifyEnabled'a bagimli.
+          enableShrinkResourcesInReleaseBuilds: true,
         },
       },
     ],
+    // Play Console "Optimizasyon etkin degil": RN sablonu -dontoptimize iceren
+    // varsayilan ProGuard dosyasini seciyor. expo-build-properties bunu
+    // ayarlayamadigi icin yerel config plugin ile degistiriliyor.
+    './plugins/with-r8-optimization',
     [
       'expo-insider-plugin',
       {
