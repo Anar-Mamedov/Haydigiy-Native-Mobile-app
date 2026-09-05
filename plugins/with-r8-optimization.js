@@ -1,50 +1,29 @@
-const { withAppBuildGradle } = require('expo/config-plugins');
+const withOptimizedProguardFile = require('./with-optimized-proguard-file');
+const withOptimizedResourceShrinking = require('./with-optimized-resource-shrinking');
 
 /**
- * AGP iki varsayılan ProGuard dosyası üretir (bkz. `ProguardFiles.ProguardFile`):
- * `proguard-android.txt` `-dontoptimize` içerir, `proguard-android-optimize.txt`
- * içermez. React Native şablonu optimizasyonu kapatan varyantı yazıyor, bu yüzden
- * R8 açık olsa bile yalnızca küçültme/karartma çalışıyor; Play Console bunu
- * "Optimizasyon etkin değil" olarak raporluyor.
+ * Play Console'un "R8 optimizasyonu ile uygulamanızın belleğini ve performansını
+ * artırın" önerisindeki, uygulama tarafından kapatılabilen maddeleri toplayan
+ * bileşik plugin.
  *
- * `expo-build-properties` bu dosyayı seçmek için bir seçenek sunmadığından ve
- * `android/` klasörü her prebuild'de yeniden üretildiğinden, değişiklik ancak bir
- * config plugin ile kalıcı olabilir.
+ * Her madde ayrı bir dosyada, çünkü farklı native dosyalara yazıyorlar:
+ * - `with-optimized-proguard-file`      -> android/app/build.gradle
+ *   ("Optimizasyon etkin değil")
+ * - `with-optimized-resource-shrinking` -> android/gradle.properties
+ *   ("Optimize edilmiş, kullanılmayan kaynakları kaldırma etkin değil")
+ *
+ * Kartın "Android Gradle eklentisini 9.0'a yükseltin" maddesi kasıtlı olarak burada
+ * DEĞİL: AGP sürümü React Native 0.86'nın version catalog'undan geliyor ve SDK 57'nin
+ * Gradle plugin'leri AGP 9'da gizlenen legacy DSL'e (`BaseExtension`,
+ * `LibraryExtension`) bağlı. Bu madde ancak Expo SDK 58 / RN 0.87 yükseltmesiyle
+ * kapanır; burada zorlanamaz.
+ *
+ * Doğrudan fonksiyon kompozisyonu kullanılıyor: `withPlugins` statik plugin
+ * çözümleyicisinden geçtiği için `_internal.projectRoot` ister ve elimizdeki
+ * doğrudan plugin referansları için gereksiz bir bağımlılık yaratır.
  */
-const DONT_OPTIMIZE = 'getDefaultProguardFile("proguard-android.txt")';
-const OPTIMIZE = 'getDefaultProguardFile("proguard-android-optimize.txt")';
-
-/**
- * `android/app/build.gradle` içeriğini optimize eden varyanta çevirir.
- *
- * Saf fonksiyon: Expo mod sisteminden bağımsız test edilebilir.
- *
- * @param {string} contents ham build.gradle metni
- * @returns {string} dönüştürülmüş metin
- * @throws {Error} beklenen satır bulunamazsa
- */
-function useOptimizedProguardFile(contents) {
-  if (contents.includes(OPTIMIZE)) return contents;
-
-  if (!contents.includes(DONT_OPTIMIZE)) {
-    throw new Error(
-      '[with-r8-optimization] android/app/build.gradle içinde ' +
-        `${DONT_OPTIMIZE} bulunamadı. React Native şablonu değişmiş olabilir; ` +
-        'plugin sessizce devre dışı kalırsa Play Console "Optimizasyon etkin değil" ' +
-        'uyarısı geri döner. Şablondaki proguardFiles satırını kontrol edip bu ' +
-        'plugin\'i güncelleyin.',
-    );
-  }
-
-  return contents.replace(DONT_OPTIMIZE, OPTIMIZE);
-}
-
 /** @type {import('expo/config-plugins').ConfigPlugin} */
 const withR8Optimization = (config) =>
-  withAppBuildGradle(config, (gradleConfig) => {
-    gradleConfig.modResults.contents = useOptimizedProguardFile(gradleConfig.modResults.contents);
-    return gradleConfig;
-  });
+  withOptimizedResourceShrinking(withOptimizedProguardFile(config));
 
 module.exports = withR8Optimization;
-module.exports.useOptimizedProguardFile = useOptimizedProguardFile;

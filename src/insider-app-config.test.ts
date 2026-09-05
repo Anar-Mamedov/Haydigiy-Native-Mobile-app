@@ -28,10 +28,19 @@ describe('Insider Expo configuration', () => {
       enableShrinkResourcesInReleaseBuilds: true,
     });
 
-    // Play Console "Optimizasyon etkin değil" maddesi; RN şablonunun
-    // `-dontoptimize` içeren varsayılan ProGuard dosyasını değiştiren yerel
-    // plugin kayıtlı kalmalı.
+    // Play Console "R8 optimizasyonu" kartının uygulama tarafından kapatılabilen
+    // maddelerini uygulayan yerel plugin kayıtlı kalmalı.
     expect(config.plugins).toContain('./plugins/with-r8-optimization');
+
+    // Expo mod zincirinde son kaydedilen plugin ilk çalışır; bizim plugin'in
+    // native dosyalara en son yazması için expo-build-properties'ten ÖNCE
+    // kayıtlı olması gerekiyor (regresyon koruması).
+    const r8PluginIndex = config.plugins.indexOf('./plugins/with-r8-optimization');
+    const buildPropertiesIndex = config.plugins.findIndex(
+      (plugin: unknown) => Array.isArray(plugin) && plugin[0] === 'expo-build-properties',
+    );
+    expect(r8PluginIndex).toBeGreaterThanOrEqual(0);
+    expect(r8PluginIndex).toBeLessThan(buildPropertiesIndex);
     expect(insiderPlugin?.[1]).toEqual(
       expect.objectContaining({
         appGroup: 'group.com.faprika.haydigiy.app',

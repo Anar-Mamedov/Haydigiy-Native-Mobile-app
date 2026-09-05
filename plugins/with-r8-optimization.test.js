@@ -1,35 +1,24 @@
-const { useOptimizedProguardFile } = require('./with-r8-optimization');
+const withR8Optimization = require('./with-r8-optimization');
 
 /**
- * Play Console "R8 optimizasyonu" önerisindeki "Optimizasyon etkin değil" maddesi,
- * React Native şablonunun `-dontoptimize` içeren varsayılan ProGuard dosyasını
- * seçmesinden kaynaklanıyordu. Bu dönüşüm bozulursa uyarı sessizce geri döner.
+ * Bileşik plugin, Play Console "R8 optimizasyonu" kartının uygulama tarafından
+ * kapatılabilen iki maddesini birlikte uygulamalı. Biri düşerse ilgili madde
+ * sessizce geri döneceği için ikisinin de kayıtlı kaldığını doğruluyoruz.
  */
-describe('useOptimizedProguardFile', () => {
-  const templateLine =
-    '            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"';
+describe('withR8Optimization', () => {
+  const baseConfig = { name: 'Haydigiy', slug: 'haydigiy-webview-app' };
 
-  it('switches the release build to the optimizing default ProGuard file', () => {
-    const result = useOptimizedProguardFile(templateLine);
+  it('registers both the build.gradle and gradle.properties mods', () => {
+    const config = withR8Optimization(baseConfig);
 
-    expect(result).toContain('getDefaultProguardFile("proguard-android-optimize.txt")');
-    expect(result).not.toContain('getDefaultProguardFile("proguard-android.txt")');
+    expect(typeof config.mods?.android?.appBuildGradle).toBe('function');
+    expect(typeof config.mods?.android?.gradleProperties).toBe('function');
   });
 
-  it('keeps the project ProGuard file in the list', () => {
-    expect(useOptimizedProguardFile(templateLine)).toContain('"proguard-rules.pro"');
-  });
+  it('leaves the rest of the config untouched', () => {
+    const config = withR8Optimization(baseConfig);
 
-  it('is idempotent so repeated prebuilds do not corrupt the file', () => {
-    const once = useOptimizedProguardFile(templateLine);
-
-    expect(useOptimizedProguardFile(once)).toBe(once);
-  });
-
-  // Sessiz başarısızlık, Play uyarısının fark edilmeden geri dönmesi demek olurdu.
-  it('throws instead of silently doing nothing when the template line is missing', () => {
-    expect(() => useOptimizedProguardFile('android { buildTypes { release {} } }')).toThrow(
-      /proguard-android\.txt/,
-    );
+    expect(config.name).toBe('Haydigiy');
+    expect(config.slug).toBe('haydigiy-webview-app');
   });
 });

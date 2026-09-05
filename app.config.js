@@ -27,6 +27,17 @@ module.exports = ({ config }) => ({
   },
   plugins: [
     ...(config.plugins || []),
+    // Play Console "R8 optimizasyonu" kartinin uygulama tarafindan kapatilabilen
+    // maddeleri: `-dontoptimize` iceren varsayilan ProGuard dosyasini degistirir ve
+    // `android.r8.optimizedResourceShrinking` bayragini acar. expo-build-properties
+    // ikisini de ayarlayamiyor.
+    //
+    // SIRA ONEMLI: Expo mod zincirinde son kaydedilen plugin ILK calisir
+    // (@expo/config-plugins withMod.js -> once action(), sonra nextMod()). Bu yuzden
+    // bu plugin expo-build-properties'ten ONCE kaydediliyor; boylece bizim mod
+    // zincirde en son calisir ve ileride expo-build-properties ayni native dosyalara
+    // yazmaya baslarsa bizim degisikligimizi ezemez.
+    './plugins/with-r8-optimization',
     // iOS framework modu STATIC olmalı, başka bir değer değil:
     // - Insider push extension'ları (InsiderNotificationService/Content) Podfile'da
     //   `use_frameworks!` ile geliyor. CocoaPods, host ve embedded target'ın aynı
@@ -54,10 +65,6 @@ module.exports = ({ config }) => ({
         },
       },
     ],
-    // Play Console "Optimizasyon etkin degil": RN sablonu -dontoptimize iceren
-    // varsayilan ProGuard dosyasini seciyor. expo-build-properties bunu
-    // ayarlayamadigi icin yerel config plugin ile degistiriliyor.
-    './plugins/with-r8-optimization',
     [
       'expo-insider-plugin',
       {
