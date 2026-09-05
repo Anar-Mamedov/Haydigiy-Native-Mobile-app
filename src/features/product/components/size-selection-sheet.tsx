@@ -12,6 +12,7 @@ import { ProductFeatureDescriptionList } from './product-feature-tags';
 import { ProductDetailDiscountPrice } from './product-price';
 import { resolveProductDiscount } from '../utils/product-price';
 import { ProductSizeSkeletonGrid } from './product-size-skeleton';
+import { ProductSaleNotice } from './product-sale-notice';
 
 type SizeSelectionSheetProps = {
   open: boolean;
@@ -86,7 +87,7 @@ export function SizeSelectionSheet({
     isNotified,
     isOutOfStock: isSelectedVariantOutOfStock,
   });
-  const canAdd = !isLoadingVariants && Boolean(selectedVariant) && !isSelectedVariantOutOfStock;
+  const canAdd = isApprovedForSale && !isLoadingVariants && Boolean(selectedVariant) && !isSelectedVariantOutOfStock;
 
   return (
     <Sheet
@@ -137,9 +138,11 @@ export function SizeSelectionSheet({
             <Paragraph color="$color" fontSize={16} fontWeight="800">
               Bedeninizi seçin
             </Paragraph>
-            <Paragraph color="$color10" fontSize={12}>
-              Sepete eklemek için bir beden seçin
-            </Paragraph>
+            {isApprovedForSale ? (
+              <Paragraph color="$color10" fontSize={12}>
+                Sepete eklemek için bir beden seçin
+              </Paragraph>
+            ) : null}
           </YStack>
 
           <YStack gap="$2">
@@ -153,35 +156,37 @@ export function SizeSelectionSheet({
                 />
               ) : (
                 variants.map((variant) => {
-                  const available = variant.hasStock && variant.quantity > 0;
-                  const selected = selectedVariant?.id === variant.id;
+                  const available = isApprovedForSale && variant.hasStock && variant.quantity > 0;
+                  const selected = isApprovedForSale && selectedVariant?.id === variant.id;
                   return (
                     <XStack
                       accessibilityLabel={
-                        available
+                        !isApprovedForSale
+                          ? `Beden ${variant.name} satışa kapalı`
+                          : available
                           ? `Beden ${variant.name}`
                           : `Beden ${variant.name} stokta yok, gelince haber ver`
                       }
                       accessibilityRole="button"
-                      accessibilityState={{ selected }}
+                      accessibilityState={{ disabled: !isApprovedForSale, selected }}
                       alignItems="center"
                       backgroundColor={selected && available ? '$brand' : '$background'}
                       borderColor={selected ? '$brand' : '$borderColor'}
                       borderRadius="$3"
                       borderWidth={2}
+                      disabled={!isApprovedForSale}
                       justifyContent="center"
                       key={variant.id}
                       minWidth={64}
-                      // Tükenmiş beden de seçilebilir; seçilince aksiyon
-                      // "Gelince Haber Ver"e dönüyor (web ile aynı).
-                      onPress={() => onSelectVariant(variant)}
+                      // Satışa açık ürünlerde tükenen bedenler stok bildirimi için seçilebilir.
+                      onPress={isApprovedForSale ? () => onSelectVariant(variant) : undefined}
                       opacity={available ? 1 : 0.6}
                       paddingHorizontal="$3"
                       paddingVertical="$2.5"
                       pressStyle={{ opacity: 0.85 }}
                     >
                       <Paragraph
-                        color={selected && available ? 'white' : selected ? '$brand' : '$color'}
+                        color={!isApprovedForSale ? '$color10' : selected && available ? 'white' : selected ? '$brand' : '$color'}
                         fontSize={14}
                         fontWeight="600"
                         textDecorationLine={available ? 'none' : 'line-through'}
@@ -195,6 +200,7 @@ export function SizeSelectionSheet({
               )}
             </XStack>
 
+            <ProductSaleNotice isApprovedForSale={isApprovedForSale} />
             <ProductFeatureDescriptionList featureIcons={featureIcons} />
           </YStack>
 
@@ -240,12 +246,12 @@ export function SizeSelectionSheet({
               </AppButton>
             ) : (
               <AppButton
-                backgroundColor="$brand"
+                backgroundColor={isApprovedForSale ? '$brand' : '$color4'}
                 borderColor="transparent"
-                color="white"
+                color={isApprovedForSale ? 'white' : '$color10'}
                 disabled={!canAdd}
                 opacity={canAdd ? 1 : 0.5}
-                onPress={onConfirm}
+                onPress={canAdd ? onConfirm : undefined}
                 pressStyle={{ opacity: 0.85 }}
               >
                 Sepete Ekle

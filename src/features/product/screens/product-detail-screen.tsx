@@ -187,6 +187,7 @@ export function ProductDetailScreen() {
                 <ProductSizeSelector
                   variants={product.variants}
                   featureIcons={product.featureIcons}
+                  isApprovedForSale={product.isApprovedForSale}
                   selectedVariant={selectedVariant}
                   onSelectVariant={controller.setSelectedVariant}
                   onSizeChartPress={() => controller.setShowSizeChart(true)}

@@ -7,11 +7,13 @@ import { FeatureIcon, ProductVariant } from '@/types/product.types';
 import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
 import { ProductFeatureDescriptionList } from './product-feature-tags';
 import { ProductSizeSelectorSkeleton } from './product-size-skeleton';
+import { ProductSaleNotice } from './product-sale-notice';
 
 interface ProductSizeSelectorProps {
   variants?: ProductVariant[];
   featureIcons?: FeatureIcon[];
   isLoading?: boolean;
+  isApprovedForSale?: boolean;
   selectedVariant: ProductVariant | null;
   onSelectVariant: (variant: ProductVariant) => void;
   onSizeChartPress?: () => void;
@@ -22,6 +24,7 @@ export function ProductSizeSelector({
   variants = [],
   featureIcons,
   isLoading = false,
+  isApprovedForSale = true,
   selectedVariant,
   onSelectVariant,
   onSizeChartPress,
@@ -75,17 +78,18 @@ export function ProductSizeSelector({
       {/* Wrapped Sizes Grid Row */}
       <XStack flexWrap="wrap" gap="$2" paddingVertical="$1" width="100%">
         {variants.map((variant) => {
-          const isSelected = selectedVariant?.id === variant.id;
-          const isAvailable = variant.hasStock && variant.quantity > 0;
+          const isSelected = isApprovedForSale && selectedVariant?.id === variant.id;
+          const isAvailable = isApprovedForSale && variant.hasStock && variant.quantity > 0;
 
           return (
             <Pressable
               key={variant.id}
-              // Tükenmiş bedenler de seçilebilir: seçilince alt bardaki aksiyon
-              // "Gelince Haber Ver"e dönüyor (web ile aynı).
+              // Satışa açık ürünlerde tükenen bedenler stok bildirimi için seçilebilir.
+              disabled={!isApprovedForSale}
               onPress={() => onSelectVariant(variant)}
               accessibilityRole="button"
-              accessibilityLabel={`Beden ${variant.name} ${isAvailable ? 'seçilebilir' : 'stokta yok, gelince haber ver'}`}
+              accessibilityState={{ disabled: !isApprovedForSale, selected: isSelected }}
+              accessibilityLabel={`Beden ${variant.name} ${!isApprovedForSale ? 'satışa kapalı' : isAvailable ? 'seçilebilir' : 'stokta yok, gelince haber ver'}`}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.8 : 1,
               })}
@@ -123,13 +127,15 @@ export function ProductSizeSelector({
                   maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}
                   numberOfLines={1}
                   color={
-                    isAvailable
-                      ? isSelected
-                        ? 'white'
-                        : (isDark ? '#E5E7EB' : '#1F2937')
-                      : isSelected
-                        ? '$brand'
-                        : (isDark ? '#4B5563' : '#9CA3AF')
+                    !isApprovedForSale
+                      ? '$color10'
+                      : isAvailable
+                        ? isSelected
+                          ? 'white'
+                          : (isDark ? '#E5E7EB' : '#1F2937')
+                        : isSelected
+                          ? '$brand'
+                          : (isDark ? '#4B5563' : '#9CA3AF')
                   }
                   style={{
                     textDecorationLine: isAvailable ? 'none' : 'line-through',
@@ -176,6 +182,7 @@ export function ProductSizeSelector({
         })}
       </XStack>
 
+      <ProductSaleNotice isApprovedForSale={isApprovedForSale} />
       <ProductFeatureDescriptionList featureIcons={featureIcons} gap="$1.5" />
     </YStack>
   );

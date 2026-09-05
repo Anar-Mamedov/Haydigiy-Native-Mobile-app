@@ -283,6 +283,8 @@ export function useProductDetailController() {
    * kullanıcı önerilen sonucu görebilsin.
    */
   const applyCalculatedSize = (sizeName: string) => {
+    if (product?.isApprovedForSale === false) return;
+
     const matched = product?.variants?.find(
       (variant) => variant.name.toLowerCase() === sizeName.toLowerCase(),
     );

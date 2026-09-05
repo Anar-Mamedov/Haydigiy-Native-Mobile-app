@@ -2,6 +2,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { FeatureIcon } from '@/types/product.types';
 import { SizeSelectionSheet } from './size-selection-sheet';
+import { Theme } from 'tamagui';
 
 jest.mock('tamagui', () => {
   const actual = jest.requireActual('tamagui');
@@ -165,6 +166,50 @@ describe('SizeSelectionSheet — sold-out sizes', () => {
 });
 
 describe('SizeSelectionSheet', () => {
+  it('disables sizes and purchase after sale approval is withdrawn, including across theme changes', () => {
+    const onConfirm = jest.fn();
+    const onSelectVariant = jest.fn();
+    const sheet = (theme: 'light' | 'dark', isApprovedForSale: boolean) => (
+      <Theme name={theme}>
+        <SizeSelectionSheet
+          {...sheetBaseProps}
+          isApprovedForSale={isApprovedForSale}
+          onConfirm={onConfirm}
+          onSelectVariant={onSelectVariant}
+          selectedVariant={inStockVariant}
+          variants={[inStockVariant, soldOutVariant]}
+        />
+      </Theme>
+    );
+    const { rerender } = renderWithTamagui(sheet('light', true));
+
+    expect(screen.getByText('Sepete Ekle')).toBeEnabled();
+
+    for (const theme of ['light', 'dark', 'light'] as const) {
+      rerender(sheet(theme, false));
+
+      for (const variant of [inStockVariant, soldOutVariant]) {
+        const button = screen.getByLabelText(`Beden ${variant.name} satışa kapalı`);
+        expect(button).toBeDisabled();
+        expect(button).not.toBeSelected();
+        expect(screen.getByText(variant.name)).toHaveStyle({ textDecorationLine: 'line-through' });
+        fireEvent.press(button);
+      }
+      expect(screen.getByText('Ürün şu an satışa kapalıdır, daha sonra tekrar deneyiniz.')).toBeTruthy();
+      expect(screen.queryByText('Sepete eklemek için bir beden seçin')).toBeNull();
+      expect(screen.queryByTestId('sheet-notify-me')).toBeNull();
+      expect(screen.getByText('Sepete Ekle')).toBeDisabled();
+      fireEvent.press(screen.getByText('Sepete Ekle'));
+    }
+
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(onSelectVariant).not.toHaveBeenCalled();
+
+    rerender(sheet('dark', true));
+    fireEvent.press(screen.getByText('Sepete Ekle'));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
   it('shows size skeletons while product variants are loading', () => {
     renderWithTamagui(
       <SizeSelectionSheet

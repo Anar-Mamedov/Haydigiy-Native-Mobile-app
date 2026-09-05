@@ -271,6 +271,14 @@ describe('useProductDetailController — beden durumu', () => {
 
     expect(result.current.selectedVariant).toBeNull();
   });
+
+  it('does not select the calculated size when the product is closed for sale', () => {
+    const { result } = setup({ data: makeProduct({ isApprovedForSale: false }) });
+
+    act(() => result.current.applyCalculatedSize('M'));
+
+    expect(result.current.selectedVariant).toBeNull();
+  });
 });
 
 describe('useProductDetailController — türetilen görünüm verisi', () => {
