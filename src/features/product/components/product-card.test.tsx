@@ -254,4 +254,22 @@ describe('ProductCard', () => {
     expect(screen.getByText('🏅 En Çok Satan 2. Ürün')).toBeTruthy();
     expect(screen.getByTestId('product-feature-description-gradient')).toBeTruthy();
   });
+
+  // Izgarada bir satırdaki kartlar en uzun karta gerilir ve sıralama şeridi
+  // yalnızca bazı ürünlerde çıkar. Metin bloğu alta yaslanmazsa artan boşluk
+  // fiyatın altında kalır ve yan yana duran iki kartın fiyatları hizasız görünür.
+  it.each([
+    ['ranking strip', { ...product, rankingText: 'En Çok Satan 2. Ürün' }],
+    ['no ranking strip', product],
+  ])('anchors the text block to the bottom of the card (%s)', (_label, cardProduct) => {
+    renderWithTamagui(<ProductCard onOpen={jest.fn()} product={cardProduct} />);
+
+    const content = StyleSheet.flatten(screen.getByTestId('product-card-content').props.style) ?? {};
+    const textBlock =
+      StyleSheet.flatten(screen.getByTestId('product-card-text-block').props.style) ?? {};
+
+    // Kart yüksekliği içeriğe geçmezse alta yaslanacak boşluk hiç oluşmaz.
+    expect(content.flexGrow ?? content.flex).toBe(1);
+    expect(textBlock.marginTop).toBe('auto');
+  });
 });

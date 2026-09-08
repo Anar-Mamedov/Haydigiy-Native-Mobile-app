@@ -54,6 +54,22 @@ export interface CartCampaignDto {
   remaining: number;
   discount?: number;
   end_date?: string | null;
+  /** Kampanya bandında gösterilen yönlendirme metni. */
+  message?: string | null;
+  /** Backend'in hesapladığı ilerleme yüzdesi; yoksa eşikten türetilir. */
+  progress_percentage?: number;
+}
+
+/**
+ * `/cart/campaigns` yanıtı. Sepet satırlarını değil, yalnızca kampanya durumunu
+ * ve eşik tutarlarını taşır; kampanya bandının tek veri kaynağıdır.
+ */
+export interface CartCampaignsResponseDto {
+  subtotal?: number | string | null;
+  /** İndirimler sonrası kampanya tabanı; banttaki mevcut tutar budur. */
+  campaign_basis?: number | string | null;
+  primary_campaign_message?: string | null;
+  campaigns?: CartCampaignDto[];
 }
 
 export interface CartResponseDto {

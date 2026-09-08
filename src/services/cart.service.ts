@@ -2,7 +2,7 @@ import { apiClient } from '@/lib/axios';
 import { appEnv } from '@/lib/env';
 import { getAccessToken } from '@/lib/storage/secure-storage';
 import { getDeviceId } from '@/lib/storage/device-id';
-import { CartResponseDto } from '@/features/cart/api/cart.dtos';
+import { CartCampaignsResponseDto, CartResponseDto } from '@/features/cart/api/cart.dtos';
 import { BundleSelection } from '@/types/bundle.types';
 
 type CartMutationPayload = {
@@ -23,6 +23,7 @@ type BundleQuantityPayload = {
 };
 
 const EMPTY_CART: CartResponseDto = { cart: [] };
+const EMPTY_CAMPAIGNS: CartCampaignsResponseDto = { campaigns: [] };
 
 /**
  * Returns the guest device_id only when there is no authenticated session.
@@ -55,6 +56,29 @@ export async function getCartDto(): Promise<CartResponseDto> {
   };
 }
 
+
+/**
+ * Sepet kampanya durumunu döndürür. `/cart/list` sepet satırlarını taşır;
+ * kampanya bandı satırlara değil yalnızca eşik/tutar bilgisine ihtiyaç duyduğu
+ * için ayrı ve daha hafif olan bu ucu kullanır.
+ */
+export async function getCartCampaignsDto(): Promise<CartCampaignsResponseDto> {
+  if (!appEnv.apiBaseUrl) {
+    return EMPTY_CAMPAIGNS;
+  }
+
+  const deviceId = await getGuestDeviceId();
+  const response = await apiClient.get<CartCampaignsResponseDto>('/cart/campaigns', {
+    params: deviceId ? { device_id: deviceId } : undefined,
+  });
+
+  return {
+    subtotal: response.data?.subtotal,
+    campaign_basis: response.data?.campaign_basis,
+    primary_campaign_message: response.data?.primary_campaign_message ?? null,
+    campaigns: Array.isArray(response.data?.campaigns) ? response.data.campaigns : [],
+  };
+}
 
 export async function addToCartDto(variantId: number, quantity = 1): Promise<void> {
   if (!appEnv.apiBaseUrl) return;

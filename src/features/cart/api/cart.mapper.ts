@@ -1,5 +1,5 @@
-import { CartCampaignDto, CartItemDto } from './cart.dtos';
-import { CartCampaign, CartLineItem } from '@/types/cart.types';
+import { CartCampaignDto, CartCampaignsResponseDto, CartItemDto } from './cart.dtos';
+import { CartCampaign, CartCampaignBannerStatus, CartLineItem } from '@/types/cart.types';
 import { isBundleLine, mapBundleComponents } from '@/features/bundle/api/bundle.mapper';
 
 function toNumber(value: string | null | undefined): number {
@@ -79,5 +79,81 @@ export function mapCartCampaignDto(dto: CartCampaignDto): CartCampaign {
     remaining: Number(dto.remaining ?? 0),
     discount: dto.discount,
     endDate: dto.end_date ?? null,
+    message: dto.message ?? null,
+    progressPercentage: dto.progress_percentage,
+  };
+}
+
+/** Sayı ya da sayısal metni negatif olmayan sonlu sayıya indirger; aksi halde `null`. */
+function toFiniteAmount(value: unknown): number | null {
+  const numberValue = typeof value === 'number' || typeof value === 'string' ? Number(value) : NaN;
+  return Number.isFinite(numberValue) ? Math.max(0, numberValue) : null;
+}
+
+/**
+ * `/cart/campaigns` yanıtını kampanya bandının modeline çevirir. Web'deki
+ * `parseCartCampaignBannerStatus` ile birebir aynı davranır; iki platformun
+ * aynı kampanyayı, aynı tutarı ve aynı metni göstermesi buna bağlıdır.
+ *
+ * Gösterilecek kampanya üç kademeli olarak seçilir:
+ * 1. mesajı `primary_campaign_message` ile birebir eşleşen kampanya,
+ * 2. yoksa `remaining > 0` olan ilk mesajlı kampanya,
+ * 3. yoksa mesajı boş olmayan ilk kampanya.
+ *
+ * Hiçbiri yoksa ya da gösterilecek metin kalmıyorsa `null` döner ve bant hiç
+ * render edilmez.
+ *
+ * Web'den tek kasıtlı sapma: 1. adım yalnızca `primary_campaign_message` gerçekten
+ * doluysa çalışır. Backend bu alanı `null` gönderdiğinde web'deki karşılaştırma
+ * boş metne düşüyor ve mesajı boşluktan ibaret olan ilk kampanyayla eşleşerek
+ * bandı tamamen susturuyor; oysa listedeki sonraki kampanyanın gösterilebilir bir
+ * mesajı olabilir. Primary mesaj dolu olduğunda iki platform aynı sonucu verir.
+ */
+export function mapCartCampaignBannerStatus(
+  dto: CartCampaignsResponseDto | null | undefined,
+): CartCampaignBannerStatus | null {
+  if (!dto || !Array.isArray(dto.campaigns)) return null;
+
+  const campaigns = dto.campaigns.filter(Boolean);
+  const primaryMessage =
+    typeof dto.primary_campaign_message === 'string' ? dto.primary_campaign_message.trim() : '';
+
+  const selectedCampaign =
+    (primaryMessage
+      ? campaigns.find(
+          (campaign) =>
+            typeof campaign.message === 'string' && campaign.message.trim() === primaryMessage,
+        )
+      : undefined) ??
+    campaigns.find(
+      (campaign) => (toFiniteAmount(campaign.remaining) ?? 0) > 0 && typeof campaign.message === 'string',
+    ) ??
+    campaigns.find(
+      (campaign) => typeof campaign.message === 'string' && campaign.message.trim().length > 0,
+    );
+
+  if (!selectedCampaign) return null;
+
+  const campaignMessage =
+    typeof selectedCampaign.message === 'string' ? selectedCampaign.message.trim() : '';
+  const message = primaryMessage || campaignMessage;
+  if (!message) return null;
+
+  const currentAmount = toFiniteAmount(dto.campaign_basis) ?? toFiniteAmount(dto.subtotal) ?? 0;
+  const thresholdValue = toFiniteAmount(selectedCampaign.threshold);
+  const threshold = thresholdValue && thresholdValue > 0 ? thresholdValue : null;
+  const apiProgress = toFiniteAmount(selectedCampaign.progress_percentage);
+  const progress = apiProgress ?? (threshold ? Math.min(100, (currentAmount / threshold) * 100) : 100);
+  const campaignName =
+    typeof selectedCampaign.name === 'string' && selectedCampaign.name.trim()
+      ? selectedCampaign.name.trim()
+      : 'Sepet Kampanyası';
+
+  return {
+    campaignName,
+    currentAmount,
+    threshold,
+    message,
+    progress: Math.min(100, progress),
   };
 }

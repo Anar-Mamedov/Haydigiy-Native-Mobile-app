@@ -10,6 +10,7 @@ import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { AppScreen, EmptyState, ScrollToTopButton } from '@/components/ui';
 import { ProductCard } from '@/features/product/components/product-card';
 import { useCartCount } from '@/features/cart/api/cart.queries';
+import { CartCampaignBanner } from '@/features/cart/components/cart-campaign-banner';
 import { useInfiniteSearchProductsQuery } from '@/features/product/api/product.queries';
 import { useQuickFiltersQuery } from '@/features/product/api/quick-filter.queries';
 import { useStableCategoryOptions } from '@/features/product/hooks/use-stable-category-options';
@@ -384,6 +385,9 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
                 tintColor={BRAND_COLOR}
               />
             }
+            // Kampanya bandı listenin başlığı olarak akar; web'de olduğu gibi
+            // listelemenin en üstünde durur ve içerikle birlikte yukarı kayar.
+            ListHeaderComponent={<CartCampaignBanner />}
             ListEmptyComponent={
               <EmptyState
                 actionLabel={activeFiltersCount > 0 ? 'Filtreleri Temizle' : undefined}

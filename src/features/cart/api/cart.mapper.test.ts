@@ -1,5 +1,5 @@
-import { mapCartItemDto, mapCartResponse } from './cart.mapper';
-import { CartItemDto } from './cart.dtos';
+import { mapCartCampaignBannerStatus, mapCartItemDto, mapCartResponse } from './cart.mapper';
+import { CartCampaignDto, CartCampaignsResponseDto, CartItemDto } from './cart.dtos';
 
 function makeDto(overrides: Partial<CartItemDto> = {}): CartItemDto {
   return {
@@ -166,5 +166,166 @@ describe('mapCartItemDto (bundle)', () => {
     dto.product = null;
     const [line] = mapCartResponse([{ ...dto, product: { id: undefined, name: 'Deneme bundle', slug: 'deneme-bundle' } }]);
     expect(line.productId).toBe('97045');
+  });
+});
+
+function makeCampaign(overrides: Partial<CartCampaignDto> = {}): CartCampaignDto {
+  return {
+    id: 1,
+    name: 'Sepette 2.000 TL',
+    type: 'cart_discount',
+    is_applicable: false,
+    threshold: 2000,
+    remaining: 2000,
+    ...overrides,
+  };
+}
+
+describe('mapCartCampaignBannerStatus', () => {
+  it('maps the campaign whose message matches primary_campaign_message', () => {
+    const dto: CartCampaignsResponseDto = {
+      subtotal: 0,
+      campaign_basis: 0,
+      primary_campaign_message: 'Kampanyadan faydalanabilmek için sepetine 2.000 TL\'lik daha ürün eklemelisin.',
+      campaigns: [
+        makeCampaign({ id: 9, name: 'Kargo', message: 'Başka bir mesaj', threshold: 500 }),
+        makeCampaign({
+          message: 'Kampanyadan faydalanabilmek için sepetine 2.000 TL\'lik daha ürün eklemelisin.',
+        }),
+      ],
+    };
+
+    expect(mapCartCampaignBannerStatus(dto)).toEqual({
+      campaignName: 'Sepette 2.000 TL',
+      currentAmount: 0,
+      threshold: 2000,
+      message: 'Kampanyadan faydalanabilmek için sepetine 2.000 TL\'lik daha ürün eklemelisin.',
+      progress: 0,
+    });
+  });
+
+  it('falls back to the first campaign that still has a remaining amount', () => {
+    const status = mapCartCampaignBannerStatus({
+      campaign_basis: 500,
+      primary_campaign_message: null,
+      campaigns: [
+        makeCampaign({ id: 1, remaining: 0, message: 'Tamamlandı' }),
+        makeCampaign({ id: 2, name: 'İkinci', remaining: 1500, message: '1.500 TL kaldı' }),
+      ],
+    });
+
+    expect(status?.message).toBe('1.500 TL kaldı');
+    expect(status?.campaignName).toBe('İkinci');
+  });
+
+  it('falls back to the first campaign with any message when none has a remaining amount', () => {
+    const status = mapCartCampaignBannerStatus({
+      primary_campaign_message: null,
+      campaigns: [
+        makeCampaign({ id: 1, remaining: 0, message: '   ' }),
+        makeCampaign({ id: 2, remaining: 0, message: 'Son mesaj' }),
+      ],
+    });
+
+    expect(status?.message).toBe('Son mesaj');
+  });
+
+  it('ignores the primary-message step when the backend sends no primary message', () => {
+    // Aksi halde boş primary mesaj, mesajı boşluktan ibaret olan ilk kampanyayla
+    // eşleşip gösterilebilir kampanyayı olan bandı tamamen susturuyor.
+    const status = mapCartCampaignBannerStatus({
+      campaign_basis: 250,
+      primary_campaign_message: null,
+      campaigns: [
+        makeCampaign({ id: 1, remaining: 0, message: '' }),
+        makeCampaign({ id: 2, name: 'Gösterilecek', remaining: 750, message: '750 TL kaldı' }),
+      ],
+    });
+
+    expect(status).not.toBeNull();
+    expect(status?.message).toBe('750 TL kaldı');
+  });
+
+  it('prefers campaign_basis over subtotal for the current amount', () => {
+    const status = mapCartCampaignBannerStatus({
+      subtotal: 900,
+      campaign_basis: 750,
+      primary_campaign_message: 'Devam et',
+      campaigns: [makeCampaign({ message: 'Devam et' })],
+    });
+
+    expect(status?.currentAmount).toBe(750);
+  });
+
+  it('uses subtotal when campaign_basis is missing and parses numeric strings', () => {
+    const status = mapCartCampaignBannerStatus({
+      subtotal: '1250.5',
+      primary_campaign_message: 'Devam et',
+      campaigns: [makeCampaign({ message: 'Devam et' })],
+    });
+
+    expect(status?.currentAmount).toBe(1250.5);
+  });
+
+  it('drops a non-positive threshold so the banner shows a single amount', () => {
+    const status = mapCartCampaignBannerStatus({
+      campaign_basis: 100,
+      primary_campaign_message: 'Kampanya aktif',
+      campaigns: [makeCampaign({ threshold: 0, message: 'Kampanya aktif' })],
+    });
+
+    expect(status?.threshold).toBeNull();
+    expect(status?.progress).toBe(100);
+  });
+
+  it('derives progress from the threshold and clamps it to 100', () => {
+    const derived = mapCartCampaignBannerStatus({
+      campaign_basis: 500,
+      primary_campaign_message: 'Devam et',
+      campaigns: [makeCampaign({ message: 'Devam et' })],
+    });
+    expect(derived?.progress).toBe(25);
+
+    const clamped = mapCartCampaignBannerStatus({
+      campaign_basis: 9000,
+      primary_campaign_message: 'Devam et',
+      campaigns: [makeCampaign({ message: 'Devam et' })],
+    });
+    expect(clamped?.progress).toBe(100);
+  });
+
+  it('prefers the backend progress_percentage when present', () => {
+    const status = mapCartCampaignBannerStatus({
+      campaign_basis: 500,
+      primary_campaign_message: 'Devam et',
+      campaigns: [makeCampaign({ message: 'Devam et', progress_percentage: 42 })],
+    });
+
+    expect(status?.progress).toBe(42);
+  });
+
+  it('falls back to a generic campaign name when the backend sends none', () => {
+    const status = mapCartCampaignBannerStatus({
+      primary_campaign_message: 'Devam et',
+      campaigns: [makeCampaign({ name: '   ', message: 'Devam et' })],
+    });
+
+    expect(status?.campaignName).toBe('Sepet Kampanyası');
+  });
+
+  it('returns null when there is nothing displayable', () => {
+    expect(mapCartCampaignBannerStatus(null)).toBeNull();
+    expect(mapCartCampaignBannerStatus(undefined)).toBeNull();
+    expect(mapCartCampaignBannerStatus({})).toBeNull();
+    expect(mapCartCampaignBannerStatus({ campaigns: [] })).toBeNull();
+    expect(
+      mapCartCampaignBannerStatus({ campaigns: [makeCampaign({ message: null })] }),
+    ).toBeNull();
+    expect(
+      mapCartCampaignBannerStatus({
+        primary_campaign_message: '   ',
+        campaigns: [makeCampaign({ message: '   ' })],
+      }),
+    ).toBeNull();
   });
 });

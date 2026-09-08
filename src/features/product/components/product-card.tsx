@@ -152,7 +152,10 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
       overflow="hidden"
       padding={0}
     >
-      <YStack width="100%">
+      {/* Izgarada bir satırdaki kartlar en uzun karta gerilir. `flex={1}` bu
+          fazladan yüksekliği kart içeriğine taşır ki metin bloğu aşağı
+          yaslanabilsin; olmazsa artan boşluk fiyatın altında kalır. */}
+      <YStack flex={1} testID="product-card-content" width="100%">
         <YStack width="100%" aspectRatio={2 / 3} backgroundColor="$color3" position="relative">
           <ProductImageCarousel
             key={product.id}
@@ -298,8 +301,12 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
           />
         </Pressable>
 
-        {/* Text Content Padded Container */}
-        <YStack padding={6} width="100%">
+        {/* Metin bloğu kartın altına yaslanır (`marginTop="auto"`). Sıralama şeridi
+            yalnızca bazı ürünlerde çıktığı için kartların metin blokları farklı
+            yükseklikten başlıyor; alta yaslayınca yan yana duran iki kartın
+            kategori/başlık/puan/beden/fiyat satırları karşı karşıya gelir ve artan
+            boşluk fiyatın altında değil, görselle metinlerin arasında oluşur. */}
+        <YStack marginTop="auto" padding={6} testID="product-card-text-block" width="100%">
           <Pressable
             accessibilityLabel={`Ürün detayını aç: ${product.title}`}
             accessibilityRole="button"

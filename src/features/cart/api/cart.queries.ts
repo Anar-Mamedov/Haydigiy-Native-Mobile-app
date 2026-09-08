@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cartKeys } from './cart.keys';
-import { mapCartCampaignDto, mapCartResponse } from './cart.mapper';
+import { mapCartCampaignBannerStatus, mapCartCampaignDto, mapCartResponse } from './cart.mapper';
 import { calculateCartItemCount, useCartStore } from '../store/use-cart-store';
 import {
   addBundleToCartDto,
   addToCartDto,
+  getCartCampaignsDto,
   getCartDto,
   removeBundleDto,
   removeCartItemDto,
@@ -44,6 +45,26 @@ export function useCartQuery() {
         removedMessage: hasRemoved ? dto.message ?? 'Sepetiniz güncellendi.' : null,
       };
     },
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Ürün listesi ekranındaki sepet kampanya bandının verisi.
+ *
+ * Anahtar `cartKeys.all` altında olduğu için sepet mutasyonlarının ve oturum
+ * değişiminde `CartHydrator`'ın yaptığı invalidation bu sorguyu da tazeler —
+ * web'deki `[authState, cartCount]` bağımlılığının karşılığıdır.
+ *
+ * Bant kritik olmayan bir dönüşüm bileşenidir: gösterilecek kampanya yoksa
+ * `null` döner ve bant hiç render edilmez. İstek hatası TanStack Query'nin
+ * `error` durumunda tutulur, sessizce yutulmaz; UI ise ekranı bozmamak için
+ * bandı gizler.
+ */
+export function useCartCampaignBannerQuery() {
+  return useQuery({
+    queryKey: cartKeys.campaigns(),
+    queryFn: async () => mapCartCampaignBannerStatus(await getCartCampaignsDto()),
     staleTime: 30_000,
   });
 }
