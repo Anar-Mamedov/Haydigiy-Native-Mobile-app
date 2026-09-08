@@ -25,6 +25,7 @@ import { PRODUCT_FILTER_BAR_HEIGHT, ProductFilterBar } from '../components/produ
 import { ProductVideoModal } from '../components/product-video-modal';
 import { resolveColorVariantTarget } from '../utils/color-variant-route';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
+import { ProductListingFilters } from '../utils/listing-deep-link-params';
 import { NOT_FOUND_ROUTE } from '@/features/not-found/routes';
 import { isMissingResourceApiError } from '@/utils/api-error';
 
@@ -32,12 +33,22 @@ interface ProductListScreenProps {
   slug: string;
   categoryId?: number;
   searchQuery?: string;
+  /**
+   * Derin bağlantıdan gelen sıralama/filtre seçimleri. Ekran durumunu yalnızca
+   * başlatır; sonrasında kullanıcının sayfa içindeki seçimleri geçerlidir.
+   */
+  initialFilters?: ProductListingFilters;
 }
 
 /** Bu kadar piksel kaydırıldıktan sonra "başa dön" butonu görünür. */
 const SCROLL_TO_TOP_THRESHOLD = 400;
 
-export function ProductListScreen({ slug, categoryId, searchQuery }: ProductListScreenProps) {
+export function ProductListScreen({
+  slug,
+  categoryId,
+  searchQuery,
+  initialFilters,
+}: ProductListScreenProps) {
   const router = useRouter();
   const listRef = useRef<FlashListRef<Product>>(null);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
@@ -45,15 +56,17 @@ export function ProductListScreen({ slug, categoryId, searchQuery }: ProductList
   // Cart integration — badge count derives from the hydrated cart store.
   const cartCount = useCartCount();
 
-  // Filters & Sorting state
-  const [sorting, setSorting] = useState('');
-  const [colors, setColors] = useState<string | undefined>(undefined);
-  const [variants, setVariants] = useState<string | undefined>(undefined);
-  const [priceRange, setPriceRange] = useState<string | undefined>(undefined);
-  const [minPrice, setMinPrice] = useState<string | undefined>(undefined);
-  const [maxPrice, setMaxPrice] = useState<string | undefined>(undefined);
-  const [propertyIds, setPropertyIds] = useState<string | undefined>(undefined);
-  const [productCategories, setProductCategories] = useState<string | undefined>(undefined);
+  // Filters & Sorting state — derin bağlantı seçimleriyle başlar, sonra ekran yönetir.
+  const [sorting, setSorting] = useState(initialFilters?.sorting ?? '');
+  const [colors, setColors] = useState<string | undefined>(initialFilters?.colors);
+  const [variants, setVariants] = useState<string | undefined>(initialFilters?.variants);
+  const [priceRange, setPriceRange] = useState<string | undefined>(initialFilters?.priceRange);
+  const [minPrice, setMinPrice] = useState<string | undefined>(initialFilters?.minPrice);
+  const [maxPrice, setMaxPrice] = useState<string | undefined>(initialFilters?.maxPrice);
+  const [propertyIds, setPropertyIds] = useState<string | undefined>(initialFilters?.propertyIds);
+  const [productCategories, setProductCategories] = useState<string | undefined>(
+    initialFilters?.productCategories,
+  );
 
   // Overlay sheets open/close state
   const [isSortOpen, setIsSortOpen] = useState(false);

@@ -158,6 +158,61 @@ describe('ProductListScreen', () => {
     });
   });
 
+  it('applies the sorting and filters that arrived with the deep link', () => {
+    // Paylaşılan liste linkindeki seçimler ekrana taşınmazsa kullanıcı
+    // sıralanmamış/filtrelenmemiş listeyi görür.
+    renderWithTamagui(
+      <ProductListScreen
+        categoryId={147}
+        initialFilters={{
+          colors: 'siyah',
+          maxPrice: '900',
+          minPrice: '100',
+          priceRange: '100-900',
+          productCategories: '11',
+          propertyIds: '5',
+          sorting: '4',
+          variants: '38',
+        }}
+        slug="haydigiy-butik"
+      />,
+    );
+
+    expect(useInfiniteSearchProductsQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        c: 147,
+        colors: 'siyah',
+        max_price: '900',
+        min_price: '100',
+        price_range: '100-900',
+        product_categories: '11',
+        property_ids: '5',
+        sorting: '4',
+        variants: '38',
+      }),
+    );
+  });
+
+  it('opens a shared search link with the query applied', () => {
+    renderWithTamagui(<ProductListScreen searchQuery="55041.1397" slug="search" />);
+
+    expect(useInfiniteSearchProductsQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ q: '55041.1397' }),
+    );
+  });
+
+  it('starts with no filters when the link carries none', () => {
+    renderWithTamagui(<ProductListScreen categoryId={40} slug="elbise" />);
+
+    expect(useInfiniteSearchProductsQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        colors: undefined,
+        sorting: '',
+        variants: undefined,
+      }),
+    );
+  });
+
   it('renders loading state when pending', () => {
     (useInfiniteSearchProductsQuery as jest.Mock).mockReturnValue({
       isPending: true,

@@ -32,6 +32,27 @@ describe('resolveDeepLinkPath', () => {
     );
   });
 
+  it('opens web search results on the app listing screen instead of the home tab', () => {
+    // Paylaşılan arama linki uygulamada ana ekrana düşüyordu; `search` kökü
+    // rezerve listesindeydi. Uygulama içi arama da aynı `search` slug'ını kullanır.
+    expect(resolveDeepLinkPath('https://haydigiy.com/search?q=55041.1397')).toBe(
+      '/kategori/search?q=55041.1397',
+    );
+    expect(resolveDeepLinkPath('/search?q=elbise')).toBe('/kategori/search?q=elbise');
+  });
+
+  it('keeps sorting and filter selections on shared listing links', () => {
+    expect(resolveDeepLinkPath('https://haydigiy.com/haydigiy-butik?c=147&sorting=4')).toBe(
+      '/kategori/haydigiy-butik?c=147&sorting=4',
+    );
+    expect(
+      resolveDeepLinkPath('https://haydigiy.com/search?q=elbise&sorting=4&colors=siyah'),
+    ).toBe('/kategori/search?q=elbise&sorting=4&colors=siyah');
+    expect(
+      resolveDeepLinkPath('https://haydigiy.com/kategori/kadin-giyim?c=40&pc=11&price_range=100-900'),
+    ).toBe('/kategori/kadin-giyim?c=40&pc=11&price_range=100-900');
+  });
+
   it('does not mistake an invalid category marker for a category link', () => {
     expect(resolveDeepLinkPath('https://haydigiy.com/spor-ayakkabi-123?c=invalid')).toBe(
       '/product/spor-ayakkabi-123',

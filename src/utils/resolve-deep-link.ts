@@ -8,9 +8,13 @@ import { resolveAccountDeepLinkPath } from './resolve-account-deep-link';
  *   web  haydigiy.com/{slug}          →  app  /product/{slug}
  *   web  haydigiy.com/{slug}?c={id}   →  app  /kategori/{slug}?c={id}
  *   web  haydigiy.com/kategori/{slug} →  app  /kategori/{slug}
+ *   web  haydigiy.com/search?q=...    →  app  /kategori/search?q=...
  *   web  haydigiy.com/hesabim/... → app'teki ilgili hesap ekranı
  * Bu yüzden gelen yol burada eşlenir. Tanınmayan her şey güvenli biçimde ana
  * ekrana (`/`) düşer; asla +not-found'a gitmez.
+ *
+ * Liste yollarında sorgu dizesi olduğu gibi taşınır; sıralama ve filtre
+ * seçimleri (`sorting`, `colors`, `pc`, ...) böylece uygulamada da uygulanır.
  *
  * RN'in `URL`/`URLSearchParams` API'si Hermes'te güvenilmez olduğundan
  * (bkz. features/checkout/utils/parse-query.ts) parse manuel yapılır.
@@ -29,6 +33,14 @@ const APP_ROUTE_ROOTS = new Set([
 
 /** Expo'nun development build'i başlatmak için kullandığı, app rotası olmayan yollar. */
 const RESERVED_NATIVE_ROOTS = new Set(['expo-development-client']);
+
+/**
+ * Web'in arama sonucu yolu. Uygulamada ayrı bir arama rotası yoktur; arama da
+ * ürün listesi ekranıdır ve uygulama içi arama ile aynı `search` slug'ını
+ * kullanır (bkz. search-suggestions-screen, link-handler).
+ */
+const WEB_SEARCH_ROOT = 'search';
+const APP_SEARCH_PATH = '/kategori/search';
 
 /** Web kök yolu → app rotası (app karşılığı olan ticari sayfalar). */
 const WEB_TO_APP: Record<string, string> = {
@@ -74,7 +86,6 @@ const RESERVED_WEB_ROOTS = new Set([
   'payten',
   'paytr',
   'sayfa-tasarimi',
-  'search',
   'sentry-example-page',
   'sitemap-main.xml',
   'sitemap-urunler',
@@ -166,6 +177,10 @@ export function resolveDeepLinkPath(input: string): string {
     if (APP_ROUTE_ROOTS.has(first)) {
       return `/${segments.join('/')}${search}`;
     }
+
+    // Web araması app'te ürün listesi ekranıdır; sorgu dizesi (`q` ve varsa
+    // sıralama/filtreler) olduğu gibi taşınır.
+    if (first === WEB_SEARCH_ROOT) return `${APP_SEARCH_PATH}${search}`;
 
     // Frontend hesap yollarını genel web eşlemelerinden önce çöz.
     const accountPath = resolveAccountDeepLinkPath(segments, search);
