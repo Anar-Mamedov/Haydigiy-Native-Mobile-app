@@ -13,19 +13,30 @@ export type CartCampaign = {
   progressPercentage?: number;
 };
 
-/**
- * Sepet kampanya bandının gösterime hazır modeli. Hangi kampanyanın seçileceği
- * ve tutarların hangi alandan geleceği mapper'da çözülür; UI yalnızca bu modeli
- * tüketir ve ham backend yanıtını hiç görmez.
- */
-export type CartCampaignBannerStatus = {
+/** Kampanya bandındaki tek bir kampanya; bant birden fazlasını karusel gösterir. */
+export type CartCampaignBannerSlide = {
+  /** Karusel anahtarı; backend kampanya kimliği ya da sıra numarası. */
+  id: string;
   campaignName: string;
-  currentAmount: number;
-  /** Eşiksiz kampanyalarda `null`; bant o zaman tek tutar gösterir. */
+  /** Eşiksiz kampanyalarda `null`; sayfa o zaman tek tutar gösterir. */
   threshold: number | null;
   message: string;
   /** 0-100 aralığına sıkıştırılmış ilerleme. */
   progress: number;
+};
+
+/**
+ * Sepet kampanya bandının gösterime hazır modeli. Hangi kampanyaların
+ * gösterileceği ve tutarların hangi alandan geleceği mapper'da çözülür; UI
+ * yalnızca bu modeli tüketir ve ham backend yanıtını hiç görmez.
+ *
+ * Tutar yanıt seviyesinde tektir (`campaign_basis`), bu yüzden sayfalarda değil
+ * burada durur; kampanyaya göre değişen eşik/metin sayfanın kendisindedir.
+ */
+export type CartCampaignBannerStatus = {
+  currentAmount: number;
+  /** En az bir sayfa; boşsa mapper `null` döner ve bant hiç render edilmez. */
+  slides: CartCampaignBannerSlide[];
 };
 
 import { BundleComponent } from '@/types/bundle.types';

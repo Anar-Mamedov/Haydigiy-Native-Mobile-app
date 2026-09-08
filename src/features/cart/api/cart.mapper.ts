@@ -1,5 +1,10 @@
 import { CartCampaignDto, CartCampaignsResponseDto, CartItemDto } from './cart.dtos';
-import { CartCampaign, CartCampaignBannerStatus, CartLineItem } from '@/types/cart.types';
+import {
+  CartCampaign,
+  CartCampaignBannerSlide,
+  CartCampaignBannerStatus,
+  CartLineItem,
+} from '@/types/cart.types';
 import { isBundleLine, mapBundleComponents } from '@/features/bundle/api/bundle.mapper';
 
 function toNumber(value: string | null | undefined): number {
@@ -90,24 +95,43 @@ function toFiniteAmount(value: unknown): number | null {
   return Number.isFinite(numberValue) ? Math.max(0, numberValue) : null;
 }
 
+/** Kampanyanın gösterilecek metni; boşluktan ibaretse gösterilebilir metin yoktur. */
+function readCampaignMessage(campaign: CartCampaignDto): string {
+  return typeof campaign.message === 'string' ? campaign.message.trim() : '';
+}
+
+function toBannerSlide(
+  campaign: CartCampaignDto,
+  index: number,
+  currentAmount: number,
+): CartCampaignBannerSlide {
+  const thresholdValue = toFiniteAmount(campaign.threshold);
+  const threshold = thresholdValue && thresholdValue > 0 ? thresholdValue : null;
+  const name = typeof campaign.name === 'string' ? campaign.name.trim() : '';
+  // Backend yüzdeyi göndermezse kampanyanın kendi eşiğinden türetilir.
+  const apiProgress = toFiniteAmount(campaign.progress_percentage);
+  const progress = apiProgress ?? (threshold ? (currentAmount / threshold) * 100 : 100);
+
+  return {
+    id: campaign.id !== undefined && campaign.id !== null ? String(campaign.id) : `slide-${index}`,
+    campaignName: name || 'Sepet Kampanyası',
+    threshold,
+    message: readCampaignMessage(campaign),
+    progress: Math.min(100, progress),
+  };
+}
+
 /**
- * `/cart/campaigns` yanıtını kampanya bandının modeline çevirir. Web'deki
- * `parseCartCampaignBannerStatus` ile birebir aynı davranır; iki platformun
- * aynı kampanyayı, aynı tutarı ve aynı metni göstermesi buna bağlıdır.
+ * `/cart/campaigns` yanıtını kampanya bandının modeline çevirir.
  *
- * Gösterilecek kampanya üç kademeli olarak seçilir:
- * 1. mesajı `primary_campaign_message` ile birebir eşleşen kampanya,
- * 2. yoksa `remaining > 0` olan ilk mesajlı kampanya,
- * 3. yoksa mesajı boş olmayan ilk kampanya.
+ * Backend aynı sepet için birden fazla kampanya döndürebilir (ücretsiz kargo +
+ * sepet indirimi + kategori indirimi gibi). Hepsi gösterilebilir metni olduğu
+ * sürece birer karusel sayfası olur; `primary_campaign_message` ile eşleşen
+ * kampanya öne alınır, kalanlar backend sırasını korur.
  *
- * Hiçbiri yoksa ya da gösterilecek metin kalmıyorsa `null` döner ve bant hiç
- * render edilmez.
- *
- * Web'den tek kasıtlı sapma: 1. adım yalnızca `primary_campaign_message` gerçekten
- * doluysa çalışır. Backend bu alanı `null` gönderdiğinde web'deki karşılaştırma
- * boş metne düşüyor ve mesajı boşluktan ibaret olan ilk kampanyayla eşleşerek
- * bandı tamamen susturuyor; oysa listedeki sonraki kampanyanın gösterilebilir bir
- * mesajı olabilir. Primary mesaj dolu olduğunda iki platform aynı sonucu verir.
+ * Hiçbir kampanyanın metni yoksa ama `primary_campaign_message` doluysa bant tek
+ * sayfayla o metni gösterir. Gösterilecek hiçbir metin kalmıyorsa `null` döner
+ * ve bant hiç render edilmez.
  */
 export function mapCartCampaignBannerStatus(
   dto: CartCampaignsResponseDto | null | undefined,
@@ -117,43 +141,36 @@ export function mapCartCampaignBannerStatus(
   const campaigns = dto.campaigns.filter(Boolean);
   const primaryMessage =
     typeof dto.primary_campaign_message === 'string' ? dto.primary_campaign_message.trim() : '';
-
-  const selectedCampaign =
-    (primaryMessage
-      ? campaigns.find(
-          (campaign) =>
-            typeof campaign.message === 'string' && campaign.message.trim() === primaryMessage,
-        )
-      : undefined) ??
-    campaigns.find(
-      (campaign) => (toFiniteAmount(campaign.remaining) ?? 0) > 0 && typeof campaign.message === 'string',
-    ) ??
-    campaigns.find(
-      (campaign) => typeof campaign.message === 'string' && campaign.message.trim().length > 0,
-    );
-
-  if (!selectedCampaign) return null;
-
-  const campaignMessage =
-    typeof selectedCampaign.message === 'string' ? selectedCampaign.message.trim() : '';
-  const message = primaryMessage || campaignMessage;
-  if (!message) return null;
-
   const currentAmount = toFiniteAmount(dto.campaign_basis) ?? toFiniteAmount(dto.subtotal) ?? 0;
-  const thresholdValue = toFiniteAmount(selectedCampaign.threshold);
-  const threshold = thresholdValue && thresholdValue > 0 ? thresholdValue : null;
-  const apiProgress = toFiniteAmount(selectedCampaign.progress_percentage);
-  const progress = apiProgress ?? (threshold ? Math.min(100, (currentAmount / threshold) * 100) : 100);
-  const campaignName =
-    typeof selectedCampaign.name === 'string' && selectedCampaign.name.trim()
-      ? selectedCampaign.name.trim()
-      : 'Sepet Kampanyası';
 
-  return {
-    campaignName,
-    currentAmount,
-    threshold,
-    message,
-    progress: Math.min(100, progress),
-  };
+  const displayable = campaigns.filter((campaign) => readCampaignMessage(campaign).length > 0);
+  const primaryIndex = primaryMessage
+    ? displayable.findIndex((campaign) => readCampaignMessage(campaign) === primaryMessage)
+    : -1;
+  const ordered =
+    primaryIndex > 0
+      ? [displayable[primaryIndex], ...displayable.filter((_, index) => index !== primaryIndex)]
+      : displayable;
+
+  const slides = ordered.map((campaign, index) => toBannerSlide(campaign, index, currentAmount));
+
+  if (slides.length === 0) {
+    if (!primaryMessage) return null;
+
+    // Kampanyaların kendi metni yok ama backend gösterilecek bir mesaj verdi.
+    return {
+      currentAmount,
+      slides: [
+        {
+          id: 'primary',
+          campaignName: 'Sepet Kampanyası',
+          threshold: null,
+          message: primaryMessage,
+          progress: 0,
+        },
+      ],
+    };
+  }
+
+  return { currentAmount, slides };
 }
