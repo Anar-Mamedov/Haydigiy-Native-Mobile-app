@@ -8,6 +8,7 @@ import {
   Landmark,
   LogOut,
   MapPin,
+  MessageCircle,
   MessageSquare,
   Package,
   RotateCcw,
@@ -69,6 +70,13 @@ export function AccountHub({ onLogout }: AccountHubProps) {
       icon: <MessageSquare color="$brand" size={26} />,
       label: 'Ürün Değerlendirme',
       onPress: () => router.push('/reviews'),
+    },
+    {
+      // `CircleHelp` "Yardım" menüsünde kullanılıyor; soru listesi ayrı bir ikonla
+      // ayrışsın diye burada MessageCircle var.
+      icon: <MessageCircle color="$brand" size={26} />,
+      label: 'Sorularım',
+      onPress: () => router.push('/questions'),
     },
   ];
 

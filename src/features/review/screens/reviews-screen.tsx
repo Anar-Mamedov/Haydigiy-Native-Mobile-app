@@ -3,14 +3,14 @@ import { useRouter } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { MessageSquare } from '@/components/ui/icons';
 import { Spinner, YStack } from 'tamagui';
-import { AppScreen, EmptyState, ScreenHeader } from '@/components/ui';
+import { AppScreen, EmptyState, ScreenHeader, TabStrip } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 // Reuses the order feature's review submission sheet (shared review UI) to avoid
 // duplicating the rating/comment/photo form across features.
 import { OrderReviewSheet } from '@/features/order/components/order-review-sheet';
 import { useMyReviewsQuery } from '../api/review.queries';
-import { ReviewTabs } from '../components/review-tabs';
 import { ReviewProductRow } from '../components/review-product-row';
+import { MyReviewsList } from '../components/my-reviews-list';
 import { ReviewTab, ReviewTabKey, ReviewTarget, UserReview } from '@/types/review.types';
 
 const DEFAULT_TABS: ReviewTab[] = [
@@ -21,8 +21,8 @@ const DEFAULT_TABS: ReviewTab[] = [
 
 const EMPTY_COPY: Record<ReviewTabKey, string> = {
   pending: 'Değerlendirebileceğiniz bir ürün bulunmuyor.',
-  waiting: 'Onay bekleyen değerlendirmeniz bulunmuyor.',
-  approved: 'Onaylanmış değerlendirmeniz bulunmuyor.',
+  waiting: 'Onay bekleyen yorumunuz bulunmuyor.',
+  approved: 'Yayına alınmış yorumunuz bulunmuyor.',
 };
 
 function toReviewTarget(review: UserReview): ReviewTarget {
@@ -44,7 +44,11 @@ export function ReviewsScreen() {
   const [activeTab, setActiveTab] = useState<ReviewTabKey>('pending');
   const [selectedReview, setSelectedReview] = useState<UserReview | null>(null);
 
-  const query = useMyReviewsQuery(activeTab, isAuthenticated);
+  // "Değerlendir" sekmesi `/review/my` ile değerlendirilecek ürünleri listeler;
+  // diğer iki sekme kullanıcının kendi yorumlarını `/review/my-reviews` ile
+  // gösterir. Bu yüzden eski sorgu yalnızca ilk sekme için çalışır.
+  const isPendingTab = activeTab === 'pending';
+  const query = useMyReviewsQuery('pending', isAuthenticated);
   const items = query.data?.items ?? [];
   const tabs = query.data?.tabs?.length ? query.data.tabs : DEFAULT_TABS;
 
@@ -120,30 +124,35 @@ export function ReviewsScreen() {
   return (
     <AppScreen backgroundColor="$color3" gap={0} header={header} padding={0} scrollable={false}>
       <YStack flex={1}>
-        <ReviewTabs
-          activeKey={activeTab}
-          onChange={(key) => setActiveTab(key as ReviewTabKey)}
-          tabs={tabs}
-        />
+        <TabStrip activeKey={activeTab} onChange={(key) => setActiveTab(key as ReviewTabKey)} tabs={tabs} />
         <YStack flex={1}>
-          <FlashList
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
-            data={items}
-            ItemSeparatorComponent={() => <YStack height={12} />}
-            keyExtractor={(item: UserReview) => item.id}
-            ListEmptyComponent={renderEmpty}
-            onRefresh={() => query.refetch()}
-            refreshing={query.isRefetching}
-            renderItem={({ item }: { item: UserReview }) => (
-              <ReviewProductRow
-                activeTab={activeTab}
-                onProductPress={(slug) => router.push(`/product/${slug}` as never)}
-                onReviewPress={setSelectedReview}
-                review={item}
-              />
-            )}
-            showsVerticalScrollIndicator={false}
-          />
+          {isPendingTab ? (
+            <FlashList
+              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+              data={items}
+              ItemSeparatorComponent={() => <YStack height={12} />}
+              keyExtractor={(item: UserReview) => item.id}
+              ListEmptyComponent={renderEmpty}
+              onRefresh={() => query.refetch()}
+              refreshing={query.isRefetching}
+              renderItem={({ item }: { item: UserReview }) => (
+                <ReviewProductRow
+                  activeTab={activeTab}
+                  onProductPress={(slug) => router.push(`/product/${slug}` as never)}
+                  onReviewPress={setSelectedReview}
+                  review={item}
+                />
+              )}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <MyReviewsList
+              emptyMessage={EMPTY_COPY[activeTab]}
+              // Sekme değişince sayfalar sıfırdan başlasın diye ayrı örnek.
+              key={activeTab}
+              status={activeTab === 'approved' ? 'approved' : 'pending'}
+            />
+          )}
         </YStack>
       </YStack>
 

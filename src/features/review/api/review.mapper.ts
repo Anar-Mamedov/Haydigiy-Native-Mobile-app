@@ -1,5 +1,13 @@
-import { MyReviewsResponseDto, ReviewItemDto } from './review.dtos';
+import { MyReviewEntriesResponseDto, MyReviewEntryDto, MyReviewsResponseDto, ReviewItemDto } from './review.dtos';
 import { ReviewTab, ReviewTabKey, UserReview } from '@/types/review.types';
+import { ActivityPage, MyReviewEntry } from '@/types/account-activity.types';
+import {
+  mapActivityPagination,
+  mapActivityProduct,
+  readActivityCount,
+  readActivityNumber,
+  readActivityString,
+} from '@/utils/account-activity';
 
 const DEFAULT_TABS: ReviewTab[] = [
   { key: 'pending', label: 'Değerlendir' },
@@ -51,4 +59,43 @@ export function mapMyReviews(
     items: visibleItems,
     tabs: response?.tabs?.length ? response.tabs : DEFAULT_TABS,
   };
+}
+
+/**
+ * `GET /review/my-reviews` sayfasını modele çevirir. Kimliksiz kayıt listeye
+ * alınmaz; `thumbnail` yoksa tam boy fotoğrafa düşülür ki kartta görsel boş
+ * kalmasın.
+ */
+export function mapMyReviewEntry(dto: MyReviewEntryDto): MyReviewEntry | null {
+  const id = readActivityNumber(dto?.id);
+  if (id === null) return null;
+
+  const rating = readActivityNumber(dto.rating) ?? 0;
+  const thumbnail = readActivityString(dto.thumbnail);
+  const photo = readActivityString(dto.photo);
+  const status = readActivityString(dto.status).toLowerCase();
+
+  return {
+    id,
+    rating: Math.min(5, Math.max(0, rating)),
+    comment: readActivityString(dto.comment),
+    status: status === 'approved' || status === 'rejected' ? status : 'pending',
+    createdAt: readActivityString(dto.created_at),
+    likeCount: readActivityCount(dto.like_count),
+    size: readActivityString(dto.size),
+    height: readActivityNumber(dto.height),
+    weight: readActivityNumber(dto.weight),
+    thumbnail: thumbnail || photo || null,
+    photo: photo || thumbnail || null,
+    orderId: readActivityNumber(dto.order_id),
+    product: mapActivityProduct(dto.product),
+  };
+}
+
+export function mapMyReviewEntriesPage(dto: MyReviewEntriesResponseDto | null | undefined): ActivityPage<MyReviewEntry> {
+  const items = (Array.isArray(dto?.data) ? dto.data : [])
+    .map(mapMyReviewEntry)
+    .filter((entry): entry is MyReviewEntry => entry !== null);
+
+  return { items, pagination: mapActivityPagination(dto?.meta, items.length) };
 }

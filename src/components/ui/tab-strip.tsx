@@ -1,21 +1,32 @@
 import { Pressable } from 'react-native';
 import { ScrollView, XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { ReviewTab } from '@/types/review.types';
 
-type ReviewTabsProps = {
-  tabs: ReviewTab[];
-  activeKey: string;
-  onChange: (key: string) => void;
+export type TabStripItem = {
+  key: string;
+  label: string;
 };
 
-/** Horizontal, theme-aware tab selector for the reviews screen. */
-export function ReviewTabs({ tabs, activeKey, onChange }: ReviewTabsProps) {
+export interface TabStripProps {
+  tabs: TabStripItem[];
+  activeKey: string;
+  onChange: (key: string) => void;
+}
+
+/**
+ * Yatay, temaya duyarlı sekme şeridi.
+ *
+ * `SegmentedControl` eşit genişlikte bölmeler kullanır ve "Cevap Bekleyenler"
+ * gibi uzun etiketlerde metin sığmaz; bu şerit ise kayabildiği için etiket
+ * uzunluğundan bağımsızdır. Değerlendirmelerim ve Sorularım ekranlarının aynı
+ * görünmesi için ikisi de bunu kullanır.
+ */
+export function TabStrip({ tabs, activeKey, onChange }: TabStripProps) {
   return (
     <ScrollView
       horizontal
-      // Pin the strip's height so the Tamagui ScrollView (which defaults to flex:1)
-      // can't expand vertically and push the list down in a flex column.
+      // Şeridin yüksekliği sabitlenir; Tamagui ScrollView varsayılan olarak
+      // flex:1 olduğu için sütun içinde dikeyde büyüyüp listeyi aşağı iterdi.
       contentContainerStyle={{ gap: 8, paddingHorizontal: 16, alignItems: 'center' }}
       flexGrow={0}
       flexShrink={0}
@@ -41,11 +52,7 @@ export function ReviewTabs({ tabs, activeKey, onChange }: ReviewTabsProps) {
               paddingHorizontal="$3"
               paddingVertical="$2"
             >
-              <Paragraph
-                color={isActive ? '$brand' : '$color10'}
-                fontSize={12}
-                fontWeight={isActive ? '700' : '500'}
-              >
+              <Paragraph color={isActive ? '$brand' : '$color10'} fontSize={12} fontWeight={isActive ? '700' : '500'}>
                 {tab.label}
               </Paragraph>
             </XStack>

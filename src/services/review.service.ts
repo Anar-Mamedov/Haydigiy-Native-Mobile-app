@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/axios';
 import { appEnv } from '@/lib/env';
-import { MyReviewsResponseDto } from '@/features/review/api/review.dtos';
+import { MyReviewEntriesResponseDto, MyReviewsResponseDto } from '@/features/review/api/review.dtos';
+import { MyReviewFilter } from '@/types/account-activity.types';
 import { ReviewTabKey } from '@/types/review.types';
 
 export type ReviewPhoto = { uri: string; name: string; type: string };
@@ -11,6 +12,26 @@ export async function getMyReviewsDto(tab: ReviewTabKey): Promise<MyReviewsRespo
 
   const response = await apiClient.get<MyReviewsResponseDto>('/review/my', {
     params: { tab },
+    headers: { Accept: 'application/json' },
+  });
+  return response.data;
+}
+
+/**
+ * Kullanıcının kendi yazdığı yorumların sayfası (`GET /review/my-reviews`).
+ *
+ * `/review/my` değerlendirilecek sipariş kalemlerini döndürür ve yorumun kendi
+ * metnini/fotoğrafını taşımaz; bu uç ise yorumun kendisini verir. `status`
+ * gönderilmediğinde backend tüm kayıtları döndürür.
+ */
+export async function getMyReviewEntriesDto(status: MyReviewFilter, page: number): Promise<MyReviewEntriesResponseDto> {
+  if (!appEnv.apiBaseUrl) return { data: [], meta: null };
+
+  const params: Record<string, string | number> = { page: Math.max(1, page) };
+  if (status !== 'all') params.status = status;
+
+  const response = await apiClient.get<MyReviewEntriesResponseDto>('/review/my-reviews', {
+    params,
     headers: { Accept: 'application/json' },
   });
   return response.data;
