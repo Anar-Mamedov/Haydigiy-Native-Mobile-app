@@ -6,6 +6,8 @@ import {
   insiderTracker,
   type InsiderLoginMethod,
 } from '@/features/insider/services/insider-tracker';
+import { analytics } from '@/features/analytics/services/analytics-dispatcher';
+import { userToAnalyticsIdentity } from '@/features/analytics/utils/analytics-identity';
 import { User } from '@/types/auth.types';
 
 type AuthState = {
@@ -31,6 +33,12 @@ export const useAuthStore = create<AuthState>()(
           insiderTracker.identifyUser(user);
           // Sıra önemli: event kimlik tanıtıldıktan sonra doğru profile yazılır.
           insiderTracker.trackUserLogin(method);
+
+          // Aynı sıra analytics tarafında da geçerli: kimlik önce bağlanır ki
+          // giriş eventi ve sonrasındaki her event `user_id` ile ilişkilensin.
+          const identity = userToAnalyticsIdentity(user);
+          if (identity) analytics.identify(identity);
+          analytics.track({ name: 'user_logged_in', method });
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -44,6 +52,9 @@ export const useAuthStore = create<AuthState>()(
           // Sıra önemli: event önce gider, kullanıcı sonra anonimleşir.
           insiderTracker.trackUserLogout('user');
           insiderTracker.clearUser();
+
+          analytics.track({ name: 'user_logged_out', reason: 'user' });
+          analytics.reset();
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -55,10 +66,16 @@ export const useAuthStore = create<AuthState>()(
         // oturumun düşmesi (null) Insider tarafında da logout sayılır.
         if (user) {
           insiderTracker.identifyUser(user);
+
+          const identity = userToAnalyticsIdentity(user);
+          if (identity) analytics.identify(identity);
         } else {
           // Kullanıcı eylemi değil, token'ın geçersiz kalması; kampanyalarda ayrışsın.
           insiderTracker.trackUserLogout('session_expired');
           insiderTracker.clearUser();
+
+          analytics.track({ name: 'user_logged_out', reason: 'session_expired' });
+          analytics.reset();
         }
       },
     }),

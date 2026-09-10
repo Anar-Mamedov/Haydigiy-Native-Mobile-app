@@ -4,6 +4,7 @@ import { ScrollView, Spinner, YStack } from 'tamagui';
 import { AppScreen, EmptyState, ScreenHeader } from '@/components/ui';
 import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-estimate-info';
 import { FreeShippingCampaignCard } from '@/features/cart/components/free-shipping-campaign-card';
+import { useTrackAnalyticsCheckoutStarted } from '@/features/analytics/hooks/use-analytics-commerce-tracking';
 import { useCheckoutController } from '../hooks/use-checkout-controller';
 import { useDelayedFlag } from '../hooks/use-delayed-flag';
 import { usePlaceOrder } from '../hooks/use-place-order';
@@ -36,6 +37,8 @@ export function CheckoutScreen() {
   const router = useRouter();
   const controller = useCheckoutController();
   const placeOrder = usePlaceOrder(controller);
+  // Web `begin_checkout` paritesi: ödeme ekranı dolu sepetle açıldığında bir kez.
+  useTrackAnalyticsCheckoutStarted(controller.items);
   const { refetchAddresses, refetchCart } = controller;
   const { orderSummary, setSubmitError } = controller;
   const [openContract, setOpenContract] = useState<CheckoutContractKind>(null);

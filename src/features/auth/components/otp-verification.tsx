@@ -12,6 +12,7 @@ import {
 import { otpSchema } from '../schemas/auth.schema';
 import { useAuthStore } from '../store/use-auth-store';
 import { insiderTracker } from '@/features/insider/services/insider-tracker';
+import { analytics } from '@/features/analytics/services/analytics-dispatcher';
 import { KVKK_DISCLOSURE_TEXT, COMMERCIAL_CONSENT_TEXT } from '../constants/auth-texts';
 import { getOtpSendErrorFeedback, parseOtpCooldownSeconds } from '../utils/otp-delivery';
 
@@ -130,7 +131,10 @@ export function OtpVerification({
         requestAnimationFrame(() => {
           void storeLogin(token, userWithPhone, isNewSignUp ? 'register' : 'otp')
             .then(() => {
-              if (isNewSignUp) insiderTracker.trackSignUp();
+              if (isNewSignUp) {
+                insiderTracker.trackSignUp();
+                analytics.track({ name: 'user_signed_up' });
+              }
             })
             .then(onSuccess)
             .catch((storeError) => {

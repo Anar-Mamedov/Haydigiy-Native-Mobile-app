@@ -16,6 +16,11 @@ import { CartLineTarget, getCartLineKey } from '@/features/cart/utils/cart-line'
 import { BundleSelection } from '@/types/bundle.types';
 import { insiderTracker } from '@/features/insider/services/insider-tracker';
 import { InsiderProductInput } from '@/features/insider/utils/insider-product.mapper';
+import { analytics } from '@/features/analytics/services/analytics-dispatcher';
+import {
+  cartItemToAnalyticsProduct,
+  trackingSnapshotToAnalyticsProduct,
+} from '@/features/analytics/utils/analytics-product.mapper';
 import { CartLineItem } from '@/types/cart.types';
 
 /**
@@ -126,9 +131,13 @@ export function useRemoveCartItemMutation() {
       const removed = context?.previous.find((item) => item.variantId === variantId);
       if (!removed) return;
       insiderTracker.trackRemoveFromCart(removed.productId);
+      analytics.track({ name: 'remove_from_cart', product: cartItemToAnalyticsProduct(removed) });
       // Insider: removing the last line also counts as clearing the cart.
       const remaining = context.previous.filter((item) => item.variantId !== variantId);
-      if (remaining.length === 0) insiderTracker.trackCartCleared();
+      if (remaining.length === 0) {
+        insiderTracker.trackCartCleared();
+        analytics.track({ name: 'cart_cleared', itemCount: 0 });
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
@@ -171,8 +180,9 @@ export function useClearCartMutation() {
     onError: (_error, _variables, context) => {
       if (context?.previous) rollbackTo(context.previous);
     },
-    onSuccess: () => {
+    onSuccess: (_data, _variables, context) => {
       insiderTracker.trackCartCleared();
+      analytics.track({ name: 'cart_cleared', itemCount: context?.previous.length ?? 0 });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
@@ -227,8 +237,12 @@ export function useRemoveBundleMutation() {
       const removed = context?.previous.find((item) => getCartLineKey(item) === lineKey);
       if (!removed) return;
       insiderTracker.trackRemoveFromCart(removed.productId);
+      analytics.track({ name: 'remove_from_cart', product: cartItemToAnalyticsProduct(removed) });
       const remaining = context.previous.filter((item) => getCartLineKey(item) !== lineKey);
-      if (remaining.length === 0) insiderTracker.trackCartCleared();
+      if (remaining.length === 0) {
+        insiderTracker.trackCartCleared();
+        analytics.track({ name: 'cart_cleared', itemCount: 0 });
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
@@ -256,7 +270,12 @@ export function useAddBundleToCartMutation() {
       tracking?: InsiderProductInput;
     }) => addBundleToCartDto(Number(bundleProductId), selections, quantity),
     onSuccess: (_data, variables) => {
-      if (variables.tracking) insiderTracker.trackAddToCart(variables.tracking);
+      if (!variables.tracking) return;
+      insiderTracker.trackAddToCart(variables.tracking);
+      analytics.track({
+        name: 'add_to_cart',
+        product: trackingSnapshotToAnalyticsProduct(variables.tracking),
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
@@ -278,7 +297,12 @@ export function useAddToCartMutation() {
       tracking?: InsiderProductInput;
     }) => addToCartDto(Number(variantId), quantity),
     onSuccess: (_data, variables) => {
-      if (variables.tracking) insiderTracker.trackAddToCart(variables.tracking);
+      if (!variables.tracking) return;
+      insiderTracker.trackAddToCart(variables.tracking);
+      analytics.track({
+        name: 'add_to_cart',
+        product: trackingSnapshotToAnalyticsProduct(variables.tracking),
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });

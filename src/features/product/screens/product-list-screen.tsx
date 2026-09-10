@@ -15,6 +15,10 @@ import { useInfiniteSearchProductsQuery } from '@/features/product/api/product.q
 import { useQuickFiltersQuery } from '@/features/product/api/quick-filter.queries';
 import { useStableCategoryOptions } from '@/features/product/hooks/use-stable-category-options';
 import { useTrackListingPageView } from '@/features/insider/hooks/use-insider-page-tracking';
+import {
+  useTrackAnalyticsCategoryView,
+  useTrackAnalyticsSearch,
+} from '@/features/analytics/hooks/use-analytics-commerce-tracking';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
 import { SortSheet } from '../components/sort-sheet';
@@ -129,6 +133,14 @@ export function ProductListScreen({
   useTrackListingPageView(
     !searchQuery && categoryDetails?.name ? [categoryDetails.name] : null,
   );
+
+  // Aynı ayrım analytics tarafında da geçerli: arama sonucu kategori ziyareti
+  // değildir, bu yüzden iki event ayrı koşullara bağlı.
+  useTrackAnalyticsCategoryView(
+    searchQuery ? null : (categoryId ?? categoryDetails?.id ?? null),
+    categoryDetails?.name,
+  );
+  useTrackAnalyticsSearch(searchQuery, firstPage?.pagination.total, !isPending);
   const availableFilters = useStableCategoryOptions(firstPage?.availableFilters, Boolean(productCategories));
   const categoryFilterOptions =
     (availableFilters?.productCategories.length ?? 0) + (availableFilters?.categoryChildren.length ?? 0);

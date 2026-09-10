@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { postCookieConsent } from '@/services/cookie-consent.service';
+import { analytics } from '@/features/analytics/services/analytics-dispatcher';
 import { buildConsentPayload } from '../services/consent-payload';
 import { readStoredConsent, writeStoredConsent } from '../services/consent-storage';
 import {
@@ -59,6 +60,10 @@ export function useCookieConsent() {
 
     setPreferences(next);
     setNeedsConsent(false);
+
+    // Analytics kapısı bellekten okur; depo yazımını beklemeden güncellenmeli,
+    // aksi halde izin verilen ilk saniyelerin event'leri düşer.
+    analytics.applyConsent(next);
 
     try {
       await writeStoredConsent({ preferences: next, status });

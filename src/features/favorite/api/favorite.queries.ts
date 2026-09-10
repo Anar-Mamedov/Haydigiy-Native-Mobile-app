@@ -9,6 +9,8 @@ import {
   InsiderProductInput,
   productToInsiderInput,
 } from '@/features/insider/utils/insider-product.mapper';
+import { analytics } from '@/features/analytics/services/analytics-dispatcher';
+import { trackingSnapshotToAnalyticsProduct } from '@/features/analytics/utils/analytics-product.mapper';
 import { Product } from '@/types/product.types';
 import { Alert } from 'react-native';
 import { isAuthenticated } from '@/features/auth/api/auth-session';
@@ -61,7 +63,13 @@ export function useAddFavoriteMutation() {
       }
     },
     onSuccess: (_data, variables) => {
-      if (variables.tracking) insiderTracker.trackAddToWishlist(variables.tracking);
+      if (variables.tracking) {
+        insiderTracker.trackAddToWishlist(variables.tracking);
+        analytics.track({
+          name: 'add_to_wishlist',
+          product: trackingSnapshotToAnalyticsProduct(variables.tracking),
+        });
+      }
       queryClient.invalidateQueries({ queryKey: favoriteKeys.all });
     },
   });
@@ -92,6 +100,7 @@ export function useRemoveFavoriteMutation() {
     },
     onSuccess: (_data, productId) => {
       insiderTracker.trackRemoveFromWishlist(productId);
+      analytics.track({ name: 'remove_from_wishlist', productId });
       queryClient.invalidateQueries({ queryKey: favoriteKeys.all });
     },
   });

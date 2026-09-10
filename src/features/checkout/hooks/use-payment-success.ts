@@ -13,6 +13,8 @@ import { cartKeys } from '@/features/cart/api/cart.keys';
 import { useCartStore } from '@/features/cart/store/use-cart-store';
 import { insiderTracker } from '@/features/insider/services/insider-tracker';
 import { cartItemToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
+import { analytics } from '@/features/analytics/services/analytics-dispatcher';
+import { cartItemToAnalyticsProduct } from '@/features/analytics/utils/analytics-product.mapper';
 import { consumePurchaseSnapshot } from '../utils/purchase-snapshot';
 import { OrderDetails } from '@/types/checkout.types';
 
@@ -112,6 +114,27 @@ export function usePaymentSuccess(): { orderDetails: OrderDetails | null; isProc
       const saleId = details.orderNo || token;
       if (saleId && purchasedItems.length > 0) {
         insiderTracker.trackPurchase(saleId, purchasedItems.map(cartItemToInsiderInput));
+      }
+
+      // Ödeme sonucu, satırlar çözülemese bile raporlanmalı: dönüşüm hunisinin
+      // son adımı boş kalırsa başarısızlık mı yoksa ölçüm boşluğu mu olduğu
+      // ayırt edilemez.
+      analytics.track({
+        name: 'payment_result',
+        status: 'success',
+        orderId: details.orderNo || undefined,
+      });
+
+      if (saleId) {
+        analytics.track({
+          name: 'purchase_completed',
+          currency: 'TRY',
+          orderId: saleId,
+          products: purchasedItems.map(cartItemToAnalyticsProduct),
+          // Tutar siparişin kendisinden gelir; sepet satırları eksik kalsa bile
+          // gelir doğru raporlanır.
+          revenue: details.totalPrice,
+        });
       }
 
       setOrderDetails(details);

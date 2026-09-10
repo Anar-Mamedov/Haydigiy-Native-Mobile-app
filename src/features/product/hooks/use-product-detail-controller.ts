@@ -6,6 +6,7 @@ import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { useGoToCartAfterAdd } from '@/features/cart/hooks/use-go-to-cart-after-add';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 import { useTrackProductDetailView } from '@/features/insider/hooks/use-insider-page-tracking';
+import { useTrackAnalyticsProductView } from '@/features/analytics/hooks/use-analytics-commerce-tracking';
 import { productToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { useProductDetailsQuery } from '@/features/product/api/product.queries';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
@@ -121,6 +122,8 @@ export function useProductDetailController() {
 
   // Insider "ürün detay görüntüleme" (fires once per loaded product).
   useTrackProductDetailView(product);
+  // Kendi collector'ımız + (ileride) GA4/Meta için `product_viewed`.
+  useTrackAnalyticsProductView(product);
 
   // Recently Viewed Tracking
   useEffect(() => {

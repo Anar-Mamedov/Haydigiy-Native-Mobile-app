@@ -3,6 +3,7 @@ import { Hourglass, XCircle } from '@/components/ui/icons';
 import { Button, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, ScreenHeader, SectionCard } from '@/components/ui';
+import { useTrackAnalyticsPaymentResult } from '@/features/analytics/hooks/use-analytics-commerce-tracking';
 import { formatCurrency } from '@/utils/format-currency';
 import { parseQuery } from '../utils/parse-query';
 import { parsePrice } from '../utils/parse-price';
@@ -34,6 +35,8 @@ export function PaymentFailedScreen() {
     pick('message', 'errorMessage', 'error_message') || firstValue(params.message) || DEFAULT_MESSAGE;
   const orderNo = pick('order_no', 'orderid', 'oid');
   const totalPrice = parsePrice(pick('total_price'));
+
+  useTrackAnalyticsPaymentResult(isPending ? 'pending' : 'failed', orderNo);
 
   if (isPending) {
     return (

@@ -48,6 +48,10 @@ jest.mock('@/features/insider/hooks/use-insider-page-tracking', () => ({
   useTrackProductDetailView: jest.fn(),
 }));
 
+jest.mock('@/features/analytics/hooks/use-analytics-commerce-tracking', () => ({
+  useTrackAnalyticsProductView: jest.fn(),
+}));
+
 jest.mock('@/utils/recently-viewed', () => ({
   trackViewedProduct: jest.fn(),
 }));

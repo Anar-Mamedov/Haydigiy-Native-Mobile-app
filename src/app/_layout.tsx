@@ -8,6 +8,7 @@ import { IncomingLinkHandler } from '@/components/navigation/incoming-link-handl
 import { InsiderIdentitySync } from '@/features/insider/components/insider-identity-sync';
 import { InsiderIntegration } from '@/features/insider/components/insider-integration';
 import { OtaUpdateWatcher } from '@/components/ota-update-watcher';
+import { AnalyticsIntegration } from '@/features/analytics/components/analytics-integration';
 import { AppUpdateProvider } from '@/features/app-update/components/app-update-provider';
 import { CartHydrator } from '@/features/cart/components/cart-hydrator';
 import { CookieConsentGate } from '@/features/consent/components/cookie-consent-gate';
@@ -53,6 +54,8 @@ export default function RootLayout() {
           <InsiderIntegration />
           {/* Kalıcı oturumu SDK başlatıldıktan sonra yeniden tanıtır. */}
           <InsiderIdentitySync />
+          {/* Rota ölçümü + kimlik bağlama. İzin kapısı dispatcher'ın içindedir. */}
+          <AnalyticsIntegration />
           {/* KVKK aydınlatması diğer istemlerin önünde cevaplanmalı. */}
           <CookieConsentGate />
           {/* Mounted after Insider so the SDK is registered before we prompt. */}
