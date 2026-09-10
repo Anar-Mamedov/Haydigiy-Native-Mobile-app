@@ -9,13 +9,20 @@
  *
  * - `byId` → `getSmartRecommendation`. Ürün gerektirmeyen algoritmalar: Top Sellers,
  *   Most Popular Items, Trending Products, Highest Discounted, New Arrivals,
- *   Most Valuable Products, User-Based, Purchased with Last Purchased.
+ *   Most Valuable Products, User-Based, Purchased with Last Purchased,
+ *   Manual Merchandising.
  * - `byProduct` → `getSmartRecommendationWithProduct`. Ürün bağlamı isteyen algoritmalar:
- *   Purchased Together, Viewed Together, Recently Viewed ve yukarıdakilerin çoğu.
- * - `byProductIds` → `getSmartRecommendationWithProductIDs`. Yalnızca Purchased Together ve
- *   Viewed Together; en fazla 3 ürün kimliği gönderilir.
+ *   Purchased Together, Viewed Together, Recently Viewed, Manual Merchandising ve
+ *   yukarıdakilerin çoğu.
+ * - `byProductIds` → `getSmartRecommendationWithProductIDs`. Yalnızca Purchased Together,
+ *   Viewed Together, Manual Merchandising ve Mixed Strategy; en fazla 3 ürün kimliği
+ *   gönderilir.
+ *
+ * Manual Merchandising ve Mixed Strategy yalnızca 2026-09-02'de güncellenen Android
+ * sayfasında listeleniyor, React Native sayfasında yok; metot eşleşmeleri o sayfadan.
  *
  * @see https://academy.insiderone.com/docs/react-native-smart-recommender
+ * @see https://academy.insiderone.com/docs/android-smart-recommender
  */
 export type InsiderRecommendationSlot = 'home' | 'productDetail' | 'cart' | 'orderSuccess';
 

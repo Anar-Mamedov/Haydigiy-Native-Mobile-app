@@ -310,6 +310,7 @@ hiçbir şey render edilmez.
 | `config/recommendation-campaigns.ts` | Slot → kampanya listesi (ID, başlık, SDK metodu). **Kampanya eklemek/kaldırmak için tek dokunulacak yer.** |
 | `services/insider-recommender.ts` | SDK sınırı; callback tabanlı API'yi promise'e çevirir, hata/zaman aşımı izolasyonu burada. |
 | `utils/insider-recommendation.mapper.ts` | Yanıt → domain modeli, tracker girdisi ve ürün rotası dönüşümleri. |
+| `utils/insider-recommendation-diagnostics.ts` | Boş sonucun nedenini ayırt eden tek satırlık teşhis log'u (PII taşımaz). |
 | `api/insider-recommendation.queries.ts` | TanStack Query hook'u; anahtarlar `insiderKeys.recommendation(...)`. |
 | `components/insider-recommendation-slider.tsx` | Yalnızca sunum: yatay slider, loading/error/empty durumları. |
 | `components/insider-recommendation-section.tsx` | Tek kampanya: veri + tıklama logu + yönlendirme. |
@@ -413,13 +414,60 @@ Zincirin çalıştığı cihaz log'undan izlenebilir (PII taşımaz):
 tıklama gönderilmez ve o ürünün Add to Cart / Revenue istatistiği de oluşmaz. Feed fiyatsız
 ürün döndürüyorsa panelde tıklama görünmemesinin sebebi budur.
 
+#### Boş slider teşhisi
+
+Slider boş sonuçta hiç çizilmez (başlık yazıp altını boş bırakmak ekranı bozar), bu yüzden
+"görünmüyor" şikâyeti birbirinden bağımsız beş nedenden gelebilir ve dışarıdan hepsi aynı
+görünür. `utils/insider-recommendation-diagnostics.ts` bu beş durumu ayırt eder:
+
+```
+[Insider] öneri yanıtı · kampanya=2 · 12 ürün · total=25 · types=mpop:25
+[Insider] öneri yanıtı · kampanya=6 · ürün yok · 25 kimlik (details=false, uygulama bu biçimi çizemiyor) · total=25
+[Insider] öneri yanıtı · kampanya=4 · boş (success=false)
+[Insider] öneri yanıtı · kampanya=7 · boş yanıt · total=0
+[Insider] öneri isteği atlandı (native SDK yok) · kampanya=3
+[Insider] öneri isteği atlandı (geçerli ürün kimliği yok) · kampanya=5
+[Insider] ürün bazlı öneri zaman aşımına uğradı · kampanya=1.
+```
+
+| Satır | Anlamı | Nerede çözülür |
+| --- | --- | --- |
+| `N ürün` | Kampanya çalışıyor. | — |
+| `details=false` | Kampanya panelde `details: false` ile kurulmuş; yanıt ürün nesnesi değil kimlik listesi taşıyor. | Panelde `details: true` yapılır. |
+| `success=false` | Insider isteği reddetti: kampanya yayında değil ya da ön koşul eksik. | Panel / Insider ekibi. |
+| `boş yanıt` | İstek geçerli ama sonuç yok: algoritma-metot uyuşmazlığı, feed'de eşleşen ürün yok, kişiselleştirme verisi birikmemiş. | Panel kurulumu. |
+| `native SDK yok` | Expo Go; `RNInsider` modülü yüklenmez, istek hiç yapılmaz. | Development build gerekir. |
+| `geçerli ürün kimliği yok` | Sepet kampanyası boş kimlik listesiyle çağrıldı. | Uygulama tarafı. |
+| `zaman aşımı` | Callback 10 sn içinde gelmedi (`onError` kanalı, `console.warn`). | Ağ / native taraf. |
+
+`types` alanı kampanyayı hangi algoritmanın karşıladığını gösterir (ör. `mpop`); paneldeki
+algoritma ile çağırdığımız metodun uyuşup uyuşmadığı ancak bu değerle doğrulanır.
+
+HTTP isteğinin kendisi JS'te görünmez — native SDK (Android'de OkHttp, iOS'ta NSURLSession)
+atar, bu yüzden Metro/DevTools Network sekmesinde yoktur. Gözlemlenebilir tek nokta
+callback'e düşen payload'dır ve yukarıdaki log'lar tam olarak onu özetler.
+
+#### Ham yanıt (yalnızca geliştirme modunda)
+
+Özetin yanında ham istek + yanıt da basılır. Biçim `lib/axios.ts` içindeki `🔵 API ...`
+logger'ıyla kasten aynı, böylece backend çağrılarıyla aynı akışta okunur:
+
+```
+🟣 API INSIDER getSmartRecommendation · kampanya=4 { request: { locale: 'tr_TR', currency: 'TRY' },
+  response: { data: [ '89656', '97265', ... ], types: { ub: 10 }, total: 10, success: true } }
+```
+
+`__DEV__` ile sınırlıdır: yanıt gövdesi ürün adı, görsel ve fiyat taşıdığı için üretim
+log'una yazılmaz, üretimde yalnızca PII taşımayan özet satırı kalır.
+
 #### Sürüm notu
 
 Öneri sliderları ve tıklama logger'ı `8783902` (2026-08-26) ve `1d2c01c` (2026-08-27)
-commit'leriyle geldi. En son mağaza sürümü olan **2.3.19 / build 36 bu tarihten öncedir
-(2026-08-22)**, yani tıklama/sepet/gelir istatistikleri ilk kez **2.3.20 / build 37** ile
-sahaya çıkar. Panelde bu metrikler görünmüyorsa önce yayındaki sürümün kontrol edilmesi
-gerekir.
+commit'leriyle geldi; ilk kez **2.3.20 / build 37** (2026-08-31) ile sahaya çıktı. Kimlik
+hizalama katmanı (`insider-recommendation-attribution.ts`, `415ddbf`) bu sürümden sonra
+girdiği için **2.3.21 / build 38** ile yayınlandı. Mağazadaki **2.3.23 / build 40** sürümü
+ikisini de içerir. Panelde metrikler görünmüyorsa yayındaki sürüm değil, yukarıdaki teşhis
+log'u kontrol edilmelidir.
 
 ### Kampanya ekleme / çıkarma
 

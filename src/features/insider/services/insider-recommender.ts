@@ -5,6 +5,12 @@ import { InsiderPayload, InsiderProductSdk, InsiderSdk } from '../types/insider.
 import { InsiderProductInput } from '../utils/insider-product.mapper';
 import { INSIDER_CURRENCY, INSIDER_LOCALE } from '../utils/insider-locale';
 import {
+  InsiderRecommendationRequestLog,
+  describeInsiderRecommendationResponse,
+  describeInsiderRecommendationSkip,
+  logInsiderRecommendationPayload,
+} from '../utils/insider-recommendation-diagnostics';
+import {
   EMPTY_INSIDER_RECOMMENDATION,
   InsiderRecommendation,
   mapInsiderRecommendation,
@@ -38,6 +44,10 @@ interface InsiderRecommenderDependencies {
   isNativeSdkAvailable: () => boolean;
   loadSdk: () => InsiderSdk;
   onError: (message: string, error: unknown) => void;
+  /** Teşhis kanalı: boş sonucun nedenini ayırt eden, PII taşımayan tek satırlık log. */
+  onDiagnostic: (message: string) => void;
+  /** Ham istek + yanıt; yalnızca geliştirme modunda yazılır. */
+  onRawPayload: (entry: InsiderRecommendationRequestLog) => void;
   timeoutMs: number;
 }
 
@@ -45,6 +55,8 @@ const defaultDependencies: InsiderRecommenderDependencies = {
   isNativeSdkAvailable: () => isInsiderNativeSdkAvailable(Platform.OS, NativeModules),
   loadSdk: () => require('react-native-insider').default as InsiderSdk,
   onError: (message, error) => console.warn(message, error),
+  onDiagnostic: (message) => console.info(message),
+  onRawPayload: (entry) => logInsiderRecommendationPayload(entry),
   timeoutMs: RECOMMENDATION_TIMEOUT_MS,
 };
 
@@ -66,12 +78,24 @@ export function createInsiderRecommender(
    * boş sonuç döner. Callback birden fazla kez tetiklenirse ilki geçerlidir.
    */
   const request = (
-    label: string,
+    options: {
+      recommendationId: number;
+      /** Hata mesajlarında kullanılan Türkçe etiket. */
+      label: string;
+      /** Çağrılan SDK metodunun adı; ham yanıt log'unda görünür. */
+      method: string;
+      /** SDK'ya gönderilen parametrelerin log'lanabilir özeti. */
+      params: Record<string, unknown>;
+    },
     invoke: (activeSdk: InsiderSdk, callback: (payload: InsiderPayload) => void) => void,
   ): Promise<InsiderRecommendation> =>
     new Promise((resolve) => {
+      const { label, method, params, recommendationId } = options;
       const activeSdk = getSdk();
       if (!activeSdk) {
+        dependencies.onDiagnostic(
+          describeInsiderRecommendationSkip(recommendationId, 'native SDK yok'),
+        );
         resolve(EMPTY_INSIDER_RECOMMENDATION);
         return;
       }
@@ -85,16 +109,29 @@ export function createInsiderRecommender(
       };
 
       const timeoutId = setTimeout(() => {
-        dependencies.onError(`[Insider] ${label} zaman aşımına uğradı.`, null);
+        dependencies.onError(
+          `[Insider] ${label} zaman aşımına uğradı · kampanya=${recommendationId}.`,
+          null,
+        );
         settle(EMPTY_INSIDER_RECOMMENDATION);
       }, dependencies.timeoutMs);
 
       try {
         invoke(activeSdk, (payload) => {
-          settle(mapInsiderRecommendation(payload, INSIDER_CURRENCY));
+          // Mükerrer callback'te ilk yanıt geçerli; teşhis log'u da bir kez yazılmalı.
+          if (settled) return;
+          const recommendation = mapInsiderRecommendation(payload, INSIDER_CURRENCY);
+          dependencies.onRawPayload({ method, params, payload, recommendationId });
+          dependencies.onDiagnostic(
+            describeInsiderRecommendationResponse(recommendationId, payload, recommendation),
+          );
+          settle(recommendation);
         });
       } catch (error) {
-        dependencies.onError(`[Insider] ${label} alınamadı.`, error);
+        dependencies.onError(
+          `[Insider] ${label} alınamadı · kampanya=${recommendationId}.`,
+          error,
+        );
         settle(EMPTY_INSIDER_RECOMMENDATION);
       }
     });
@@ -118,26 +155,43 @@ export function createInsiderRecommender(
 
   return {
     fetchRecommendation(recommendationId) {
-      return request('öneri listesi', (activeSdk, callback) => {
-        activeSdk.getSmartRecommendation(
+      return request(
+        {
+          label: 'öneri listesi',
+          method: 'getSmartRecommendation',
+          params: { locale: INSIDER_LOCALE, currency: INSIDER_CURRENCY },
           recommendationId,
-          INSIDER_LOCALE,
-          INSIDER_CURRENCY,
-          callback,
-        );
-      });
+        },
+        (activeSdk, callback) => {
+          activeSdk.getSmartRecommendation(
+            recommendationId,
+            INSIDER_LOCALE,
+            INSIDER_CURRENCY,
+            callback,
+          );
+        },
+      );
     },
 
     fetchRecommendationForProduct(recommendationId, product) {
-      return request('ürün bazlı öneri', (activeSdk, callback) => {
-        // Dikkat: bu metot currency almıyor (SDK imzası), fazladan parametre çağrıyı düşürür.
-        activeSdk.getSmartRecommendationWithProduct(
-          buildProduct(activeSdk, product),
+      return request(
+        {
+          label: 'ürün bazlı öneri',
+          method: 'getSmartRecommendationWithProduct',
+          // Ürün nesnesi SDK handle'ı olduğu için log'a kimlik/ad özeti yazılır.
+          params: { locale: INSIDER_LOCALE, product: { id: product.id, name: product.name } },
           recommendationId,
-          INSIDER_LOCALE,
-          callback,
-        );
-      });
+        },
+        (activeSdk, callback) => {
+          // Dikkat: bu metot currency almıyor (SDK imzası), fazladan parametre çağrıyı düşürür.
+          activeSdk.getSmartRecommendationWithProduct(
+            buildProduct(activeSdk, product),
+            recommendationId,
+            INSIDER_LOCALE,
+            callback,
+          );
+        },
+      );
     },
 
     fetchRecommendationForProductIds(recommendationId, productIds) {
@@ -146,17 +200,34 @@ export function createInsiderRecommender(
         .filter((id): id is string => Boolean(id))
         .slice(0, MAX_RECOMMENDATION_PRODUCT_IDS);
 
-      if (cleaned.length === 0) return Promise.resolve(EMPTY_INSIDER_RECOMMENDATION);
-
-      return request('kimlik bazlı öneri', (activeSdk, callback) => {
-        activeSdk.getSmartRecommendationWithProductIDs(
-          cleaned,
-          recommendationId,
-          INSIDER_LOCALE,
-          INSIDER_CURRENCY,
-          callback,
+      if (cleaned.length === 0) {
+        dependencies.onDiagnostic(
+          describeInsiderRecommendationSkip(recommendationId, 'geçerli ürün kimliği yok'),
         );
-      });
+        return Promise.resolve(EMPTY_INSIDER_RECOMMENDATION);
+      }
+
+      return request(
+        {
+          label: 'kimlik bazlı öneri',
+          method: 'getSmartRecommendationWithProductIDs',
+          params: {
+            locale: INSIDER_LOCALE,
+            currency: INSIDER_CURRENCY,
+            productIDs: cleaned,
+          },
+          recommendationId,
+        },
+        (activeSdk, callback) => {
+          activeSdk.getSmartRecommendationWithProductIDs(
+            cleaned,
+            recommendationId,
+            INSIDER_LOCALE,
+            INSIDER_CURRENCY,
+            callback,
+          );
+        },
+      );
     },
   };
 }

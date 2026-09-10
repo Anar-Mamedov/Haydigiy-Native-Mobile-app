@@ -51,14 +51,18 @@ function createHarness(overrides: Partial<Record<string, unknown>> = {}) {
   } as unknown as jest.Mocked<InsiderSdk>;
 
   const onError = jest.fn();
+  const onDiagnostic = jest.fn();
+  const onRawPayload = jest.fn();
   const recommender = createInsiderRecommender({
     isNativeSdkAvailable: () => true,
     loadSdk: () => sdk,
     onError,
+    onDiagnostic,
+    onRawPayload,
     timeoutMs: 50,
   });
 
-  return { onError, product, recommender, sdk };
+  return { onDiagnostic, onError, onRawPayload, product, recommender, sdk };
 }
 
 describe('createInsiderRecommender', () => {
@@ -103,21 +107,27 @@ describe('createInsiderRecommender', () => {
   });
 
   it('skips the call entirely when no usable product id is left', async () => {
-    const { recommender, sdk } = createHarness();
+    const { onDiagnostic, recommender, sdk } = createHarness();
 
     const result = await recommender.fetchRecommendationForProductIds(7, ['', '   ']);
 
     expect(sdk.getSmartRecommendationWithProductIDs).not.toHaveBeenCalled();
     expect(result.products).toEqual([]);
+    expect(onDiagnostic).toHaveBeenCalledWith(
+      expect.stringContaining('geçerli ürün kimliği yok'),
+    );
   });
 
-  it('resolves empty when the native SDK is unavailable (Expo Go)', async () => {
+  it('resolves empty and reports the skip when the native SDK is unavailable (Expo Go)', async () => {
+    const onDiagnostic = jest.fn();
     const recommender = createInsiderRecommender({
       isNativeSdkAvailable: () => false,
       loadSdk: () => {
         throw new Error('SDK yüklenmemeli');
       },
       onError: jest.fn(),
+      onDiagnostic,
+      onRawPayload: jest.fn(),
       timeoutMs: 50,
     });
 
@@ -125,6 +135,8 @@ describe('createInsiderRecommender', () => {
       products: [],
       productIds: [],
     });
+    expect(onDiagnostic).toHaveBeenCalledWith(expect.stringContaining('kampanya=7'));
+    expect(onDiagnostic).toHaveBeenCalledWith(expect.stringContaining('native SDK yok'));
   });
 
   it('resolves empty and reports when the SDK throws', async () => {
@@ -153,7 +165,7 @@ describe('createInsiderRecommender', () => {
   });
 
   it('ignores a second callback invocation', async () => {
-    const { recommender } = createHarness({
+    const { onDiagnostic, recommender } = createHarness({
       getSmartRecommendation: jest.fn((_id, _locale, _currency, callback) => {
         callback(DETAILED_RESPONSE);
         callback({ success: true, data: [] });
@@ -163,5 +175,66 @@ describe('createInsiderRecommender', () => {
     const result = await recommender.fetchRecommendation(7);
 
     expect(result.products).toHaveLength(1);
+    // Teşhis log'u da yanıt başına bir kez yazılmalı, yoksa cihaz log'u yanıltır.
+    expect(onDiagnostic).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Boş slider'ın nedeni dışarıdan görünmediği için her yanıt teşhis kanalına
+   * kampanya kimliğiyle yazılır; cihaz log'undan hangi kampanyanın ne döndürdüğü
+   * ayırt edilebilmeli.
+   */
+  it('reports every response with its campaign id', async () => {
+    const { onDiagnostic, recommender } = createHarness({
+      getSmartRecommendation: jest.fn((_id, _locale, _currency, callback) =>
+        callback({ ...DETAILED_RESPONSE, total: 25, types: { mpop: 25 } }),
+      ),
+    });
+
+    await recommender.fetchRecommendation(2);
+
+    expect(onDiagnostic).toHaveBeenCalledWith(expect.stringContaining('kampanya=2'));
+    expect(onDiagnostic).toHaveBeenCalledWith(expect.stringContaining('1 ürün'));
+    expect(onDiagnostic).toHaveBeenCalledWith(expect.stringContaining('types=mpop:25'));
+  });
+
+  it('separates a details=false response from an empty one in the diagnostic log', async () => {
+    const { onDiagnostic, recommender } = createHarness({
+      getSmartRecommendation: jest.fn((_id, _locale, _currency, callback) =>
+        callback({ success: true, total: 3, data: ['11', '12', '13'] }),
+      ),
+    });
+
+    const result = await recommender.fetchRecommendation(6);
+
+    expect(result.products).toEqual([]);
+    expect(onDiagnostic).toHaveBeenCalledWith(expect.stringContaining('details=false'));
+  });
+
+  /**
+   * Ham yanıt, backend çağrılarının `🔵 API ...` log'uyla aynı akışta okunabilsin diye
+   * ayrı kanala yazılır: metot adı, gönderilen parametreler ve yanıt gövdesi birlikte.
+   */
+  it('forwards the raw request and response for the development log', async () => {
+    const { onRawPayload, recommender } = createHarness();
+
+    await recommender.fetchRecommendationForProductIds(5, ['11', '22']);
+
+    expect(onRawPayload).toHaveBeenCalledWith({
+      method: 'getSmartRecommendationWithProductIDs',
+      params: { locale: 'tr_TR', currency: 'TRY', productIDs: ['11', '22'] },
+      payload: DETAILED_RESPONSE,
+      recommendationId: 5,
+    });
+  });
+
+  it('names the campaign in the timeout report', async () => {
+    const { onError, recommender } = createHarness({
+      getSmartRecommendation: jest.fn(() => undefined),
+    });
+
+    await recommender.fetchRecommendation(4);
+
+    expect(onError).toHaveBeenCalledWith(expect.stringContaining('kampanya=4'), null);
   });
 });
