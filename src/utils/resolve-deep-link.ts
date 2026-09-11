@@ -69,6 +69,7 @@ const RESERVED_WEB_ROOTS = new Set([
   'hizli-giris',
   'iade-degisim',
   'iletisim',
+  'indir',
   'iptal-iade-kosullari',
   'isbank',
   'islem-rehberi',

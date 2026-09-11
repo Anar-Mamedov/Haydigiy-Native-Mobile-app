@@ -135,6 +135,15 @@ describe('resolveDeepLinkPath', () => {
     expect(resolveDeepLinkPath('https://haydigiy.com/sitemap.xml')).toBe('/');
   });
 
+  it('opens the home screen for the app-download QR link', () => {
+    // Basılı QR `haydigiy.com/indir` taşır. Uygulama yüklüyse App Links isteği
+    // ağa çıkmadan yakalar; `indir` rezerve edilmemişken ürün slug'ı sanılıp
+    // `/product/indir`e gidiyor ve 404 ekranı açılıyordu.
+    expect(resolveDeepLinkPath('https://haydigiy.com/indir')).toBe('/');
+    expect(resolveDeepLinkPath('https://haydigiy.com/indir?utm_source=qr')).toBe('/');
+    expect(resolveDeepLinkPath('https://haydigiy.com/INDIR')).toBe('/');
+  });
+
   it('resolves the banner custom-scheme `to` parameter', () => {
     expect(resolveDeepLinkPath('haydigiywebviewapp:///?to=%2Fspor-ayakkabi-123')).toBe(
       '/product/spor-ayakkabi-123',
