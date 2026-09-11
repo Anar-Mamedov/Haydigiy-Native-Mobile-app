@@ -19,6 +19,35 @@ interface CheckoutCartItemsProps {
   onPressBundleComponent?: (component: BundleComponent) => void;
 }
 
+/**
+ * Satırın fiyatı. Kampanya indirimi olan satırda normal toplam üstü çizili
+ * gösterilir ve indirimli toplam altında vurgulanır; indirim yoksa tek satırlık
+ * marka renkli toplam kalır.
+ */
+function CheckoutCartItemPrice({ item }: { item: CartLineItem }) {
+  const lineTotal = item.unitPrice * item.quantity;
+  const hasCampaignPrice = (item.campaignDiscount ?? 0) > 0 && item.campaignTotal !== undefined;
+
+  if (!hasCampaignPrice) {
+    return (
+      <Paragraph color="$brand" fontSize={12} fontWeight="700" textAlign="center">
+        {formatCurrency(lineTotal)}
+      </Paragraph>
+    );
+  }
+
+  return (
+    <YStack alignItems="center" gap={2}>
+      <Paragraph color="$color10" fontSize={11} textDecorationLine="line-through">
+        {formatCurrency(lineTotal)}
+      </Paragraph>
+      <Paragraph color="$discount" fontSize={12} fontWeight="800">
+        {formatCurrency(item.campaignTotal ?? 0)}
+      </Paragraph>
+    </YStack>
+  );
+}
+
 /** Collapsible strip of cart thumbnails, mirroring the web "Sepetimdeki Ürünler" panel. */
 export function CheckoutCartItems({
   items,
@@ -112,9 +141,7 @@ export function CheckoutCartItems({
                       </XStack>
                     ) : null}
                   </YStack>
-                  <Paragraph color="$brand" fontSize={12} fontWeight="700" textAlign="center">
-                    {formatCurrency(item.unitPrice * item.quantity)}
-                  </Paragraph>
+                  <CheckoutCartItemPrice item={item} />
                 </YStack>
               </Pressable>
             ))}

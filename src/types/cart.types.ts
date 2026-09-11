@@ -11,6 +11,11 @@ export type CartCampaign = {
   message?: string | null;
   /** Backend'in hesapladığı ilerleme yüzdesi; yoksa eşikten türetilir. */
   progressPercentage?: number;
+  /**
+   * Geri sayım anahtarı. Backend yalnızca `1` gönderdiğinde kampanyanın bitiş
+   * sayacı gösterilir; diğer değerlerde bitiş tarihi dolu olsa bile gizlenir.
+   */
+  counter?: number;
 };
 
 /** Kampanya bandındaki tek bir kampanya; bant birden fazlasını karusel gösterir. */
@@ -69,4 +74,11 @@ export type CartLineItem = {
   bundleProductId?: string;
   /** Paket içeriği — yalnızca gösterim amaçlıdır. */
   bundleComponents?: BundleComponent[];
+  /**
+   * Satıra uygulanan kampanya indirimi. Yalnızca 0'dan büyükken anlamlıdır;
+   * `campaignTotal` ile birlikte gelir, ikisi ayrı ayrı kullanılmaz.
+   */
+  campaignDiscount?: number;
+  /** Kampanya indirimi sonrası satır toplamı (adet dahil). */
+  campaignTotal?: number;
 };

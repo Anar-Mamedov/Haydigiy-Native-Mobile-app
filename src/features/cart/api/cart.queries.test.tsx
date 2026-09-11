@@ -4,6 +4,7 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import {
   useAddBundleToCartMutation,
   useAddToCartMutation,
+  useCartQuery,
   useClearCartMutation,
   useRemoveBundleMutation,
   useRemoveCartItemMutation,
@@ -50,6 +51,7 @@ const removeBundleDto = cartService.removeBundleDto as jest.MockedFunction<
 const updateCartItemDto = cartService.updateCartItemDto as jest.MockedFunction<
   typeof cartService.updateCartItemDto
 >;
+const getCartDto = cartService.getCartDto as jest.MockedFunction<typeof cartService.getCartDto>;
 const trackerMock = insiderTracker as jest.Mocked<typeof insiderTracker>;
 
 function makeItem(variantId: string): CartLineItem {
@@ -96,7 +98,74 @@ beforeEach(() => {
   updateBundleQuantityDto.mockResolvedValue(undefined);
   removeBundleDto.mockResolvedValue(undefined);
   updateCartItemDto.mockResolvedValue(undefined);
+  getCartDto.mockResolvedValue({ cart: [] });
   useCartStore.setState({ items: [] });
+});
+
+describe('useCartQuery', () => {
+  // Geri sayım ve satır kampanya fiyatı tamamen backend yanıtına bağlı:
+  // `counter`, `campaign_discount` ve `campaign_total` sorgudan UI'a kadar
+  // taşınmazsa sayaç hiç görünmez, kampanyalı fiyat da normal fiyata düşer.
+  it('carries the campaign counter and line campaign totals from the API response', async () => {
+    getCartDto.mockResolvedValue({
+      cart: [
+        {
+          variant_id: 555,
+          quantity: 2,
+          old_price: '120.00',
+          price: '100.00',
+          current_price: '100.00',
+          stock_quantity: '3',
+          in_stock: true,
+          product: { id: 42, name: 'Test Ürün', slug: 'test-urun' },
+          campaign_discount: 40,
+          campaign_total: 160,
+        },
+      ],
+      campaigns: [
+        {
+          id: 7,
+          name: 'Sepette %10 indirim',
+          type: 'cart_discount',
+          is_applicable: true,
+          threshold: 1000,
+          remaining: 0,
+          end_date: '2026-07-01T00:00:00Z',
+          counter: 1,
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useCartQuery(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.campaigns[0].counter).toBe(1);
+    expect(result.current.data?.items[0].campaignDiscount).toBe(40);
+    expect(result.current.data?.items[0].campaignTotal).toBe(160);
+  });
+
+  it('leaves the counter undefined when the API omits it', async () => {
+    getCartDto.mockResolvedValue({
+      cart: [],
+      campaigns: [
+        {
+          id: 7,
+          name: 'Sepette %10 indirim',
+          type: 'cart_discount',
+          is_applicable: true,
+          threshold: 1000,
+          remaining: 0,
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useCartQuery(), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data?.campaigns[0].counter).toBeUndefined();
+  });
 });
 
 describe('useClearCartMutation', () => {

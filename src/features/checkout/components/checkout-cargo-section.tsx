@@ -1,11 +1,15 @@
 import { Image } from 'expo-image';
 import { Separator, Spinner, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { CampaignCountdownText } from '@/features/cart/components/campaign-countdown';
 import { CheckoutSection } from './checkout-section';
 import { CheckoutOptionRow } from './checkout-option-row';
 import { resolveCdnUrl } from '@/utils/cdn';
 import { formatCurrency } from '@/utils/format-currency';
 import { CargoCompany } from '@/types/checkout.types';
+
+/** Backend sayacı yalnızca bu değerdeyken kargo satırında geri sayım gösterilir. */
+const COUNTDOWN_ENABLED_COUNTER = 1;
 
 interface CheckoutCargoSectionProps {
   companies: CargoCompany[];
@@ -15,6 +19,13 @@ interface CheckoutCargoSectionProps {
   isLoading: boolean;
   /** Locks selection while `/order/token` is in flight (see `isCheckoutLocked`). */
   disabled?: boolean;
+  /** Ücretsiz kargo kampanyasının bitiş tarihi; sayaç bununla sayar. */
+  campaignEndDate?: string | null;
+  /**
+   * Kampanyanın sayaç anahtarı. Ücretsiz kargo bir kupondan da gelebildiği için
+   * geri sayım `hasFreeShipping`'e değil, kampanyanın kendi sayacına bağlıdır.
+   */
+  campaignCounter?: number;
 }
 
 export function CheckoutCargoSection({
@@ -24,7 +35,10 @@ export function CheckoutCargoSection({
   hasFreeShipping,
   isLoading,
   disabled = false,
+  campaignEndDate,
+  campaignCounter,
 }: CheckoutCargoSectionProps) {
+  const showCountdown = campaignCounter === COUNTDOWN_ENABLED_COUNTER;
   return (
     <CheckoutSection noBodyPadding title="Kargo">
       {isLoading ? (
@@ -61,6 +75,7 @@ export function CheckoutCargoSection({
                       <Paragraph color="$green10" fontSize={13} fontWeight="700">
                         Ücretsiz
                       </Paragraph>
+                      {showCountdown ? <CampaignCountdownText endDate={campaignEndDate} /> : null}
                     </YStack>
                   ) : (
                     <Paragraph color="$color" fontSize={14} fontWeight="700">

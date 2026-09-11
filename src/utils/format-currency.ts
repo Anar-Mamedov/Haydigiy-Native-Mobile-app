@@ -18,3 +18,13 @@ export function formatAmount(amount: number) {
     minimumFractionDigits: 0,
   }).format(safeAmount);
 }
+
+/**
+ * Yukarı yuvarlanmış, simgesiz tutar ("1.501 TL"). Kampanya eşiklerinde kalan
+ * tutar için kullanılır: kuruş göstermek kullanıcıyı eşiğin bir kuruş altında
+ * bırakabileceği için yuvarlama her zaman yukarı yapılır.
+ */
+export function formatCeilAmount(amount: number) {
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  return `${formatAmount(Math.ceil(safeAmount))} TL`;
+}

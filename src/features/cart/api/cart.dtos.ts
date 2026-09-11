@@ -43,6 +43,10 @@ export interface CartItemDto {
   /** Adet güncelleme ve silme yalnızca bu kimlikle yapılır. */
   bundle_group_id?: string | null;
   bundle?: (BundleDto & { components?: BundleComponentDto[] | null }) | null;
+  /** Satıra uygulanan kampanya indirimi; kampanya yoksa gelmez ya da 0 gelir. */
+  campaign_discount?: number | string | null;
+  /** Kampanya indirimi sonrası satır toplamı (adet dahil). */
+  campaign_total?: number | string | null;
 }
 
 export interface CartCampaignDto {
@@ -58,6 +62,8 @@ export interface CartCampaignDto {
   message?: string | null;
   /** Backend'in hesapladığı ilerleme yüzdesi; yoksa eşikten türetilir. */
   progress_percentage?: number;
+  /** Geri sayım anahtarı; yalnızca `1` iken bitiş sayacı gösterilir. */
+  counter?: number;
 }
 
 /**

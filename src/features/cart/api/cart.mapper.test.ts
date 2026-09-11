@@ -1,4 +1,9 @@
-import { mapCartCampaignBannerStatus, mapCartItemDto, mapCartResponse } from './cart.mapper';
+import {
+  mapCartCampaignBannerStatus,
+  mapCartCampaignDto,
+  mapCartItemDto,
+  mapCartResponse,
+} from './cart.mapper';
 import { CartCampaignDto, CartCampaignsResponseDto, CartItemDto } from './cart.dtos';
 
 function makeDto(overrides: Partial<CartItemDto> = {}): CartItemDto {
@@ -91,6 +96,65 @@ describe('mapCartItemDto', () => {
   it('falls back to the variant id when the product id is missing', () => {
     const item = mapCartItemDto(makeDto({ product: { name: 'X', slug: 'x' } }));
     expect(item.productId).toBe('555');
+  });
+
+  it('carries the line campaign discount and discounted total', () => {
+    const item = mapCartItemDto(makeDto({ campaign_discount: 40, campaign_total: 160 }));
+    expect(item.campaignDiscount).toBe(40);
+    expect(item.campaignTotal).toBe(160);
+  });
+
+  it('parses campaign amounts sent as numeric strings', () => {
+    const item = mapCartItemDto(makeDto({ campaign_discount: '40.00', campaign_total: '160.00' }));
+    expect(item.campaignDiscount).toBe(40);
+    expect(item.campaignTotal).toBe(160);
+  });
+
+  // İndirim ve indirimli toplam yalnızca birlikte anlamlı; biri eksikse satır
+  // normal fiyatıyla gösterilmeli, yarım bir kampanya fiyatı sızmamalı.
+  it('drops the campaign price unless both fields are usable', () => {
+    expect(mapCartItemDto(makeDto({ campaign_discount: 0, campaign_total: 200 }))).not.toHaveProperty(
+      'campaignTotal',
+    );
+    expect(
+      mapCartItemDto(makeDto({ campaign_discount: 40, campaign_total: null })),
+    ).not.toHaveProperty('campaignTotal');
+    expect(mapCartItemDto(makeDto())).not.toHaveProperty('campaignDiscount');
+  });
+});
+
+describe('mapCartCampaignDto', () => {
+  const campaignDto = (overrides: Partial<CartCampaignDto> = {}): CartCampaignDto => ({
+    id: 7,
+    name: 'Sepette %10 indirim',
+    type: 'cart_discount',
+    is_applicable: true,
+    threshold: 1000,
+    remaining: 0,
+    end_date: '2026-07-01T00:00:00Z',
+    ...overrides,
+  });
+
+  it('maps a campaign into the domain model', () => {
+    expect(mapCartCampaignDto(campaignDto({ counter: 1, discount: 50 }))).toEqual({
+      id: 7,
+      name: 'Sepette %10 indirim',
+      type: 'cart_discount',
+      isApplicable: true,
+      threshold: 1000,
+      remaining: 0,
+      discount: 50,
+      endDate: '2026-07-01T00:00:00Z',
+      message: null,
+      progressPercentage: undefined,
+      counter: 1,
+    });
+  });
+
+  // Sayaç anahtarı gelmediğinde geri sayım kapalı kalmalı; `1` dışındaki her
+  // değer (0 dahil) gizler.
+  it('leaves the counter undefined when the backend omits it', () => {
+    expect(mapCartCampaignDto(campaignDto()).counter).toBeUndefined();
   });
 });
 

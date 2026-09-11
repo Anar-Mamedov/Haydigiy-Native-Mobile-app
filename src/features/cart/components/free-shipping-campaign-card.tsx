@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Check, Clock, Truck } from '@/components/ui/icons';
+import { Check, Truck } from '@/components/ui/icons';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { CampaignCountdown } from '@/features/cart/components/campaign-countdown';
 import { CartCampaign } from '@/types/cart.types';
+import { formatCeilAmount } from '@/utils/format-currency';
 import { getFreeShippingCampaign } from '@/utils/cart-campaigns';
 
 type FreeShippingCampaignCardProps = {
@@ -10,79 +11,11 @@ type FreeShippingCampaignCardProps = {
   subtotal: number;
 };
 
-function formatShort(amount: number) {
-  return `${Math.ceil(amount).toLocaleString('tr-TR')} TL`;
-}
-
 function formatPrice(amount: number) {
   return `${amount.toLocaleString('tr-TR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })} TL`;
-}
-
-function pad(n: number) {
-  return String(n).padStart(2, '0');
-}
-
-function getTimeLeft(endDateStr: string) {
-  const diff = Math.max(0, new Date(endDateStr).getTime() - Date.now());
-  const totalSecs = Math.floor(diff / 1000);
-  return {
-    days: Math.floor(totalSecs / 86400),
-    hours: Math.floor((totalSecs % 86400) / 3600),
-    minutes: Math.floor((totalSecs % 3600) / 60),
-    seconds: totalSecs % 60,
-    expired: diff === 0,
-  };
-}
-
-function CountdownChip({ label }: { label: string }) {
-  return (
-    <XStack
-      alignItems="center"
-      backgroundColor="$brand"
-      borderRadius="$2"
-      justifyContent="center"
-      opacity={0.92}
-      paddingHorizontal="$1.5"
-      paddingVertical="$0.5"
-    >
-      <Paragraph color="white" fontSize={11} fontWeight="800">
-        {label}
-      </Paragraph>
-    </XStack>
-  );
-}
-
-function CountdownTimer({ endDateStr }: { endDateStr: string }) {
-  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(endDateStr));
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const next = getTimeLeft(endDateStr);
-      setTimeLeft(next);
-      if (next.expired) clearInterval(interval);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [endDateStr]);
-
-  if (timeLeft.expired) return null;
-
-  return (
-    <XStack alignItems="center" gap="$1.5" marginTop="$2">
-      <Clock color="$brand" size={14} />
-      <Paragraph color="$color10" fontSize={12}>
-        Kampanya bitiş:
-      </Paragraph>
-      <XStack alignItems="center" gap="$1">
-        {timeLeft.days > 0 ? <CountdownChip label={`${timeLeft.days}g`} /> : null}
-        <CountdownChip label={`${pad(timeLeft.hours)}s`} />
-        <CountdownChip label={`${pad(timeLeft.minutes)}d`} />
-        <CountdownChip label={`${pad(timeLeft.seconds)}sn`} />
-      </XStack>
-    </XStack>
-  );
 }
 
 /**
@@ -138,7 +71,7 @@ export function FreeShippingCampaignCard({
           ) : (
             <Paragraph color="$color" fontSize={14} fontWeight="700">
               <Paragraph color="$brand" fontSize={14} fontWeight="700">
-                {formatShort(campaign.remaining)}
+                {formatCeilAmount(campaign.remaining)}
               </Paragraph>
               {`'lik daha ürün eklersen `}
               <Paragraph color="$brand" fontSize={14} fontWeight="700">
@@ -162,7 +95,7 @@ export function FreeShippingCampaignCard({
             <YStack backgroundColor="$brand" borderRadius={100} height="100%" width={`${progress}%`} />
           </YStack>
 
-          {campaign.endDate ? <CountdownTimer endDateStr={campaign.endDate} /> : null}
+          <CampaignCountdown endDate={campaign.endDate} />
         </YStack>
       </XStack>
     </YStack>

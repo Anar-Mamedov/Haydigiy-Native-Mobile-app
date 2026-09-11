@@ -1,4 +1,8 @@
-import { getCartDiscountCampaignTotal, getFreeShippingCampaign } from './cart-campaigns';
+import {
+  getCartDiscountCampaignTotal,
+  getFreeShippingCampaign,
+  getStandardCampaigns,
+} from './cart-campaigns';
 import { CartCampaign } from '@/types/cart.types';
 
 const NOW = new Date('2026-06-17T00:00:00Z').getTime();
@@ -67,5 +71,67 @@ describe('getCartDiscountCampaignTotal', () => {
     expect(
       getCartDiscountCampaignTotal([discount({ endDate: '2026-01-01T00:00:00Z' })], 400, NOW),
     ).toBe(0);
+  });
+});
+
+describe('getStandardCampaigns', () => {
+  const standard = (overrides: Partial<CartCampaign> = {}): CartCampaign => ({
+    id: 3,
+    name: 'Sepette %10',
+    type: 'cart_discount',
+    isApplicable: false,
+    threshold: 1000,
+    remaining: 0,
+    endDate: null,
+    ...overrides,
+  });
+
+  it('reports remaining amount and progress below the threshold', () => {
+    const [status] = getStandardCampaigns([standard()], 250, NOW);
+    expect(status.remaining).toBe(750);
+    expect(status.isApplicable).toBe(false);
+    expect(status.progress).toBeCloseTo(25);
+  });
+
+  it('marks the campaign applicable once the subtotal reaches the threshold', () => {
+    const [status] = getStandardCampaigns([standard()], 1000, NOW);
+    expect(status.isApplicable).toBe(true);
+    expect(status.remaining).toBe(0);
+    expect(status.progress).toBe(100);
+  });
+
+  it('excludes the free-shipping campaign; that one has its own card row', () => {
+    const campaigns = [standard(), freeShipping({ threshold: 500 })];
+    expect(getStandardCampaigns(campaigns, 250, NOW)).toHaveLength(1);
+  });
+
+  it('treats an expired campaign as not applicable', () => {
+    const [status] = getStandardCampaigns(
+      [standard({ endDate: '2026-01-01T00:00:00Z' })],
+      1000,
+      NOW,
+    );
+    expect(status.isApplicable).toBe(false);
+  });
+
+  it('drops campaigns that have neither a threshold nor an applicable state', () => {
+    const thresholdless = standard({ threshold: null, isApplicable: false });
+    expect(getStandardCampaigns([thresholdless], 1000, NOW)).toEqual([]);
+  });
+
+  it('keeps a thresholdless campaign the backend already applied', () => {
+    const applied = standard({ threshold: null, isApplicable: true, discount: 40 });
+    const [status] = getStandardCampaigns([applied], 1000, NOW);
+    expect(status.isApplicable).toBe(true);
+    expect(status.progress).toBe(100);
+  });
+
+  it('clamps a backend progress percentage into the 0-100 range', () => {
+    const [status] = getStandardCampaigns([standard({ progressPercentage: 140 })], 250, NOW);
+    expect(status.progress).toBe(100);
+  });
+
+  it('returns an empty list when there are no campaigns', () => {
+    expect(getStandardCampaigns(undefined, 1000, NOW)).toEqual([]);
   });
 });

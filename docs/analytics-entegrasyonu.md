@@ -12,7 +12,7 @@ yalnızca Insider kuruluydu. Bu doküman mobil tarafta **ne yapıldığını** v
 | HaydiGiy kendi collector'ı | `src/lib/analytics.ts` → `/analytics/events/batch` | ✅ Tam — bu doküman |
 | Google Analytics 4 (`G-ED6DZ66SH6`) | `layout.tsx` + `src/lib/ga4.ts` | ✅ Kod tamam — env değerleri bekliyor |
 | Meta Pixel (`246021789341141`) | `components/analytics/FacebookPixel.tsx` (yalnızca `PageView`) | ✅ Kod tamam — env değerleri bekliyor |
-| Google Ads (`AW-816642529`) | `GoogleAds.tsx` + `GoogleAdsConversion.tsx` | ✅ GA4↔Ads bağlantısından otomatik gelir, kod gerekmez |
+| Google Ads (`AW-816642529`) | `GoogleAds.tsx` + `GoogleAdsConversion.tsx` (Ads'e **doğrudan** dönüşüm) | ⚠️ Karar gerektirir — bkz. adım 6, naif import web'i iki kez saydırır |
 | Google Tag Manager (`GTM-NZ79DJB`) | `layout.tsx` | ❌ Mobilde karşılığı yok — GTM tarayıcı DOM'una bağlıdır |
 
 ## Neden web'in kodu native'de çalışmaz
@@ -230,10 +230,24 @@ almak için kalan işler. **Sıra önemli:** 1 ve 2 olmadan 4 çalışmaz.
 
 ## 1. GA4 API secret oluştur — 2 dakika
 
-1. [analytics.google.com](https://analytics.google.com) → **Admin** (sol altta dişli)
-2. **Data streams** → `G-ED6DZ66SH6` olan web stream'ini aç
-3. Aşağıda **Measurement Protocol API secrets** → **Create**
-4. Nickname: `Mobile App`, oluştur, **secret değerini kopyala**
+> Google tarafının **tek blokajı** budur. Bu boş olduğu sürece GA4'e hiçbir event
+> gitmez ve hata da alınmaz (`isConfigured()` false → iş kuyruğa hiç girmez).
+
+**Site:** [analytics.google.com](https://analytics.google.com)
+
+1. Sol altta **⚙️ Yönetici** (Admin)
+2. Üstteki property seçicide **`G-ED6DZ66SH6`** olan property'nin seçili olduğunu doğrulayın
+3. **Veri toplama ve değiştirme** (Data collection and modification) → **Veri akışları** (Data streams)
+4. Listede MEASUREMENT ID kolonunda `G-ED6DZ66SH6` yazan **web akışına** tıklayın
+5. Açılan panelde aşağı kaydırın → **Measurement Protocol API secrets**
+   (Türkçe arayüzde de İngilizce kalır)
+6. **Oluştur** (Create) → Takma ad: `Mobile App` → **Oluştur**
+7. **Gizli değer** (Secret value) kolonundaki ~22 karakterlik değeri kopyalayın
+
+**Gereken yetki:** property üzerinde *Düzenleyen* (Editor) veya üstü. Secret
+listede kalıcı durur, sonra da kopyalayabilirsiniz.
+
+**Nereye:** sunucu `backend/.env` → `GA4_API_SECRET=<değer>`
 
 > **Bilmeniz gereken kısıt:** GA4'te iOS/Android data stream'i açmak Firebase
 > zorunlu kılıyor. Firebase kullanmadığımız için uygulama event'leri **web
@@ -247,15 +261,52 @@ almak için kalan işler. **Sıra önemli:** 1 ve 2 olmadan 4 çalışmaz.
 
 ## 2. Meta CAPI token'ını doğrula — 3 dakika
 
-Elinizdeki `EAADKk...` token'ın hâlâ geçerli ve **uzun ömürlü** olması gerekiyor
-(kişisel kullanıcı token'ları 60 günde ölür).
+Token `.env`'de dolu ama frontend'de **üretilmiş ve hiç kullanılmamış**; kişisel
+kullanıcı token'ıysa 60 günde ölmüştür.
 
-1. [business.facebook.com/events_manager](https://business.facebook.com/events_manager)
-2. **Data Sources** → Pixel `246021789341141` → **Settings**
-3. **Conversions API** bölümü → **Generate access token**
-   (System User token üretir, süresizdir — mevcut token'ın kaynağı buysa değiştirmeyin)
-4. Aynı sayfada **Test Events** sekmesine gidin ve **`test_event_code`** değerini kopyalayın
-   — canlıya almadan önce event'lerin geldiğini burada göreceğiz
+### 2a. Geçerliliği kontrol et
+
+**Site:** [developers.facebook.com/tools/debug/accesstoken](https://developers.facebook.com/tools/debug/accesstoken/)
+
+Token'ı yapıştırıp **Debug**'a basın. Şu üç satıra bakın:
+
+| Alan | Olması gereken |
+| --- | --- |
+| `Valid` | `True` |
+| `Expires` | **`Never`** — bir tarih yazıyorsa ölecek/ölmüş |
+| `Scopes` | `ads_management` içermeli |
+
+Terminalden de bakabilirsiniz:
+
+```bash
+cd backend && TOKEN=$(grep '^META_CAPI_ACCESS_TOKEN=' .env | cut -d= -f2-) && \
+  curl -s "https://graph.facebook.com/v21.0/debug_token?input_token=$TOKEN&access_token=$TOKEN" | python3 -m json.tool
+```
+
+`"expires_at": 0` → süresiz, iyi.
+
+### 2b. Ölüyse yeni üret
+
+**Site:** [business.facebook.com/events_manager2](https://business.facebook.com/events_manager2)
+
+1. Sol menü **Veri Kaynakları** (Data Sources)
+2. Pixel **`246021789341141`**'i seçin
+3. **Ayarlar** (Settings) sekmesi
+4. Aşağı kaydırın → **Conversions API** bölümü
+5. **Erişim belirteci oluştur** (Generate access token) linkine tıklayın
+
+> Link görünmüyorsa manuel yol: **Business Settings** → **Kullanıcılar** →
+> **Sistem Kullanıcıları** → yeni sistem kullanıcısı → `ads_management` yetkisi →
+> **Varlık Ekle** ile pixel'i atayın → **Belirteç Oluştur**. Bu yol süresiz
+> (System User) token verir, tercih edilen budur.
+
+### 2c. Test Events kodunu al (doğrulama için)
+
+Aynı Events Manager → pixel → **Test Events** sekmesi → **Test server events**
+bölümündeki `TEST#####` kodunu kopyalayın.
+
+**Nereye:** `META_CAPI_TEST_EVENT_CODE=TEST#####` — doğrulama bitince **boşaltın**,
+yoksa event'ler sonsuza kadar yalnızca test ekranında kalır.
 
 ## 3. Backend env değerlerini gir — 1 dakika
 
@@ -273,10 +324,29 @@ META_CAPI_TEST_EVENT_CODE=<adım 2'den, canlıya geçince silinecek>
 
 Kod yazıldı (yukarıdaki "Backend dağıtımı" bölümü). Sizin yapacağınız:
 
-1. `backend/.env`'e adım 3'teki değerleri girin
-2. `php artisan config:clear`
-3. Kuyruk işçisinin çalıştığını doğrulayın — event'ler kuyrukta işleniyor
-   (`ANALYTICS_FORWARDING_QUEUE`, varsayılan `default`)
+`backend/.env`'e adım 3'teki değerleri girdikten sonra sunucuda **üç komut** —
+sadece `config:clear` yetmez:
+
+```bash
+php artisan config:clear
+php artisan octane:reload     # Octane yapılandırmayı BELLEKTE tutar
+php artisan queue:restart     # işçi ESKİ env ile çalışıyor, yeniden başlamalı
+```
+
+> **En sık atlanan yer burası.** `queue:restart` yapılmazsa işçi eski (boş)
+> `GA4_API_SECRET` ile çalışmaya devam eder ve GA4'e hiçbir şey gitmez.
+
+### Kuyruk gerçekten işleniyor mu
+
+`QUEUE_CONNECTION=database` olduğu için bekleyen işler tabloda görünür:
+
+```sql
+SELECT queue, COUNT(*) FROM jobs GROUP BY queue;
+SELECT queue, COUNT(*) FROM failed_jobs GROUP BY queue;
+```
+
+`default` satırı sürekli büyüyüp hiç azalmıyorsa işçi o kuyruğu dinlemiyor.
+Mevcut `LogProductSearchJob` da `default` kullandığı için muhtemelen dinleniyor.
 
 `ANALYTICS_FORWARDING_ENABLED=false` acil durum şalteridir: kod deploy edilmiş
 olsa bile dağıtımı tümden durdurur.
@@ -285,21 +355,69 @@ olsa bile dağıtımı tümden durdurur.
 
 Uygulama trafiğini web'den ayırabilmek için:
 
-1. GA4 → **Admin** → **Custom definitions** → **Create custom dimension**
-2. Dimension name: `App platform`, Scope: **Event**, Event parameter: `app_platform`
-3. Kaydet
+**Site:** [analytics.google.com](https://analytics.google.com)
+
+1. **⚙️ Yönetici** → **Veri görüntüleme** (Data display) → **Özel tanımlar** (Custom definitions)
+2. **Özel boyut oluştur** (Create custom dimension)
+3. Boyut adı: `App platform`
+4. Kapsam (Scope): **Etkinlik** (Event)
+5. Etkinlik parametresi (Event parameter): **`app_platform`** — birebir bu yazım
+6. **Kaydet**
 
 > Custom dimension geçmişe dönük çalışmaz; veri toplanmaya başladıktan sonraki
 > günleri raporlar.
 
-## 6. Google Ads bağlantısını kontrol et — 2 dakika
+## 6. Google Ads — ⚠️ ACELE ETMEYİN, karar gerektirir
 
-`AW-816642529` için ayrı kod yazılmıyor; dönüşümler GA4'ten akıyor.
+Bu adım mekanik değil; yanlış yapılırsa **Google Ads raporunuzu bozar.**
 
-1. GA4 → **Admin** → **Product links** → **Google Ads links**
-2. `816642529` hesabının bağlı olduğunu doğrulayın (bağlı değilse **Link**)
-3. Google Ads → **Goals** → **Conversions** → **Summary** → **New conversion action**
-   → **Import** → **Google Analytics 4 properties** → `purchase` event'ini içe alın
+### Frontend'in Ads kurulumu GA4'ten bağımsız
+
+Web, `/odeme-basarili` sayfasında **iki ayrı** event atıyor:
+
+| Ne | Nereden | Nereye |
+| --- | --- | --- |
+| `gtag('event','purchase')` | `PaymentSuccessful.tsx:707` | GA4 |
+| `gtag('event','conversion', {send_to:'AW-816642529/d2YmCP…'})` | `GoogleAdsConversion.tsx` → `odeme-basarili/page.tsx:21` | **Google Ads'e DOĞRUDAN** |
+
+İkincisi Ads'te doğrudan oluşturulmuş bir **"web sitesi" dönüşüm işlemi**.
+GA4↔Ads bağlantısıyla hiç ilgisi yok. Yani "frontend Ads kullanıyor" demek
+"GA4↔Ads bağlantısı var" demek değildir — ikisi bağımsız mekanizma.
+
+### Naif import web dönüşümlerini İKİ KEZ saydırır
+
+GA4 `purchase` event'ini Ads'e dönüşüm olarak içe aktarırsanız, bir web satın
+alması Ads'e **iki yoldan** girer: mevcut doğrudan AW tag'i **ve** GA4 import'u.
+Web her ikisini de aynı sayfada ateşlediği için çakışma kesin.
+
+### Seçenekler
+
+**A — Hiçbir şey yapma (önerilen).** Ads'te bugünkü düzen korunur, web dönüşümleri
+doğru sayılmaya devam eder. Uygulama satın almaları Ads'te dönüşüm olarak
+görünmez — ama **GA4'te görünür**, yani ölçüm kaybı yok, yalnızca Ads teklif
+verme tarafında uygulama atfı olmaz. Risk sıfır.
+
+**B — Import et + mevcut AW işlemini "İkincil"e çek.** Uygulama ve web tek
+kaynaktan (GA4) sayılır. Google'ın önerdiği yol da bu: bir dönüşüm için tek
+kaynak. Mevcut AW tag'i raporda kalır, teklif vermede kullanılmaz.
+**Dikkat:** canlı reklam teklif verme davranışını değiştirir.
+
+**C — Import et + frontend'den AW tag'ini kaldır.** En temiz sonuç ama frontend'e
+dokunmak gerekir ve geçiş gününde veri boşluğu oluşur.
+
+### Karar sizin değil benim değil — reklam ekibinin
+
+B ve C canlı kampanya performansını etkiler. Uygulama satın almalarının Ads
+teklif verme tarafına gerçekten girmesi isteniyorsa B'yi reklam ekibiyle
+konuşun. Aksi halde **A'da kalın**; GA4 ve Meta entegrasyonu buna ihtiyaç
+duymuyor.
+
+### Sadece bağlantıyı görmek isterseniz (salt okunur, zararsız)
+
+[analytics.google.com](https://analytics.google.com) → **⚙️ Yönetici** →
+**Ürün bağlantıları** → **Google Ads bağlantıları** → `816642529` listede mi?
+Bakmak bir şey değiştirmez; **Bağla**'ya basmak da tek başına dönüşüm
+saydırmaz (import ayrı adımdır). Riskli olan Ads tarafındaki import'tur.
 
 ## 7. Doğrulama — canlıya almadan önce
 

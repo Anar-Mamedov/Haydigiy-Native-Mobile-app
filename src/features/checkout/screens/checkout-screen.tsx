@@ -3,7 +3,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { ScrollView, Spinner, YStack } from 'tamagui';
 import { AppScreen, EmptyState, ScreenHeader } from '@/components/ui';
 import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-estimate-info';
-import { FreeShippingCampaignCard } from '@/features/cart/components/free-shipping-campaign-card';
+import { StandardCampaignCard } from '@/features/cart/components/standard-campaign-card';
 import { useTrackAnalyticsCheckoutStarted } from '@/features/analytics/hooks/use-analytics-commerce-tracking';
 import { useCheckoutController } from '../hooks/use-checkout-controller';
 import { useDelayedFlag } from '../hooks/use-delayed-flag';
@@ -172,12 +172,14 @@ export function CheckoutScreen() {
           />
 
           <ShippingEstimateInfo estimate={controller.shippingEstimate} />
-          <FreeShippingCampaignCard
+          <StandardCampaignCard
             campaigns={controller.campaigns}
             subtotal={controller.campaignBasis}
           />
 
           <CheckoutCargoSection
+            campaignCounter={controller.freeShippingCampaign?.counter}
+            campaignEndDate={controller.freeShippingCampaign?.endDate}
             companies={controller.cargoCompanies}
             disabled={isSelectionLocked}
             hasFreeShipping={controller.hasFreeShipping}

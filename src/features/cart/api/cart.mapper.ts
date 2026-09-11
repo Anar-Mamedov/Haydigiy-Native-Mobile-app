@@ -18,6 +18,12 @@ function toPositivePrice(value: string | null | undefined): number | null {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
+/** Kampanya tutarları sayı ya da sayısal metin gelebilir; geçersizse yok sayılır. */
+function toAmount(value: number | string | null | undefined): number | null {
+  const parsed = typeof value === 'number' ? value : Number.parseFloat(value ?? '');
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 /**
  * Maps a backend cart line into the cart domain model consumed by the UI and the
  * Zustand store. The backend cart is keyed by `variant_id`, which is preserved so
@@ -39,6 +45,12 @@ export function mapCartItemDto(dto: CartItemDto): CartLineItem {
 
   const isBundle = isBundleLine(dto);
 
+  // İndirim ve indirimli toplam yalnızca birlikte anlamlı: biri eksikse satır
+  // normal fiyatıyla gösterilir, yarım bir kampanya fiyatı hiç sızmaz.
+  const campaignDiscount = toAmount(dto.campaign_discount) ?? 0;
+  const campaignTotal = toAmount(dto.campaign_total);
+  const hasCampaignPrice = campaignDiscount > 0 && campaignTotal !== null;
+
   return {
     // Bundle satırının `variant_id`'si yoktur; kimlik `bundleGroupId` üzerinden taşınır.
     variantId: dto.variant_id != null ? String(dto.variant_id) : undefined,
@@ -58,6 +70,7 @@ export function mapCartItemDto(dto: CartItemDto): CartLineItem {
     stock: Number.isFinite(stock) ? stock : undefined,
     size: dto.variant?.size?.name ?? undefined,
     color: (product?.color?.name ?? product?.color_name)?.trim() || undefined,
+    ...(hasCampaignPrice ? { campaignDiscount, campaignTotal } : {}),
     ...(isBundle
       ? {
           itemType: 'bundle' as const,
@@ -86,6 +99,7 @@ export function mapCartCampaignDto(dto: CartCampaignDto): CartCampaign {
     endDate: dto.end_date ?? null,
     message: dto.message ?? null,
     progressPercentage: dto.progress_percentage,
+    counter: dto.counter,
   };
 }
 
