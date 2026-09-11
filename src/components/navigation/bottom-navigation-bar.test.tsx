@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, screen, within } from '@testing-library/react-native';
 import { BottomNavigationBar } from '@/components/navigation/bottom-navigation-bar';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
@@ -66,5 +66,23 @@ describe('BottomNavigationBar', () => {
     renderWithTamagui(<BottomNavigationBar />);
 
     expect(screen.getByText('2')).toBeTruthy();
+  });
+
+  it('anchors the cart badge to the cart icon instead of the whole tab column', () => {
+    // Rozet ikon + etiket kolonuna çapalandığında "Sepetim" yazısının hizasına
+    // kayıyordu; çapa yalnızca ikonu saran kutu olmalı.
+    renderWithTamagui(<BottomNavigationBar />);
+
+    const anchor = within(screen.getByTestId('cart-tab-icon'));
+
+    expect(anchor.getByTestId('cart-tab-badge')).toBeTruthy();
+    expect(anchor.queryByText('Sepetim')).toBeNull();
+  });
+
+  it('draws the badge only on the cart tab', () => {
+    renderWithTamagui(<BottomNavigationBar />);
+
+    expect(screen.getAllByTestId(/-tab-badge$/)).toHaveLength(1);
+    expect(screen.getByTestId('cart-tab-badge')).toBeTruthy();
   });
 });

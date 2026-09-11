@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Pressable } from 'react-native';
 import { XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { CountBadge } from '@/components/ui/count-badge';
 import { ChevronDown } from '@/components/ui/icons';
 import { COMPACT_MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
@@ -38,7 +39,6 @@ export function FilterPill({
   showChevron = true,
 }: FilterPillProps) {
   const highlighted = isActive || isOpen;
-  const hasBadge = Boolean(badgeCount && badgeCount > 0);
 
   return (
     <Pressable
@@ -79,32 +79,7 @@ export function FilterPill({
             ) : null}
           </XStack>
 
-          {hasBadge ? (
-            <XStack
-              alignItems="center"
-              backgroundColor="$brand"
-              borderRadius={100}
-              height={18}
-              justifyContent="center"
-              minWidth={18}
-              paddingHorizontal={4}
-              position="absolute"
-              right={-4}
-              top={-6}
-            >
-              <Paragraph
-                color="white"
-                fontSize={10}
-                fontWeight="900"
-                includeFontPadding={false}
-                lineHeight={18}
-                maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}
-                textAlign="center"
-              >
-                {badgeCount! > 9 ? '9+' : badgeCount}
-              </Paragraph>
-            </XStack>
-          ) : null}
+          <CountBadge count={badgeCount} right={-4} />
         </XStack>
       )}
     </Pressable>

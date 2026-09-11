@@ -1,7 +1,7 @@
 import { useRouter, usePathname } from 'expo-router';
 import { Heart, Menu, ShoppingCart, UserRound, Search } from '@/components/ui/icons';
-import { Button, Theme, XStack, YStack, useTheme, useThemeName } from 'tamagui';
-import { Paragraph } from '@/components/ui/app-paragraph';
+import { Button, XStack, useTheme, useThemeName } from 'tamagui';
+import { IconWithCountBadge } from '@/components/ui/count-badge';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { Image } from 'expo-image';
 
@@ -130,37 +130,12 @@ export function AppHeader() {
               circular
               hoverStyle={{ backgroundColor: '$backgroundHover' }}
               icon={
-                <YStack position="relative">
-                  <ShoppingCart color={iconColor as any} size={22} />
-                  {cartCount > 0 ? (
-                    <XStack
-                      alignItems="center"
-                      backgroundColor="$brand"
-                      borderRadius={10}
-                      height={18}
-                      justifyContent="center"
-                      minWidth={18}
-                      paddingHorizontal={4}
-                      position="absolute"
-                      right={-6}
-                      top={-6}
-                    >
-                      <Theme name="dark">
-                        <Paragraph
-                          color="white"
-                          fontSize={10}
-                          fontWeight="900"
-                          includeFontPadding={false}
-                          lineHeight={18}
-                          textAlign="center"
-                          textAlignVertical="center"
-                        >
-                          {cartCount > 9 ? '9+' : cartCount}
-                        </Paragraph>
-                      </Theme>
-                    </XStack>
-                  ) : null}
-                </YStack>
+                <IconWithCountBadge
+                  badgeTestID="header-cart-badge"
+                  count={cartCount}
+                  icon={<ShoppingCart color={iconColor as any} size={22} />}
+                  testID="header-cart-icon"
+                />
               }
               onPress={handleCartPress}
               pressStyle={{ backgroundColor: '$backgroundPress' }}

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { XStack, YStack, useTheme } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { IconWithCountBadge } from '@/components/ui/count-badge';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
@@ -192,7 +193,8 @@ export function BottomNavigationBar() {
       {TAB_ITEMS.slice(0, 4).map((item) => {
         const focused = isTabActive(pathname, item.path);
         const color = focused ? BRAND_COLOR : inactiveColor;
-        const showBadge = item.path === '/cart' && cartCount > 0;
+        const badgeCount = item.path === '/cart' ? cartCount : undefined;
+        const tabTestId = item.path === '/' ? 'home' : item.path.replace('/', '');
 
         return (
           <Pressable
@@ -207,26 +209,14 @@ export function BottomNavigationBar() {
               opacity: pressed ? 0.65 : 1,
             })}
           >
-            <YStack alignItems="center" gap={2} position="relative">
-              {item.icon({ color, focused, size: tabIconSize })}
-              {showBadge ? (
-                <XStack
-                  alignItems="center"
-                  backgroundColor="$brand"
-                  borderRadius={badgeSize / 2}
-                  height={badgeSize}
-                  justifyContent="center"
-                  minWidth={badgeSize}
-                  paddingHorizontal={5}
-                  position="absolute"
-                  right={-12}
-                  top={-5}
-                >
-                  <Paragraph color="white" fontSize={10} fontWeight="700" lineHeight={Math.round(12 * scale)} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}>
-                    {cartCount}
-                  </Paragraph>
-                </XStack>
-              ) : null}
+            <YStack alignItems="center" gap={2}>
+              <IconWithCountBadge
+                badgeTestID={`${tabTestId}-tab-badge`}
+                count={badgeCount}
+                icon={item.icon({ color, focused, size: tabIconSize })}
+                size={badgeSize}
+                testID={`${tabTestId}-tab-icon`}
+              />
               <Paragraph fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1} style={{ color }}>
                 {item.label}
               </Paragraph>
