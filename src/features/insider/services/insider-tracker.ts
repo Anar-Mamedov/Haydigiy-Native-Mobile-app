@@ -5,6 +5,7 @@ import {
   InsiderIdentifierConstructor,
   InsiderProductSdk,
   InsiderSdk,
+  InsiderUserSdk,
 } from '../types/insider.types';
 import {
   InsiderProductInput,
@@ -73,7 +74,34 @@ export interface InsiderTracker {
    * tıklamayla eşleşemez.
    */
   restoreRecommendationAttribution(): Promise<void>;
+  /**
+   * Kullanıcıyı kimlikleriyle (uuid + e-posta + telefon) Insider'a tanıtır ve
+   * attribute'larını yazar.
+   *
+   * YALNIZCA kimliğin Insider tarafında güncel olduğu bilinen anlarda çağrılır:
+   * oturum açma ve uygulama açılışında oturumun geri yüklenmesi. Profil ekranından
+   * yapılan e-posta/telefon değişikliğinde çağrılMAZ; bkz. `refreshUserAttributes`.
+   */
   identifyUser(user: User): void;
+  /**
+   * Profil güncellemesinden sonra yalnızca attribute'ları (ad, soyad, dil) tazeler;
+   * identifier'lara DOKUNMAZ.
+   *
+   * E-posta ve telefon Insider'da identifier'dır. Kullanıcı bunları değiştirdiğinde
+   * yeni değeri cihazdan doğrudan bildirmek Insider'ın kullanıcıyı farklı biri sayıp
+   * IKINCI bir profil açmasına yol açar; geçmiş davranış verisi ve attribute'lar eski
+   * profilde kalır. Doğru yol, mevcut profildeki identifier'ı yenisiyle DEĞİŞTİREN
+   * Update Identifiers API'sidir ve o çağrıyı backend yapar (istek tokenı yalnızca
+   * sunucuda durur). Cihaz yeni kimliği ancak değişiklik uygulandıktan sonra — bir
+   * sonraki açılışta, `useInsiderIdentityRestore` üzerinden — öğrenir.
+   *
+   * O ana kadar cihazın SDK kimliği eski değeri taşımaya devam eder; Insider eski
+   * identifier'ı "pasif" olarak sakladığı ve o değerle gelen isteği yine aynı profile
+   * çözdüğü için oturumun geri kalanındaki eventler doğru profile düşer.
+   *
+   * @see https://academy.insiderone.com/docs/update-identifiers-api
+   */
+  refreshUserAttributes(user: User): void;
   /**
    * Dil/locale attribute'unu oturum durumundan bağımsız tanımlar. Smart Recommender
    * ön koşulu olduğu için misafir ziyaretçilerde de tanımlı olmalı.
@@ -173,6 +201,19 @@ export function createInsiderTracker(
         `kimlik ${input.id} → ${click.productId}`,
     );
     return { ...input, id: click.productId };
+  };
+
+  /**
+   * Kimlik TAŞIMAYAN profil alanları. Bunlar Insider'da attribute'tur: o an aktif olan
+   * profile yazılır, yeni profil açtırmaz. E-posta ve telefon bu listeye GİRMEZ —
+   * onlar identifier'dır ve yalnızca `identifyUser` üzerinden, kimliğin güncel olduğu
+   * bilinen anlarda gönderilir.
+   */
+  const applyProfileAttributes = (currentUser: InsiderUserSdk, user: User): void => {
+    if (user.name) currentUser.setName(user.name);
+    if (user.surname) currentUser.setSurname(user.surname);
+    currentUser.setLanguage(INSIDER_LANGUAGE);
+    currentUser.setLocale(INSIDER_LOCALE);
   };
 
   const buildProduct = (
@@ -398,12 +439,22 @@ export function createInsiderTracker(
           currentUser.login(identifiers);
         }
 
-        if (user.name) currentUser.setName(user.name);
-        if (user.surname) currentUser.setSurname(user.surname);
-        currentUser.setLanguage(INSIDER_LANGUAGE);
-        currentUser.setLocale(INSIDER_LOCALE);
+        applyProfileAttributes(currentUser, user);
         if (email) currentUser.setEmail(email);
         if (phone) currentUser.setPhoneNumber(phone);
+      });
+    },
+
+    refreshUserAttributes(user) {
+      run('kullanıcı attribute tazeleme', (activeSdk) => {
+        const currentUser = activeSdk.getCurrentUser();
+        if (!currentUser) return;
+
+        // Bilerek yalnızca attribute: `login()`, `setEmail()` ve `setPhoneNumber()`
+        // buradan ASLA çağrılmaz. Profil kaydedildiği anda yeni identifier'ı cihazdan
+        // göndermek, backend'in Update Identifiers isteğiyle yarışır ve genelde onu
+        // geçer; Insider da yeni değeri ilk kez gördüğü için ikinci bir profil açar.
+        applyProfileAttributes(currentUser, user);
       });
     },
 

@@ -65,7 +65,13 @@ export const useAuthStore = create<AuthState>()(
         // Profil güncellemeleri Insider attribute'larını tazeler; süresi dolan
         // oturumun düşmesi (null) Insider tarafında da logout sayılır.
         if (user) {
-          insiderTracker.identifyUser(user);
+          // Kimlik (e-posta/telefon) buradan BİLDİRİLMEZ. `setUser` profil kaydedildiği
+          // anda çalışır; yeni identifier'ı cihazdan göndermek backend'in Update
+          // Identifiers isteğiyle yarışır ve genelde onu geçer — Insider yeni değeri ilk
+          // kez gördüğü için ikinci bir profil açar ve kullanıcının geçmişi eski profilde
+          // kalır. Identifier'ı backend değiştirir; cihaz yeni kimliği bir sonraki
+          // açılışta `useInsiderIdentityRestore` üzerinden öğrenir.
+          insiderTracker.refreshUserAttributes(user);
 
           const identity = userToAnalyticsIdentity(user);
           if (identity) analytics.identify(identity);

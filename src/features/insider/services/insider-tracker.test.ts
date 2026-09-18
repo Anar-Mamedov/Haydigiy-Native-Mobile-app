@@ -513,6 +513,31 @@ describe('insider tracker', () => {
     expect(insiderUser.setName).toHaveBeenCalledWith('Ali');
   });
 
+  /**
+   * Regresyon: profil ekranından e-posta/telefon değiştirildiğinde uygulama yeni
+   * identifier'ı cihazdan doğrudan gönderiyordu. Backend'in Update Identifiers isteği
+   * kuyrukta beklerken bu çağrı Insider'a önce ulaşıyor, Insider da yeni değeri ilk kez
+   * gördüğü için ikinci bir profil açıyor ve kullanıcının geçmişi eski profilde kalıyordu.
+   *
+   * @see https://academy.insiderone.com/docs/update-identifiers-api
+   */
+  it('refreshes profile attributes without sending any identifier', () => {
+    const { tracker, insiderUser, identifiers } = createSdkHarness();
+
+    tracker.refreshUserAttributes({ ...testUser, email: 'yeni@example.com' });
+
+    expect(insiderUser.setName).toHaveBeenCalledWith('Ayşe');
+    expect(insiderUser.setSurname).toHaveBeenCalledWith('Yılmaz');
+    expect(insiderUser.setLanguage).toHaveBeenCalledWith('tr_TR');
+    expect(insiderUser.setLocale).toHaveBeenCalledWith('tr_TR');
+
+    // Kimliğe dokunan üç yolun da kapalı kalması bu düzeltmenin tamamı.
+    expect(insiderUser.login).not.toHaveBeenCalled();
+    expect(insiderUser.setEmail).not.toHaveBeenCalled();
+    expect(insiderUser.setPhoneNumber).not.toHaveBeenCalled();
+    expect(identifiers).toHaveLength(0);
+  });
+
   it('logs the Insider user out when the session ends', () => {
     const { tracker, insiderUser } = createSdkHarness();
     tracker.clearUser();

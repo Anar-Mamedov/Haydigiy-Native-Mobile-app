@@ -6,6 +6,7 @@ import { insiderTracker } from '@/features/insider/services/insider-tracker';
 jest.mock('@/features/insider/services/insider-tracker', () => ({
   insiderTracker: {
     identifyUser: jest.fn(),
+    refreshUserAttributes: jest.fn(),
     clearUser: jest.fn(),
     trackUserLogin: jest.fn(),
     trackUserLogout: jest.fn(),
@@ -80,7 +81,7 @@ describe('useAuthStore', () => {
 
     useAuthStore.getState().setUser(mockUser);
     expect(useAuthStore.getState().user).toEqual(mockUser);
-    expect(trackerMock.identifyUser).toHaveBeenCalledWith(mockUser);
+    expect(trackerMock.refreshUserAttributes).toHaveBeenCalledWith(mockUser);
 
     useAuthStore.getState().setUser(null);
     expect(useAuthStore.getState().user).toBeNull();
@@ -134,7 +135,33 @@ describe('useAuthStore', () => {
   it('does not send user_login when setUser only refreshes the profile', () => {
     useAuthStore.getState().setUser({ id: 'user-6', name: 'Anar', email: 'anar@example.com' });
 
-    expect(trackerMock.identifyUser).toHaveBeenCalled();
+    expect(trackerMock.refreshUserAttributes).toHaveBeenCalled();
     expect(trackerMock.trackUserLogin).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Regresyon: profil güncellemesi `identifyUser` çağırdığı için yeni e-posta cihazdan
+   * doğrudan Insider'a gidiyordu. Bu çağrı, backend'in Update Identifiers isteği kuyrukta
+   * beklerken Insider'a önce ulaşıp ikinci bir profil açtırıyordu; kimliği artık yalnızca
+   * backend değiştirir.
+   */
+  it('does not push the new identifier to Insider when the profile e-mail changes', async () => {
+    await useAuthStore.getState().login('test-token-xyz', {
+      id: 'user-7',
+      name: 'Anar',
+      email: 'eski@example.com',
+      phoneNumber: '5551234567',
+    });
+    jest.clearAllMocks();
+
+    useAuthStore.getState().setUser({
+      id: 'user-7',
+      name: 'Anar',
+      email: 'yeni@example.com',
+      phoneNumber: '5559876543',
+    });
+
+    expect(trackerMock.identifyUser).not.toHaveBeenCalled();
+    expect(trackerMock.refreshUserAttributes).toHaveBeenCalledTimes(1);
   });
 });

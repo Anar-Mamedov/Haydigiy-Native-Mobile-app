@@ -12,7 +12,7 @@ yalnızca Insider kuruluydu. Bu doküman mobil tarafta **ne yapıldığını** v
 | HaydiGiy kendi collector'ı | `src/lib/analytics.ts` → `/analytics/events/batch` | ✅ Tam — bu doküman |
 | Google Analytics 4 (`G-ED6DZ66SH6`) | `layout.tsx` + `src/lib/ga4.ts` | ✅ Kod tamam — env değerleri bekliyor |
 | Meta Pixel (`246021789341141`) | `components/analytics/FacebookPixel.tsx` (yalnızca `PageView`) | ✅ Kod tamam — env değerleri bekliyor |
-| TikTok Pixel (`DALPV53C77UES97571VG`) | `components/analytics/TikTokPixel.tsx` (yalnızca `Pageview`) | ✅ Kod tamam — env değerleri bekliyor |
+| TikTok Pixel (`DAMGINJC77U9262DST40`) | `components/analytics/TikTokPixel.tsx` (yalnızca `Pageview`) | ✅ Kod tamam — env değerleri bekliyor |
 | Google Ads (`AW-816642529`) | `GoogleAds.tsx` + `GoogleAdsConversion.tsx` (Ads'e **doğrudan** dönüşüm) | ⚠️ Karar gerektirir — bkz. adım 7, naif import web'i iki kez saydırır |
 | Google Tag Manager (`GTM-NZ79DJB`) | `layout.tsx` | ❌ Mobilde karşılığı yok — GTM tarayıcı DOM'una bağlıdır |
 
@@ -372,7 +372,7 @@ yoksa event'ler sonsuza kadar yalnızca test ekranında kalır.
 **Site:** [ads.tiktok.com](https://ads.tiktok.com) → **Araçlar** (Tools) →
 **Events** (Etkinlikler) → **Web Events**
 
-1. Pixel listesinden **`DALPV53C77UES97571VG`** kodlu pixel'i seçin
+1. Pixel listesinden **`DAMGINJC77U9262DST40`** kodlu pixel'i seçin
    (web'in `TikTokPixel.tsx` içinde yüklediği pixel'in ta kendisi)
 2. **Settings** (Ayarlar) sekmesi
 3. **Events API** bölümü → **Generate Access Token**
@@ -405,7 +405,7 @@ GA4_API_SECRET=<adım 1'den>
 META_PIXEL_ID=246021789341141
 META_CAPI_ACCESS_TOKEN=<adım 2'den>
 META_CAPI_TEST_EVENT_CODE=<adım 2'den, canlıya geçince silinecek>
-TIKTOK_PIXEL_CODE=DALPV53C77UES97571VG
+TIKTOK_PIXEL_CODE=DAMGINJC77U9262DST40
 TIKTOK_EVENTS_ACCESS_TOKEN=<adım 3'ten>
 TIKTOK_EVENTS_TEST_CODE=<adım 3'ten, canlıya geçince silinecek>
 ```
