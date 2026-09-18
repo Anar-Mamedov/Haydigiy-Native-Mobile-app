@@ -4,8 +4,24 @@ import { CargoCompany } from '@/types/checkout.types';
 import { CheckoutCargoSection } from './checkout-cargo-section';
 
 const companies: CargoCompany[] = [
-  { id: 1, name: 'Hepsijet', logo: '', price: 119.99, sortOrder: 1 },
-  { id: 2, name: 'Aras Kargo', logo: '', price: 124.99, sortOrder: 2 },
+  {
+    id: 1,
+    name: 'Hepsijet',
+    logo: '',
+    price: 119.99,
+    sortOrder: 1,
+    toCityDistrict: null,
+    toVillageRural: null,
+  },
+  {
+    id: 2,
+    name: 'Aras Kargo',
+    logo: '',
+    price: 124.99,
+    sortOrder: 2,
+    toCityDistrict: null,
+    toVillageRural: null,
+  },
 ];
 
 describe('CheckoutCargoSection', () => {
@@ -42,6 +58,46 @@ describe('CheckoutCargoSection', () => {
     fireEvent.press(screen.getByLabelText('Aras Kargo'));
 
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  describe('teslimat kapsamı rozetleri', () => {
+    function renderCoverage(coverage: Partial<CargoCompany>) {
+      return renderWithTamagui(
+        <CheckoutCargoSection
+          companies={[{ ...companies[0], ...coverage }]}
+          hasFreeShipping={false}
+          isLoading={false}
+          onSelect={jest.fn()}
+          selectedId={1}
+        />,
+      );
+    }
+
+    it('shows nothing while the backend has no coverage answer', () => {
+      renderCoverage({});
+
+      expect(screen.queryByText(/merkezlerine/)).toBeNull();
+      expect(screen.queryByText(/Köylere/)).toBeNull();
+    });
+
+    it('renders the affirmative and negative labels together', () => {
+      renderCoverage({ toCityDistrict: true, toVillageRural: false });
+
+      expect(screen.getByText('İl ve ilçe merkezlerine gider')).toBeTruthy();
+      expect(screen.getByText('Köylere ve kırsal bölgelere gitmez')).toBeTruthy();
+    });
+
+    // The row is a single pressable, so the badges only reach assistive tech
+    // through the row's own label.
+    it('announces the coverage through the row label', () => {
+      renderCoverage({ toCityDistrict: true, toVillageRural: true });
+
+      expect(
+        screen.getByLabelText(
+          'Hepsijet. İl ve ilçe merkezlerine gider. Köylere ve kırsal bölgelere de gider',
+        ),
+      ).toBeTruthy();
+    });
   });
 
   describe('ücretsiz kargo sayacı', () => {

@@ -4,6 +4,8 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { CampaignCountdownText } from '@/features/cart/components/campaign-countdown';
 import { CheckoutSection } from './checkout-section';
 import { CheckoutOptionRow } from './checkout-option-row';
+import { CheckoutCargoCoverage } from './checkout-cargo-coverage';
+import { buildCargoAccessibilityLabel, getCargoCoverageItems } from '../utils/cargo-coverage';
 import { resolveCdnUrl } from '@/utils/cdn';
 import { formatCurrency } from '@/utils/format-currency';
 import { CargoCompany } from '@/types/checkout.types';
@@ -55,11 +57,12 @@ export function CheckoutCargoSection({
       ) : (
         companies.map((company, index) => {
           const logo = resolveCdnUrl(company.logo);
+          const coverage = getCargoCoverageItems(company);
           return (
             <YStack key={company.id}>
               {index > 0 ? <Separator borderColor="$borderColor" /> : null}
               <CheckoutOptionRow
-                accessibilityLabel={company.name}
+                accessibilityLabel={buildCargoAccessibilityLabel(company)}
                 disabled={disabled}
                 onPress={() => onSelect(company)}
                 right={
@@ -93,9 +96,12 @@ export function CheckoutCargoSection({
                     style={{ width: 36, height: 36, borderRadius: 6 }}
                   />
                 ) : null}
-                <Paragraph color="$color" flex={1} fontSize={14} fontWeight="600">
-                  {company.name}
-                </Paragraph>
+                <YStack flex={1}>
+                  <Paragraph color="$color" fontSize={14} fontWeight="600">
+                    {company.name}
+                  </Paragraph>
+                  <CheckoutCargoCoverage items={coverage} />
+                </YStack>
               </CheckoutOptionRow>
             </YStack>
           );

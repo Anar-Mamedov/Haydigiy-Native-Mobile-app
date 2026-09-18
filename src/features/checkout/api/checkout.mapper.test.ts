@@ -54,9 +54,35 @@ describe('mapPaymentMethod', () => {
 });
 
 describe('mapCargoCompany', () => {
+  const baseDto = { id: 3, name: 'Aras', logo: 'x.png', price: '49,90', sort_order: 1 };
+
   it('parses the Turkish-formatted price string', () => {
-    const cargo = mapCargoCompany({ id: 3, name: 'Aras', logo: 'x.png', price: '49,90', sort_order: 1 });
+    const cargo = mapCargoCompany(baseDto);
     expect(cargo.price).toBeCloseTo(49.9);
+  });
+
+  // `null` (no answer yet) must not collapse into `false` (explicitly not served).
+  it('keeps missing coverage flags null', () => {
+    const cargo = mapCargoCompany({ ...baseDto, to_city_district: null });
+    expect(cargo.toCityDistrict).toBeNull();
+    expect(cargo.toVillageRural).toBeNull();
+  });
+
+  it('maps explicit coverage flags', () => {
+    const cargo = mapCargoCompany({ ...baseDto, to_city_district: true, to_village_rural: false });
+    expect(cargo.toCityDistrict).toBe(true);
+    expect(cargo.toVillageRural).toBe(false);
+  });
+
+  // Laravel sends 1/0 when the column is not cast to a boolean.
+  it('normalises numeric coverage flags', () => {
+    const cargo = mapCargoCompany({
+      ...baseDto,
+      to_city_district: 1 as unknown as boolean,
+      to_village_rural: 0 as unknown as boolean,
+    });
+    expect(cargo.toCityDistrict).toBe(true);
+    expect(cargo.toVillageRural).toBe(false);
   });
 });
 

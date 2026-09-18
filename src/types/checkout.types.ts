@@ -27,6 +27,10 @@ export type CargoCompany = {
   /** Parsed numeric price (the backend returns it as a string). */
   price: number;
   sortOrder: number;
+  /** Delivers to city/district centers; `null` means unknown and is not shown at all. */
+  toCityDistrict: boolean | null;
+  /** Delivers to villages/rural areas; `null` means unknown and is not shown at all. */
+  toVillageRural: boolean | null;
 };
 
 /** A single installment plan row from the İyzico BIN/installment rate lookup. */

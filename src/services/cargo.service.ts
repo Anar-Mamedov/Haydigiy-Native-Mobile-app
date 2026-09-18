@@ -8,6 +8,10 @@ export interface CargoCompanyDto {
   logo: string;
   price: string;
   sort_order: number;
+  /** Delivers to city/district centers. `null` when the backend has no answer yet. */
+  to_city_district?: boolean | null;
+  /** Delivers to villages/rural areas. `null` when the backend has no answer yet. */
+  to_village_rural?: boolean | null;
 }
 
 interface CargoCompaniesResponseDto {

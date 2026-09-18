@@ -1,8 +1,8 @@
-# Analytics entegrasyonu (GA4 + Meta Pixel + kendi collector'ımız)
+# Analytics entegrasyonu (GA4 + Meta Pixel + TikTok Pixel + kendi collector'ımız)
 
-Web (`frontend`) tarafında beş ayrı ölçüm hattı var; mobil uygulamada bunlardan
+Web (`frontend`) tarafında yedi ayrı ölçüm hattı var; mobil uygulamada bunlardan
 yalnızca Insider kuruluydu. Bu doküman mobil tarafta **ne yapıldığını** ve
-**GA4/Meta'yı canlıya almak için kalan tek adımı** anlatır.
+**GA4/Meta/TikTok'u canlıya almak için kalan adımları** anlatır.
 
 ## Web ↔ mobil durum tablosu
 
@@ -12,26 +12,28 @@ yalnızca Insider kuruluydu. Bu doküman mobil tarafta **ne yapıldığını** v
 | HaydiGiy kendi collector'ı | `src/lib/analytics.ts` → `/analytics/events/batch` | ✅ Tam — bu doküman |
 | Google Analytics 4 (`G-ED6DZ66SH6`) | `layout.tsx` + `src/lib/ga4.ts` | ✅ Kod tamam — env değerleri bekliyor |
 | Meta Pixel (`246021789341141`) | `components/analytics/FacebookPixel.tsx` (yalnızca `PageView`) | ✅ Kod tamam — env değerleri bekliyor |
-| Google Ads (`AW-816642529`) | `GoogleAds.tsx` + `GoogleAdsConversion.tsx` (Ads'e **doğrudan** dönüşüm) | ⚠️ Karar gerektirir — bkz. adım 6, naif import web'i iki kez saydırır |
+| TikTok Pixel (`DALPV53C77UES97571VG`) | `components/analytics/TikTokPixel.tsx` (yalnızca `Pageview`) | ✅ Kod tamam — env değerleri bekliyor |
+| Google Ads (`AW-816642529`) | `GoogleAds.tsx` + `GoogleAdsConversion.tsx` (Ads'e **doğrudan** dönüşüm) | ⚠️ Karar gerektirir — bkz. adım 7, naif import web'i iki kez saydırır |
 | Google Tag Manager (`GTM-NZ79DJB`) | `layout.tsx` | ❌ Mobilde karşılığı yok — GTM tarayıcı DOM'una bağlıdır |
 
 ## Neden web'in kodu native'de çalışmaz
 
-`gtag.js` ve `fbevents.js` `window`/DOM gerektirir; React Native'de ikisi de
-yoktur. Native'de üç seçenek var:
+`gtag.js`, `fbevents.js` ve TikTok'un `events.js`'i `window`/DOM gerektirir;
+React Native'de ikisi de yoktur (TikTok base kodu `document.createElement`
+çağırır, native'de hiç yüklenmez). Native'de üç seçenek var:
 
-1. **Native SDK** (Firebase Analytics + Meta SDK) — GA4 tarafında **ayrı bir app
-   data stream** açar, yani web ile aynı raporda birleşmez. Ayrıca iOS için
+1. **Native SDK** (Firebase Analytics + Meta SDK + TikTok SDK) — GA4 tarafında
+   **ayrı bir app data stream** açar, yani web ile aynı raporda birleşmez. Ayrıca iOS için
    `GoogleService-Info.plist` ve Meta App ID + Client Token gerektirir; ikisi de
    projede yok. Bu proje Firebase'i ürün olarak kullanmıyor (repodaki
    `google-services.json` yalnızca Insider push'unun FCM taşıyıcısı içindir).
-2. **Sunucu tarafı HTTPS** — GA4 Measurement Protocol ve Meta Conversions API,
-   web'in kullandığı **aynı** `measurement_id` ve **aynı** Pixel ID'yi kabul
-   eder. Mobil event'ler web ile aynı property/pixel'e düşer.
-3. **İstemciden doğrudan HTTPS** — GA4 `api_secret` ve Meta CAPI access token'ı
-   uygulama paketine gömmek gerekir. **Yapılmadı ve yapılmamalı:** APK/IPA açılıp
-   token okunabilir; o token'la üçüncü bir taraf pixel'e sahte dönüşüm basıp
-   reklam optimizasyonunu bozabilir.
+2. **Sunucu tarafı HTTPS** — GA4 Measurement Protocol, Meta Conversions API ve
+   TikTok Events API, web'in kullandığı **aynı** `measurement_id` ve **aynı**
+   pixel'leri kabul eder. Mobil event'ler web ile aynı property/pixel'e düşer.
+3. **İstemciden doğrudan HTTPS** — GA4 `api_secret`, Meta CAPI ve TikTok Events
+   API access token'larını uygulama paketine gömmek gerekir. **Yapılmadı ve
+   yapılmamalı:** APK/IPA açılıp token okunabilir; o token'la üçüncü bir taraf
+   pixel'e sahte dönüşüm basıp reklam optimizasyonunu bozabilir.
 
 Seçilen yol **2**: mobil uygulama sırsız olarak kendi API'mize yazar, dağıtımı
 backend yapar.
@@ -41,7 +43,8 @@ Mobil uygulama ──(sır yok, public uç)──> /api/analytics/events/batch
                                                 │
                                                 ├──> ClickHouse (mevcut davranış)
                                                 ├──> GA4 Measurement Protocol
-                                                └──> Meta Conversions API
+                                                ├──> Meta Conversions API
+                                                └──> TikTok Events API
 ```
 
 ## Mobil taraftaki mimari
@@ -89,24 +92,24 @@ Hangi sağlayıcının hangi alanı hangi isimle beklediği sink'lerin içindedi
 Event adları web `src/lib/analytics.ts` ile birebir aynı tutulmuştur; mobil ve
 web aynı ClickHouse tablosunda tek raporla okunabilir.
 
-| Domain event | Collector `event_name` | Tetik noktası | GA4 karşılığı | Meta karşılığı |
-| --- | --- | --- | --- | --- |
-| `screen_viewed` | `page_viewed` | Her rota değişimi (`use-analytics-screen-tracking`) | `page_view` | `PageView` |
-| `product_viewed` | `product_viewed` | `use-product-detail-controller` — ürün başına bir kez | `view_item` | `ViewContent` |
-| `category_viewed` | `category_viewed` | `product-list-screen` — arama sonuçları hariç | — | — |
-| `search_performed` | `search_performed` | `product-list-screen` — sonuç sayısı gelince | — | `Search` |
-| `filter_applied` | `filter_applied` | (sözleşme hazır, çağrı yeri henüz bağlanmadı) | — | — |
-| `add_to_cart` | `add_to_cart` | `useAddToCartMutation` + `useAddBundleToCartMutation` başarısı | `add_to_cart` | `AddToCart` |
-| `remove_from_cart` | `remove_from_cart` | `useRemoveCartItemMutation` / `useRemoveBundleMutation` başarısı | — | — |
-| `cart_cleared` | `cart_cleared` | `useClearCartMutation` başarısı + son satırın silinmesi | — | — |
-| `add_to_wishlist` | `add_to_wishlist` | `useAddFavoriteMutation` başarısı | `add_to_wishlist` | `AddToWishlist` |
-| `remove_from_wishlist` | `remove_from_wishlist` | `useRemoveFavoriteMutation` başarısı | — | — |
-| `checkout_started` | `checkout_started` | `checkout-screen` dolu sepetle açılınca bir kez | `begin_checkout` | `InitiateCheckout` |
-| `payment_result` | `payment_result` | Başarı ekranı + `payment-failed-screen` (`success` / `failed` / `pending`) | — | — |
-| `purchase_completed` | `purchase_completed` | `use-payment-success` — Kapıda Ödeme, Garanti 3D, İyzico 3DS | `purchase` | `Purchase` |
-| `user_signed_up` | `user_signed_up` | `otp-verification` — yeni hesap | `sign_up` | `CompleteRegistration` |
-| `user_logged_in` | `user_logged_in` | `useAuthStore.login` | `login` | — |
-| `user_logged_out` | `user_logged_out` | `useAuthStore.logout` + süresi dolan oturum | — | — |
+| Domain event | Collector `event_name` | Tetik noktası | GA4 karşılığı | Meta karşılığı | TikTok karşılığı |
+| --- | --- | --- | --- | --- | --- |
+| `screen_viewed` | `page_viewed` | Her rota değişimi (`use-analytics-screen-tracking`) | `page_view` | `PageView` | `Pageview` |
+| `product_viewed` | `product_viewed` | `use-product-detail-controller` — ürün başına bir kez | `view_item` | `ViewContent` | `ViewContent` |
+| `category_viewed` | `category_viewed` | `product-list-screen` — arama sonuçları hariç | — | — | — |
+| `search_performed` | `search_performed` | `product-list-screen` — sonuç sayısı gelince | — | `Search` | `Search` |
+| `filter_applied` | `filter_applied` | (sözleşme hazır, çağrı yeri henüz bağlanmadı) | — | — | — |
+| `add_to_cart` | `add_to_cart` | `useAddToCartMutation` + `useAddBundleToCartMutation` başarısı | `add_to_cart` | `AddToCart` | `AddToCart` |
+| `remove_from_cart` | `remove_from_cart` | `useRemoveCartItemMutation` / `useRemoveBundleMutation` başarısı | — | — | — |
+| `cart_cleared` | `cart_cleared` | `useClearCartMutation` başarısı + son satırın silinmesi | — | — | — |
+| `add_to_wishlist` | `add_to_wishlist` | `useAddFavoriteMutation` başarısı | `add_to_wishlist` | `AddToWishlist` | `AddToWishlist` |
+| `remove_from_wishlist` | `remove_from_wishlist` | `useRemoveFavoriteMutation` başarısı | — | — | — |
+| `checkout_started` | `checkout_started` | `checkout-screen` dolu sepetle açılınca bir kez | `begin_checkout` | `InitiateCheckout` | `InitiateCheckout` |
+| `payment_result` | `payment_result` | Başarı ekranı + `payment-failed-screen` (`success` / `failed` / `pending`) | — | — | — |
+| `purchase_completed` | `purchase_completed` | `use-payment-success` — Kapıda Ödeme, Garanti 3D, İyzico 3DS | `purchase` | `Purchase` | `CompletePayment` |
+| `user_signed_up` | `user_signed_up` | `otp-verification` — yeni hesap | `sign_up` | `CompleteRegistration` | `CompleteRegistration` |
+| `user_logged_in` | `user_logged_in` | `useAuthStore.login` | `login` | — | — |
+| `user_logged_out` | `user_logged_out` | `useAuthStore.logout` + süresi dolan oturum | — | — | — |
 
 ### Web'den bilinçli olarak taşınmayanlar
 
@@ -135,31 +138,50 @@ istenmesi hâlinde bu, web tarafında ayrı bir iş kalemidir.
 
 ```text
 backend/
-  config/analytics.php                              # GA4 + Meta ayarları
+  config/analytics.php                              # GA4 + Meta + TikTok ayarları
   app/Services/Analytics/
     AnalyticsForwarder.php                          # Tek giriş noktası: neyi kime göndereceğine karar verir
     AnalyticsEventMap.php                           # Event sözlüğü + uygulama trafiği tespiti
+
+    # ── Sağlayıcı-bağımsız ortak katman ──
+    AnalyticsEventId.php                            # Deterministik mükerrerlik anahtarı
+    AnalyticsCommercePayloadFactory.php             # Event → tutar/ürün özeti (saf)
+    AnalyticsCommercePayload.php                    # Özetin değer nesnesi
+    AnalyticsCommerceLine.php                       # Tek ürün satırının değer nesnesi
+    AnalyticsIdentityNormalizer.php                 # E-posta/telefon normalizasyonu + SHA-256
+    AnalyticsUserIdentityResolver.php               # user_id → ham kimlik (tek DB okuması)
+    AnalyticsUserIdentity.php                       # Ham kimliğin değer nesnesi
+
+    # ── GA4 ──
     Ga4EventBuilder.php                             # Event → GA4 MP gövdesi (saf)
     Ga4MeasurementProtocolClient.php                # HTTP + ziyaretçi bazlı gruplama
+
+    # ── Meta ──
     MetaEventBuilder.php                            # Event → Meta CAPI girdisi (saf)
     MetaConversionsApiClient.php                    # HTTP + test_event_code
-    MetaUserDataResolver.php                        # user_id → SHA-256'lı e-posta/telefon
+    MetaUserDataResolver.php                        # Kimlik → Meta biçimi (em/ph, rakam telefon)
+
+    # ── TikTok ──
+    TikTokEventBuilder.php                          # Event → TikTok Events API girdisi (saf)
+    TikTokEventsApiClient.php                       # HTTP + Access-Token + gövdedeki `code` kontrolü
+    TikTokUserDataResolver.php                      # Kimlik → TikTok biçimi (E.164 telefon)
   app/Jobs/
     ForwardAnalyticsToGa4Job.php
     ForwardAnalyticsToMetaJob.php
+    ForwardAnalyticsToTikTokJob.php
 ```
 
 ### Hedef başına ayrı iş — neden
 
-GA4'ün Meta'daki `event_id` gibi bir mükerrerlik koruması **yok**. İki hedef tek
-işte olsaydı, GA4 başarılı olup Meta patladığında yeniden deneme GA4'e aynı
-event'i ikinci kez gönderirdi. Ayrı işler bağımsız retry alır.
+GA4'ün Meta/TikTok'taki `event_id` gibi bir mükerrerlik koruması **yok**. Üç
+hedef tek işte olsaydı, GA4 başarılı olup Meta patladığında yeniden deneme
+GA4'e aynı event'i ikinci kez gönderirdi. Ayrı işler bağımsız retry alır.
 
 ### Çift sayım koruması — en kritik nokta
 
-Web tarayıcısı `gtag.js` ve `fbevents.js` ile event'ini **kendisi** gönderiyor
-ve **aynı zamanda** `/analytics/events/batch`'e de yazıyor. Backend her iki
-kaynağı iletseydi her web dönüşümü iki kez sayılırdı.
+Web tarayıcısı `gtag.js`, `fbevents.js` ve TikTok `events.js` ile event'ini
+**kendisi** gönderiyor ve **aynı zamanda** `/analytics/events/batch`'e de
+yazıyor. Backend her iki kaynağı iletseydi her web dönüşümü iki kez sayılırdı.
 
 Ayrım `browser` alanından yapılır: uygulama `"HaydiGiy App <sürüm>"`, web ise
 tarayıcı adını (`Chrome`, `Safari`, …) gönderir. `AnalyticsEventMap::isAppEvent`
@@ -172,9 +194,12 @@ yalnızca ilkini geçirir.
 ### Eşlenmeyen event'ler
 
 `cart_cleared`, `remove_from_wishlist`, `payment_result`, `user_logged_out` ve
-`filter_applied` GA4/Meta'ya **gitmez** — standart sözlüklerinde karşılıkları
-yok, custom event olarak gönderilseler kitle/optimizasyon tarafında işe
-yaramazlar. Bu event'ler kendi collector'ınızda (ClickHouse) durmaya devam eder.
+`filter_applied` GA4/Meta/TikTok'a **gitmez** — standart sözlüklerinde
+karşılıkları yok, custom event olarak gönderilseler kitle/optimizasyon
+tarafında işe yaramazlar. `category_viewed` GA4'te `view_item_list` olarak
+karşılanır ama Meta ve TikTok sözlüklerinde liste görüntülemenin karşılığı
+olmadığı için oralara gitmez. Bu event'ler kendi collector'ınızda (ClickHouse)
+durmaya devam eder.
 
 ### GA4 tarafındaki incelikler
 
@@ -200,6 +225,31 @@ yaramazlar. Bu event'ler kendi collector'ınızda (ClickHouse) durmaya devam ede
   yeniden denemesi mükerrer dönüşüm üretmez.
 - 4xx yeniden denenmez (geçersiz token/şema), 5xx denenir.
 
+### TikTok tarafındaki incelikler
+
+- **Kaynak türü `web`.** TikTok'ta `event_source: "app"` bir **TikTok App ID**
+  ister; o da ancak TikTok SDK'sı veya bir MMP kurulunca oluşur. Bizde SDK yok,
+  bu yüzden uygulama event'leri web'in kullandığı **pixel koduna** (`event_source_id`)
+  yazılır — Meta'da uygulama event'lerinin web Pixel ID'sine yazılmasıyla aynı karar.
+- **Hata HTTP 200 içinde gelir.** TikTok şema/kimlik hatalarını `200 OK` gövdesinde
+  `{"code": 40002, "message": "..."}` olarak bildirir. Yalnızca HTTP durumuna
+  bakılsaydı reddedilen event'ler sessizce kaybolurdu; istemci gövdedeki `code`
+  alanını da kontrol eder, `5xxxx` ailesini geçici sayıp yeniden denemeye bırakır.
+- **Telefon biçimi Meta'dan farklı.** Meta yalnızca rakam (`905321234567`),
+  TikTok E.164 (`+905321234567`) ister. Aynı numara iki sağlayıcıya **farklı
+  hash** olarak gider; ortak `AnalyticsIdentityNormalizer` rakam gövdesini bir kez
+  üretir, biçimi her sağlayıcı kendi çözücüsünde uygular.
+- **Satın alma `CompletePayment`.** TikTok kampanya optimizasyonu dönüşümü bu
+  event üzerinden okur. `PlaceAnOrder` ödemesi henüz alınmamış sipariş demektir;
+  bizim akışımızda ödeme onaylanmadan event üretilmediği için kullanılmaz.
+- **`page` nesnesi gönderilmez.** TikTok web adresi bekler; uygulamanın ekran yolu
+  (`/sepet`) geçerli bir URL değildir ve uydurulmuş adres gönderilmez.
+- **Misafirde `ttclid`/`ttp` yok.** İkisi de tarayıcı çerezinden/URL'den okunur,
+  uygulamada karşılığı yoktur. Eşleşme oturum açmış kullanıcıda hash'li
+  e-posta/telefon ile iyi, misafirde `external_id` + IP ile zayıftır.
+- `event_id` Meta ile **aynı** kuraldan türer (`AnalyticsEventId`), böylece iki
+  sağlayıcı aynı event için aynı mükerrerlik kararını verir.
+
 ## Testler
 
 `src/features/analytics` altında 9 suite / 128 test:
@@ -212,21 +262,23 @@ yaramazlar. Bu event'ler kendi collector'ınızda (ClickHouse) durmaya devam ede
 - `use-analytics-commerce-tracking.test.ts` — tek event garantileri
 - `analytics-product.mapper.test.ts` / `analytics-identity.test.ts` / `analytics-device.test.ts`
 
-Backend'de 84 test (`backend/tests/.../Analytics`):
+Backend'de 132 test (`backend/tests/.../Analytics`):
 
 - `AnalyticsEventMapTest` — uygulama/web ayrımı (çift sayım koruması), event sözlüğü
 - `Ga4EventBuilderTest` — `client_id` kararlılığı, oturum parametreleri, `transaction_id`, satır toplamı
 - `MetaEventBuilderTest` — `action_source: app`, `external_id` garantisi, `event_id` kararlılığı, ham PII sızmadığı
 - `MetaUserDataResolverTest` — e-posta/telefon normalizasyonu ve hash
+- `TikTokEventBuilderTest` — TikTok alan adları (`content_id`/`price`/`query`), `CompletePayment` eşlemesi, `external_id` garantisi, ham PII sızmadığı
+- `TikTokUserDataResolverTest` — E.164 telefon biçimi ve Meta'dan farklı olduğu
 - `AnalyticsForwarderTest` — hangi durumda hangi işin kuyruğa gireceği
-- `AnalyticsHttpClientsTest` — istek URL'leri, ziyaretçi gruplama, 25 event sınırı, test kodu, 4xx/5xx davranışı
+- `AnalyticsHttpClientsTest` — istek URL'leri, ziyaretçi gruplama, 25 event sınırı, test kodu, 4xx/5xx davranışı, TikTok'un HTTP 200 içindeki hata kodu
 
 ---
 
 # Sizin yapacaklarınız (adım adım)
 
-Mobil taraf bitti, sizden bir şey gerekmiyor. Aşağıdakiler GA4 + Meta'yı canlıya
-almak için kalan işler. **Sıra önemli:** 1 ve 2 olmadan 4 çalışmaz.
+Mobil taraf bitti, sizden bir şey gerekmiyor. Aşağıdakiler GA4 + Meta + TikTok'u
+canlıya almak için kalan işler. **Sıra önemli:** 1, 2 ve 3 olmadan 5 çalışmaz.
 
 ## 1. GA4 API secret oluştur — 2 dakika
 
@@ -253,7 +305,7 @@ listede kalıcı durur, sonra da kopyalayabilirsiniz.
 > zorunlu kılıyor. Firebase kullanmadığımız için uygulama event'leri **web
 > stream'ine** düşecek, yani GA4 raporunda platform "web" görünecek. Ayırt etmek
 > için event'lere `app_platform` (`ios` / `android`) parametresi göndereceğiz;
-> adım 5'te bunu custom dimension olarak tanımlıyorsunuz.
+> adım 6'da bunu custom dimension olarak tanımlıyorsunuz.
 >
 > Mobil tarafta ek bir iş yok: uygulama zaten `os: "iOS 18.2"` ve
 > `browser: "HaydiGiy App 2.3.24"` alanlarını gönderiyor, backend `app_platform`
@@ -308,7 +360,42 @@ bölümündeki `TEST#####` kodunu kopyalayın.
 **Nereye:** `META_CAPI_TEST_EVENT_CODE=TEST#####` — doğrulama bitince **boşaltın**,
 yoksa event'ler sonsuza kadar yalnızca test ekranında kalır.
 
-## 3. Backend env değerlerini gir — 1 dakika
+## 3. TikTok Events API token'ı oluştur — 3 dakika
+
+> Bu boş olduğu sürece TikTok'a hiçbir event gitmez ve hata da alınmaz
+> (`isConfigured()` false → iş kuyruğa hiç girmez).
+
+> **Mobil uygulamada kod değişikliği yok.** Uygulama zaten bütün event'lerini
+> `/analytics/events/batch`'e yazıyor; TikTok yalnızca backend'in dağıttığı
+> üçüncü hedef olarak eklendi. Yeni bir uygulama sürümü/store yayını gerekmez.
+
+**Site:** [ads.tiktok.com](https://ads.tiktok.com) → **Araçlar** (Tools) →
+**Events** (Etkinlikler) → **Web Events**
+
+1. Pixel listesinden **`DALPV53C77UES97571VG`** kodlu pixel'i seçin
+   (web'in `TikTokPixel.tsx` içinde yüklediği pixel'in ta kendisi)
+2. **Settings** (Ayarlar) sekmesi
+3. **Events API** bölümü → **Generate Access Token**
+4. Çıkan token'ı kopyalayın — ekranı kapatınca bir daha gösterilmez
+
+**Gereken yetki:** TikTok Ads Manager'da ilgili reklam hesabı üzerinde **Admin**
+veya **Operator**.
+
+### 3a. Test Events kodunu al (doğrulama için)
+
+Aynı ekranda **Test Events** sekmesi → `TEST#####` benzeri kodu kopyalayın.
+
+**Nereye:** `TIKTOK_EVENTS_TEST_CODE=TEST#####` — doğrulama bitince **boşaltın**,
+yoksa event'ler sonsuza kadar yalnızca test ekranında kalır.
+
+> **Uygulama event'leri neden web pixel'ine yazılıyor?** TikTok'ta ayrı bir "app"
+> kaynağı açmak **TikTok App ID** ister; o da ancak TikTok SDK'sı veya bir MMP
+> (AppsFlyer/Adjust) kurulunca oluşur. Bizde ikisi de yok. Bu yüzden uygulama
+> event'leri web'in pixel'ine düşer ve web ile tek raporda birleşir — Meta'da
+> uygulama event'lerinin web Pixel ID'sine yazılmasıyla aynı karar. Sonucu:
+> **dönüşüm ve retargeting sinyali alırsınız, install attribution almazsınız.**
+
+## 4. Backend env değerlerini gir — 1 dakika
 
 `backend/.env` içine (mobil `.env`'e **değil**):
 
@@ -318,13 +405,16 @@ GA4_API_SECRET=<adım 1'den>
 META_PIXEL_ID=246021789341141
 META_CAPI_ACCESS_TOKEN=<adım 2'den>
 META_CAPI_TEST_EVENT_CODE=<adım 2'den, canlıya geçince silinecek>
+TIKTOK_PIXEL_CODE=DALPV53C77UES97571VG
+TIKTOK_EVENTS_ACCESS_TOKEN=<adım 3'ten>
+TIKTOK_EVENTS_TEST_CODE=<adım 3'ten, canlıya geçince silinecek>
 ```
 
-## 4. Backend'i deploy et
+## 5. Backend'i deploy et
 
 Kod yazıldı (yukarıdaki "Backend dağıtımı" bölümü). Sizin yapacağınız:
 
-`backend/.env`'e adım 3'teki değerleri girdikten sonra sunucuda **üç komut** —
+`backend/.env`'e adım 4'teki değerleri girdikten sonra sunucuda **üç komut** —
 sadece `config:clear` yetmez:
 
 ```bash
@@ -351,7 +441,7 @@ Mevcut `LogProductSearchJob` da `default` kullandığı için muhtemelen dinleni
 `ANALYTICS_FORWARDING_ENABLED=false` acil durum şalteridir: kod deploy edilmiş
 olsa bile dağıtımı tümden durdurur.
 
-## 5. GA4'te custom dimension tanımla — 2 dakika
+## 6. GA4'te custom dimension tanımla — 2 dakika
 
 Uygulama trafiğini web'den ayırabilmek için:
 
@@ -367,7 +457,7 @@ Uygulama trafiğini web'den ayırabilmek için:
 > Custom dimension geçmişe dönük çalışmaz; veri toplanmaya başladıktan sonraki
 > günleri raporlar.
 
-## 6. Google Ads — ⚠️ ACELE ETMEYİN, karar gerektirir
+## 7. Google Ads — ⚠️ ACELE ETMEYİN, karar gerektirir
 
 Bu adım mekanik değil; yanlış yapılırsa **Google Ads raporunuzu bozar.**
 
@@ -419,13 +509,14 @@ duymuyor.
 Bakmak bir şey değiştirmez; **Bağla**'ya basmak da tek başına dönüşüm
 saydırmaz (import ayrı adımdır). Riskli olan Ads tarafındaki import'tur.
 
-## 7. Doğrulama — canlıya almadan önce
+## 8. Doğrulama — canlıya almadan önce
 
 | Ne kontrol edilecek | Nerede |
 | --- | --- |
 | Kendi collector'ınıza event düşüyor mu | ClickHouse: `browser = 'HaydiGiy App 2.3.24'` olan satırlar |
 | GA4'e event düşüyor mu | GA4 → **Reports** → **Realtime** (30 sn içinde görünür) |
 | Meta'ya event düşüyor mu | Events Manager → Pixel → **Test Events** sekmesi |
+| TikTok'a event düşüyor mu | TikTok Events Manager → Pixel → **Test Events** sekmesi |
 | Google Ads dönüşümü | Ads → Conversions → durum "Recording conversions" olmalı |
 
 ### ⚠️ Test ederken en sık düşülen tuzak
@@ -437,7 +528,7 @@ veri görmezsiniz ve entegrasyonun bozuk olduğunu düşünürsünüz.
 Uygulamayı daha önce açıp reddettiyseniz: uygulamayı silip yeniden kurun ya da
 Profil → Çerez Tercihleri'nden izni açın.
 
-## 8. Uygulamayı native'de gözden geçir
+## 9. Uygulamayı native'de gözden geçir
 
 Kod dokunduğu için şu üç akışı iOS/Android'de bir kez deneyin — ölçüm değil,
 **akış bozulmadı mı** diye:
@@ -450,7 +541,9 @@ Kod dokunduğu için şu üç akışı iOS/Android'de bir kez deneyin — ölç�
 
 1. **Install attribution ve deferred deep link yok.** Sunucu taraflı ölçüm
    dönüşüm ve retargeting verir; "App Install" kampanyası yürütmek isterseniz
-   Meta App ID + Meta SDK ayrıca gerekir.
-2. **Misafir kullanıcılarda Meta eşleşme kalitesi düşük olacak.** SDK olmadığı
-   için reklam kimliği (`madid`) gönderilemiyor; eşleşme hash'li e-posta/telefona
-   dayanıyor, yani **oturum açmış** kullanıcılarda iyi, misafirlerde zayıf.
+   Meta tarafında Meta App ID + Meta SDK, TikTok tarafında TikTok App ID + TikTok
+   SDK (ya da AppsFlyer/Adjust gibi bir MMP) ayrıca gerekir.
+2. **Misafir kullanıcılarda eşleşme kalitesi düşük olacak.** SDK olmadığı için
+   Meta'ya reklam kimliği (`madid`), TikTok'a `ttclid`/`ttp` gönderilemiyor;
+   eşleşme hash'li e-posta/telefona dayanıyor, yani **oturum açmış**
+   kullanıcılarda iyi, misafirlerde zayıf.

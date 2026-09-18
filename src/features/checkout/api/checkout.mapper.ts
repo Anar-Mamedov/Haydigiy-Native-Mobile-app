@@ -33,6 +33,15 @@ export function mapPaymentMethod(dto: PaymentTypeDto): PaymentMethod {
   };
 }
 
+/**
+ * Coverage flags are tri-state: the backend sends `null` while it has no answer,
+ * so "unknown" must stay distinguishable from an explicit "does not deliver".
+ * Non-null values go through `Boolean` because the API may send 1/0 instead.
+ */
+function mapCoverageFlag(value: boolean | null | undefined): boolean | null {
+  return value === null || value === undefined ? null : Boolean(value);
+}
+
 export function mapCargoCompany(dto: CargoCompanyDto): CargoCompany {
   return {
     id: dto.id,
@@ -40,6 +49,8 @@ export function mapCargoCompany(dto: CargoCompanyDto): CargoCompany {
     logo: dto.logo,
     price: parsePrice(dto.price),
     sortOrder: Number(dto.sort_order) || 0,
+    toCityDistrict: mapCoverageFlag(dto.to_city_district),
+    toVillageRural: mapCoverageFlag(dto.to_village_rural),
   };
 }
 

@@ -113,6 +113,173 @@ Hiçbir identifier üretilemiyorsa (id, e-posta ve telefonun üçü de yoksa)
 `login()` hiç çağrılmaz; kimliksiz bir login yalnızca login bayrağını açar,
 birleştirilecek bir anahtar sağlamaz.
 
+### Kimlik değişikliği — Update Identifiers (backend)
+
+Kullanıcı e-postasını veya telefonunu **değiştirdiğinde**, yeni değer Insider'a önce
+"kimlik değiştirme" olarak bildirilmelidir. Aksi halde yeni identifier'ı ilk kez gören
+`user/v1/upsert` çağrısı aynı kişiye **ikinci bir profil** açar; event, attribute ve
+segment geçmişi eski profilde kalır. Insider ekibinin bildirdiği duplike kayıt budur.
+
+**Entegrasyon uygulamada değil backend'dedir.** İki nedeni var:
+
+1. Uç `X-REQUEST-TOKEN` ister. Bu bir sunucu sırrıdır ve uygulama paketine giremez
+   (GA4/Meta için alınan kararla aynı gerekçe: `docs/analytics-entegrasyonu.md`).
+2. React Native SDK'sında karşılığı yok. `login()` yalnızca kimliği bildirir, eski
+   değeri yenisiyle **değiştiremez**.
+
+Mobil tarafta değişiklik gerekmez: profil güncellemesi `PUT /user/profile` üzerinden
+gittiği için e-posta/telefon değişimi backend'de zaten görünür.
+
+| Katman (`haydigiy/backend`) | Sorumluluk |
+| --- | --- |
+| `app/Observers/UserInsiderSyncObserver.php` | `updated` olayında değişimi yakalar, işleri sırayla zincirler. |
+| `app/Services/Insider/InsiderIdentifierChangeDetector.php` | Eski (`getOriginal`) ve yeni değeri karşılaştırır. |
+| `app/Services/Insider/InsiderIdentifierChange.php` | Tek identifier değişimi; gönderilmeye değmeyen durumları eler. |
+| `app/Services/Insider/InsiderIdentityClient.php` | `PATCH /user/v1/identity` sınırı ve hata sınıflandırması. |
+| `app/Services/Insider/InsiderIdentityUpdateOutcome.php` | `Applied` / `Skipped` / `Rejected` — zincirin devam edip etmeyeceği buna bakar. |
+| `app/Services/Insider/InsiderIdentityPendingGate.php` | "Bu kullanıcı için PATCH kuyrukta bekliyor" bayrağı (paylaşılan cache). |
+| `app/Services/Insider/InsiderPhoneNumberFormatter.php` | E.164 biçimi; upsert ile ortak tek kaynak. |
+| `app/Jobs/UpdateInsiderIdentifierJob.php` | Kuyruk işi: 3 deneme, 10/30/60 sn backoff, payload şifreli (`ShouldBeEncrypted`). |
+
+#### Sıra üç mekanizmayla korunuyor
+
+Upsert, PATCH'ten önce çalışırsa Insider yeni e-postayı ilk kez görür ve duplike profili
+tam da engellemeye çalıştığımız anda açar. Backend 8 sunucuda çalıştığı ve kuyruğu birden
+fazla worker tükettiği için sıralama üç ayrı yerde korunuyor:
+
+| Mekanizma | Neyi kapatır |
+| --- | --- |
+| `Bus::chain([...kimlik işleri, upsert])` | Observer'ın ürettiği upsert'in PATCH'ten önce çalışmasını. |
+| `InsiderIdentityPendingGate` | **Zincir dışı** upsert'i: `AuthService::createTokenWithIp` her giriş/kayıt/doğrulamada ayrıca `SyncUserToInsiderJob` atıyor. Bayrak açıkken o iş 10 sn'lik turlarla kendini erteler, en fazla 150 sn. |
+| Reddedilmede upsert halkasının düşürülmesi | PATCH kalıcı olarak reddedildiyse (ör. IRM kapalı) upsert'in yeni identifier'ı Insider'a ilk kez tanıtmasını. Zincirin tamamı değil **yalnızca upsert** düşer; reddedilen değişiklikle ilgisi olmayan ikinci PATCH (telefon) çalışmaya devam eder. |
+
+**Bekleme süresi, koruduğu işin en kötü ömründen uzun olmak zorunda.** PATCH'in en kötü
+durumu 3 deneme × 10 sn zaman aşımı + 10/30 sn backoff ≈ 70 sn; bekleme tavanı 150 sn.
+Tavan bunun altına düşerse kapı tam da korunması gereken anda açılır.
+
+**Bekleme bir "deneme" değildir.** `release()` kuyruğun `attempts` sayacını artırır ve bekleme
+turları `$tries` bütçesini yiyip gerçek bir ağ hatasına tekrar hakkı bırakmaz; bu yüzden erteleme
+yeni bir iş olarak yazılır ve son tarih payload'da taşınır (`identityWaitUntil`). Son tarih
+kurucuda değil **ilk beklemede** damgalanır: iş kuyrukta uzun süre beklemişse bütçe, işin hiç
+kontrol edemediği kuyruk gecikmesiyle tükenmiş olmamalı.
+
+**Bayrak her PATCH denemesinde tazelenir** (`UpdateInsiderIdentifierJob::handle` başında). TTL iş
+kuyruğa yazıldığı anda işlemeye başlar; yeniden denemeler (10 + 30 sn backoff) ve kuyruk gecikmesi
+üst üste binerse kapı, koruduğu PATCH daha havadayken açılabilirdi. Süreler tek kaynaktan gelir:
+`InsiderIdentityPendingGate::TTL_SECONDS` (180 sn) ve bekleme tavanı ondan türetilir (150 sn).
+
+> **Tuzak:** `identityWaitUntil` **sınıf düzeyinde** bildirilmek zorunda, kurucuda promote
+> edilemez. PHP'de promote edilmiş bir parametrenin varsayılanı property'nin varsayılanı değildir
+> (`ReflectionProperty::hasDefaultValue()` → `false`) ve `SerializesModels::__unserialize()`
+> payload'da olmayan anahtarı atlar; alan ilklenmemiş kalır ve ilk okumada
+> *"must not be accessed before initialization"* ile fatal verir. Bu, sürüm geçişinde kuyrukta
+> bekleyen **her** payload'u düşürür. Regresyon testi işi kuyruğun kurduğu gibi kurar
+> (`newInstanceWithoutConstructor()` + `__unserialize()`); property'ye elle atama yapan bir test
+> bu hatayı **yakalayamaz**.
+
+`Skipped` (entegrasyon kapalı) ile `Rejected` (denendi, reddedildi) **ayrı sonuçlardır**.
+İkisi tek bir bool'a indirgenirse, kill-switch kapatıldığı anda tüm kullanıcıların attribute
+senkronu sessizce durur. Regresyon testi: `UpdateInsiderIdentifierJobTest`.
+
+Bu yüzden senkron işi artık çağrı yerlerinden (`AuthService::updateProfile`,
+`UserPreferenceController::update`) değil **yalnızca observer'dan** tetikleniyor;
+iki ayrı dispatch birbiriyle yarışıyordu. Observer sadece Insider'a giden alanlar
+değiştiğinde çalışır (`name`, `surname`, `email`, `phone`, `phone_prefix`, `birth_date`,
+`gender`, izin alanları); `last_login_at` gibi her istekte yazılan alanlar kota harcamaz.
+
+#### Gönderim kuralları
+
+| Kural | Neden |
+| --- | --- |
+| Bir istek = bir identifier | Uç tek identifier kabul ediyor; e-posta + telefon aynı anda değişirse iki iş oluşur. |
+| Eski değer yoksa PATCH yok | Bu bir yeniden adlandırma değil, ilk kez tanımlamadır; upsert zaten ekler. |
+| Yeni değer boşsa PATCH yok | Silme işlemi ayrı uca aittir (Delete Identifiers). |
+| Sadece harf büyüklüğü değiştiyse PATCH yok | Uç `identifier values are the same: bad request` döndürür. |
+| Telefon her zaman E.164 | Aksi halde `no valid identifier: bad request`. Biçim upsert ile aynı sınıftan üretilir; iki taraf farklı biçim üretirse gönderilen "eski değer" Insider'daki kayıtla eşleşmez. |
+
+#### Hata tablosu
+
+Kalıcı hatalar tekrar denenmez, `Log::warning` ile eyleme dönük yazılır. Identifier
+**değerleri** log'a yazılmaz (PII); yalnızca tip, HTTP kodu ve Insider'ın hata metni.
+
+| Yanıt | Davranış | Nerede çözülür |
+| --- | --- | --- |
+| 200 | Kimlik değişti, profil korundu. | — |
+| 400 `already has a user` | Yeni değer başka profile bağlı. | Delete Identifiers ile eski profilden kaldırılmalı (Insider ekibi). |
+| 400 `no valid identifier` | Tip IRM'de kapalı ya da biçim geçersiz. | Insider paneli / veri tarafı. |
+| 400 `are the same` | Değişiklik zaten uygulanmış. | — |
+| 403 | Token geçersiz. | Panelden API anahtarı yenilenir. |
+| 429 / 5xx | Geçici; kuyruk backoff ile tekrar dener. | — |
+
+#### Ön koşul ve ayarlar
+
+`email` ve `phone_number` Insider panelinde **Identity Resolution Management (IRM)**
+ayarlarında identifier olarak açık olmalı; kapalıysa uç 400 döner.
+
+```env
+INSIDER_IDENTITY_UPDATE_ENABLED=true
+INSIDER_IDENTITY_API_URL=https://unification.useinsider.com/api
+INSIDER_QUEUE=connect
+```
+
+Uç, diğer Insider API'lerinden **farklı bir host** üzerindedir
+(`unification.useinsider.com`, `api.useinsider.com` değil). Config anahtarı okunamasa bile
+istemci bu adresi sabit varsayılan olarak kullanır — bayat config taşıyan bir worker'ın
+isteği göreceli bir URL'e göndermesini engeller.
+
+`INSIDER_IDENTITY_UPDATE_ENABLED=false` gerçek bir kill-switch'tir: bayrak **üretici tarafta**,
+observer dispatch etmeden önce okunur, dolayısıyla kapalıyken yeni iş sınıfı kuyruğa hiç
+yazılmaz. "Önce uyuyan kodu dağıt, tüm sunucular yeni koda geçince aç" stratejisi bu sayede
+mümkün.
+
+#### Dağıtım (8 sunuculu kurulum)
+
+Kuyruk worker'ı uzun ömürlü bir süreçtir: config dizisini ve sınıfları yalnızca **açılışta**
+bir kez yükler. `.gitlab-ci.yml` yalnızca Octane'i yeniliyordu; bu yüzden deploy adımlarına
+`config:cache`'ten sonra `queue:restart` eklendi (`optimize:clear`'dan sonra olmak zorunda —
+içindeki `cache:clear` restart anahtarını siler).
+
+8 node aynı stage'de paralel deploy olduğu için, ilk dağıtımda bir pencere kalır: yeni koda
+geçmiş bir node'un ürettiği işi, henüz eski kodda olan bir node'un worker'ı tüketip
+`__PHP_Incomplete_Class` ile düşürebilir. İki seçenek:
+
+1. **Uyuyan dağıtım (önerilen):** `INSIDER_IDENTITY_UPDATE_ENABLED=false` ile deploy edin,
+   8 node yeşillenip worker'lar yenilendikten sonra bayrağı açıp `config:cache` çalıştırın.
+2. **Pencereyi kapatma:** Deploy öncesi 8 node'da `connect` worker'larını durdurun (işler
+   `jobs` tablosunda bekler, kaybolmaz), pipeline bitince yeniden başlatın.
+
+#### Kabul edilen riskler
+
+- **Geçici hatada zincir kopar:** Kimlik işi 429/5xx yüzünden 3 denemeyi tüketirse ardındaki
+  upsert hiç çalışmaz. Kalıcı kayıp değil — bir sonraki giriş `createTokenWithIp` üzerinden
+  upsert'i yeniden atar. `failed()` içinden upsert dispatch **etmeyin**: kimlik değişmeden
+  atılan upsert duplike profil açar.
+- **Bekleme sınırlı:** Zincir dışı upsert en fazla 150 sn bekler, sonra yine de gönderilir.
+  Bayat attribute, hiç gönderilmemiş attribute'tan iyidir.
+- **Deploy sırasında bayrak silinir:** `optimize:clear` paylaşılan `database` cache store'unu
+  boşaltıyor, dolayısıyla deploy penceresinde bekleyen bir upsert erken uyanabilir. Etki, bu
+  özellikten önceki davranışın aynısıdır. Kalıcı çözüm: bayrağı `cache:clear`'ın dokunmadığı
+  ayrı bir store'a (veya kalıcı bir kolona) taşımak.
+- **Reddedilme sonrası park etmiş upsert:** PATCH kalıcı reddedilirse zincirdeki upsert düşer,
+  ama o sırada bekleyen zincir dışı bir upsert varsa süresi dolunca yine de gönderilir.
+  Bunu tam kapatmak için kalıcı bir "identifier divergent" işareti gerekir; şu an kapsam dışı.
+- **`failed_jobs` içinde eski identifier:** Payload `ShouldBeEncrypted` ile şifrelenir, ama
+  kayıt süresiz durur — `queue:prune-failed` zamanlanmış değil.
+
+#### Açık kalan iki madde
+
+1. **Cihaz tarafı yarış.** Profil güncellemesi başarılı olunca uygulama `setUser` →
+   `identifyUser` → `login()` çağırır ve yeni e-postayı PATCH'ten önce bildirebilir.
+   `login()` `addUserID` (CRM id) de gönderdiği için Insider'ın profili CRM kimliği
+   üzerinden eşleştirmesi beklenir; IRM öncelik sırası panelde doğrulanmalı. Belirti,
+   yukarıdaki tabloda `already has a user` satırıdır.
+2. **Upsert'teki `custom` alanı.** `SyncUserToInsiderJob` identifier'ları kurarken
+   `custom` alanına **String** yazıyor (`'custom' => (string) $user->id`), oysa Insider
+   `custom`'ı **obje** bekliyor (`{"<ad>": "<değer>"}`). Bu haliyle CRM kimliği
+   büyük olasılıkla hiç işlenmiyor ve backend upsert'i profili yalnızca e-posta/telefon
+   ile eşleştirmeye çalışıyor — duplike profillerin bir diğer olası kaynağı. Düzeltmesi
+   kimlik eşleştirmesini değiştireceği için Insider ekibiyle birlikte kararlaştırılmalı.
+
 ## user_login / user_logout custom eventleri
 
 Insider ekibinin talebi üzerine oturum açma/kapatma ayrıca custom event olarak da

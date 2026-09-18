@@ -43,6 +43,8 @@ function makeInput(overrides: Partial<OrderTokenSyncInput> = {}): OrderTokenSync
       logo: '',
       price: 99.99,
       sortOrder: 0,
+      toCityDistrict: null,
+      toVillageRural: null,
     },
     selectedMethod: {
       id: 7,
@@ -117,6 +119,8 @@ describe('useOrderTokenSync', () => {
           logo: '',
           price: 49.99,
           sortOrder: 1,
+          toCityDistrict: null,
+          toVillageRural: null,
         },
       }),
     );
