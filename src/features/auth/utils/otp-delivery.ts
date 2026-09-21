@@ -44,3 +44,14 @@ export function getOtpSendErrorFeedback(error: unknown): OtpSendErrorFeedback {
         : DEFAULT_SEND_ERROR),
   };
 }
+
+/** Renders a remaining OTP cooldown as `MM:SS` for countdown labels. */
+export function formatOtpCooldown(totalSeconds: number): string {
+  const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+  const minutes = Math.floor(safeSeconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const seconds = (safeSeconds % 60).toString().padStart(2, '0');
+
+  return `${minutes}:${seconds}`;
+}

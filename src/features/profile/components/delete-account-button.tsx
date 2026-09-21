@@ -1,41 +1,37 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { Alert, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
 import { ChevronRight, Trash2 } from '@/components/ui/icons';
 import { XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { ConfirmDialog, SectionCard } from '@/components/ui';
-import { useDeactivateAccountMutation } from '@/features/auth/api/auth.mutations';
-import { useAuthStore } from '@/features/auth/store/use-auth-store';
+import { DeleteAccountVerificationSheet } from '@/features/profile/components/delete-account-verification-sheet';
+import { useAccountDeletion } from '@/features/profile/hooks/use-account-deletion';
 
 /**
  * "Hesabımı Sil" row mirroring the web flow: a destructive confirmation, then
- * `POST /auth/deactivate`, clearing the session and returning to the home screen.
+ * `POST /auth/deactivate`. Under the `v2` contract the confirmation only asks the
+ * backend for an SMS code and the sheet below closes the account once the code is
+ * verified; under `v1` the confirmation closes it directly. Either way the session
+ * is cleared and the user returns to the home screen.
  */
 export function DeleteAccountButton() {
-  const router = useRouter();
-  const logout = useAuthStore((state) => state.logout);
-  const deactivate = useDeactivateAccountMutation();
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const deletion = useAccountDeletion();
+  const { dismissStartError, startError } = deletion;
 
-  const handleConfirm = async () => {
-    try {
-      await deactivate.mutateAsync();
-      await logout();
-      setConfirmOpen(false);
-      router.replace('/');
-    } catch {
-      setConfirmOpen(false);
-      Alert.alert('Hata', 'Hesap silinirken bir hata oluştu. Lütfen tekrar deneyiniz.');
-    }
-  };
+  // A failure before the code screen opens has no surface of its own, so it is
+  // reported the same way the flow always reported it: a native alert.
+  useEffect(() => {
+    if (!startError) return;
+
+    Alert.alert('Hata', startError, [{ onPress: dismissStartError, text: 'Tamam' }]);
+  }, [dismissStartError, startError]);
 
   return (
     <>
       <Pressable
         accessibilityLabel="Hesabımı Sil"
         accessibilityRole="button"
-        onPress={() => setConfirmOpen(true)}
+        onPress={deletion.openConfirm}
         style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
       >
         <SectionCard backgroundColor="$red2" borderColor="$red6" padding="$3.5">
@@ -56,11 +52,25 @@ export function DeleteAccountButton() {
         confirmLabel="Evet, Sil"
         description="Bu işlem geri alınamaz ve tüm verileriniz silinecektir."
         destructive
-        isConfirming={deactivate.isPending}
-        onConfirm={handleConfirm}
-        onOpenChange={setConfirmOpen}
-        open={confirmOpen}
+        isConfirming={deletion.isStarting}
+        onConfirm={() => void deletion.startDeletion()}
+        onOpenChange={deletion.setIsConfirmOpen}
+        open={deletion.isConfirmOpen}
         title="Hesabınızı Silmek İstediğinize Emin Misiniz?"
+      />
+
+      <DeleteAccountVerificationSheet
+        code={deletion.code}
+        cooldownSeconds={deletion.cooldownSeconds}
+        errorMessage={deletion.errorMessage}
+        infoMessage={deletion.infoMessage}
+        isResending={deletion.isResending}
+        isVerifying={deletion.isVerifying}
+        onCancel={deletion.cancelVerification}
+        onChangeCode={deletion.setCode}
+        onResend={() => void deletion.resendCode()}
+        onSubmit={() => void deletion.submitCode()}
+        open={deletion.isVerificationOpen}
       />
     </>
   );

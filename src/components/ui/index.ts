@@ -19,6 +19,7 @@ export * from '@/components/ui/filter-checkbox';
 export * from '@/components/ui/keyboard-aware-form-scroll-view';
 export * from '@/components/ui/keyboard-aware-sheet-scroll-view';
 export * from '@/components/ui/markdown-content';
+export * from '@/components/ui/otp-code-input';
 export * from '@/components/ui/pagination';
 export * from '@/components/ui/password-visibility-toggle';
 export * from '@/components/ui/pull-to-dismiss-scroll-view';

@@ -230,12 +230,46 @@ export async function fastLoginVerifyApi(payload: {
 
 
 /**
- * Deactivates (deletes) the authenticated user's account (`POST /auth/deactivate`),
- * mirroring the web "Hesabımı Sil" flow. Callers should clear the session and
- * navigate away on success.
+ * Deletion contract version asked of `POST /auth/deactivate`. The endpoint stays
+ * backwards compatible: omitting the version (or sending `v1`) closes the account
+ * straight away, while `v2` requires an SMS code first.
  */
-export async function deactivateAccountApi(): Promise<void> {
-  if (!appEnv.apiBaseUrl) return;
+export type DeactivateAccountVersion = 'v1' | 'v2';
 
-  await apiClient.post('/auth/deactivate');
+export interface DeactivateAccountPayload {
+  version?: DeactivateAccountVersion;
+  /** Only sent on the second `v2` call, once the user has typed the SMS code. */
+  verification_code?: string;
+}
+
+export interface DeactivateAccountResponse {
+  success?: boolean;
+  message?: string;
+  /** `true` while the account is still waiting for the SMS code to be confirmed. */
+  verification_required?: boolean;
+  code_sent?: boolean;
+  remaining_seconds?: number | string;
+  user_id?: number;
+}
+
+/**
+ * Deactivates (deletes) the authenticated user's account (`POST /auth/deactivate`),
+ * mirroring the web "Hesabımı Sil" flow. Under `v2` the first call only sends a
+ * verification code; the account is closed by the follow-up call that carries
+ * `verification_code`. Callers should clear the session and navigate away once the
+ * response no longer asks for verification.
+ */
+export async function deactivateAccountApi(
+  payload: DeactivateAccountPayload = {},
+): Promise<DeactivateAccountResponse> {
+  if (!appEnv.apiBaseUrl) {
+    // Dev builds without a backend still walk through both steps of the v2 flow.
+    if (payload.version === 'v2' && !payload.verification_code) {
+      return { code_sent: true, remaining_seconds: 60, verification_required: true };
+    }
+    return { success: true };
+  }
+
+  const response = await apiClient.post('/auth/deactivate', payload);
+  return response.data ?? {};
 }

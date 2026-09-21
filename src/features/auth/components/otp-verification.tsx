@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { TextInput, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { YStack, XStack, Button, Spinner } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { AppButton, AppCheckbox, DisclosureSheet } from '@/components/ui';
+import { AppButton, AppCheckbox, DisclosureSheet, OtpCodeInput } from '@/components/ui';
 import {
   useFastLoginInitMutation,
   useFastLoginVerifyMutation,
@@ -14,7 +13,12 @@ import { useAuthStore } from '../store/use-auth-store';
 import { insiderTracker } from '@/features/insider/services/insider-tracker';
 import { analytics } from '@/features/analytics/services/analytics-dispatcher';
 import { KVKK_DISCLOSURE_TEXT, COMMERCIAL_CONSENT_TEXT } from '../constants/auth-texts';
-import { getOtpSendErrorFeedback, parseOtpCooldownSeconds } from '../utils/otp-delivery';
+import {
+  formatOtpCooldown,
+  getOtpSendErrorFeedback,
+  parseOtpCooldownSeconds,
+} from '../utils/otp-delivery';
+import { useOtpCooldown } from '../hooks/use-otp-cooldown';
 
 interface OtpVerificationProps {
   identifier: string;
@@ -43,7 +47,11 @@ export function OtpVerification({
   const fastLoginInit = useFastLoginInitMutation();
   const sendCode = useSendCodeMutation();
   const [code, setCode] = useState('');
-  const [cooldown, setCooldown] = useState(initialCooldown);
+  const {
+    isCoolingDown,
+    secondsLeft: cooldown,
+    start: startCooldown,
+  } = useOtpCooldown(initialCooldown);
   const [isResending, setIsResending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,19 +63,9 @@ export function OtpVerification({
   const [sheetContent, setSheetContent] = useState<{ title: string; text: string } | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  const inputRef = useRef<TextInput>(null);
-
   useEffect(() => {
-    if (cooldown <= 0) return;
-    const interval = setInterval(() => {
-      setCooldown((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [cooldown]);
-
-  useEffect(() => {
-    setCooldown(initialCooldown);
-  }, [initialCooldown]);
+    startCooldown(initialCooldown);
+  }, [initialCooldown, startCooldown]);
 
   const handleVerify = async () => {
     const parsedCode = otpSchema.safeParse({ code });
@@ -172,24 +170,17 @@ export function OtpVerification({
         response = await sendCode.mutateAsync({ type: 'phone', value: identifier });
       }
       
-      const nextCooldown = parseOtpCooldownSeconds(response.remaining_seconds, 60);
-      setCooldown(nextCooldown);
+      startCooldown(parseOtpCooldownSeconds(response.remaining_seconds, 60));
       setInfo(response.message || 'Yeni doğrulama kodu gönderildi.');
       setCode('');
     } catch (err: unknown) {
       console.error('OTP resend error:', err);
       const feedback = getOtpSendErrorFeedback(err);
-      setCooldown(feedback.cooldownSeconds);
+      startCooldown(feedback.cooldownSeconds);
       setError(feedback.message);
     } finally {
       setIsResending(false);
     }
-  };
-
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
   };
 
   const openDisclosureSheet = (type: 'kvkk' | 'commercial') => {
@@ -212,58 +203,15 @@ export function OtpVerification({
         </Paragraph>
       </YStack>
 
-      {/* Code Input Boxes container */}
-      <Pressable
-        accessibilityLabel="Telefon doğrulama kodunu gir"
-        accessibilityRole="button"
-        onPress={() => inputRef.current?.focus()}
-        style={{ width: '100%' }}
-      >
-        <XStack gap="$2" justifyContent="space-between" width="100%" paddingVertical="$2">
-          {[0, 1, 2, 3, 4, 5].map((i) => {
-            const digit = code[i] || '';
-            const isFocused = i === code.length;
-            return (
-              <YStack
-                key={i}
-                alignItems="center"
-                justifyContent="center"
-                width={48}
-                height={52}
-                borderWidth={1.5}
-                borderColor={isFocused ? '$brand' : '$borderColor'}
-                borderRadius={8}
-                backgroundColor="$background"
-              >
-                <Paragraph fontSize={20} fontWeight="700" color="$color">
-                  {digit}
-                </Paragraph>
-              </YStack>
-            );
-          })}
-        </XStack>
-      </Pressable>
-
-      {/* Hidden text input to capture keyboard entries */}
-      <TextInput
+      <OtpCodeInput
         accessibilityLabel="6 haneli telefon doğrulama kodu"
-        ref={inputRef}
-        value={code}
-        onChangeText={(text) => {
-          const digits = text.replace(/\D/g, '').slice(0, 6);
+        autoFocus
+        focusAccessibilityLabel="Telefon doğrulama kodunu gir"
+        onChangeText={(digits) => {
           setCode(digits);
           setError(null);
         }}
-        keyboardType="numeric"
-        maxLength={6}
-        style={{
-          position: 'absolute',
-          opacity: 0,
-          width: 1,
-          height: 1,
-        }}
-        textContentType="oneTimeCode"
-        autoFocus
+        value={code}
       />
 
       {/* KVKK / Consent for new fast login users */}
@@ -344,9 +292,9 @@ export function OtpVerification({
         </AppButton>
 
         <XStack justifyContent="space-between" width="100%" alignItems="center" paddingHorizontal="$1">
-          {cooldown > 0 ? (
+          {isCoolingDown ? (
             <Paragraph size="$2" color="$color10">
-              Kalan Süre: <Paragraph size="$2" fontWeight="700" color="$color">{formatTime(cooldown)}</Paragraph>
+              Kalan Süre: <Paragraph size="$2" fontWeight="700" color="$color">{formatOtpCooldown(cooldown)}</Paragraph>
             </Paragraph>
           ) : (
             <Button

@@ -10,6 +10,10 @@ import {
   resetPasswordApi,
   deactivateAccountApi,
 } from '@/services/auth.service';
+import type {
+  DeactivateAccountPayload,
+  DeactivateAccountResponse,
+} from '@/services/auth.service';
 
 /**
  * Auth flows are remote async mutations, so they go through TanStack Query
@@ -49,6 +53,14 @@ export function useSendCodeMutation() {
   return useMutation({ mutationFn: sendCodeApi, retry: false });
 }
 
+/**
+ * `POST /auth/deactivate`. The payload carries the contract version: `v2` asks
+ * for an SMS code first, a second call with `verification_code` closes the
+ * account. Retries stay off so a destructive call is never repeated on its own.
+ */
 export function useDeactivateAccountMutation() {
-  return useMutation({ mutationFn: deactivateAccountApi });
+  return useMutation<DeactivateAccountResponse, unknown, DeactivateAccountPayload>({
+    mutationFn: deactivateAccountApi,
+    retry: false,
+  });
 }
