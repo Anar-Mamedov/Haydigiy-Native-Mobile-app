@@ -6,7 +6,7 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { BundleItem } from '@/types/bundle.types';
 import { formatCurrency } from '@/utils/format-currency';
 
-// Görsel; beden şeridi ve "Ürüne Git" aksiyonuyla dengeli dursun diye webdeki kompakt satırla
+// Görsel; beden şeridi ve "Tek Satın Al" aksiyonuyla dengeli dursun diye webdeki kompakt satırla
 // aynı ölçüdedir (72 genişlik, 1.35 oran).
 const IMAGE_WIDTH = 72;
 const IMAGE_HEIGHT = 97;
@@ -14,10 +14,10 @@ const LOW_STOCK_THRESHOLD = 3;
 /** Beden butonunun en küçük dokunma hedefi (mobil erişilebilirlik alt sınırı). */
 const SIZE_CHIP_MIN_HEIGHT = 44;
 const SIZE_CHIP_MIN_WIDTH = 52;
-/** Kartın iç boşluğu; "Ürüne Git" sekmesi bu boşluğu negatif marjla geri alıp sağ alt köşeye yaslanır. */
+/** Kartın iç boşluğu; "Tek Satın Al" sekmesi bu boşluğu negatif marjla geri alıp sağ alt köşeye yaslanır. */
 const CARD_PADDING = '$2.5';
 /** Sekme webdeki gibi 36pt görünür; dokunma alanı üstten ve soldan taşarak 44pt'ye tamamlanır. */
-const OPEN_PRODUCT_HIT_SLOP = { top: 8, left: 8 };
+const BUY_SINGLE_HIT_SLOP = { top: 8, left: 8 };
 
 export type BundleItemRowProps = {
   item: BundleItem;
@@ -28,10 +28,17 @@ export type BundleItemRowProps = {
   /** Beden seçilmediği için vurgulanacak mı? */
   isMissing: boolean;
   /**
-   * Görsele veya "Ürüne Git"e dokunulunca çağrılır (ürün detayına gitmek için). Verilmezse ya da
-   * kalemin slug'ı yoksa yönlendirme gösterilmez. Rota kararı çağırana aittir.
+   * Görsele dokunulunca çağrılır (ürün detayına gitmek için). Verilmezse ya da kalemin slug'ı
+   * yoksa görsel tıklanmaz. Rota kararı çağırana aittir.
    */
   onOpenProduct?: (item: BundleItem) => void;
+  /**
+   * "Tek Satın Al"a basılınca çağrılır: beden seçiliyse kalem tek başına sepete eklenir, değilse
+   * ürün detayı açılır. Karar çağırana aittir; verilmezse buton gösterilmez.
+   */
+  onBuySingle?: (item: BundleItem) => void;
+  /** Bu kalemin "Tek Satın Al" isteği sürüyor mu? Buton "Ekleniyor..." gösterir ve basılamaz. */
+  isBuyingSingle?: boolean;
 };
 
 /**
@@ -45,12 +52,18 @@ export function BundleItemRow({
   onSelectVariant,
   isMissing,
   onOpenProduct,
+  onBuySingle,
+  isBuyingSingle = false,
 }: BundleItemRowProps) {
   const selectedVariant = item.variants.find((variant) => variant.variantId === selectedVariantId);
   const hasStock = item.variants.some((variant) => variant.hasStock);
-  // Slug yoksa gidilecek ürün sayfası yok; satır yalnızca beden seçimi sunar.
+  // Slug yoksa gidilecek ürün sayfası yok; görsel tıklanmaz.
   const canOpenProduct = Boolean(onOpenProduct && item.slug);
   const openProduct = () => onOpenProduct?.(item);
+  // Tükenmiş kalem tek başına alınamaz; bedeni seçilmemiş ve sayfası olmayan kalemde de
+  // butonun yapacağı bir şey kalmaz.
+  const canBuySingle = Boolean(onBuySingle) && hasStock && Boolean(selectedVariant || item.slug);
+  const buySingle = () => onBuySingle?.(item);
   const cardPadding = getTokenValue(CARD_PADDING, 'space');
 
   const borderColor = isMissing ? '$red8' : selectedVariant ? '$brand' : '$borderColor';
@@ -111,10 +124,16 @@ export function BundleItemRow({
             <Paragraph color="$color" flex={1} fontSize={13} fontWeight="700" numberOfLines={2}>
               {item.title}
             </Paragraph>
+            {/* Bu fiyat "Tek Satın Al" ile sepete yansıyan fiyattır (paket içi fiyat değil). */}
             {item.price > 0 ? (
-              <Paragraph color="$color10" fontSize={13} fontWeight="700">
-                {formatCurrency(item.price)}
-              </Paragraph>
+              <YStack alignItems="flex-end">
+                <Paragraph color="$color10" fontSize={13} fontWeight="700">
+                  {formatCurrency(item.price)}
+                </Paragraph>
+                <Paragraph color="$color10" fontSize={10} fontWeight="600">
+                  Tek alım fiyatı
+                </Paragraph>
+              </YStack>
             ) : null}
           </XStack>
 
@@ -176,7 +195,7 @@ export function BundleItemRow({
           )}
 
           {/*
-            Durum satırı + "Ürüne Git": sekme webdeki gibi kartın sağ alt köşesine yaslanır. Mutlak
+            Durum satırı + "Tek Satın Al": sekme webdeki gibi kartın sağ alt köşesine yaslanır. Mutlak
             konum yerine akışta durur; böylece uzun durum metninin ve beden kutularının üstüne binmez.
             marginTop="auto", görsel sütunu daha uzun olduğunda da satırı kartın dibine indirir.
           */}
@@ -205,25 +224,29 @@ export function BundleItemRow({
               )}
             </YStack>
 
-            {canOpenProduct ? (
+            {canBuySingle ? (
               <AppButton
-                accessibilityHint="Ürün detayına gider"
-                accessibilityLabel={`${item.title} ürününe git`}
+                accessibilityHint={
+                  selectedVariant ? 'Seçili bedeni tek başına sepete ekler' : 'Beden seçmek için ürün detayına gider'
+                }
+                accessibilityLabel={`${item.title} tek satın al`}
                 backgroundColor="$brand"
                 borderRadius={0}
                 borderTopLeftRadius="$4"
                 borderWidth={0}
-                hitSlop={OPEN_PRODUCT_HIT_SLOP}
+                disabled={isBuyingSingle}
+                hitSlop={BUY_SINGLE_HIT_SLOP}
                 marginBottom={-cardPadding}
                 marginRight={-cardPadding}
                 marginTop="$2"
-                onPress={openProduct}
+                onPress={isBuyingSingle ? undefined : buySingle}
+                opacity={isBuyingSingle ? 0.7 : 1}
                 paddingHorizontal="$3"
                 pressStyle={{ opacity: 0.85 }}
                 size="$3"
               >
                 <Paragraph color="white" fontSize={14} fontWeight="600" numberOfLines={1}>
-                  Ürüne Git
+                  {isBuyingSingle ? 'Ekleniyor...' : 'Tek Satın Al'}
                 </Paragraph>
               </AppButton>
             ) : null}

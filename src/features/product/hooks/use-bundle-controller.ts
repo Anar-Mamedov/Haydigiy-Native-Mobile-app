@@ -1,15 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useAddBundleToCartMutation } from '@/features/cart/api/cart.queries';
-import { productToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
+import { useAddBundleToCartMutation, useAddToCartMutation } from '@/features/cart/api/cart.queries';
+import { buildInsiderInput, productToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { BundleItem, BundleSummary } from '@/types/bundle.types';
 import { Product } from '@/types/product.types';
 import { getApiErrorMessage } from '@/utils/api-error';
 import { useBundleSelection } from './use-bundle-selection';
 
 const ADD_ERROR_FALLBACK = 'Paket sepete eklenemedi. Lütfen tekrar deneyin.';
+const SINGLE_ADD_ERROR_FALLBACK = 'Ürün sepete eklenemedi. Lütfen tekrar deneyin.';
 
 export type UseBundleControllerOptions = {
-  /** Paket gerçekten sepete eklendikten sonra çalışır (ör. sepete yönlendirme). */
+  /** Sepete ekleme (paket ya da "Tek Satın Al") gerçekten başarılı olunca çalışır (ör. sepete yönlendirme). */
   onAdded: () => void;
   /** Paketteki bir ürünün detayını açar; rota kararı çağırana aittir. */
   onOpenProduct: (slug: string) => void;
@@ -27,8 +28,15 @@ export type BundleController = {
   /** Sepete ekleme başarısız olduysa kullanıcıya gösterilecek mesaj. */
   errorMessage: string | null;
   confirmAdd: () => void;
-  /** Paketteki ürünün detayına gider (görsel veya "Ürüne Git"). */
+  /** Paketteki ürünün detayına gider (görsele dokunulunca ya da bedensiz "Tek Satın Al"da). */
   openItemProduct: (item: BundleItem) => void;
+  /**
+   * "Tek Satın Al": bedeni seçilmiş kalemi paketsiz, tek başına sepete ekler. Beden seçilmemişse
+   * beden orada seçilsin diye ürün detayına gider.
+   */
+  buySingleItem: (item: BundleItem) => void;
+  /** "Tek Satın Al" isteği süren kalemin id'si; istek yoksa null. */
+  buyingItemId: number | null;
   selection: ReturnType<typeof useBundleSelection>;
 };
 
@@ -48,9 +56,11 @@ export function useBundleController(
 
   const selection = useBundleSelection(items);
   const addBundleToCart = useAddBundleToCartMutation();
+  const addToCart = useAddToCartMutation();
 
   const [isSheetOpen, setSheetOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [buyingItemId, setBuyingItemId] = useState<number | null>(null);
 
   const openSheet = useCallback(() => setSheetOpen(true), []);
 
@@ -103,6 +113,48 @@ export function useBundleController(
     [closeSheet, onOpenProduct],
   );
 
+  const buySingleItem = useCallback(
+    (item: BundleItem) => {
+      // Tek istek: çift dokunma ürünü iki kez eklemesin, istek sürerken başka ekrana da geçilmesin.
+      if (addToCart.isPending) return;
+
+      const variantId = selection.selections[item.bundleItemId];
+      if (!variantId) {
+        openItemProduct(item);
+        return;
+      }
+
+      const variant = item.variants.find((option) => option.variantId === variantId);
+      setErrorMessage(null);
+      setBuyingItemId(item.bundleItemId);
+      addToCart.mutate(
+        {
+          // Paketteki beden id'si ürüne özel `product_variant_id`'dir; tekli sepet de aynı id'yi bekler.
+          variantId,
+          tracking: buildInsiderInput({
+            id: item.productId != null ? String(item.productId) : '',
+            name: item.title,
+            imageUrl: item.imageUrl,
+            price: item.price,
+            size: variant?.name,
+            quantity: 1,
+            slug: item.slug ?? undefined,
+          }),
+        },
+        {
+          // Paket eklemeyle aynı akış: yalnızca başarıda sepete geçilir, hata alt sayfada gösterilir.
+          onSuccess: () => {
+            setSheetOpen(false);
+            onAdded();
+          },
+          onError: (error) => setErrorMessage(getApiErrorMessage(error, SINGLE_ADD_ERROR_FALLBACK)),
+          onSettled: () => setBuyingItemId(null),
+        },
+      );
+    },
+    [addToCart, onAdded, openItemProduct, selection.selections],
+  );
+
   return {
     isBundle,
     items,
@@ -114,6 +166,8 @@ export function useBundleController(
     errorMessage,
     confirmAdd,
     openItemProduct,
+    buySingleItem,
+    buyingItemId,
     selection,
   };
 }

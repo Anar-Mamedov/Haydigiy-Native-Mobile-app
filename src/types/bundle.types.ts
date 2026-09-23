@@ -34,7 +34,10 @@ export type BundleItem = {
   title: string;
   slug: string | null;
   imageUrl: string;
-  /** Ürünün paket dışındaki normal fiyatı. */
+  /**
+   * Ürünün paket dışındaki normal fiyatı: "Tek Satın Al" ile sepete yansıyan birim fiyat.
+   * Backend bunu `product.price` olarak sepetle aynı kuralla (indirimli fiyat varsa o) verir.
+   */
   price: number;
   /** Üstü çizili gösterilecek eski fiyat — yoksa null. */
   oldPrice: number | null;

@@ -309,6 +309,22 @@ describe('useProductDetailController — paket ürün', () => {
     expect(mockPush).toHaveBeenCalledWith('/product/kemer-detayli-elbise');
     expect(mockReplace).not.toHaveBeenCalled();
   });
+
+  it('adds a package item alone and goes to the cart once the request succeeds', () => {
+    const { result } = setup({ data: makeBundleProduct() });
+
+    act(() => result.current.bundle.selection.selectVariant(12, '3510'));
+    act(() => result.current.bundle.buySingleItem(result.current.bundle.items[0]));
+
+    // Paket değil, yalnızca seçili bedeniyle bu kalem sepete gider.
+    expect(mockAddBundleToCart).not.toHaveBeenCalled();
+    expect(mockAddToCart).toHaveBeenCalledWith(expect.objectContaining({ variantId: '3510' }), expect.any(Object));
+    expect(mockGoToCartAfterAdd).not.toHaveBeenCalled();
+
+    act(() => mockAddToCart.mock.calls[0][1].onSuccess());
+
+    expect(mockGoToCartAfterAdd).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('useProductDetailController — beden durumu', () => {

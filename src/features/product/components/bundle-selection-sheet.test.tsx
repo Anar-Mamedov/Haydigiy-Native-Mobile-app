@@ -120,16 +120,28 @@ describe('BundleSelectionSheet', () => {
     expect(screen.getByLabelText('Kruvaze Ceket için beden M')).toBeTruthy();
   });
 
-  it('lets the shopper open a package item from its row', () => {
+  it('lets the shopper open a package item from its image', () => {
     const onOpenProduct = jest.fn();
     const items = [{ ...ITEMS[0], slug: 'kemer-detayli-elbise' }, ITEMS[1]];
     renderSheet({ items, onOpenProduct });
 
-    fireEvent.press(screen.getByLabelText('Kemer Detaylı Elbise ürününe git'));
+    fireEvent.press(screen.getByLabelText('Kemer Detaylı Elbise ürün detayı'));
 
     expect(onOpenProduct).toHaveBeenCalledWith(items[0]);
-    // Slug'ı olmayan kalem yönlendirme sunmaz.
-    expect(screen.queryByLabelText('Kruvaze Ceket ürününe git')).toBeNull();
+    // Slug'ı olmayan kalemin görseli tıklanmaz.
+    expect(screen.queryByLabelText('Kruvaze Ceket ürün detayı')).toBeNull();
+  });
+
+  it('buys a single package item from its row and marks the one being added', () => {
+    const onBuySingle = jest.fn();
+    const items = [{ ...ITEMS[0], slug: 'kemer-detayli-elbise' }, ITEMS[1]];
+    renderSheet({ buyingItemId: 13, items, onBuySingle, selections: { 13: '3577' } });
+
+    fireEvent.press(screen.getByLabelText('Kemer Detaylı Elbise tek satın al'));
+
+    expect(onBuySingle).toHaveBeenCalledWith(items[0]);
+    // Yalnızca isteği süren satır "Ekleniyor..." gösterir.
+    expect(screen.getAllByText('Ekleniyor...')).toHaveLength(1);
   });
 
   it('reports the selection progress', () => {

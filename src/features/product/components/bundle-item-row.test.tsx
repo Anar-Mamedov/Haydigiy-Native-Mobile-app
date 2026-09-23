@@ -58,6 +58,18 @@ describe('BundleItemRow', () => {
     expect(getByText('1')).toBeTruthy();
   });
 
+  it('labels the price as what Tek Satın Al puts in the cart', () => {
+    const { getByText } = renderRow();
+
+    expect(getByText('Tek alım fiyatı')).toBeTruthy();
+  });
+
+  it('shows no price label when the item has no price', () => {
+    const { queryByText } = renderRow({ item: makeItem({ price: 0 }) });
+
+    expect(queryByText('Tek alım fiyatı')).toBeNull();
+  });
+
   it('sends the product-specific variant id when a size is picked', () => {
     const { getByLabelText, onSelectVariant } = renderRow();
 
@@ -134,37 +146,81 @@ describe('BundleItemRow', () => {
     expect(getByText('Kemer Detaylı Yarım Kol Elbise Siyah')).toBeTruthy();
   });
 
-  it('opens the product from both the image and the Ürüne Git button', () => {
+  it('opens the product from the image', () => {
     const onOpenProduct = jest.fn();
     const item = makeItem();
     const { getByLabelText } = renderRow({ item, onOpenProduct });
 
     fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah ürün detayı'));
-    fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah ürününe git'));
 
-    expect(onOpenProduct).toHaveBeenCalledTimes(2);
     expect(onOpenProduct).toHaveBeenCalledWith(item);
   });
 
-  it('offers no product link when the item has no product page', () => {
+  it('hands the item to Tek Satın Al whether or not a size is picked', () => {
+    // Beden seçiliyse sepete ekleme, değilse ürün detayı kararı çağırana (controller) aittir.
+    const onBuySingle = jest.fn();
+    const item = makeItem();
+    const { getByLabelText } = renderRow({ item, onBuySingle });
+
+    fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah tek satın al'));
+
+    expect(onBuySingle).toHaveBeenCalledWith(item);
+  });
+
+  it('offers Tek Satın Al without a product page once a size is picked', () => {
+    const { getByText } = renderRow({
+      item: makeItem({ slug: null }),
+      onBuySingle: jest.fn(),
+      selectedVariantId: '3510',
+    });
+
+    expect(getByText('Tek Satın Al')).toBeTruthy();
+  });
+
+  it('offers nothing to open or buy when the item has neither a size nor a product page', () => {
     const { queryByLabelText, queryByText } = renderRow({
       item: makeItem({ slug: null }),
+      onBuySingle: jest.fn(),
       onOpenProduct: jest.fn(),
     });
 
-    expect(queryByText('Ürüne Git')).toBeNull();
+    expect(queryByText('Tek Satın Al')).toBeNull();
     expect(queryByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah ürün detayı')).toBeNull();
   });
 
-  it('offers no product link when the caller does not handle it', () => {
-    const { queryByText } = renderRow();
+  it('does not offer Tek Satın Al for a sold-out item', () => {
+    const item = makeItem({ variants: [makeVariant('S', '3510', 0), makeVariant('M', '3511', 0)] });
+    const { queryByText } = renderRow({ item, onBuySingle: jest.fn() });
 
-    expect(queryByText('Ürüne Git')).toBeNull();
+    expect(queryByText('Tek Satın Al')).toBeNull();
   });
 
-  it('keeps the Ürüne Git label readable in the dark theme', () => {
-    const { getByText } = renderRow({ onOpenProduct: jest.fn() }, 'dark');
+  it('offers no actions when the caller does not handle them', () => {
+    const { queryByLabelText, queryByText } = renderRow();
 
-    expect(getByText('Ürüne Git')).toBeTruthy();
+    expect(queryByText('Tek Satın Al')).toBeNull();
+    expect(queryByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah ürün detayı')).toBeNull();
+  });
+
+  it('shows the adding state and ignores presses while the item is being bought', () => {
+    const onBuySingle = jest.fn();
+    const { getByLabelText, getByText, queryByText } = renderRow({
+      isBuyingSingle: true,
+      onBuySingle,
+      selectedVariantId: '3510',
+    });
+
+    expect(getByText('Ekleniyor...')).toBeTruthy();
+    expect(queryByText('Tek Satın Al')).toBeNull();
+
+    fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah tek satın al'));
+
+    expect(onBuySingle).not.toHaveBeenCalled();
+  });
+
+  it('keeps the Tek Satın Al label readable in the dark theme', () => {
+    const { getByText } = renderRow({ onBuySingle: jest.fn() }, 'dark');
+
+    expect(getByText('Tek Satın Al')).toBeTruthy();
   });
 });

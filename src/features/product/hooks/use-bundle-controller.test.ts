@@ -4,9 +4,12 @@ import { BundleItem } from '@/types/bundle.types';
 import { Product } from '@/types/product.types';
 
 const mockMutate = jest.fn();
+const mockAddToCart = jest.fn();
+let mockIsAddingSingle = false;
 
 jest.mock('@/features/cart/api/cart.queries', () => ({
   useAddBundleToCartMutation: () => ({ mutate: mockMutate, isPending: false }),
+  useAddToCartMutation: () => ({ mutate: mockAddToCart, isPending: mockIsAddingSingle }),
 }));
 
 jest.mock('@/features/insider/utils/insider-product.mapper', () => ({
@@ -18,6 +21,7 @@ jest.mock('@/features/insider/utils/insider-product.mapper', () => ({
     price: 2000,
     currency: 'TRY',
   })),
+  buildInsiderInput: jest.fn((partial) => partial),
 }));
 
 function makeBundleItem(bundleItemId: number, sizes: { id: string; stock: number }[]): BundleItem {
@@ -78,6 +82,7 @@ function renderController(product: Product | null, onAdded = jest.fn(), onOpenPr
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockIsAddingSingle = false;
 });
 
 describe('useBundleController', () => {
@@ -231,6 +236,75 @@ describe('useBundleController', () => {
     act(() => result.current.openItemProduct(SINGLE_SIZE_ITEM));
 
     expect(result.current.isSheetOpen).toBe(true);
+    expect(onOpenProduct).not.toHaveBeenCalled();
+  });
+
+  it('adds the item with its picked size alone to the cart', () => {
+    const { result, onAdded } = renderController(makeProduct());
+
+    act(() => result.current.openSheet());
+    act(() => result.current.selection.selectVariant(12, '3510'));
+    act(() => result.current.buySingleItem(SINGLE_SIZE_ITEM));
+
+    // Paket değil yalnızca bu kalem; sepete ürüne özel `product_variant_id` gider.
+    expect(mockMutate).not.toHaveBeenCalled();
+    expect(mockAddToCart).toHaveBeenCalledTimes(1);
+    expect(mockAddToCart.mock.calls[0][0]).toEqual({
+      variantId: '3510',
+      tracking: expect.objectContaining({ id: '120', name: 'Ürün 12', size: '3510', quantity: 1 }),
+    });
+    expect(result.current.buyingItemId).toBe(12);
+
+    act(() => mockAddToCart.mock.calls[0][1].onSuccess());
+    act(() => mockAddToCart.mock.calls[0][1].onSettled());
+
+    expect(onAdded).toHaveBeenCalledTimes(1);
+    expect(result.current.isSheetOpen).toBe(false);
+    expect(result.current.buyingItemId).toBeNull();
+  });
+
+  it('opens the product instead when no size is picked for the item', () => {
+    // Tek bedenli kalemin bedeni otomatik seçildiği için iki bedenli kalem kullanılır.
+    const { result, onOpenProduct } = renderController(
+      makeProduct({ bundleItems: [SINGLE_SIZE_ITEM, MULTI_SIZE_ITEM] }),
+    );
+
+    act(() => result.current.openSheet());
+    act(() => result.current.buySingleItem({ ...MULTI_SIZE_ITEM, slug: 'kruvaze-ceket' }));
+
+    expect(mockAddToCart).not.toHaveBeenCalled();
+    expect(onOpenProduct).toHaveBeenCalledWith('kruvaze-ceket');
+    expect(result.current.isSheetOpen).toBe(false);
+  });
+
+  it('keeps the sheet open with the backend message when the single add fails', async () => {
+    const { result, onAdded } = renderController(makeProduct());
+
+    act(() => result.current.openSheet());
+    act(() => result.current.selection.selectVariant(12, '3510'));
+    act(() => result.current.buySingleItem(SINGLE_SIZE_ITEM));
+    act(() =>
+      mockAddToCart.mock.calls[0][1].onError({
+        isAxiosError: true,
+        response: { status: 400, data: { message: 'Bu bedenin stoğu kalmadı.' } },
+      }),
+    );
+
+    await waitFor(() => expect(result.current.errorMessage).toBe('Bu bedenin stoğu kalmadı.'));
+    expect(result.current.isSheetOpen).toBe(true);
+    expect(onAdded).not.toHaveBeenCalled();
+  });
+
+  it('ignores Tek Satın Al while a single add is already running', () => {
+    mockIsAddingSingle = true;
+    const { result, onOpenProduct } = renderController(makeProduct());
+
+    act(() => result.current.selection.selectVariant(12, '3510'));
+    act(() => result.current.buySingleItem(SINGLE_SIZE_ITEM));
+    act(() => result.current.buySingleItem({ ...MULTI_SIZE_ITEM, slug: 'kruvaze-ceket' }));
+
+    // Çift dokunma ikinci isteği göndermez, istek sürerken başka ekrana da geçilmez.
+    expect(mockAddToCart).not.toHaveBeenCalled();
     expect(onOpenProduct).not.toHaveBeenCalled();
   });
 

@@ -297,6 +297,7 @@ export function ProductDetailScreen() {
       {/* Bundle beden seçim alt sayfası — paket kalemi başına beden seçilir */}
       {bundle.isBundle && bundle.summary ? (
         <BundleSelectionSheet
+          buyingItemId={bundle.buyingItemId}
           errorMessage={bundle.errorMessage}
           imageUrl={displayData.imageUrl}
           isAdding={bundle.isAdding}
@@ -305,6 +306,7 @@ export function ProductDetailScreen() {
           items={bundle.items}
           missingHighlight={bundle.selection.missingHighlight}
           missingItemIds={bundle.selection.missingItemIds}
+          onBuySingle={bundle.buySingleItem}
           onClose={bundle.closeSheet}
           onConfirm={bundle.confirmAdd}
           onOpenProduct={bundle.openItemProduct}
