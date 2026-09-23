@@ -10,6 +10,7 @@ import { Product } from '@/types/product.types';
 import { ProductFeatureAssetTicker, ProductFeatureDescriptionTicker } from './product-feature-tags';
 import { ProductImageCarousel } from './product-image-carousel';
 import { ProductCardPrice } from './product-price';
+import { ProductSizeSpecialPrice } from './product-size-special-price';
 import { ProductSizeStrip } from './product-size-strip';
 import { useToggleFavorite } from '@/features/favorite/api/favorite.queries';
 
@@ -337,9 +338,9 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
             <ProductSizeStrip sizes={product.sizes} />
           </YStack>
 
-          {/* Fiyat satırı: indirim varsa oran rozeti + üstü çizili eski fiyat */}
+          {/* Fiyat satırı: indirim varsa oran rozeti + üstü çizili eski fiyat; ucuz beden varsa altında duyurusu */}
           <Pressable accessible={false} onPress={() => onOpen(imageIndex)}>
-            <YStack marginTop={6} width="100%">
+            <YStack gap={4} marginTop={6} width="100%">
               <ProductCardPrice
                 discountRate={product.discountRate}
                 firstPrice={product.firstPrice}
@@ -347,6 +348,7 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
                 price={product.price}
                 testID="product-card-price"
               />
+              <ProductSizeSpecialPrice productPrice={product.price} sizes={product.sizes} />
             </YStack>
           </Pressable>
         </YStack>

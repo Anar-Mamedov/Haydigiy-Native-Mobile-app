@@ -80,6 +80,30 @@ describe('ProductCard', () => {
     expect(StyleSheet.flatten(firstPrice.props.style)?.textDecorationLine).toBe('line-through');
   });
 
+  it('announces a size sold below the product price under the price row', () => {
+    renderWithTamagui(
+      <ProductCard
+        onOpen={jest.fn()}
+        product={{
+          ...product,
+          sizes: [
+            { name: 'S', hasStock: true, price: 129.99 },
+            { name: 'M', hasStock: true },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('150,00 TL')).toBeTruthy();
+    expect(screen.getByLabelText('S bedenine özel 129,99 TL')).toBeTruthy();
+  });
+
+  it('shows no size special price while the sizes carry no own price', () => {
+    renderWithTamagui(<ProductCard onOpen={jest.fn()} product={product} />);
+
+    expect(screen.queryByTestId('product-size-special-price')).toBeNull();
+  });
+
   it('falls back to the plain price when the discount flag arrives without usable data', () => {
     renderWithTamagui(
       <ProductCard onOpen={jest.fn()} product={{ ...product, hasDiscount: true }} />,

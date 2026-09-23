@@ -19,6 +19,7 @@ import { extractProductCode } from '../utils/extract-product-code';
 import { getCarouselImageHeight } from '../utils/product-carousel-geometry';
 import { isProductCodeBadgeVisible } from '../utils/product-code-badge';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
+import { resolveVariantPricing } from '../utils/variant-price';
 import { useBundleController } from './use-bundle-controller';
 import { useNotifyStock } from './use-notify-stock';
 
@@ -163,6 +164,8 @@ export function useProductDetailController() {
     : null;
 
   const displayData = product || previewProduct;
+  // Seçili bedenin kendi fiyatı varsa o, yoksa ürünün varsayılan fiyatı gösterilir.
+  const displayPricing = displayData ? resolveVariantPricing(displayData, selectedVariant) : null;
   const { isFavorite, toggleFavorite } = useToggleFavorite(displayData);
   const areProductOptionsLoading = isPending && !product;
 
@@ -306,6 +309,7 @@ export function useProductDetailController() {
     // Data + durumlar
     product,
     displayData,
+    displayPricing,
     previewProduct,
     error,
     isError,

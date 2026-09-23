@@ -46,7 +46,7 @@ import { SizeCalculatorModal } from '../components/size-calculator-modal';
  */
 export function ProductDetailScreen() {
   const controller = useProductDetailController();
-  const { bundle, displayData, product, selectedVariant } = controller;
+  const { bundle, displayData, displayPricing, product, selectedVariant } = controller;
 
   if (controller.isPending && !controller.previewProduct) {
     return (
@@ -78,7 +78,7 @@ export function ProductDetailScreen() {
     );
   }
 
-  if (!displayData) {
+  if (!displayData || !displayPricing) {
     return (
       <AppScreen scrollable={false} padding={0} gap={0}>
         <ProductDetailHeader />
@@ -273,11 +273,11 @@ export function ProductDetailScreen() {
       {/* Sticky footer price & CTA buttons */}
       <ProductStickyFooter
         bundleSummary={bundle.isBundle ? bundle.summary : null}
-        price={displayData.price}
+        price={displayPricing.price}
         originalPrice={displayData.originalPrice}
-        hasDiscount={displayData.hasDiscount}
-        discountRate={displayData.discountRate}
-        firstPrice={displayData.firstPrice}
+        hasDiscount={displayPricing.hasDiscount}
+        discountRate={displayPricing.discountRate}
+        firstPrice={displayPricing.firstPrice}
         onAddToCart={controller.handleAddToCart}
         onNotifyMe={controller.handleNotifyMe}
         onWhatsappPress={controller.handleWhatsappPress}
@@ -332,11 +332,11 @@ export function ProductDetailScreen() {
           onConfirm={controller.confirmAddToCart}
           onSelectVariant={controller.setSelectedVariant}
           open
-          priceLabel={formatCurrency(displayData.price)}
-          price={displayData.price}
-          hasDiscount={displayData.hasDiscount}
-          discountRate={displayData.discountRate}
-          firstPrice={displayData.firstPrice}
+          priceLabel={formatCurrency(displayPricing.price)}
+          price={displayPricing.price}
+          hasDiscount={displayPricing.hasDiscount}
+          discountRate={displayPricing.discountRate}
+          firstPrice={displayPricing.firstPrice}
           productName={displayData.title}
           selectedVariant={selectedVariant}
           shippingMessage={controller.shippingMessage}

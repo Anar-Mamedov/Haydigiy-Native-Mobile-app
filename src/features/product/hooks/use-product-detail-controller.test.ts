@@ -221,6 +221,55 @@ describe('useProductDetailController — sepete ekleme', () => {
   });
 });
 
+describe('useProductDetailController — beden fiyatı', () => {
+  const SIZE_S_SPECIAL = { id: '103', name: 'S', quantity: 3, price: 279.99, hasStock: true, pivotId: '4322' };
+  const SIZE_XL_NO_PRICE = { id: '104', name: 'XL', quantity: 2, price: 0, hasStock: true, pivotId: '4323' };
+
+  function setupWithSizePrices() {
+    return setup({
+      data: makeProduct({
+        firstPrice: 349.99,
+        hasDiscount: true,
+        discountRate: 11,
+        variants: [SIZE_S_SPECIAL, SIZE_XL_NO_PRICE],
+      }),
+    });
+  }
+
+  it('shows the product default price until a size is selected', () => {
+    const { result } = setupWithSizePrices();
+
+    expect(result.current.displayPricing).toEqual({
+      discountRate: 11,
+      firstPrice: 349.99,
+      hasDiscount: true,
+      price: 309.99,
+    });
+  });
+
+  it('switches to the selected size price and recalculates its discount', () => {
+    const { result } = setupWithSizePrices();
+
+    act(() => result.current.setSelectedVariant(SIZE_S_SPECIAL as never));
+
+    expect(result.current.displayPricing).toEqual({
+      discountRate: 20,
+      firstPrice: 349.99,
+      hasDiscount: true,
+      price: 279.99,
+    });
+  });
+
+  it('keeps the product default price for a size without its own price', () => {
+    const { result } = setupWithSizePrices();
+
+    act(() => result.current.setSelectedVariant(SIZE_XL_NO_PRICE as never));
+
+    expect(result.current.displayPricing?.price).toBe(309.99);
+    expect(result.current.displayPricing?.discountRate).toBe(11);
+  });
+});
+
 describe('useProductDetailController — paket ürün', () => {
   it('opens the package sheet instead of the size sheet', () => {
     const { result } = setup({ data: makeBundleProduct() });

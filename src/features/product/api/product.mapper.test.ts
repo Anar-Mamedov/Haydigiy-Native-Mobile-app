@@ -162,6 +162,21 @@ describe('mapSearchProductDto', () => {
     expect(plain.firstPrice).toBeUndefined();
   });
 
+  it('maps the size specific prices and leaves null prices empty', () => {
+    const product = mapSearchProductDto({
+      ...baseProductDto,
+      stock_variants: [
+        { id: 234, name: 'S', quantity: '5', price: '129.99' },
+        { id: 232, name: 'M', quantity: '0', price: null },
+      ],
+    });
+
+    expect(product.sizes).toEqual([
+      { name: 'S', hasStock: true, price: 129.99 },
+      { name: 'M', hasStock: false, price: undefined },
+    ]);
+  });
+
   it('marks a package product coming from a list response', () => {
     expect(mapSearchProductDto({ ...baseProductDto, is_bundle: true }).isBundle).toBe(true);
   });

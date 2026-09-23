@@ -339,6 +339,7 @@ function extractSizes(dto: SearchProductDto): ProductSize[] {
     sizesList = dto.stock_variants.map((v) => ({
       name: v.name,
       hasStock: parseSafely(v.quantity) > 0,
+      price: parseOptionalNumber(v.price),
     }));
   } else if (Array.isArray(dto.variant_names)) {
     sizesList = dto.variant_names.map((name) => ({

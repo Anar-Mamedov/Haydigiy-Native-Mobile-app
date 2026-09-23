@@ -3,6 +3,8 @@ import { BundleItem, BundleSummary } from '@/types/bundle.types';
 export type ProductSize = {
   name: string;
   hasStock: boolean;
+  /** Bedene özel fiyat; boş ya da `0` ise ürünün varsayılan fiyatı geçerlidir. */
+  price?: number;
 };
 
 export type FeatureIcon = {
@@ -130,6 +132,7 @@ export type ProductVariant = {
   name: string;
   name2?: string | null;
   quantity: number;
+  /** Bedene özel fiyat; `0` ise bedenin kendi fiyatı yoktur ve ürünün fiyatı geçerlidir. */
   price: number;
   hasStock: boolean;
   /** Product-variant pivot id; this is the `variant_id` the cart API expects. */

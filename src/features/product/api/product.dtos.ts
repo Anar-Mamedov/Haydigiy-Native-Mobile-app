@@ -112,7 +112,8 @@ export interface SearchProductDto {
     id: number;
     name: string;
     quantity: string | number;
-    price: number;
+    /** Bedene özel fiyat; `null` ise ürünün varsayılan fiyatı geçerlidir. */
+    price?: number | string | null;
   }[];
   variant_names?: string[];
   variants?: {
