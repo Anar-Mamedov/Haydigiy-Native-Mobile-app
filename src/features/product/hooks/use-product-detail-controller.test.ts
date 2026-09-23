@@ -109,6 +109,7 @@ function makeBundleProduct() {
         imageUrl: '',
         price: 1250,
         oldPrice: null,
+        regularUnitPrice: 1250,
         quantity: 1,
         isAvailable: true,
         variants: [

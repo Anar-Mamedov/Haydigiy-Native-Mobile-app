@@ -20,6 +20,7 @@ function makeItem(bundleItemId: number, variants: { id: string; stock: number }[
     imageUrl: '',
     price: 100,
     oldPrice: null,
+    regularUnitPrice: 100,
     quantity: 1,
     isAvailable: mapped.some((variant) => variant.hasStock),
     variants: mapped,

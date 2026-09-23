@@ -40,6 +40,7 @@ function makeItem(bundleItemId: number, title: string, sizes: { name: string; id
     imageUrl: '',
     price: 1250,
     oldPrice: null,
+    regularUnitPrice: 1250,
     quantity: 1,
     isAvailable: variants.some((variant) => variant.hasStock),
     variants,

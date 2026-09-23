@@ -6,13 +6,18 @@ import {
   mapBundleSummary,
 } from './bundle.mapper';
 
-/** Canlı "Deneme bundle" cevabından sadeleştirilmiş paket kalemi. */
+/**
+ * Canlı "Deneme bundle" cevabından sadeleştirilmiş paket kalemi. Backend kalemin paket içi
+ * fiyatını `price`, ürünün normal fiyatını `original_price` olarak gönderir.
+ */
 const bundleItemFixture = {
   id: 1,
   component_product_id: 96763,
   quantity: 1,
-  regular_line_total: 469.99,
-  bundle_unit_price: 333333,
+  bundle_unit_price: 449.9,
+  bundle_line_total: 449.9,
+  price: 449.9,
+  original_price: 469.99,
   is_available: true,
   max_quantity: 13,
   product: {
@@ -35,10 +40,60 @@ describe('mapBundleItems', () => {
     expect(item.bundleItemId).toBe(1);
     expect(item.productId).toBe(96763);
     expect(item.title).toBe('Raşel Kumaş İkili Takım Açıkhaki - 75247.801.');
-    expect(item.price).toBe(469.99);
     expect(item.quantity).toBe(1);
     // Görsel `image: { thumb, medium }` nesnesi olarak geliyor; düz string değil.
     expect(item.imageUrl).toBe('https://cdn/rasel-thumb.webp');
+  });
+
+  it('shows the package price and strikes through the regular price, like the web', () => {
+    const [item] = mapBundleItems({ items: [bundleItemFixture] });
+
+    expect(item.price).toBe(449.9);
+    expect(item.oldPrice).toBe(469.99);
+  });
+
+  it('keeps the regular unit price for Tek Satın Al apart from the line prices', () => {
+    const [item] = mapBundleItems({
+      items: [{ ...bundleItemFixture, quantity: 2, bundle_line_total: 899.8, price: 899.8, original_price: 939.98 }],
+    });
+
+    expect(item.price).toBe(899.8);
+    expect(item.oldPrice).toBe(939.98);
+    expect(item.regularUnitPrice).toBe(469.99);
+  });
+
+  it('strikes nothing through when the package price is not lower', () => {
+    const [item] = mapBundleItems({
+      items: [{ ...bundleItemFixture, bundle_line_total: 469.99, price: 469.99 }],
+    });
+
+    expect(item.price).toBe(469.99);
+    expect(item.oldPrice).toBeNull();
+  });
+
+  it('reads the line totals of older responses', () => {
+    const [item] = mapBundleItems({
+      items: [
+        {
+          id: 2,
+          quantity: 1,
+          bundle_line_total: 449.9,
+          regular_line_total: 469.99,
+          product: { id: 96763, name: 'Eski cevap', price: 469.99 },
+        },
+      ],
+    });
+
+    expect(item.price).toBe(449.9);
+    expect(item.oldPrice).toBe(469.99);
+  });
+
+  it('falls back to the regular price when the package price is missing', () => {
+    const [item] = mapBundleItems({ items: [{ id: 3, quantity: 2, product: { name: 'Fiyatsız kalem', price: 100 } }] });
+
+    expect(item.price).toBe(200);
+    expect(item.oldPrice).toBeNull();
+    expect(item.regularUnitPrice).toBe(100);
   });
 
   it('selects product_variant_id, not the global variant_id, for cart selections', () => {

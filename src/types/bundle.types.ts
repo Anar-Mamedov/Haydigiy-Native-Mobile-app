@@ -34,13 +34,15 @@ export type BundleItem = {
   title: string;
   slug: string | null;
   imageUrl: string;
+  /** Kalemin paket içindeki satır fiyatı (adetle çarpılmış); satırda asıl fiyat olarak gösterilir. */
+  price: number;
+  /** Ürünün paket dışındaki normal satır fiyatı; paket fiyatından yüksek değilse null. Üstü çizili gösterilir. */
+  oldPrice: number | null;
   /**
-   * Ürünün paket dışındaki normal fiyatı: "Tek Satın Al" ile sepete yansıyan birim fiyat.
+   * Ürünün paket dışındaki normal birim fiyatı: "Tek Satın Al" ile sepete yansıyan fiyat.
    * Backend bunu `product.price` olarak sepetle aynı kuralla (indirimli fiyat varsa o) verir.
    */
-  price: number;
-  /** Üstü çizili gösterilecek eski fiyat — yoksa null. */
-  oldPrice: number | null;
+  regularUnitPrice: number;
   /** Pakette bu üründen kaç adet var (çoğunlukla 1). */
   quantity: number;
   /** Backend kalemi satılabilir buluyor ve en az bir bedeninde stok var mı? */

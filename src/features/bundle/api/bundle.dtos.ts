@@ -46,7 +46,13 @@ export interface BundleItemDto {
   bundle_item_id?: number;
   component_product_id?: number;
   quantity?: number | string;
-  /** Ürünün paket dışındaki normal satır tutarı. */
+  /** Kalemin paket içindeki satır tutarı (`bundle_unit_price` × adet); satırda asıl fiyat budur. */
+  price?: number | string;
+  /** Ürünün paket dışındaki normal satır tutarı; paket fiyatından yüksekse üstü çizili gösterilir. */
+  original_price?: number | string;
+  /** Eski cevaplardaki paket içi satır tutarı; `price` yoksa okunur. */
+  bundle_line_total?: number | string;
+  /** Eski cevaplardaki normal satır tutarı; `original_price` yoksa okunur. */
   regular_line_total?: number | string;
   bundle_unit_price?: number | string;
   is_available?: boolean;

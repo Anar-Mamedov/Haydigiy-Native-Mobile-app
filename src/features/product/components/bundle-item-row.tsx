@@ -42,6 +42,39 @@ export type BundleItemRowProps = {
 };
 
 /**
+ * Kalemin fiyatı webdeki gibi gösterilir: asıl fiyat paket içi fiyattır; ürünün normal fiyatı
+ * ondan yüksekse üstünde üstü çizili durur. Fiyatı olmayan kalemde hiçbir şey çizilmez.
+ */
+function BundleItemPrice({ price, oldPrice }: Pick<BundleItem, 'price' | 'oldPrice'>) {
+  if (price <= 0) return null;
+
+  const priceLabel = formatCurrency(price);
+  const oldPriceLabel = oldPrice !== null ? formatCurrency(oldPrice) : null;
+
+  return (
+    <YStack
+      // Ekran okuyucu üstü çizili fiyatı ayırt edemez; iki fiyat tek cümlede okunur.
+      accessibilityLabel={
+        oldPriceLabel
+          ? `Paket içi fiyatı ${priceLabel}, normal fiyatı ${oldPriceLabel}`
+          : `Paket içi fiyatı ${priceLabel}`
+      }
+      accessible
+      alignItems="flex-end"
+    >
+      {oldPriceLabel ? (
+        <Paragraph color="$color10" fontSize={11} fontWeight="500" textDecorationLine="line-through">
+          {oldPriceLabel}
+        </Paragraph>
+      ) : null}
+      <Paragraph color="$color" fontSize={13} fontWeight="700">
+        {priceLabel}
+      </Paragraph>
+    </YStack>
+  );
+}
+
+/**
  * Paketteki tek bir ürün: görsel, ad, fiyat ve kendi beden şeridi.
  * Her kalem kendi bedenini ayrı seçer; paket ancak hepsi seçilince sepete eklenir.
  */
@@ -124,17 +157,7 @@ export function BundleItemRow({
             <Paragraph color="$color" flex={1} fontSize={13} fontWeight="700" numberOfLines={2}>
               {item.title}
             </Paragraph>
-            {/* Bu fiyat "Tek Satın Al" ile sepete yansıyan fiyattır (paket içi fiyat değil). */}
-            {item.price > 0 ? (
-              <YStack alignItems="flex-end">
-                <Paragraph color="$color10" fontSize={13} fontWeight="700">
-                  {formatCurrency(item.price)}
-                </Paragraph>
-                <Paragraph color="$color10" fontSize={10} fontWeight="600">
-                  Tek alım fiyatı
-                </Paragraph>
-              </YStack>
-            ) : null}
+            <BundleItemPrice oldPrice={item.oldPrice} price={item.price} />
           </XStack>
 
           {item.quantity > 1 ? (

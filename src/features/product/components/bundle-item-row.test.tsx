@@ -27,6 +27,7 @@ function makeItem(overrides: Partial<BundleItem> = {}): BundleItem {
     imageUrl: 'https://cdn/elbise.webp',
     price: 1250,
     oldPrice: null,
+    regularUnitPrice: 1250,
     quantity: 1,
     isAvailable: variants.some((variant) => variant.hasStock),
     ...overrides,
@@ -58,16 +59,32 @@ describe('BundleItemRow', () => {
     expect(getByText('1')).toBeTruthy();
   });
 
-  it('labels the price as what Tek Satın Al puts in the cart', () => {
-    const { getByText } = renderRow();
+  it('shows the package price with the regular price struck through above it, like the web', () => {
+    const { getByLabelText, getByText } = renderRow({ item: makeItem({ price: 1199.9, oldPrice: 1250 }) });
 
-    expect(getByText('Tek alım fiyatı')).toBeTruthy();
+    expect(getByText('₺1.250,00')).toHaveStyle({ textDecorationLine: 'line-through' });
+    expect(getByText('₺1.199,90')).not.toHaveStyle({ textDecorationLine: 'line-through' });
+    expect(getByLabelText('Paket içi fiyatı ₺1.199,90, normal fiyatı ₺1.250,00')).toBeTruthy();
   });
 
-  it('shows no price label when the item has no price', () => {
-    const { queryByText } = renderRow({ item: makeItem({ price: 0 }) });
+  it('shows only the package price when the item has no package discount', () => {
+    const { getByLabelText, getByText } = renderRow();
 
-    expect(queryByText('Tek alım fiyatı')).toBeNull();
+    expect(getByText('₺1.250,00')).not.toHaveStyle({ textDecorationLine: 'line-through' });
+    expect(getByLabelText('Paket içi fiyatı ₺1.250,00')).toBeTruthy();
+  });
+
+  it('shows no price when the item has no price', () => {
+    const { queryByLabelText } = renderRow({ item: makeItem({ price: 0, oldPrice: 1250 }) });
+
+    expect(queryByLabelText(/Paket içi fiyatı/)).toBeNull();
+  });
+
+  it('keeps both prices readable in the dark theme', () => {
+    const { getByText } = renderRow({ item: makeItem({ price: 1199.9, oldPrice: 1250 }) }, 'dark');
+
+    expect(getByText('₺1.250,00')).toBeTruthy();
+    expect(getByText('₺1.199,90')).toBeTruthy();
   });
 
   it('sends the product-specific variant id when a size is picked', () => {

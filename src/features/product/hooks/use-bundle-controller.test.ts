@@ -40,8 +40,10 @@ function makeBundleItem(bundleItemId: number, sizes: { id: string; stock: number
     title: `Ürün ${bundleItemId}`,
     slug: null,
     imageUrl: '',
-    price: 1250,
-    oldPrice: null,
+    // Paket içi fiyat normal fiyattan düşük: "Tek Satın Al" hangisini kullandığı ayırt edilebilsin.
+    price: 1100,
+    oldPrice: 1250,
+    regularUnitPrice: 1250,
     quantity: 1,
     isAvailable: variants.some((variant) => variant.hasStock),
     variants,
@@ -261,6 +263,16 @@ describe('useBundleController', () => {
     expect(onAdded).toHaveBeenCalledTimes(1);
     expect(result.current.isSheetOpen).toBe(false);
     expect(result.current.buyingItemId).toBeNull();
+  });
+
+  it('reports the regular unit price, not the package price, for the single add', () => {
+    const { result } = renderController(makeProduct());
+
+    act(() => result.current.selection.selectVariant(12, '3510'));
+    act(() => result.current.buySingleItem(SINGLE_SIZE_ITEM));
+
+    // Kalem paketsiz eklenir; sepete yansıyan bedel normal fiyattır.
+    expect(mockAddToCart.mock.calls[0][0].tracking).toEqual(expect.objectContaining({ price: 1250 }));
   });
 
   it('opens the product instead when no size is picked for the item', () => {

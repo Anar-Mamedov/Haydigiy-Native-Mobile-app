@@ -135,7 +135,8 @@ export function useBundleController(
             id: item.productId != null ? String(item.productId) : '',
             name: item.title,
             imageUrl: item.imageUrl,
-            price: item.price,
+            // Kalem paketsiz eklendiği için paket içi fiyat değil, normal birim fiyat raporlanır.
+            price: item.regularUnitPrice,
             size: variant?.name,
             quantity: 1,
             slug: item.slug ?? undefined,

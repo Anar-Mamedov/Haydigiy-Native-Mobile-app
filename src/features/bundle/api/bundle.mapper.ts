@@ -84,7 +84,11 @@ function readBundleItem(dto: BundleItemDto, index: number): BundleItem | null {
     .map(readVariant)
     .filter((variant): variant is BundleVariantOption => variant !== null);
 
-  const price = toNumber(dto.regular_line_total ?? product.price);
+  const quantity = toPositiveInt(dto.quantity, 1);
+  const regularUnitPrice = toNumber(product.price);
+  const regularLinePrice = toNumber(dto.original_price ?? dto.regular_line_total ?? regularUnitPrice * quantity);
+  // Web vitrini gibi satırda paket içi fiyat gösterilir; backend göndermezse normal fiyata düşülür.
+  const price = toNumber(dto.price ?? dto.bundle_line_total ?? regularLinePrice);
 
   return {
     bundleItemId,
@@ -93,8 +97,9 @@ function readBundleItem(dto: BundleItemDto, index: number): BundleItem | null {
     slug: toText(product.slug),
     imageUrl: readImageUrl(product.image, product.medias?.[0]),
     price,
-    oldPrice: null,
-    quantity: toPositiveInt(dto.quantity, 1),
+    oldPrice: regularLinePrice > price ? regularLinePrice : null,
+    regularUnitPrice,
+    quantity,
     // Backend kalemi satılamaz işaretlerse beden seçimi açılmaz.
     isAvailable: dto.is_available !== false && variants.some((variant) => variant.hasStock),
     variants,
@@ -118,7 +123,7 @@ export function mapBundleSummary(
 ): BundleSummary {
   const bundlePrice = toNumber(bundle?.price);
 
-  const computedTotal = items.reduce((sum, item) => sum + item.price * Math.max(1, item.quantity), 0);
+  const computedTotal = items.reduce((sum, item) => sum + item.regularUnitPrice * Math.max(1, item.quantity), 0);
   const reportedTotal = toNumber(bundle?.regular_total);
   const itemsTotal = reportedTotal > 0 ? reportedTotal : computedTotal;
 

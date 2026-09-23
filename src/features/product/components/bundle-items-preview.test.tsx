@@ -12,6 +12,7 @@ function makeItem(bundleItemId: number, title: string): BundleItem {
     imageUrl: `https://cdn/${bundleItemId}.webp`,
     price: 1250,
     oldPrice: null,
+    regularUnitPrice: 1250,
     quantity: 1,
     isAvailable: true,
     variants: [
