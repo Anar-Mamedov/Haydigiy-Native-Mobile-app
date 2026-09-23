@@ -4,6 +4,7 @@ import { ScrollView, XStack, YStack, Input } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { Search, X, TrendingDown } from '@/components/ui/icons';
 import { FavoritesFilter } from '@/types/favorite.types';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 interface FavoritesToolbarProps {
   searchQuery: string;
@@ -49,6 +50,7 @@ export function FavoritesToolbar({
           height="100%"
           backgroundColor="transparent"
           borderWidth={0}
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
           paddingLeft="$2"
           fontSize={14}
           color="$color"

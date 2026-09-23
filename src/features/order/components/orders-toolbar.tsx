@@ -5,6 +5,7 @@ import { Input, XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { OrderDateFilter } from '@/types/order.types';
 import { OrderDateSheet, orderDateLabel } from './order-date-sheet';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 type OrdersToolbarProps = {
   search: string;
@@ -44,6 +45,7 @@ export function OrdersToolbar({
             flex={1}
             fontSize={14}
             height={42}
+            maxFontSizeMultiplier={MAX_FONT_SCALE}
             onChangeText={onSearchChange}
             padding={0}
             placeholder="Ürün/Sipariş ara"

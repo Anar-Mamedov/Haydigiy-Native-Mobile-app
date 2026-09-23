@@ -1,5 +1,6 @@
 import { Search } from '@/components/ui/icons';
 import { Input, XStack } from 'tamagui';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 export interface SearchInputProps {
   value: string;
@@ -33,6 +34,7 @@ export function SearchInput({
         borderWidth={0}
         flex={1}
         fontSize={14}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
         onChangeText={onChangeText}
         padding={0}
         placeholder={placeholder}

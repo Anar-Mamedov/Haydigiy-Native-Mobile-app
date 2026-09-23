@@ -17,6 +17,7 @@ import {
   getViewedProducts,
   ViewedProduct,
 } from '@/utils/recently-viewed';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 export function SearchSuggestionsScreen() {
   const router = useRouter();
@@ -139,6 +140,7 @@ export function SearchSuggestionsScreen() {
           height="100%"
           backgroundColor="transparent"
           borderWidth={0}
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
           padding={0}
           fontSize={14}
           color="$color"

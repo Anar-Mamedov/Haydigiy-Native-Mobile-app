@@ -12,9 +12,12 @@ import {
   SAVINGS_BADGE_COLOR,
   SHEET_OVERLAY_COLOR,
 } from '@/lib/theme/colors';
+import { FONT_SCALE_DEFAULT_PROPS } from '@/lib/theme/font-scale';
 
 const testConfig = createTamagui({
   ...defaultConfig,
+  // Uygulama config'iyle aynı yazı boyutu tavanı; testler gerçek davranışı görsün.
+  defaultProps: FONT_SCALE_DEFAULT_PROPS,
   themes: {
     ...defaultConfig.themes,
     light: {

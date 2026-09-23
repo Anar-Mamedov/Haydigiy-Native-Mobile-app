@@ -85,4 +85,13 @@ describe('BottomNavigationBar', () => {
     expect(screen.getAllByTestId(/-tab-badge$/)).toHaveLength(1);
     expect(screen.getByTestId('cart-tab-badge')).toBeTruthy();
   });
+
+  it('shrinks a label that does not fit its tab instead of cutting it off', () => {
+    // Büyük yazı ayarında "Favorilerim" dar ekranda "Favorileri…" diye kesiliyordu.
+    renderWithTamagui(<BottomNavigationBar />);
+
+    for (const label of ['Favorilerim', 'Whatsapp', 'Hesabım']) {
+      expect(screen.getByText(label).props.adjustsFontSizeToFit).toBe(true);
+    }
+  });
 });

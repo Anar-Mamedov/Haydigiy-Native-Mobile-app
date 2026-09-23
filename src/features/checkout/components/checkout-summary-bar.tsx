@@ -172,11 +172,23 @@ export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
                 <ChevronUp color="$brand" size={22} />
               )}
             </Pressable>
-            <YStack>
+            {/*
+              Büyük yazı ayarında tutar "Onayla ve Bitir" butonunun altına kayıyordu. Sütun
+              daralabilir; tutar sığmazsa "…" ile kesilmek yerine yazısı küçülür.
+            */}
+            <YStack flexShrink={1} minWidth={0}>
               <Paragraph color="$color10" fontSize={11}>
                 Toplam
               </Paragraph>
-              <Paragraph color="$color" fontSize={17} fontWeight="800" numberOfLines={1}>
+              <Paragraph
+                adjustsFontSizeToFit
+                color="$color"
+                fontSize={17}
+                fontWeight="800"
+                minimumFontScale={0.7}
+                numberOfLines={1}
+                testID="checkout-summary-total"
+              >
                 {totalLabel}
               </Paragraph>
             </YStack>

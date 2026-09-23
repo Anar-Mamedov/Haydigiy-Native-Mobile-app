@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { CategoriesScreen } from './categories-screen';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 import { useMenuGroupsQuery, useMenuItemsQuery } from '../api/category.queries';
 
 const mockPush = jest.fn();
@@ -223,5 +224,14 @@ describe('CategoriesScreen', () => {
     fireEvent.changeText(searchInput, 'nonexistent');
 
     expect(screen.getByText('"nonexistent" için sonuç bulunamadı.')).toBeTruthy();
+  });
+
+  it('caps OS text scaling on the search box', () => {
+    // React Native TextInput'u Tamagui config varsayılanını almadığı için tavan elle verilir.
+    renderWithTamagui(<CategoriesScreen />);
+
+    expect(screen.getByPlaceholderText('Ürün veya kategori ara').props.maxFontSizeMultiplier).toBe(
+      MAX_FONT_SCALE,
+    );
   });
 });

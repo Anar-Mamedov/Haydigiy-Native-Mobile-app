@@ -9,6 +9,7 @@ import { AppButton, AppCheckbox, AppSheetOverlay, KeyboardAwareSheetScrollView }
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useAskProductQuestionMutation } from '../api/product-questions.queries';
 import { toPlainText } from '@/utils/normalize-text';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 type AskQuestionSheetProps = {
   open: boolean;
@@ -207,6 +208,7 @@ export function AskQuestionSheet({ open, onClose, slug, productId }: AskQuestion
                 focusStyle={{ borderColor: '$brand' }}
                 fontSize={15}
                 height={96}
+                maxFontSizeMultiplier={MAX_FONT_SCALE}
                 maxLength={MAX_LENGTH}
                 onChangeText={(text) => {
                   setQuestion(toPlainText(text));

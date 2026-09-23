@@ -12,6 +12,7 @@ import { ReviewTarget } from '@/types/review.types';
 import { resolveReviewVariantId, ReviewPhoto } from '@/services/review.service';
 import { useSubmitReviewMutation } from '../api/review.mutations';
 import { toPlainText } from '@/utils/normalize-text';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 const MAX_COMMENT = 2000;
 
@@ -267,6 +268,7 @@ export function OrderReviewSheet({
                 <TextArea
                   backgroundColor="$background"
                   borderColor="$borderColor"
+                  maxFontSizeMultiplier={MAX_FONT_SCALE}
                   maxLength={MAX_COMMENT}
                   minHeight={90}
                   onChangeText={(text) => setComment(toPlainText(text))}
@@ -321,6 +323,7 @@ export function OrderReviewSheet({
                     backgroundColor="$background"
                     borderColor="$borderColor"
                     keyboardType="number-pad"
+                    maxFontSizeMultiplier={MAX_FONT_SCALE}
                     onChangeText={setHeight}
                     value={height}
                   />
@@ -333,6 +336,7 @@ export function OrderReviewSheet({
                     backgroundColor="$background"
                     borderColor="$borderColor"
                     keyboardType="number-pad"
+                    maxFontSizeMultiplier={MAX_FONT_SCALE}
                     onChangeText={setWeight}
                     value={weight}
                   />

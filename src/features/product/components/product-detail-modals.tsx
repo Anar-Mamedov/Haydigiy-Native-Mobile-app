@@ -15,6 +15,7 @@ import {
   type SizeChartGender,
   type SizeChartSection,
 } from '../data/size-chart-assets';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 // --- WASHING INSTRUCTIONS DATA ---
 const WASHING_INSTRUCTIONS = [
@@ -279,6 +280,7 @@ export function FeedbackModal({
                 <YStack gap="$1.5" marginTop="$1">
                   <Paragraph fontSize={12} color="$color10" fontWeight="600">Geri Bildiriminiz</Paragraph>
                   <Input
+                    maxFontSizeMultiplier={MAX_FONT_SCALE}
                     value={otherText}
                     onChangeText={setOtherText}
                     placeholder="Geri bildiriminizi detaylandırın..."

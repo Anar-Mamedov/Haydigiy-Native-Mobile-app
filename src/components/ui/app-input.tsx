@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { GetProps, Input, Label, XStack, YStack, styled } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 const StyledInput = styled(Input, {
   name: 'AppInput',
@@ -43,6 +44,7 @@ export function AppInput({
           accessibilityLabel={label}
           flex={1}
           id={fieldId}
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
           name={name}
           paddingRight={rightElement ? 44 : undefined}
           {...inputProps}

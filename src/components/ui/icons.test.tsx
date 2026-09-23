@@ -22,11 +22,12 @@ describe('scaled icons', () => {
   });
 
   it('grows with the OS text size so it stays in proportion', () => {
-    mockFontScale(1.3);
+    // Tavanın (1.15) içinde kalan bir ayar; ikon yazıyla aynı oranda büyür.
+    mockFontScale(1.1);
 
     renderWithTamagui(<ArrowLeft size={22} testID="icon" />);
 
-    expect(screen.getByTestId('icon').props.width).toBe(Math.round(22 * 1.3));
+    expect(screen.getByTestId('icon').props.width).toBe(Math.round(22 * 1.1));
   });
 
   it('stops at the same cap as the text', () => {

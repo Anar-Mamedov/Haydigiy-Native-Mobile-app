@@ -10,6 +10,7 @@ import {
   SAVINGS_BADGE_COLOR,
   SHEET_OVERLAY_COLOR,
 } from './src/lib/theme/colors';
+import { FONT_SCALE_DEFAULT_PROPS } from './src/lib/theme/font-scale';
 
 // Use Tamagui's React Native Animated driver instead of the Reanimated driver.
 // With Reanimated 4 + RN 0.83 New Architecture, RN's dev render-logging
@@ -71,6 +72,8 @@ export const config = createTamagui({
     ...defaultConfig.settings,
     onlyAllowShorthands: false,
   },
+  // OS yazı boyutu tavanı tüm Tamagui metin ve input'larına buradan uygulanır.
+  defaultProps: FONT_SCALE_DEFAULT_PROPS,
   animations,
 });
 

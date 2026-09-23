@@ -87,4 +87,14 @@ describe('CheckoutSummaryBar', () => {
     expect(screen.getByText('Ödeme işlemi başlatılamadı.')).toBeTruthy();
     expect(screen.getByRole('alert')).toBeTruthy();
   });
+
+  it('shrinks the total to fit instead of sliding under the submit button', () => {
+    // Büyük yazı ayarında tutar "Onayla ve Bitir" butonunun altına taşıyordu.
+    renderWithTamagui(<CheckoutSummaryBar {...baseProps} />);
+
+    const total = screen.getByTestId('checkout-summary-total');
+
+    expect(total.props.adjustsFontSizeToFit).toBe(true);
+    expect(total.props.numberOfLines).toBe(1);
+  });
 });

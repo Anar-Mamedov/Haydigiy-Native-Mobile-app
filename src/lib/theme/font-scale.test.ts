@@ -1,4 +1,4 @@
-import { clampFontScale, COMPACT_MAX_FONT_SCALE, MAX_FONT_SCALE } from './font-scale';
+import { clampFontScale, COMPACT_MAX_FONT_SCALE, FONT_SCALE_DEFAULT_PROPS, MAX_FONT_SCALE } from './font-scale';
 
 describe('clampFontScale', () => {
   it('leaves the default text size untouched', () => {
@@ -31,5 +31,19 @@ describe('clampFontScale', () => {
 
   it('keeps the compact cap below the global one', () => {
     expect(COMPACT_MAX_FONT_SCALE).toBeLessThan(MAX_FONT_SCALE);
+  });
+
+  it('lets system text grow by at most 15%', () => {
+    // 1.3 tavanında ödeme alt çubuğu gibi dar ekranlar bozuluyordu.
+    expect(clampFontScale(1.3)).toBe(1.15);
+    expect(clampFontScale(2)).toBe(1.15);
+  });
+});
+
+describe('FONT_SCALE_DEFAULT_PROPS', () => {
+  it('caps every Tamagui text the app renders outside Paragraph', () => {
+    for (const name of ['Text', 'SizableText', 'Paragraph', 'H1', 'H2', 'Label']) {
+      expect(FONT_SCALE_DEFAULT_PROPS[name]).toEqual({ maxFontSizeMultiplier: MAX_FONT_SCALE });
+    }
   });
 });

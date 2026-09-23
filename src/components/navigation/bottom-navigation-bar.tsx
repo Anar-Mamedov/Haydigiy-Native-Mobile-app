@@ -154,7 +154,8 @@ export function BottomNavigationBar() {
   const inactiveColor = theme.color10.val;
 
   // Tab bar yüksekliği sabit; etiket, ikon ve rozet aynı sıkı oranla birlikte
-  // büyüsün ki aralarındaki denge bozulmasın ve satır taşmasın.
+  // büyüsün ki aralarındaki denge bozulmasın ve satır taşmasın. Dar ekranda
+  // sekmeye sığmayan etiket ("Favorilerim") "…" ile kesilmek yerine küçülür.
   const scale = useFontScale(COMPACT_MAX_FONT_SCALE);
   const tabIconSize = Math.round(25 * scale);
   const tabLabelLineHeight = Math.round(13 * scale);
@@ -217,7 +218,7 @@ export function BottomNavigationBar() {
                 size={badgeSize}
                 testID={`${tabTestId}-tab-icon`}
               />
-              <Paragraph fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1} style={{ color }}>
+              <Paragraph adjustsFontSizeToFit fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} minimumFontScale={0.8} numberOfLines={1} style={{ color }}>
                 {item.label}
               </Paragraph>
             </YStack>
@@ -237,7 +238,7 @@ export function BottomNavigationBar() {
       >
         <YStack alignItems="center" gap={2}>
           <WhatsappTabIcon color={inactiveColor} size={tabIconSize} />
-          <Paragraph fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1} style={{ color: inactiveColor }}>
+          <Paragraph adjustsFontSizeToFit fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} minimumFontScale={0.8} numberOfLines={1} style={{ color: inactiveColor }}>
             Whatsapp
           </Paragraph>
         </YStack>
@@ -262,7 +263,7 @@ export function BottomNavigationBar() {
           >
             <YStack alignItems="center" gap={2}>
               {item.icon({ color, focused, size: tabIconSize })}
-              <Paragraph fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} numberOfLines={1} style={{ color }}>
+              <Paragraph adjustsFontSizeToFit fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} minimumFontScale={0.8} numberOfLines={1} style={{ color }}>
                 {item.label}
               </Paragraph>
             </YStack>

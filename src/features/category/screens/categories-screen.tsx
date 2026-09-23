@@ -10,6 +10,7 @@ import { CategoryCard } from '../components/category-card';
 import { MenuItem } from '../types/category.types';
 import { handleLinkPress } from '@/utils/link-handler';
 import { BRAND_COLOR } from '@/lib/theme/colors';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 export function CategoriesScreen() {
   const router = useRouter();
@@ -116,6 +117,8 @@ export function CategoriesScreen() {
       >
         <Search color="$brand" size={18} />
         <TextInput
+          // Tamagui dışı input olduğu için config'teki yazı boyutu tavanı buraya ulaşmıyor.
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
           placeholder="Ürün veya kategori ara"
           placeholderTextColor="#9ca3af"
           value={searchTerm}

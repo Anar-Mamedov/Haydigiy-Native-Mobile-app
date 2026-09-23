@@ -6,6 +6,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { formatCurrency } from '@/utils/format-currency';
 import { AppliedCoupon } from '@/types/checkout.types';
 import { Coupon } from '@/types/coupon.types';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 const COUPON_INPUT_PLACEHOLDER = 'Kupon Kodu (Zorunlu Değildir)';
 
@@ -41,6 +42,7 @@ function CouponCodeInput({ value, onChangeText, disabled }: CouponCodeInputProps
         disabled={disabled}
         flex={1}
         height={44}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
         multiline={false}
         numberOfLines={1}
         onChangeText={onChangeText}

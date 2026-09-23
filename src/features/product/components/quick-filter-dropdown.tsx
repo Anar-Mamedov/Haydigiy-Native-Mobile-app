@@ -7,6 +7,7 @@ import { FilterProperty, ProductAvailableFilters, QuickFilterGroup } from '@/typ
 import { FilterShortcutSection } from './filter-sheet';
 import { CategoryFilterTree } from './category-filter-tree';
 import { FilterCheckbox } from '@/components/ui/filter-checkbox';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 type ActiveFilters = {
   colors?: string;
@@ -74,6 +75,7 @@ function SearchField({ onChangeText, placeholder, value }: {
         flex={1}
         backgroundColor="transparent"
         borderWidth={0}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
         paddingLeft={10}
         fontSize={15}
         color="$color"

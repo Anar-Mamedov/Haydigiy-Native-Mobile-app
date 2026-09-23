@@ -7,6 +7,7 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { KeyboardAwareSheetScrollView } from '@/components/ui/keyboard-aware-sheet-scroll-view';
 import { matchesSearch } from '@/utils/search';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 export type AppSelectOption = {
   label: string;
@@ -173,6 +174,7 @@ export function AppSelect({
                   flex={1}
                   fontSize={14}
                   height={42}
+                  maxFontSizeMultiplier={MAX_FONT_SCALE}
                   onChangeText={setQuery}
                   paddingHorizontal={0}
                   placeholder="Ara..."

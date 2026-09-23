@@ -7,6 +7,7 @@ import { FilterProperty, ProductAvailableFilters } from '@/types/product.types';
 import { CategoryFilterTree } from './category-filter-tree';
 import { FilterCheckbox } from '@/components/ui/filter-checkbox';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
+import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 export type FilterShortcutSection =
   | 'categories'
@@ -96,6 +97,7 @@ function SearchField({ onChangeText, placeholder, value }: { onChangeText: (valu
         flex={1}
         backgroundColor="transparent"
         borderWidth={0}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
         paddingLeft={10}
         fontSize={14}
         color="$color"
