@@ -60,8 +60,20 @@ export function useProductDetailController() {
   const goToCartAfterAdd = useGoToCartAfterAdd();
   const shippingQuery = useShippingEstimateQuery();
 
+  // Paketteki bir ürün, paketin üstüne yeni ekran olarak açılır; geri dönünce paket yerinde
+  // kalır (sepetteki paket içeriğiyle aynı yönlendirme).
+  const openProductBySlug = useCallback(
+    (slug: string) => {
+      router.push(`/product/${slug}` as never);
+    },
+    [router],
+  );
+
   // Bundle (paket) ürün: normal beden seçimi yerine paket kalemi başına seçim yapılır.
-  const bundle = useBundleController(product, { onAdded: goToCartAfterAdd });
+  const bundle = useBundleController(product, {
+    onAdded: goToCartAfterAdd,
+    onOpenProduct: openProductBySlug,
+  });
 
   // States
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);

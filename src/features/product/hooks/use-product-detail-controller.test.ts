@@ -296,6 +296,19 @@ describe('useProductDetailController — paket ürün', () => {
     expect(result.current.bundle.isBundle).toBe(false);
     expect(result.current.bundle.summary).toBeNull();
   });
+
+  it('opens a package item on top of the package after closing the sheet', () => {
+    const { result } = setup({ data: makeBundleProduct() });
+    const item = { ...result.current.bundle.items[0], slug: 'kemer-detayli-elbise' };
+
+    act(() => result.current.bundle.openSheet());
+    act(() => result.current.bundle.openItemProduct(item));
+
+    expect(result.current.bundle.isSheetOpen).toBe(false);
+    // push: geri dönünce paket ve beden seçimleri yerinde kalır.
+    expect(mockPush).toHaveBeenCalledWith('/product/kemer-detayli-elbise');
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
 });
 
 describe('useProductDetailController — beden durumu', () => {

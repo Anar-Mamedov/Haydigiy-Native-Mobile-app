@@ -133,4 +133,38 @@ describe('BundleItemRow', () => {
     expect(getByText('Beden seçiniz')).toBeTruthy();
     expect(getByText('Kemer Detaylı Yarım Kol Elbise Siyah')).toBeTruthy();
   });
+
+  it('opens the product from both the image and the Ürüne Git button', () => {
+    const onOpenProduct = jest.fn();
+    const item = makeItem();
+    const { getByLabelText } = renderRow({ item, onOpenProduct });
+
+    fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah ürün detayı'));
+    fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah ürününe git'));
+
+    expect(onOpenProduct).toHaveBeenCalledTimes(2);
+    expect(onOpenProduct).toHaveBeenCalledWith(item);
+  });
+
+  it('offers no product link when the item has no product page', () => {
+    const { queryByLabelText, queryByText } = renderRow({
+      item: makeItem({ slug: null }),
+      onOpenProduct: jest.fn(),
+    });
+
+    expect(queryByText('Ürüne Git')).toBeNull();
+    expect(queryByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah ürün detayı')).toBeNull();
+  });
+
+  it('offers no product link when the caller does not handle it', () => {
+    const { queryByText } = renderRow();
+
+    expect(queryByText('Ürüne Git')).toBeNull();
+  });
+
+  it('keeps the Ürüne Git label readable in the dark theme', () => {
+    const { getByText } = renderRow({ onOpenProduct: jest.fn() }, 'dark');
+
+    expect(getByText('Ürüne Git')).toBeTruthy();
+  });
 });

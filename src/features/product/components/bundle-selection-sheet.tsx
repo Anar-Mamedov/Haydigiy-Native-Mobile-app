@@ -21,6 +21,8 @@ export type BundleSelectionSheetProps = {
   summary: BundleSummary;
   selections: Record<number, string>;
   onSelectVariant: (bundleItemId: number, variantId: string) => void;
+  /** Paketteki bir ürünün detayını açar. Verilmezse satırlar yönlendirme sunmaz. */
+  onOpenProduct?: (item: BundleItem) => void;
   missingItemIds: number[];
   missingHighlight: boolean;
   selectedCount: number;
@@ -61,6 +63,7 @@ export function BundleSelectionSheet({
   summary,
   selections,
   onSelectVariant,
+  onOpenProduct,
   missingItemIds,
   missingHighlight,
   selectedCount,
@@ -183,6 +186,7 @@ export function BundleSelectionSheet({
                   isMissing={missingHighlight && missingItemIds.includes(item.bundleItemId)}
                   item={item}
                   key={item.bundleItemId}
+                  onOpenProduct={onOpenProduct}
                   onSelectVariant={onSelectVariant}
                   selectedVariantId={selections[item.bundleItemId]}
                 />

@@ -120,6 +120,18 @@ describe('BundleSelectionSheet', () => {
     expect(screen.getByLabelText('Kruvaze Ceket için beden M')).toBeTruthy();
   });
 
+  it('lets the shopper open a package item from its row', () => {
+    const onOpenProduct = jest.fn();
+    const items = [{ ...ITEMS[0], slug: 'kemer-detayli-elbise' }, ITEMS[1]];
+    renderSheet({ items, onOpenProduct });
+
+    fireEvent.press(screen.getByLabelText('Kemer Detaylı Elbise ürününe git'));
+
+    expect(onOpenProduct).toHaveBeenCalledWith(items[0]);
+    // Slug'ı olmayan kalem yönlendirme sunmaz.
+    expect(screen.queryByLabelText('Kruvaze Ceket ürününe git')).toBeNull();
+  });
+
   it('reports the selection progress', () => {
     renderSheet({ selectedCount: 1, selections: { 12: '3510' }, missingItemIds: [13] });
 

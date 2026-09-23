@@ -11,6 +11,8 @@ const ADD_ERROR_FALLBACK = 'Paket sepete eklenemedi. Lütfen tekrar deneyin.';
 export type UseBundleControllerOptions = {
   /** Paket gerçekten sepete eklendikten sonra çalışır (ör. sepete yönlendirme). */
   onAdded: () => void;
+  /** Paketteki bir ürünün detayını açar; rota kararı çağırana aittir. */
+  onOpenProduct: (slug: string) => void;
 };
 
 export type BundleController = {
@@ -25,6 +27,8 @@ export type BundleController = {
   /** Sepete ekleme başarısız olduysa kullanıcıya gösterilecek mesaj. */
   errorMessage: string | null;
   confirmAdd: () => void;
+  /** Paketteki ürünün detayına gider (görsel veya "Ürüne Git"). */
+  openItemProduct: (item: BundleItem) => void;
   selection: ReturnType<typeof useBundleSelection>;
 };
 
@@ -36,7 +40,7 @@ export type BundleController = {
  */
 export function useBundleController(
   product: Product | null | undefined,
-  { onAdded }: UseBundleControllerOptions,
+  { onAdded, onOpenProduct }: UseBundleControllerOptions,
 ): BundleController {
   const items = useMemo(() => product?.bundleItems ?? [], [product?.bundleItems]);
   const summary = product?.bundleSummary ?? null;
@@ -86,6 +90,19 @@ export function useBundleController(
     );
   }, [addBundleToCart, onAdded, product, selection]);
 
+  /**
+   * Paketteki ürünün detayına gider. Alt sayfa modal olduğu için önce kapatılır; açık kalırsa
+   * yeni ekranın üstünde görünür. Geri dönüldüğünde beden seçimleri yerinde kalır.
+   */
+  const openItemProduct = useCallback(
+    (item: BundleItem) => {
+      if (!item.slug) return;
+      closeSheet();
+      onOpenProduct(item.slug);
+    },
+    [closeSheet, onOpenProduct],
+  );
+
   return {
     isBundle,
     items,
@@ -96,6 +113,7 @@ export function useBundleController(
     isAdding: addBundleToCart.isPending,
     errorMessage,
     confirmAdd,
+    openItemProduct,
     selection,
   };
 }

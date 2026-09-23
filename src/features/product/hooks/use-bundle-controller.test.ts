@@ -71,9 +71,9 @@ function makeProduct(overrides: Partial<Product> = {}): Product {
   } as Product;
 }
 
-function renderController(product: Product | null, onAdded = jest.fn()) {
-  const utils = renderHook(() => useBundleController(product, { onAdded }));
-  return { ...utils, onAdded };
+function renderController(product: Product | null, onAdded = jest.fn(), onOpenProduct = jest.fn()) {
+  const utils = renderHook(() => useBundleController(product, { onAdded, onOpenProduct }));
+  return { ...utils, onAdded, onOpenProduct };
 }
 
 beforeEach(() => {
@@ -211,6 +211,27 @@ describe('useBundleController', () => {
 
     expect(result.current.errorMessage).toBeNull();
     expect(mockMutate).toHaveBeenCalledTimes(2);
+  });
+
+  it('closes the sheet and opens the package item by its slug', () => {
+    const { result, onOpenProduct } = renderController(makeProduct());
+
+    act(() => result.current.openSheet());
+    act(() => result.current.openItemProduct({ ...SINGLE_SIZE_ITEM, slug: 'kemer-detayli-elbise' }));
+
+    // Modal alt sayfa açık kalsaydı yeni ürün ekranının üstünde görünürdü.
+    expect(result.current.isSheetOpen).toBe(false);
+    expect(onOpenProduct).toHaveBeenCalledWith('kemer-detayli-elbise');
+  });
+
+  it('keeps the sheet open when the package item has no product page', () => {
+    const { result, onOpenProduct } = renderController(makeProduct());
+
+    act(() => result.current.openSheet());
+    act(() => result.current.openItemProduct(SINGLE_SIZE_ITEM));
+
+    expect(result.current.isSheetOpen).toBe(true);
+    expect(onOpenProduct).not.toHaveBeenCalled();
   });
 
   it('does nothing without a product', () => {

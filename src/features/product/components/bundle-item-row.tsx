@@ -1,16 +1,23 @@
 import { Image } from 'expo-image';
 import { Check } from '@/components/ui/icons';
-import { XStack, YStack } from 'tamagui';
+import { getTokenValue, XStack, YStack } from 'tamagui';
+import { AppButton } from '@/components/ui/app-button';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { BundleItem } from '@/types/bundle.types';
 import { formatCurrency } from '@/utils/format-currency';
 
-const IMAGE_WIDTH = 64;
-const IMAGE_HEIGHT = 86;
+// Görsel; beden şeridi ve "Ürüne Git" aksiyonuyla dengeli dursun diye webdeki kompakt satırla
+// aynı ölçüdedir (72 genişlik, 1.35 oran).
+const IMAGE_WIDTH = 72;
+const IMAGE_HEIGHT = 97;
 const LOW_STOCK_THRESHOLD = 3;
 /** Beden butonunun en küçük dokunma hedefi (mobil erişilebilirlik alt sınırı). */
 const SIZE_CHIP_MIN_HEIGHT = 44;
 const SIZE_CHIP_MIN_WIDTH = 52;
+/** Kartın iç boşluğu; "Ürüne Git" sekmesi bu boşluğu negatif marjla geri alıp sağ alt köşeye yaslanır. */
+const CARD_PADDING = '$2.5';
+/** Sekme webdeki gibi 36pt görünür; dokunma alanı üstten ve soldan taşarak 44pt'ye tamamlanır. */
+const OPEN_PRODUCT_HIT_SLOP = { top: 8, left: 8 };
 
 export type BundleItemRowProps = {
   item: BundleItem;
@@ -20,6 +27,11 @@ export type BundleItemRowProps = {
   onSelectVariant: (bundleItemId: number, variantId: string) => void;
   /** Beden seçilmediği için vurgulanacak mı? */
   isMissing: boolean;
+  /**
+   * Görsele veya "Ürüne Git"e dokunulunca çağrılır (ürün detayına gitmek için). Verilmezse ya da
+   * kalemin slug'ı yoksa yönlendirme gösterilmez. Rota kararı çağırana aittir.
+   */
+  onOpenProduct?: (item: BundleItem) => void;
 };
 
 /**
@@ -32,9 +44,14 @@ export function BundleItemRow({
   selectedVariantId,
   onSelectVariant,
   isMissing,
+  onOpenProduct,
 }: BundleItemRowProps) {
   const selectedVariant = item.variants.find((variant) => variant.variantId === selectedVariantId);
   const hasStock = item.variants.some((variant) => variant.hasStock);
+  // Slug yoksa gidilecek ürün sayfası yok; satır yalnızca beden seçimi sunar.
+  const canOpenProduct = Boolean(onOpenProduct && item.slug);
+  const openProduct = () => onOpenProduct?.(item);
+  const cardPadding = getTokenValue(CARD_PADDING, 'space');
 
   const borderColor = isMissing ? '$red8' : selectedVariant ? '$brand' : '$borderColor';
   const backgroundColor = isMissing ? '$red2' : '$background';
@@ -46,18 +63,24 @@ export function BundleItemRow({
       borderRadius="$4"
       borderWidth={1}
       gap="$2"
-      padding="$2.5"
+      overflow="hidden"
+      padding={CARD_PADDING}
     >
       <XStack gap="$2.5">
         {/* Sıra numarası + görsel */}
         <YStack position="relative">
           <YStack
+            accessibilityHint={canOpenProduct ? 'Ürün detayına gider' : undefined}
+            accessibilityLabel={canOpenProduct ? `${item.title} ürün detayı` : undefined}
+            accessibilityRole={canOpenProduct ? 'button' : undefined}
             backgroundColor="$backgroundHover"
             borderColor="$borderColor"
             borderRadius="$3"
             borderWidth={1}
             height={IMAGE_HEIGHT}
+            onPress={canOpenProduct ? openProduct : undefined}
             overflow="hidden"
+            pressStyle={canOpenProduct ? { opacity: 0.7 } : undefined}
             width={IMAGE_WIDTH}
           >
             <Image
@@ -152,28 +175,59 @@ export function BundleItemRow({
             </Paragraph>
           )}
 
-          {/* Durum satırı */}
-          {!hasStock ? (
-            <Paragraph color="$red10" fontSize={11} fontWeight="700">
-              Bu ürün tükendi
-            </Paragraph>
-          ) : selectedVariant ? (
-            <XStack alignItems="center" gap="$1" marginTop={2}>
-              <Check color="$green10" size={12} />
-              <Paragraph color="$green10" fontSize={11} fontWeight="700">
-                {selectedVariant.name} bedeni seçildi
-              </Paragraph>
-              {selectedVariant.stock > 0 && selectedVariant.stock <= LOW_STOCK_THRESHOLD ? (
-                <Paragraph color="$red10" fontSize={11} fontWeight="800">
-                  Son {selectedVariant.stock} ürün!
+          {/*
+            Durum satırı + "Ürüne Git": sekme webdeki gibi kartın sağ alt köşesine yaslanır. Mutlak
+            konum yerine akışta durur; böylece uzun durum metninin ve beden kutularının üstüne binmez.
+            marginTop="auto", görsel sütunu daha uzun olduğunda da satırı kartın dibine indirir.
+          */}
+          <XStack alignItems="flex-end" gap="$2" marginTop="auto">
+            <YStack flex={1}>
+              {!hasStock ? (
+                <Paragraph color="$red10" fontSize={11} fontWeight="700">
+                  Bu ürün tükendi
                 </Paragraph>
-              ) : null}
-            </XStack>
-          ) : (
-            <Paragraph color={isMissing ? '$red10' : '$color10'} fontSize={11} fontWeight="700" marginTop={2}>
-              Beden seçiniz
-            </Paragraph>
-          )}
+              ) : selectedVariant ? (
+                <XStack alignItems="center" flexWrap="wrap" gap="$1" marginTop={2}>
+                  <Check color="$green10" size={12} />
+                  <Paragraph color="$green10" fontSize={11} fontWeight="700">
+                    {selectedVariant.name} bedeni seçildi
+                  </Paragraph>
+                  {selectedVariant.stock > 0 && selectedVariant.stock <= LOW_STOCK_THRESHOLD ? (
+                    <Paragraph color="$red10" fontSize={11} fontWeight="800">
+                      Son {selectedVariant.stock} ürün!
+                    </Paragraph>
+                  ) : null}
+                </XStack>
+              ) : (
+                <Paragraph color={isMissing ? '$red10' : '$color10'} fontSize={11} fontWeight="700" marginTop={2}>
+                  Beden seçiniz
+                </Paragraph>
+              )}
+            </YStack>
+
+            {canOpenProduct ? (
+              <AppButton
+                accessibilityHint="Ürün detayına gider"
+                accessibilityLabel={`${item.title} ürününe git`}
+                backgroundColor="$brand"
+                borderRadius={0}
+                borderTopLeftRadius="$4"
+                borderWidth={0}
+                hitSlop={OPEN_PRODUCT_HIT_SLOP}
+                marginBottom={-cardPadding}
+                marginRight={-cardPadding}
+                marginTop="$2"
+                onPress={openProduct}
+                paddingHorizontal="$3"
+                pressStyle={{ opacity: 0.85 }}
+                size="$3"
+              >
+                <Paragraph color="white" fontSize={14} fontWeight="600" numberOfLines={1}>
+                  Ürüne Git
+                </Paragraph>
+              </AppButton>
+            ) : null}
+          </XStack>
         </YStack>
       </XStack>
     </YStack>

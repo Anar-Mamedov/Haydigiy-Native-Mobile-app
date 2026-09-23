@@ -307,6 +307,7 @@ export function ProductDetailScreen() {
           missingItemIds={bundle.selection.missingItemIds}
           onClose={bundle.closeSheet}
           onConfirm={bundle.confirmAdd}
+          onOpenProduct={bundle.openItemProduct}
           onSelectVariant={bundle.selection.selectVariant}
           open={bundle.isSheetOpen}
           productName={displayData.title}
