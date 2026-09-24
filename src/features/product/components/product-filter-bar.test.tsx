@@ -136,4 +136,25 @@ describe('ProductFilterBar', () => {
     expect(screen.getByLabelText('Renk filtresi').props.accessibilityState.expanded).toBe(true);
     expect(screen.getByLabelText('Beden filtresi').props.accessibilityState.expanded).toBe(false);
   });
+
+  it('shows size shortcut pills and applies the pressed size', () => {
+    const toggle = jest.fn();
+    const items = [
+      { label: 'S', variantIds: [256, 234, 31], isActive: false },
+      { label: 'M', variantIds: [274, 232, 30], isActive: true },
+    ];
+    renderBar({ sizeShortcuts: { items, toggle } });
+
+    expect(screen.getByLabelText('M Beden filtresi').props.accessibilityState.selected).toBe(true);
+    expect(screen.getByLabelText('S Beden filtresi').props.accessibilityState.selected).toBe(false);
+
+    fireEvent.press(screen.getByLabelText('S Beden filtresi'));
+    expect(toggle).toHaveBeenCalledWith(items[0]);
+  });
+
+  it('renders no size pills for categories without size shortcuts', () => {
+    renderBar();
+
+    expect(screen.queryByLabelText('S Beden filtresi')).toBeNull();
+  });
 });

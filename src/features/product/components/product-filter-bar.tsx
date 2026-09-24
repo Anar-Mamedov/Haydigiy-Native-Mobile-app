@@ -2,6 +2,7 @@ import { ScrollView } from 'react-native';
 import { XStack, YStack } from 'tamagui';
 import { ArrowUpDown, SlidersHorizontal } from '@/components/ui/icons';
 import { QuickFilterGroup } from '@/types/product.types';
+import type { SizeShortcutFilter } from '../hooks/use-size-shortcut-filter';
 import { FILTER_PILL_HEIGHT, FilterPill } from './filter-pill';
 import { FilterShortcutSection } from './filter-sheet';
 
@@ -16,6 +17,8 @@ interface ProductFilterBarProps {
   productCategories: string | undefined;
   propertyIds: string | undefined;
   quickFilterGroups: QuickFilterGroup[];
+  /** Kategoriye tanımlı beden kısayolları (ör. Beden İndirimli Ürünler: S, M, L, XL); yoksa çizilmez. */
+  sizeShortcuts?: SizeShortcutFilter;
   variants: string | undefined;
   onFilterPress: () => void;
   onSortPress: () => void;
@@ -51,6 +54,7 @@ export function ProductFilterBar({
   productCategories,
   propertyIds,
   quickFilterGroups,
+  sizeShortcuts,
   variants,
   onFilterPress,
   onSortPress,
@@ -141,6 +145,18 @@ export function ProductFilterBar({
             key={group.id}
             label={group.name}
             onPress={() => onToggleQuickFilter(`quick:${group.id}`)}
+          />
+        ))}
+
+        {/* Hızlı filtrelerin yanındaki beden kısayolları: liste açmaz, dokununca bedeni uygular ya da kaldırır. */}
+        {sizeShortcuts?.items.map((shortcut) => (
+          <FilterPill
+            isActive={shortcut.isActive}
+            isOpen={false}
+            key={shortcut.label}
+            label={`${shortcut.label} Beden`}
+            onPress={() => sizeShortcuts.toggle(shortcut)}
+            showChevron={false}
           />
         ))}
       </ScrollView>

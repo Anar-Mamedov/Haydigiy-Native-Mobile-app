@@ -14,6 +14,7 @@ import { CartCampaignBanner } from '@/features/cart/components/cart-campaign-ban
 import { useInfiniteSearchProductsQuery } from '@/features/product/api/product.queries';
 import { useQuickFiltersQuery } from '@/features/product/api/quick-filter.queries';
 import { useStableCategoryOptions } from '@/features/product/hooks/use-stable-category-options';
+import { useSizeShortcutFilter } from '@/features/product/hooks/use-size-shortcut-filter';
 import { useTrackListingPageView } from '@/features/insider/hooks/use-insider-page-tracking';
 import {
   useTrackAnalyticsCategoryView,
@@ -150,6 +151,7 @@ export function ProductListScreen({
   // enhancement: while loading or on error it simply stays hidden.
   const quickFiltersQuery = useQuickFiltersQuery(categoryId ?? categoryDetails?.id);
   const quickFilterGroups = quickFiltersQuery.data ?? [];
+  const sizeShortcuts = useSizeShortcutFilter(categoryId ?? categoryDetails?.id, variants, setVariants);
 
   if (isMissingResourceApiError(error)) {
     return <Redirect href={NOT_FOUND_ROUTE} />;
@@ -326,6 +328,7 @@ export function ProductListScreen({
         productCategories={productCategories}
         propertyIds={propertyIds}
         quickFilterGroups={quickFilterGroups}
+        sizeShortcuts={sizeShortcuts}
         variants={variants}
         onFilterPress={() => {
           setQuickFilterSection(null);
