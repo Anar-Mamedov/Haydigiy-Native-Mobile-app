@@ -104,6 +104,11 @@ export interface SearchProductDto {
   has_stock?: boolean;
   /** Liste/arama/favori cevaplarında paket ürünü işaretler (detaydaki `is_bundle` ile aynı). */
   is_bundle?: boolean;
+  /**
+   * Yalnızca paketlerde: paketteki ürünlerin tekil fiyat toplamı ("ayrı ayrı alsan"). Paketlerde
+   * `has_discount` false gelir; liste kartındaki kazanç bu alanla `price` farkından çıkar.
+   */
+  regular_price?: number | string | null;
   shipping_label?: string;
   badge?: string;
   seller_name?: string;

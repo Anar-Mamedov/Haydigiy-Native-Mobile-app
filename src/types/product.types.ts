@@ -230,4 +230,10 @@ export type Product = {
   bundleItems?: BundleItem[];
   /** Paket fiyat/satılabilirlik özeti — yalnızca `isBundle` true iken dolu. */
   bundleSummary?: BundleSummary;
+  /**
+   * Paketteki ürünlerin tekil fiyat toplamı ("ayrı ayrı alsan"). Liste/arama/favori
+   * cevaplarından gelir (`regular_price`) ve yalnızca `isBundle` true iken doludur;
+   * liste kartı paket kazancını bununla `price` arasındaki farktan gösterir.
+   */
+  bundleItemsTotal?: number;
 };

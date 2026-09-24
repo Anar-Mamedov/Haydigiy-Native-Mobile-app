@@ -126,6 +126,45 @@ describe('ProductCard', () => {
     ).toBeTruthy();
   });
 
+  describe('paket (bundle) ürün', () => {
+    const bundle: Product = { ...product, price: 299.98, isBundle: true, bundleItemsTotal: 339.98 };
+
+    it('shows the package saving like a discount with the separate-purchase total below, like the web', () => {
+      renderWithTamagui(<ProductCard onOpen={jest.fn()} product={bundle} />);
+
+      expect(screen.getByText('-%12')).toBeTruthy();
+      expect(screen.getByText('299,98 TL')).toBeTruthy();
+      expect(screen.getByText('Ayrı ayrı alırsan')).toBeTruthy();
+      // Ayrı alım toplamı fiyat satırında gri eski fiyat olarak tekrar edilmez; yalnızca altındaki notta.
+      const totals = screen.getAllByText('339,98 TL');
+      expect(totals).toHaveLength(1);
+      expect(StyleSheet.flatten(totals[0].props.style)?.textDecorationLine).toBe('line-through');
+    });
+
+    it('shows the plain price when the package total is missing', () => {
+      renderWithTamagui(<ProductCard onOpen={jest.fn()} product={{ ...bundle, bundleItemsTotal: undefined }} />);
+
+      expect(screen.getByText('299,98 TL')).toBeTruthy();
+      expect(screen.queryByText(/^-%/)).toBeNull();
+      expect(screen.queryByTestId('bundle-separate-price-note')).toBeNull();
+    });
+
+    it('ignores a separate-purchase total on a product that is not a package', () => {
+      renderWithTamagui(<ProductCard onOpen={jest.fn()} product={{ ...bundle, isBundle: false }} />);
+
+      expect(screen.queryByText(/^-%/)).toBeNull();
+      expect(screen.queryByTestId('bundle-separate-price-note')).toBeNull();
+    });
+
+    it('keeps the package price row readable in the dark theme', () => {
+      renderWithTamagui(<ProductCard onOpen={jest.fn()} product={bundle} />, 'dark');
+
+      expect(screen.getByText('-%12')).toBeTruthy();
+      expect(screen.getByText('299,98 TL')).toBeTruthy();
+      expect(screen.getByLabelText('Ayrı ayrı alırsan 339,98 TL')).toBeTruthy();
+    });
+  });
+
   it('opens the product when the card is pressed', () => {
     const onOpen = jest.fn();
     renderWithTamagui(<ProductCard onOpen={onOpen} product={product} />);

@@ -185,6 +185,18 @@ describe('mapSearchProductDto', () => {
     expect(mapSearchProductDto(baseProductDto).isBundle).toBe(false);
     expect(mapSearchProductDto({ ...baseProductDto, is_bundle: false }).isBundle).toBe(false);
   });
+
+  it('maps the separate-purchase total of a package from regular_price', () => {
+    // Backend alanı string gönderiyor ("339.98"); sayı gelirse de aynı sonuç.
+    expect(mapSearchProductDto({ ...baseProductDto, is_bundle: true, regular_price: '339.98' }).bundleItemsTotal).toBe(339.98);
+    expect(mapSearchProductDto({ ...baseProductDto, is_bundle: true, regular_price: 339.98 }).bundleItemsTotal).toBe(339.98);
+  });
+
+  it('leaves the separate-purchase total empty when it is missing or the product is not a package', () => {
+    expect(mapSearchProductDto({ ...baseProductDto, is_bundle: true }).bundleItemsTotal).toBeUndefined();
+    expect(mapSearchProductDto({ ...baseProductDto, is_bundle: true, regular_price: null }).bundleItemsTotal).toBeUndefined();
+    expect(mapSearchProductDto({ ...baseProductDto, regular_price: '339.98' }).bundleItemsTotal).toBeUndefined();
+  });
 });
 
 describe('mapPopularProductDto', () => {

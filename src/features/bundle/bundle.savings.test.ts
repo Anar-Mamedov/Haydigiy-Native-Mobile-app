@@ -1,5 +1,5 @@
 import { BundleSummary } from '@/types/bundle.types';
-import { getBundleItemSavings, resolveBundleSavings } from './bundle.savings';
+import { getBundleItemSavings, resolveBundleListingSavings, resolveBundleSavings } from './bundle.savings';
 
 function makeSummary(overrides: Partial<BundleSummary> = {}): BundleSummary {
   return {
@@ -62,5 +62,39 @@ describe('getBundleItemSavings', () => {
   it('is zero when the single price is not higher', () => {
     expect(getBundleItemSavings({ oldPrice: 149.99, price: 149.99 })).toBe(0);
     expect(getBundleItemSavings({ oldPrice: 120, price: 149.99 })).toBe(0);
+  });
+});
+
+describe('resolveBundleListingSavings', () => {
+  it('turns the separate-purchase total into the card saving, like the web', () => {
+    // 40 / 339,98 = %11,8 → %12 (detaydaki paket kutusuyla aynı oran).
+    expect(resolveBundleListingSavings({ isBundle: true, price: 299.98, bundleItemsTotal: 339.98 })).toEqual({
+      itemsTotal: 339.98,
+      savingsPercent: 12,
+    });
+  });
+
+  it('shows nothing for a product that is not a package', () => {
+    expect(resolveBundleListingSavings({ isBundle: false, price: 299.98, bundleItemsTotal: 339.98 })).toBeNull();
+    expect(resolveBundleListingSavings({ price: 299.98, bundleItemsTotal: 339.98 })).toBeNull();
+  });
+
+  it('shows nothing without a usable separate-purchase total', () => {
+    expect(resolveBundleListingSavings({ isBundle: true, price: 299.98 })).toBeNull();
+    expect(resolveBundleListingSavings({ isBundle: true, price: 299.98, bundleItemsTotal: Number.NaN })).toBeNull();
+  });
+
+  it('promises no saving when the package is not cheaper', () => {
+    expect(resolveBundleListingSavings({ isBundle: true, price: 299.98, bundleItemsTotal: 299.98 })).toBeNull();
+    expect(resolveBundleListingSavings({ isBundle: true, price: 299.98, bundleItemsTotal: 250 })).toBeNull();
+  });
+
+  it('shows nothing when the package has no price', () => {
+    expect(resolveBundleListingSavings({ isBundle: true, price: 0, bundleItemsTotal: 339.98 })).toBeNull();
+  });
+
+  it('drops a saving that rounds down to zero percent', () => {
+    // 0,50 / 339,98 = %0,15 → "-%0" rozeti çıkmasın.
+    expect(resolveBundleListingSavings({ isBundle: true, price: 339.48, bundleItemsTotal: 339.98 })).toBeNull();
   });
 });

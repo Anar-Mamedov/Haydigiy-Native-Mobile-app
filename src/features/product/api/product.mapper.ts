@@ -330,6 +330,8 @@ export function mapSearchProductDto(dto: SearchProductDto): Product {
     // Paket ürün liste/favori kartında da tanınmalı: tek beden seçilerek sepete
     // eklenemez, kullanıcı beden seçimi için ürün detayına gider.
     isBundle: dto.is_bundle === true,
+    // Paket olmayan üründe gelse bile anlamı yok; kart yalnızca paket kazancını gösterir.
+    bundleItemsTotal: dto.is_bundle === true ? parseOptionalNumber(dto.regular_price) : undefined,
   };
 }
 

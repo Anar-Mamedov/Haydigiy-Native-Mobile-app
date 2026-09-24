@@ -1,4 +1,5 @@
 import { BundleItem, BundleSummary } from '@/types/bundle.types';
+import { Product } from '@/types/product.types';
 
 /** Paket kazancının ekranda nasıl gösterileceğini belirleyen türetilmiş model. */
 export type BundleSavings = {
@@ -35,4 +36,29 @@ export function resolveBundleSavings(summary: BundleSummary): BundleSavings {
 export function getBundleItemSavings(item: Pick<BundleItem, 'price' | 'oldPrice'>): number {
   if (item.oldPrice === null || item.oldPrice <= item.price) return 0;
   return item.oldPrice - item.price;
+}
+
+/** Liste kartındaki paket kazancı: "-%X" rozeti ve altındaki "Ayrı ayrı alırsan" toplamı. */
+export type BundleListingSavings = {
+  /** Paketteki ürünlerin tekil fiyat toplamı. */
+  itemsTotal: number;
+  /** Kazanç yüzdesi (tam sayı). */
+  savingsPercent: number;
+};
+
+/**
+ * Liste kartında paketin kazancını çözer. Liste cevabı paketlerde indirim alanlarını boş gönderir;
+ * kazanç, paketteki ürünlerin tekil fiyat toplamı ile paket fiyatının farkıdır. Paket değilse, toplam
+ * yoksa ya da paket fiyatından yüksek değilse null döner — kullanıcıya olmayan bir kazanç vaat edilmez.
+ * Yuvarlanınca %0'a düşen kazanç da gösterilmez ("-%0" rozeti çıkmasın).
+ */
+export function resolveBundleListingSavings(
+  product: Pick<Product, 'isBundle' | 'price' | 'bundleItemsTotal'>,
+): BundleListingSavings | null {
+  const itemsTotal = product.bundleItemsTotal;
+  if (!product.isBundle || itemsTotal === undefined || !Number.isFinite(itemsTotal)) return null;
+  if (!(product.price > 0) || itemsTotal <= product.price) return null;
+
+  const savingsPercent = Math.round(((itemsTotal - product.price) / itemsTotal) * 100);
+  return savingsPercent > 0 ? { itemsTotal, savingsPercent } : null;
 }

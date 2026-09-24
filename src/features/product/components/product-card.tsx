@@ -7,6 +7,8 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui/section-card';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
+import { resolveBundleListingSavings } from '@/features/bundle/bundle.savings';
+import { BundleSeparatePriceNote } from './bundle-separate-price-note';
 import { ProductFeatureAssetTicker, ProductFeatureDescriptionTicker } from './product-feature-tags';
 import { ProductImageCarousel } from './product-image-carousel';
 import { ProductCardPrice } from './product-price';
@@ -131,6 +133,13 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
   const images = product.images && product.images.length > 0 ? product.images : [product.imageUrl];
   const hasCarousel = images.length > 1;
   const colorOptionsCount = product.otherColors?.length ?? 0;
+
+  // Paketin kazancı, indirimli kartlarla aynı satırda "-%X + yeşil fiyat" olarak gösterilir (web ile
+  // aynı). Ayrı alım toplamı satırın altındaki notta durduğu için gri üstü çizili eski fiyat verilmez.
+  const bundleSavings = resolveBundleListingSavings(product);
+  const priceDiscount = bundleSavings
+    ? { discountRate: bundleSavings.savingsPercent, firstPrice: undefined, hasDiscount: true }
+    : { discountRate: product.discountRate, firstPrice: product.firstPrice, hasDiscount: product.hasDiscount };
 
   const handleVideoPress = (event?: GestureResponderEvent) => {
     stopPressPropagation(event);
@@ -338,16 +347,18 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
             <ProductSizeStrip sizes={product.sizes} />
           </YStack>
 
-          {/* Fiyat satırı: indirim varsa oran rozeti + üstü çizili eski fiyat; ucuz beden varsa altında duyurusu */}
+          {/* Fiyat satırı: indirim varsa oran rozeti + üstü çizili eski fiyat; paketse altında ayrı alım
+              toplamı; ucuz beden varsa altında duyurusu */}
           <Pressable accessible={false} onPress={() => onOpen(imageIndex)}>
             <YStack gap={4} marginTop={6} width="100%">
               <ProductCardPrice
-                discountRate={product.discountRate}
-                firstPrice={product.firstPrice}
-                hasDiscount={product.hasDiscount}
+                discountRate={priceDiscount.discountRate}
+                firstPrice={priceDiscount.firstPrice}
+                hasDiscount={priceDiscount.hasDiscount}
                 price={product.price}
                 testID="product-card-price"
               />
+              {bundleSavings ? <BundleSeparatePriceNote itemsTotal={bundleSavings.itemsTotal} /> : null}
               <ProductSizeSpecialPrice productPrice={product.price} sizes={product.sizes} />
             </YStack>
           </Pressable>
