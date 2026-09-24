@@ -95,7 +95,87 @@ Insider kampanyasında **Internal URL** kullanın. Güvenli uygulama içi yönle
 - Favoriler: `https://www.haydigiy.com/favori-listem`
 - Kategori: `https://www.haydigiy.com/kategori-slug?c=147`
 
-Uygulama içi yönlendirme yalnızca `haydigiy.com`, `www.haydigiy.com`, `/...` yolları ve `haydigiywebviewapp://` şeması için kabul edilir. Insider'daki **External URL** alanı ise doğrulanmış `http`/`https` bağlantısını sistem üzerinden açar.
+Uygulama içi yönlendirme yalnızca `haydigiy.com`, `www.haydigiy.com`, `/...` yolları ve `haydigiywebviewapp://` şeması için kabul edilir. Insider'daki **External URL** alanı ise `https` bağlantısını sistem üzerinden açar.
+
+## 7. Targeted App Push API entegrasyonu
+
+[Targeted App Push API](https://academy.insiderone.com/docs/send-targeted-app-pushes-api)
+sunucudan çağrılır. API anahtarı uygulamaya eklenmez. Backend gereksinimleri ve
+kabul kriterleri [GitLab #2](https://git.haydigiytr.com/root/connect/-/work_items/2)
+içindedir; bu mobil çalışmada backend kodu değiştirilmemiştir.
+
+Mobil SDK oturum açarken `addUserID(String(user.id))` kullanır. Backend'deki
+`INSIDER.uuid` bu değerle aynı olmalıdır. Kalıcı oturum geri yüklendiğinde kimlik
+SDK'ya yeniden bildirilir; telefon/e-posta tanımlayıcıları mevcut normalizasyondan geçer.
+SDK cihaz kaydını ve bildirim token'ını yönetir; mobil ayrıca bu gönderim API'sini çağırmaz.
+
+### Hedef sözleşmesi
+
+Backend aşağıdaki nesnelerden birini `android.deep_link`, `ios.deep_link` veya
+carousel/slider öğesinin `deep_links` alanına koyabilir. SDK callback'i hedefi
+doğrudan ya da `{ type, data }` içinde iletir. Uygulama yalnızca bildirim açılışı
+ve InApp buton tıklamasında yönlendirir; bildirimin ulaşması tek başına ekranı değiştirmez.
+
+| Hedef türü | Deep-link nesnesi örneği |
+| --- | --- |
+| Internal URL | `{"ins_dl_internal":"https://www.haydigiy.com/sepet"}` |
+| URL scheme | `{"ins_dl_url_scheme":"haydigiywebviewapp://product/12345"}` |
+| External URL | `{"ins_dl_external":"https://example.com/kampanya"}` |
+| Ürün kimliği | `{"screen":"product","product_id":"12345"}` |
+| Ürün slug | `{"screen":"product","product_slug":"siyah-elbise"}` |
+| Kategori | `{"screen":"category","category_id":"147","category_slug":"elbise"}` |
+| Sipariş | `{"screen":"order","order_id":"940225"}` |
+| Sabit ekran | `{"screen":"cart"}`; diğerleri: `home`, `favorites`, `orders`, `profile` |
+| JSON | `{"ins_dl_json":"{\"screen\":\"product\",\"product_id\":\"12345\"}"}` |
+
+`product_detail`, `product` için geriye uyumlu bir eş addır. Ürün slug'ı varsa
+önceliklidir; yalnızca sayısal kimlik geldiğinde mevcut ürün sorgusu güncel slug'ı
+bulur. Kimlikler pozitif olmalıdır. Kategori slug'ı opsiyoneldir; kategori kimliği
+filtreye taşınır. Sipariş bağlantıları mevcut oturum ve sunucu yetki kontrolünü kullanır.
+
+`ins_dl_json` nesne olarak da kabul edilir; içinde yukarıdaki URL veya `screen`
+alanları bulunmalıdır. Serbest bir JSON, bilinmeyen bir `screen` veya bozuk içerik
+uygulamada rastgele bir işlem çalıştırmaz. Geçersiz hedefler yok sayılır.
+Bir bildirimde tek hedef biçimi kullanın. Birden fazlası varsa geçerli alanların
+önceliği internal URL, URL scheme, external URL, JSON ve custom screen şeklindedir.
+
+Uygulama soğuk açılışta son tıklanan hedefi navigator hazır olana kadar tutar.
+Rich push, carousel ve slider görünümünü native Insider SDK/extension'ları oluşturur.
+Advanced push'ta tıklanan öğenin hedefini SDK seçer; uygulama payload içindeki ilk
+öğeyi kendiliğinden açmaz.
+
+### Platform seçenekleri ve yayın
+
+- Metin, görsel, ses, badge, thread/channel, TTL, frequency cap ve kampanya alanları
+  backend gönderim gövdesinde hazırlanır. Mobil SDK mevcut rich/advanced ve ön
+  planda gösterim ayarlarıyla bunları işler. Özel ses ancak uygulamada paketlenmiş
+  bir dosya varsa kullanılabilir; mevcut senaryoda `default` tercih edilir.
+- iOS `content-available` için `UIBackgroundModes: remote-notification` eklenmiştir.
+  Bu bir platform yeteneğidir; kendiliğinden JavaScript arka plan işi oluşturmaz.
+  Özel bir arka plan iş mantığı bu entegrasyonda tanımlı değildir. Sessiz payload
+  görünür push'tan ayrıdır ve teslimi iOS tarafından geciktirilebilir veya atlanabilir.
+  [Apple arka plan bildirimleri](https://developer.apple.com/documentation/usernotifications/pushing-background-updates-to-your-app)
+  açıklamasına göre OS teslimi garanti etmez.
+- Bu iOS yeteneği için **yeni native build gerekir**; yalnızca OTA güncellemesi
+  yeterli değildir. Store/build yayını bu kod değişikliğinin parçası değildir.
+- Yeni JSON/custom-screen hedefleri yayınlanmadan önce eski mobil sürümlere
+  gönderim yapılıyorsa HTTPS `ins_dl_internal` formatını kullanın.
+
+### Doğrulama
+
+Birim/bileşen testleri hedef çözümleme, kullanıcı kimliği, izin akışı, callback
+tipleri, config ve navigator hazır olma davranışını doğrular. Bunlar gerçek
+FCM/APNs teslimini veya görsel extension çıktısını kanıtlamaz.
+
+Backend işi ve sertifika ayarları tamamlandıktan sonra yetkili test cihazlarında:
+
+1. Oturumdaki kullanıcıya metin ve görselli push gönderin; açık, arka plan ve soğuk
+   açılış durumlarında doğru hedefe gidildiğini doğrulayın.
+2. Carousel ve slider'da iki farklı öğeye basın; her birinin kendi ürününü açtığını kontrol edin.
+3. JSON, URL scheme, external URL, kategori/sepet/sipariş ve geçersiz hedefleri deneyin.
+4. İzin reddi, logout/hesap değişimi ve bir kullanıcının iki cihazı senaryolarını kontrol edin.
+5. Sessiz payload'ı görünür push'tan ayrı doğrulayın; API'nin kabul/gönderim yanıtını
+   cihazda teslim veya açılış kanıtı olarak değerlendirmeyin.
 
 ## iOS build: framework modu neden `static` olmak zorunda
 

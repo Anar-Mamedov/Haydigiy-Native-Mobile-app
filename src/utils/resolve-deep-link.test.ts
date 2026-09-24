@@ -64,6 +64,15 @@ describe('resolveDeepLinkPath', () => {
     expect(resolveDeepLinkPath('/order/42')).toBe('/order/42');
   });
 
+  it.each(['cart', 'favorites', 'orders', 'categories'])(
+    'opens native %s notification links instead of treating them as product slugs',
+    (path) => {
+      expect(resolveDeepLinkPath(`/${path}`)).toBe(`/${path}`);
+      expect(resolveDeepLinkPath(`haydigiywebviewapp://${path}`)).toBe(`/${path}`);
+      expect(resolveDeepLinkPath(`https://haydigiy.com/${path}`)).toBe(`/${path}`);
+    },
+  );
+
   it.each([
     ['/hesabim', '/profile'],
     ['/hesabim/kullaniciBilgileri', '/user-info'],

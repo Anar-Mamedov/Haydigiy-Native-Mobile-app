@@ -13,6 +13,17 @@ function getApnsMode() {
 
 module.exports = ({ config }) => ({
   ...config,
+  ios: {
+    ...config.ios,
+    infoPlist: {
+      ...config.ios?.infoPlist,
+      // Required by iOS for the API's optional content-available payloads.
+      UIBackgroundModes: [...new Set([
+        ...(config.ios?.infoPlist?.UIBackgroundModes || []),
+        'remote-notification',
+      ])],
+    },
+  },
   android: {
     ...config.android,
     googleServicesFile: process.env.GOOGLE_SERVICES_JSON || GOOGLE_SERVICES_FILE,

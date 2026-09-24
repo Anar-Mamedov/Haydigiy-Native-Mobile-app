@@ -1,15 +1,18 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Linking from 'expo-linking';
-import { Href, useRouter } from 'expo-router';
+import { Href, useRootNavigationState, useRouter } from 'expo-router';
 import { resolveDeepLinkPath } from '@/utils/resolve-deep-link';
 import { insiderClient } from '../services/insider-client';
 import { insiderTracker } from '../services/insider-tracker';
-import { InsiderCallback } from '../types/insider.types';
+import { InsiderCallback, InsiderPushAction } from '../types/insider.types';
 import { logInsiderCallback } from '../utils/insider-diagnostics';
 import { resolveInsiderCallbackAction } from '../utils/insider-url';
 
 export function InsiderIntegration() {
   const router = useRouter();
+  const navigationKey = useRootNavigationState()?.key;
+  const [latestAction, setLatestAction] = useState<InsiderPushAction>(null);
+  const consumedAction = useRef<InsiderPushAction>(null);
 
   /**
    * SDK yedi ayrı callback tipi yayınlar. Burada yalnızca yönlendirme taşıyanlar
@@ -22,19 +25,26 @@ export function InsiderIntegration() {
       logInsiderCallback(type, payload);
 
       const action = resolveInsiderCallbackAction(type, payload);
-      if (!action) return;
-
-      if (action.type === 'internal') {
-        router.dismissTo(resolveDeepLinkPath(action.url) as Href);
-        return;
-      }
-
-      Linking.openURL(action.url).catch((error) => {
-        console.warn('[Insider] Harici bağlantı açılamadı.', error);
-      });
+      if (action) setLatestAction(action);
     },
-    [router],
+    [],
   );
+
+  useEffect(() => {
+    // A notification can open the app before the root navigator mounts.
+    // Keep the latest tapped target until navigation is ready.
+    if (!navigationKey || !latestAction || consumedAction.current === latestAction) return;
+    consumedAction.current = latestAction;
+
+    if (latestAction.type === 'internal') {
+      router.dismissTo(resolveDeepLinkPath(latestAction.url) as Href);
+      return;
+    }
+
+    Linking.openURL(latestAction.url).catch((error) => {
+      console.warn('[Insider] Harici bağlantı açılamadı.', error);
+    });
+  }, [navigationKey, latestAction, router]);
 
   useEffect(() => {
     // Öneri tıklama hafızası kalıcı; 3D Secure sırasında süreç öldürülürse satın alma

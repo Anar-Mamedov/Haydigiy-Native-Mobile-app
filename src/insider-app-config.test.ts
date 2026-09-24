@@ -47,11 +47,27 @@ describe('Insider Expo configuration', () => {
         partnerName: 'haydigiyprod',
         insiderRichPush: true,
         insiderAdvancedPush: true,
+        overrideUNUserNotificationCenterDelegate: true,
+        enablePushViewOnForegroundStatus: true,
         minimumDeploymentTarget: '15.1',
       }),
     );
     expect(config.android.googleServicesFile).toBe('./google-services.json');
     expect(config.android.permissions).toContain('android.permission.POST_NOTIFICATIONS');
+    expect(config.ios.infoPlist.UIBackgroundModes).toContain('remote-notification');
+  });
+
+  it('preserves other iOS capabilities when adding background notification support', () => {
+    const config = createConfig({ config: {
+      ...appJson.expo,
+      ios: {
+        ...appJson.expo.ios,
+        infoPlist: { UIBackgroundModes: ['audio', 'remote-notification'], ExampleFlag: true },
+      },
+    } });
+    expect(config.ios.infoPlist.UIBackgroundModes).toEqual(['audio', 'remote-notification']);
+    expect(config.ios.infoPlist.ExampleFlag).toBe(true);
+    expect(config.ios.bundleIdentifier).toBe(appJson.expo.ios.bundleIdentifier);
   });
 
   it('blocks optional geofence permissions', () => {

@@ -22,6 +22,10 @@ import { resolveAccountDeepLinkPath } from './resolve-account-deep-link';
 
 /** Uygulamada zaten var olan, olduğu gibi geçirilecek üst-seviye rotalar. */
 const APP_ROUTE_ROOTS = new Set([
+  'cart',
+  'favorites',
+  'orders',
+  'categories',
   'product',
   'kategori',
   'order',

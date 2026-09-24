@@ -1,15 +1,24 @@
 import insiderConfig from '../../../../insider.config.json';
 import { InsiderCallbackType, InsiderPayload, InsiderPushAction } from '../types/insider.types';
+import { resolveInsiderScreen } from './insider-screen';
 
 const TRUSTED_WEB_PREFIXES = ['https://haydigiy.com', 'https://www.haydigiy.com'];
 const APP_SCHEME_PREFIX = 'haydigiywebviewapp://';
 const INSIDER_SCHEME_PREFIX = `insider${insiderConfig.partnerName.toLowerCase()}://`;
 
-function readPayloadData(payload: InsiderPayload): InsiderPayload {
-  const nestedData = payload.data;
-  return nestedData && typeof nestedData === 'object' && !Array.isArray(nestedData)
-    ? (nestedData as InsiderPayload)
-    : payload;
+function readObject(value: unknown): InsiderPayload | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as InsiderPayload)
+    : null;
+}
+
+function readJson(value: unknown): InsiderPayload | null {
+  if (typeof value !== 'string') return readObject(value);
+  try {
+    return readObject(JSON.parse(value));
+  } catch {
+    return null;
+  }
 }
 
 function readString(payload: InsiderPayload, key: string): string | null {
@@ -38,7 +47,14 @@ export function isTrustedAppUrl(url: string): boolean {
 }
 
 export function resolveInsiderPushAction(payload: InsiderPayload): InsiderPushAction {
-  const data = readPayloadData(payload);
+  const data = readObject(payload?.data) ?? readObject(payload);
+  return data ? resolveDeepLinkData(data, 0) : null;
+}
+
+function resolveDeepLinkData(data: InsiderPayload, depth: number): InsiderPushAction {
+  // Only inspect the SDK's clicked target, never the first item in an advanced push.
+  // Bound nested JSON to tolerate malformed/cyclic input without breaking SDK callbacks.
+  if (depth > 4) return null;
   const internalUrl = readString(data, 'ins_dl_internal');
 
   if (internalUrl && isTrustedAppUrl(internalUrl)) {
@@ -55,7 +71,12 @@ export function resolveInsiderPushAction(payload: InsiderPayload): InsiderPushAc
     return { type: 'external', url: externalUrl };
   }
 
-  return null;
+  const json = readJson(data.ins_dl_json);
+  const jsonAction = json ? resolveDeepLinkData(json, depth + 1) : null;
+  if (jsonAction) return jsonAction;
+
+  const screen = resolveInsiderScreen(data);
+  return screen ? { type: 'internal', url: screen } : null;
 }
 
 /**
