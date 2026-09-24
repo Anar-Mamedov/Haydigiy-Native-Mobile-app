@@ -186,6 +186,7 @@ export function ProductDetailScreen() {
                 /* Size selector squares */
                 <ProductSizeSelector
                   variants={product.variants}
+                  productPrice={product.price}
                   featureIcons={product.featureIcons}
                   isApprovedForSale={product.isApprovedForSale}
                   selectedVariant={selectedVariant}
@@ -341,6 +342,7 @@ export function ProductDetailScreen() {
           hasDiscount={displayPricing.hasDiscount}
           discountRate={displayPricing.discountRate}
           firstPrice={displayPricing.firstPrice}
+          productPrice={product?.price}
           productName={displayData.title}
           selectedVariant={selectedVariant}
           shippingMessage={controller.shippingMessage}

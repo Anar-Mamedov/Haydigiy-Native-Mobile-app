@@ -6,8 +6,11 @@ import { Sheet, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton } from '@/components/ui/app-button';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
+import { DiscountRateBadge } from '@/components/ui/discount-rate-badge';
+import { COMPACT_MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 import { FeatureIcon, ProductVariant } from '@/types/product.types';
 import { resolveProductActionState } from '../utils/product-action-state';
+import { resolveVariantDiscountRate } from '../utils/variant-price';
 import { ProductFeatureDescriptionList } from './product-feature-tags';
 import { ProductDetailDiscountPrice } from './product-price';
 import { resolveProductDiscount } from '../utils/product-price';
@@ -29,6 +32,11 @@ type SizeSelectionSheetProps = {
   discountRate?: number;
   /** İndirim öncesi fiyat (`first_price`). */
   firstPrice?: number;
+  /**
+   * Ürünün varsayılan (bedene özel olmayan) fiyatı. `price` seçili bedenin fiyatına dönebildiği için
+   * ayrı verilir; bundan ucuza satılan ve alınabilen bedenin köşesinde "%21" indirim rozeti çıkar.
+   */
+  productPrice?: number;
   shippingMessage?: string;
   featureIcons?: FeatureIcon[];
   variants: ProductVariant[];
@@ -58,6 +66,7 @@ export function SizeSelectionSheet({
   hasDiscount,
   discountRate,
   firstPrice,
+  productPrice,
   shippingMessage,
   featureIcons,
   variants,
@@ -158,13 +167,17 @@ export function SizeSelectionSheet({
                 variants.map((variant) => {
                   const available = isApprovedForSale && variant.hasStock && variant.quantity > 0;
                   const selected = isApprovedForSale && selectedVariant?.id === variant.id;
+                  // Rozet yalnızca alınabilen bedende: tükenmiş ya da satışa kapalı bedende indirim vaat edilmez.
+                  const discountRate = available ? resolveVariantDiscountRate(variant.price, productPrice) : undefined;
                   return (
                     <XStack
                       accessibilityLabel={
                         !isApprovedForSale
                           ? `Beden ${variant.name} satışa kapalı`
                           : available
-                          ? `Beden ${variant.name}`
+                          ? discountRate !== undefined
+                            ? `Beden ${variant.name}, yüzde ${discountRate} indirimli`
+                            : `Beden ${variant.name}`
                           : `Beden ${variant.name} stokta yok, gelince haber ver`
                       }
                       accessibilityRole="button"
@@ -194,6 +207,19 @@ export function SizeSelectionSheet({
                         {variant.name}
                         {variant.name2 ? ` (${variant.name2})` : ''}
                       </Paragraph>
+
+                      {/* Köşeden taşan indirim rozeti (webdeki beden butonuyla aynı). */}
+                      <DiscountRateBadge
+                        maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}
+                        pointerEvents="none"
+                        position="absolute"
+                        rate={discountRate}
+                        // Çipler arası boşluk ($2 = 7pt) kadar taşar; yandaki çipin altında kalmaz.
+                        right={-6}
+                        size="xs"
+                        testID={`size-sheet-discount-badge-${variant.id}`}
+                        top={-9}
+                      />
                     </XStack>
                   );
                 })

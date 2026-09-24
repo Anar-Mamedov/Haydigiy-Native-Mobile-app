@@ -52,6 +52,14 @@ describe('DiscountRateBadge', () => {
     expect(screen.getByText('%20')).toBeTruthy();
   });
 
+  it('fits the corner of a size chip with the extra small size', () => {
+    renderWithTamagui(<DiscountRateBadge rate={21} size="xs" testID="badge" />);
+
+    expect(screen.getByTestId('badge')).toBeTruthy();
+    expect(screen.getByText('%21')).toBeTruthy();
+    expect(screen.getByLabelText('yüzde 21 indirim')).toBeTruthy();
+  });
+
   it('accepts the compact size used on fixed-height surfaces', () => {
     renderWithTamagui(<DiscountRateBadge rate={20} size="sm" testID="badge" />);
 

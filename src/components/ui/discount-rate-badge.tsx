@@ -11,6 +11,8 @@ const BadgeFrame = styled(XStack, {
 
   variants: {
     size: {
+      /** Beden çipi gibi dar düğmelerin köşesi için. */
+      xs: { gap: 1, paddingHorizontal: 5, paddingVertical: 1 },
       sm: { gap: 2, paddingHorizontal: 8, paddingVertical: 2 },
       md: { gap: 3, paddingHorizontal: '$2.5', paddingVertical: 2 },
     },
@@ -19,7 +21,12 @@ const BadgeFrame = styled(XStack, {
   defaultVariants: { size: 'md' },
 });
 
-const ICON_SIZE = { sm: 12, md: 13 } as const;
+const ICON_SIZE = { xs: 10, sm: 12, md: 13 } as const;
+const LABEL_SIZE = {
+  xs: { fontSize: 10, lineHeight: 13 },
+  sm: { fontSize: 11, lineHeight: 15 },
+  md: { fontSize: 11, lineHeight: 15 },
+} as const;
 
 export type DiscountRateBadgeProps = GetProps<typeof BadgeFrame> & {
   /** Gösterilecek indirim yüzdesi. 0 veya geçersizse rozet hiç çizilmez. */
@@ -57,9 +64,9 @@ export function DiscountRateBadge({
       <TrendingDown color="white" size={ICON_SIZE[size]} strokeWidth={2.5} />
       <Paragraph
         color="white"
-        fontSize={11}
+        fontSize={LABEL_SIZE[size].fontSize}
         fontWeight="800"
-        lineHeight={15}
+        lineHeight={LABEL_SIZE[size].lineHeight}
         maxFontSizeMultiplier={maxFontSizeMultiplier}
       >
         %{rateLabel}

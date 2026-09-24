@@ -3,14 +3,21 @@ import { Table, Calculator, Bell } from '@/components/ui/icons';
 import { XStack, YStack, useThemeName } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { Pressable } from 'react-native';
+import { DiscountRateBadge } from '@/components/ui/discount-rate-badge';
 import { FeatureIcon, ProductVariant } from '@/types/product.types';
 import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
+import { resolveVariantDiscountRate } from '../utils/variant-price';
 import { ProductFeatureDescriptionList } from './product-feature-tags';
 import { ProductSizeSelectorSkeleton } from './product-size-skeleton';
 import { ProductSaleNotice } from './product-sale-notice';
 
 interface ProductSizeSelectorProps {
   variants?: ProductVariant[];
+  /**
+   * Ürünün varsayılan (bedene özel olmayan) fiyatı. Verilirse, bundan ucuza satılan ve alınabilen
+   * bedenin köşesinde "%21" indirim rozeti gösterilir.
+   */
+  productPrice?: number;
   featureIcons?: FeatureIcon[];
   isLoading?: boolean;
   isApprovedForSale?: boolean;
@@ -22,6 +29,7 @@ interface ProductSizeSelectorProps {
 
 export function ProductSizeSelector({
   variants = [],
+  productPrice,
   featureIcons,
   isLoading = false,
   isApprovedForSale = true,
@@ -80,6 +88,9 @@ export function ProductSizeSelector({
         {variants.map((variant) => {
           const isSelected = isApprovedForSale && selectedVariant?.id === variant.id;
           const isAvailable = isApprovedForSale && variant.hasStock && variant.quantity > 0;
+          // Rozet yalnızca alınabilen bedende: tükenmiş ya da satışa kapalı bedende indirim vaat edilmez.
+          const discountRate = isAvailable ? resolveVariantDiscountRate(variant.price, productPrice) : undefined;
+          const discountLabel = discountRate !== undefined ? `, yüzde ${discountRate} indirimli` : '';
 
           return (
             <Pressable
@@ -89,7 +100,7 @@ export function ProductSizeSelector({
               onPress={() => onSelectVariant(variant)}
               accessibilityRole="button"
               accessibilityState={{ disabled: !isApprovedForSale, selected: isSelected }}
-              accessibilityLabel={`Beden ${variant.name} ${!isApprovedForSale ? 'satışa kapalı' : isAvailable ? 'seçilebilir' : 'stokta yok, gelince haber ver'}`}
+              accessibilityLabel={`Beden ${variant.name}${discountLabel} ${!isApprovedForSale ? 'satışa kapalı' : isAvailable ? 'seçilebilir' : 'stokta yok, gelince haber ver'}`}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.8 : 1,
               })}
@@ -177,6 +188,19 @@ export function ProductSizeSelector({
                   </>
                 )}
               </YStack>
+
+              {/* Çip çapraz çizgi için taşmayı kırptığından rozet çipin kardeşi olarak Pressable'a
+                  yerleşir ve köşeden taşar (webdeki beden butonuyla aynı). */}
+              <DiscountRateBadge
+                maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}
+                pointerEvents="none"
+                position="absolute"
+                rate={discountRate}
+                right={-6}
+                size="xs"
+                testID={`size-discount-badge-${variant.id}`}
+                top={-8}
+              />
             </Pressable>
           );
         })}

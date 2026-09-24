@@ -103,3 +103,66 @@ describe('ProductSizeSelector', () => {
     expect(screen.getByText('Bedenimi hesapla')).toBeTruthy();
   });
 });
+
+describe('ProductSizeSelector — bedene özel indirim rozeti', () => {
+  // Süet pijama: ürün 339,99 TL; yalnızca 2XL'in kendi (ucuz) fiyatı var, 3XL ucuz ama tükendi.
+  const pajamaSizes: ProductVariant[] = [
+    { id: 'v-l', name: 'L', quantity: 18, price: 0, hasStock: true },
+    { id: 'v-2xl', name: '2XL', quantity: 9, price: 269.99, hasStock: true },
+    { id: 'v-3xl', name: '3XL', quantity: 0, price: 249.99, hasStock: false },
+  ];
+
+  function renderPajama(props: Partial<React.ComponentProps<typeof ProductSizeSelector>> = {}, theme?: 'light' | 'dark') {
+    return renderWithTamagui(
+      <ProductSizeSelector
+        onSelectVariant={jest.fn()}
+        productPrice={339.99}
+        selectedVariant={null}
+        variants={pajamaSizes}
+        {...props}
+      />,
+      theme,
+    );
+  }
+
+  it('marks the size sold below the product price with its discount rate, like the web', () => {
+    renderPajama();
+
+    expect(screen.getByTestId('size-discount-badge-v-2xl')).toBeTruthy();
+    expect(screen.getByText('%21')).toBeTruthy();
+    expect(screen.getByLabelText('Beden 2XL, yüzde 21 indirimli seçilebilir')).toBeTruthy();
+  });
+
+  it('leaves a size without its own cheaper price unmarked', () => {
+    renderPajama();
+
+    expect(screen.queryByTestId('size-discount-badge-v-l')).toBeNull();
+    expect(screen.getByLabelText('Beden L seçilebilir')).toBeTruthy();
+  });
+
+  it('does not promise a discount on a sold-out size', () => {
+    renderPajama();
+
+    expect(screen.queryByTestId('size-discount-badge-v-3xl')).toBeNull();
+    expect(screen.getByLabelText('Beden 3XL stokta yok, gelince haber ver')).toBeTruthy();
+  });
+
+  it('shows no badge while the product price is unknown', () => {
+    renderPajama({ productPrice: undefined });
+
+    expect(screen.queryByText(/%/)).toBeNull();
+  });
+
+  it('shows no badge when the product is closed for sale', () => {
+    renderPajama({ isApprovedForSale: false });
+
+    expect(screen.queryByTestId('size-discount-badge-v-2xl')).toBeNull();
+  });
+
+  it('keeps the badge readable on the selected size in the dark theme', () => {
+    renderPajama({ selectedVariant: pajamaSizes[1] }, 'dark');
+
+    expect(screen.getByTestId('size-discount-badge-v-2xl')).toBeTruthy();
+    expect(screen.getByText('%21')).toBeTruthy();
+  });
+});

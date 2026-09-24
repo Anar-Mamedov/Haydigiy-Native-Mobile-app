@@ -279,3 +279,42 @@ describe('SizeSelectionSheet', () => {
     expect(screen.getByText('Gelince Haber Ver')).toBeTruthy();
   });
 });
+
+describe('SizeSelectionSheet — bedene özel indirim rozeti', () => {
+  // Ürün 339,99 TL; yalnızca 2XL'in kendi (ucuz) fiyatı var, 3XL ucuz ama tükendi.
+  const regularSize = { hasStock: true, id: '80', name: 'L', price: 0, quantity: 18 };
+  const cheapSize = { hasStock: true, id: '81', name: '2XL', price: 269.99, quantity: 9 };
+  const soldOutCheapSize = { hasStock: false, id: '82', name: '3XL', price: 249.99, quantity: 0 };
+
+  it('marks the size sold below the product price with its discount rate, like the web', () => {
+    renderWithTamagui(
+      <SizeSelectionSheet
+        {...sheetBaseProps}
+        productPrice={339.99}
+        selectedVariant={null}
+        variants={[regularSize, cheapSize, soldOutCheapSize]}
+      />,
+    );
+
+    expect(screen.getByTestId('size-sheet-discount-badge-81')).toBeTruthy();
+    expect(screen.getByText('%21')).toBeTruthy();
+    expect(screen.getByLabelText('Beden 2XL, yüzde 21 indirimli')).toBeTruthy();
+    expect(screen.queryByTestId('size-sheet-discount-badge-80')).toBeNull();
+    expect(screen.queryByTestId('size-sheet-discount-badge-82')).toBeNull();
+  });
+
+  it('shows no badge while the product price is unknown', () => {
+    renderWithTamagui(<SizeSelectionSheet {...sheetBaseProps} selectedVariant={null} variants={[regularSize, cheapSize]} />);
+
+    expect(screen.queryByTestId('size-sheet-discount-badge-81')).toBeNull();
+  });
+
+  it('keeps the badge readable on the selected size in the dark theme', () => {
+    renderWithTamagui(
+      <SizeSelectionSheet {...sheetBaseProps} productPrice={339.99} selectedVariant={cheapSize} variants={[regularSize, cheapSize]} />,
+      'dark',
+    );
+
+    expect(screen.getByText('%21')).toBeTruthy();
+  });
+});

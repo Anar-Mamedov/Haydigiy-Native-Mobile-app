@@ -1,9 +1,4 @@
-import {
-  formatSizeSpecialPriceLabel,
-  hasOwnVariantPrice,
-  resolveSizeSpecialPrice,
-  resolveVariantPricing,
-} from './variant-price';
+import { formatSizeSpecialPriceLabel, hasOwnVariantPrice, resolveSizeSpecialPrice, resolveVariantDiscountRate, resolveVariantPricing } from './variant-price';
 
 const discountedProduct = { discountRate: 13, firstPrice: 399.99, hasDiscount: true, price: 349.99 };
 
@@ -86,5 +81,29 @@ describe('formatSizeSpecialPriceLabel', () => {
     expect(formatSizeSpecialPriceLabel(['S'])).toBe('S bedenine özel');
     expect(formatSizeSpecialPriceLabel(['S', 'M'])).toBe('S ve M bedenlerine özel');
     expect(formatSizeSpecialPriceLabel(['S', 'M', 'L'])).toBe('S, M ve L bedenlerine özel');
+  });
+});
+
+describe('resolveVariantDiscountRate', () => {
+  it('is how much cheaper the size is than the product price, like the web', () => {
+    // Süet pijama: ürün 339,99 TL, 2XL 269,99 TL → %20,59 → %21.
+    expect(resolveVariantDiscountRate(269.99, 339.99)).toBe(21);
+    expect(resolveVariantDiscountRate(349.99, 439.99)).toBe(20);
+  });
+
+  it('is empty without an own cheaper price', () => {
+    expect(resolveVariantDiscountRate(0, 339.99)).toBeUndefined();
+    expect(resolveVariantDiscountRate(undefined, 339.99)).toBeUndefined();
+    expect(resolveVariantDiscountRate(339.99, 339.99)).toBeUndefined();
+    expect(resolveVariantDiscountRate(359.99, 339.99)).toBeUndefined();
+  });
+
+  it('is empty while the product price is unknown', () => {
+    expect(resolveVariantDiscountRate(269.99, undefined)).toBeUndefined();
+    expect(resolveVariantDiscountRate(269.99, 0)).toBeUndefined();
+  });
+
+  it('drops a discount that rounds down to zero percent', () => {
+    expect(resolveVariantDiscountRate(339.49, 339.99)).toBeUndefined();
   });
 });

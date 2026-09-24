@@ -47,6 +47,24 @@ export function resolveVariantPricing(
 }
 
 /**
+ * Beden çipindeki indirim rozeti için: bedenin kendi fiyatı ürünün varsayılan fiyatından düşükse
+ * yüzde kaç ucuz olduğu (ör. 339,99 → 269,99 için 21; webdeki `getVariantDiscountRate` ile aynı).
+ * Bedenin kendi fiyatı yoksa, ucuz değilse ya da fark yuvarlanınca %0'a düşüyorsa `undefined`.
+ * Stok ve satış durumu çağıranın kararıdır: rozet yalnızca alınabilen bedende gösterilmeli.
+ */
+export function resolveVariantDiscountRate(
+  variantPrice: number | null | undefined,
+  productPrice: number | null | undefined,
+): number | undefined {
+  if (!hasOwnVariantPrice(variantPrice) || !hasOwnVariantPrice(productPrice) || variantPrice >= productPrice) {
+    return undefined;
+  }
+
+  const rate = Math.round(((productPrice - variantPrice) / productPrice) * 100);
+  return rate > 0 ? rate : undefined;
+}
+
+/**
  * Liste kartı için: stokta olup ürünün fiyatından ucuza satılan bedenlerin en düşük fiyatı.
  * Aynı fiyattan satılan bedenler birlikte döner; böyle bir beden yoksa `null` döner.
  */
