@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useBundleController } from './use-bundle-controller';
+import { SINGLE_ADDED_FEEDBACK_MS, useBundleController } from './use-bundle-controller';
 import { BundleItem } from '@/types/bundle.types';
 import { Product } from '@/types/product.types';
 
@@ -40,7 +40,7 @@ function makeBundleItem(bundleItemId: number, sizes: { id: string; stock: number
     title: `Ürün ${bundleItemId}`,
     slug: null,
     imageUrl: '',
-    // Paket içi fiyat normal fiyattan düşük: "Tek Satın Al" hangisini kullandığı ayırt edilebilsin.
+    // Paket içi fiyat normal fiyattan düşük: "Tekli Satın Al" hangisini kullandığı ayırt edilebilsin.
     price: 1100,
     oldPrice: 1250,
     regularUnitPrice: 1250,
@@ -260,9 +260,54 @@ describe('useBundleController', () => {
     act(() => mockAddToCart.mock.calls[0][1].onSuccess());
     act(() => mockAddToCart.mock.calls[0][1].onSettled());
 
-    expect(onAdded).toHaveBeenCalledTimes(1);
-    expect(result.current.isSheetOpen).toBe(false);
+    // Webdeki gibi sepete geçilmez: alt sayfa açık kalır, kalem "eklendi" olarak işaretlenir.
+    expect(onAdded).not.toHaveBeenCalled();
+    expect(result.current.isSheetOpen).toBe(true);
     expect(result.current.buyingItemId).toBeNull();
+    expect(result.current.addedItemId).toBe(12);
+  });
+
+  it('shows the single-add confirmation only for a moment', () => {
+    jest.useFakeTimers();
+    try {
+      const { result } = renderController(makeProduct());
+
+      act(() => result.current.selection.selectVariant(12, '3510'));
+      act(() => result.current.buySingleItem(SINGLE_SIZE_ITEM));
+      act(() => mockAddToCart.mock.calls[0][1].onSuccess());
+
+      expect(result.current.addedItemId).toBe(12);
+
+      act(() => jest.advanceTimersByTime(SINGLE_ADDED_FEEDBACK_MS - 1));
+      expect(result.current.addedItemId).toBe(12);
+
+      act(() => jest.advanceTimersByTime(1));
+      expect(result.current.addedItemId).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('drops the single-add confirmation when the sheet is closed', () => {
+    const { result } = renderController(makeProduct());
+
+    act(() => result.current.openSheet());
+    act(() => result.current.selection.selectVariant(12, '3510'));
+    act(() => result.current.buySingleItem(SINGLE_SIZE_ITEM));
+    act(() => mockAddToCart.mock.calls[0][1].onSuccess());
+    act(() => result.current.closeSheet());
+
+    expect(result.current.addedItemId).toBeNull();
+  });
+
+  it('does not confirm the single add when the request fails', () => {
+    const { result } = renderController(makeProduct());
+
+    act(() => result.current.selection.selectVariant(12, '3510'));
+    act(() => result.current.buySingleItem(SINGLE_SIZE_ITEM));
+    act(() => mockAddToCart.mock.calls[0][1].onError(new Error('network')));
+
+    expect(result.current.addedItemId).toBeNull();
   });
 
   it('reports the regular unit price, not the package price, for the single add', () => {
@@ -307,7 +352,7 @@ describe('useBundleController', () => {
     expect(onAdded).not.toHaveBeenCalled();
   });
 
-  it('ignores Tek Satın Al while a single add is already running', () => {
+  it('ignores Tekli Satın Al while a single add is already running', () => {
     mockIsAddingSingle = true;
     const { result, onOpenProduct } = renderController(makeProduct());
 

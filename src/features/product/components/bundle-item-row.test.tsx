@@ -59,12 +59,33 @@ describe('BundleItemRow', () => {
     expect(getByText('1')).toBeTruthy();
   });
 
-  it('shows the package price with the regular price struck through above it, like the web', () => {
+  it('compares the single price with the package price, like the web', () => {
     const { getByLabelText, getByText } = renderRow({ item: makeItem({ price: 1199.9, oldPrice: 1250 }) });
 
+    expect(getByText('Tekli alırsan')).toBeTruthy();
+    expect(getByText('Pakette alırsan')).toBeTruthy();
     expect(getByText('₺1.250,00')).toHaveStyle({ textDecorationLine: 'line-through' });
     expect(getByText('₺1.199,90')).not.toHaveStyle({ textDecorationLine: 'line-through' });
-    expect(getByLabelText('Paket içi fiyatı ₺1.199,90, normal fiyatı ₺1.250,00')).toBeTruthy();
+    expect(getByLabelText('Tekli alırsan ₺1.250,00, pakette alırsan ₺1.199,90')).toBeTruthy();
+  });
+
+  it('tells how much buying the item in the package saves', () => {
+    const { getByText } = renderRow({ item: makeItem({ price: 1199.9, oldPrice: 1250 }) });
+
+    expect(getByText('Ürünü pakette alırsan ₺50,10 indirim kazanırsın.')).toBeTruthy();
+  });
+
+  it('does not multiply the saving by the quantity again (prices are line totals)', () => {
+    // 2 adet: satır fiyatları 2 × 1.199,95 ve 2 × 1.250; kazanç 100,10 (200,20 değil).
+    const { getByText } = renderRow({ item: makeItem({ price: 2399.9, oldPrice: 2500, quantity: 2 }) });
+
+    expect(getByText('Ürünü pakette alırsan ₺100,10 indirim kazanırsın.')).toBeTruthy();
+  });
+
+  it('promises no saving when the single price is not higher', () => {
+    const { queryByText } = renderRow();
+
+    expect(queryByText(/pakette alırsan .* kazanırsın/)).toBeNull();
   });
 
   it('shows only the package price when the item has no package discount', () => {
@@ -173,71 +194,107 @@ describe('BundleItemRow', () => {
     expect(onOpenProduct).toHaveBeenCalledWith(item);
   });
 
-  it('hands the item to Tek Satın Al whether or not a size is picked', () => {
+  it('hands the item to Tekli Satın Al whether or not a size is picked', () => {
     // Beden seçiliyse sepete ekleme, değilse ürün detayı kararı çağırana (controller) aittir.
     const onBuySingle = jest.fn();
     const item = makeItem();
     const { getByLabelText } = renderRow({ item, onBuySingle });
 
-    fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah tek satın al'));
+    fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah, Tekli Satın Al'));
 
     expect(onBuySingle).toHaveBeenCalledWith(item);
   });
 
-  it('offers Tek Satın Al without a product page once a size is picked', () => {
+  it('switches the button to Tekli Sepete Ekle once a size is picked, like the web', () => {
+    const onBuySingle = jest.fn();
+    const item = makeItem();
+    const { getByLabelText, getByText, queryByText } = renderRow({ item, onBuySingle, selectedVariantId: '3510' });
+
+    expect(getByText('Tekli Sepete Ekle')).toBeTruthy();
+    expect(queryByText('Tekli Satın Al')).toBeNull();
+
+    fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah, Tekli Sepete Ekle'));
+
+    expect(onBuySingle).toHaveBeenCalledWith(item);
+  });
+
+  it('confirms on the button that the item was just added', () => {
+    const { getByText, queryByText } = renderRow({
+      isAddedSingle: true,
+      onBuySingle: jest.fn(),
+      selectedVariantId: '3510',
+    });
+
+    expect(getByText('Tekli Ürün Eklendi')).toBeTruthy();
+    expect(queryByText('Tekli Sepete Ekle')).toBeNull();
+  });
+
+  it('offers Tekli Sepete Ekle without a product page once a size is picked', () => {
     const { getByText } = renderRow({
       item: makeItem({ slug: null }),
       onBuySingle: jest.fn(),
       selectedVariantId: '3510',
     });
 
-    expect(getByText('Tek Satın Al')).toBeTruthy();
+    expect(getByText('Tekli Sepete Ekle')).toBeTruthy();
   });
 
-  it('offers nothing to open or buy when the item has neither a size nor a product page', () => {
-    const { queryByLabelText, queryByText } = renderRow({
+  it('greys out Tekli Satın Al when the item has neither a size nor a product page', () => {
+    const onBuySingle = jest.fn();
+    const { getByLabelText, queryByLabelText } = renderRow({
       item: makeItem({ slug: null }),
-      onBuySingle: jest.fn(),
+      onBuySingle,
       onOpenProduct: jest.fn(),
     });
 
-    expect(queryByText('Tek Satın Al')).toBeNull();
+    // Webdeki gibi buton görünür ama pasiftir; görsel de gidilecek sayfa olmadığı için tıklanmaz.
+    const button = getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah, Tekli Satın Al');
+    expect(button).toBeDisabled();
+    fireEvent.press(button);
+    expect(onBuySingle).not.toHaveBeenCalled();
     expect(queryByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah ürün detayı')).toBeNull();
   });
 
-  it('does not offer Tek Satın Al for a sold-out item', () => {
+  it('greys out Tekli Satın Al for a sold-out item', () => {
+    const onBuySingle = jest.fn();
     const item = makeItem({ variants: [makeVariant('S', '3510', 0), makeVariant('M', '3511', 0)] });
-    const { queryByText } = renderRow({ item, onBuySingle: jest.fn() });
+    const { getByLabelText } = renderRow({ item, onBuySingle });
 
-    expect(queryByText('Tek Satın Al')).toBeNull();
+    const button = getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah, Tekli Satın Al');
+    expect(button).toBeDisabled();
+    fireEvent.press(button);
+    expect(onBuySingle).not.toHaveBeenCalled();
   });
 
   it('offers no actions when the caller does not handle them', () => {
     const { queryByLabelText, queryByText } = renderRow();
 
-    expect(queryByText('Tek Satın Al')).toBeNull();
+    expect(queryByText('Tekli Satın Al')).toBeNull();
     expect(queryByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah ürün detayı')).toBeNull();
   });
 
   it('shows the adding state and ignores presses while the item is being bought', () => {
     const onBuySingle = jest.fn();
-    const { getByLabelText, getByText, queryByText } = renderRow({
+    const { getByLabelText, getByTestId, queryByText } = renderRow({
       isBuyingSingle: true,
       onBuySingle,
       selectedVariantId: '3510',
     });
 
-    expect(getByText('Ekleniyor...')).toBeTruthy();
-    expect(queryByText('Tek Satın Al')).toBeNull();
+    expect(getByTestId('bundle-buy-single-spinner')).toBeTruthy();
+    expect(queryByText('Tekli Sepete Ekle')).toBeNull();
 
-    fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah tek satın al'));
+    fireEvent.press(getByLabelText('Kemer Detaylı Yarım Kol Elbise Siyah, Ekleniyor'));
 
     expect(onBuySingle).not.toHaveBeenCalled();
   });
 
-  it('keeps the Tek Satın Al label readable in the dark theme', () => {
-    const { getByText } = renderRow({ onBuySingle: jest.fn() }, 'dark');
+  it('keeps the Tekli Satın Al label and the price comparison readable in the dark theme', () => {
+    const { getByText } = renderRow({ item: makeItem({ price: 1199.9, oldPrice: 1250 }), onBuySingle: jest.fn() }, 'dark');
 
-    expect(getByText('Tek Satın Al')).toBeTruthy();
+    expect(getByText('Tekli Satın Al')).toBeTruthy();
+    expect(getByText('Tekli alırsan')).toBeTruthy();
+    expect(getByText('Pakette alırsan')).toBeTruthy();
+    expect(getByText('Ürünü pakette alırsan ₺50,10 indirim kazanırsın.')).toBeTruthy();
   });
 });

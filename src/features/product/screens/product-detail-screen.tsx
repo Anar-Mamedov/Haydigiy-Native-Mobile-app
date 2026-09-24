@@ -297,6 +297,7 @@ export function ProductDetailScreen() {
       {/* Bundle beden seçim alt sayfası — paket kalemi başına beden seçilir */}
       {bundle.isBundle && bundle.summary ? (
         <BundleSelectionSheet
+          addedItemId={bundle.addedItemId}
           buyingItemId={bundle.buyingItemId}
           errorMessage={bundle.errorMessage}
           imageUrl={displayData.imageUrl}

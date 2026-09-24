@@ -11,6 +11,8 @@ import {
   DISCOUNT_COLOR_DARK,
   SAVINGS_BADGE_COLOR,
   SHEET_OVERLAY_COLOR,
+  SINGLE_PRICE_COLOR,
+  SINGLE_PRICE_COLOR_DARK,
 } from '@/lib/theme/colors';
 import { FONT_SCALE_DEFAULT_PROPS } from '@/lib/theme/font-scale';
 
@@ -27,6 +29,7 @@ const testConfig = createTamagui({
       discountBackground: DISCOUNT_BACKGROUND_COLOR,
       discountBadge: DISCOUNT_COLOR,
       savingsBadge: SAVINGS_BADGE_COLOR,
+      singlePrice: SINGLE_PRICE_COLOR,
       overlay: SHEET_OVERLAY_COLOR,
     },
     dark: {
@@ -36,6 +39,7 @@ const testConfig = createTamagui({
       discountBackground: DISCOUNT_BACKGROUND_COLOR_DARK,
       discountBadge: DISCOUNT_COLOR,
       savingsBadge: SAVINGS_BADGE_COLOR,
+      singlePrice: SINGLE_PRICE_COLOR_DARK,
       overlay: SHEET_OVERLAY_COLOR,
     },
   },

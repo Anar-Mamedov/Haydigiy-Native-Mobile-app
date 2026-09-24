@@ -1,4 +1,4 @@
-import { BundleSummary } from '@/types/bundle.types';
+import { BundleItem, BundleSummary } from '@/types/bundle.types';
 
 /** Paket kazancının ekranda nasıl gösterileceğini belirleyen türetilmiş model. */
 export type BundleSavings = {
@@ -25,4 +25,14 @@ export function resolveBundleSavings(summary: BundleSummary): BundleSavings {
     discountRate: canShowRate ? rate : undefined,
     hasSavings,
   };
+}
+
+/**
+ * Kalemi pakette almanın, tek başına almaya göre kazandırdığı tutar ("Ürünü pakette alırsan
+ * X indirim kazanırsın"). İki fiyat da zaten satır toplamı (adet × birim fiyat) olduğu için
+ * fark adetle tekrar çarpılmaz. Normal fiyat yoksa ya da paket fiyatından yüksek değilse 0'dır.
+ */
+export function getBundleItemSavings(item: Pick<BundleItem, 'price' | 'oldPrice'>): number {
+  if (item.oldPrice === null || item.oldPrice <= item.price) return 0;
+  return item.oldPrice - item.price;
 }

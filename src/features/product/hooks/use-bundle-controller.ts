@@ -5,12 +5,15 @@ import { BundleItem, BundleSummary } from '@/types/bundle.types';
 import { Product } from '@/types/product.types';
 import { getApiErrorMessage } from '@/utils/api-error';
 import { useBundleSelection } from './use-bundle-selection';
+import { useTransientValue } from './use-transient-value';
 
 const ADD_ERROR_FALLBACK = 'Paket sepete eklenemedi. Lütfen tekrar deneyin.';
 const SINGLE_ADD_ERROR_FALLBACK = 'Ürün sepete eklenemedi. Lütfen tekrar deneyin.';
+/** Tekli eklemeden sonra butonda "Tekli Ürün Eklendi" yazısının kalma süresi (webdekiyle aynı). */
+export const SINGLE_ADDED_FEEDBACK_MS = 1500;
 
 export type UseBundleControllerOptions = {
-  /** Sepete ekleme (paket ya da "Tek Satın Al") gerçekten başarılı olunca çalışır (ör. sepete yönlendirme). */
+  /** Paket sepete gerçekten eklenince çalışır (ör. sepete yönlendirme). Tekli eklemede çağrılmaz. */
   onAdded: () => void;
   /** Paketteki bir ürünün detayını açar; rota kararı çağırana aittir. */
   onOpenProduct: (slug: string) => void;
@@ -28,15 +31,17 @@ export type BundleController = {
   /** Sepete ekleme başarısız olduysa kullanıcıya gösterilecek mesaj. */
   errorMessage: string | null;
   confirmAdd: () => void;
-  /** Paketteki ürünün detayına gider (görsele dokunulunca ya da bedensiz "Tek Satın Al"da). */
+  /** Paketteki ürünün detayına gider (görsele dokunulunca ya da bedensiz "Tekli Satın Al"da). */
   openItemProduct: (item: BundleItem) => void;
   /**
-   * "Tek Satın Al": bedeni seçilmiş kalemi paketsiz, tek başına sepete ekler. Beden seçilmemişse
-   * beden orada seçilsin diye ürün detayına gider.
+   * "Tekli Satın Al": bedeni seçilmiş kalemi paketsiz, tek başına sepete ekler ve webdeki gibi alt
+   * sayfada kalır. Beden seçilmemişse beden orada seçilsin diye ürün detayına gider.
    */
   buySingleItem: (item: BundleItem) => void;
-  /** "Tek Satın Al" isteği süren kalemin id'si; istek yoksa null. */
+  /** Tekli sepete ekleme isteği süren kalemin id'si; istek yoksa null. */
   buyingItemId: number | null;
+  /** Az önce tek başına sepete eklenen kalemin id'si; kısa süre sonra kendiliğinden null olur. */
+  addedItemId: number | null;
   selection: ReturnType<typeof useBundleSelection>;
 };
 
@@ -61,13 +66,17 @@ export function useBundleController(
   const [isSheetOpen, setSheetOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [buyingItemId, setBuyingItemId] = useState<number | null>(null);
+  const addedItem = useTransientValue<number>(SINGLE_ADDED_FEEDBACK_MS);
+  const clearAddedItem = addedItem.clear;
+  const showAddedItem = addedItem.show;
 
   const openSheet = useCallback(() => setSheetOpen(true), []);
 
   const closeSheet = useCallback(() => {
     setErrorMessage(null);
+    clearAddedItem();
     setSheetOpen(false);
-  }, []);
+  }, [clearAddedItem]);
 
   /**
    * Paketi sepete ekler. Eksik beden varsa istek gönderilmez; eksik kalemler
@@ -143,17 +152,15 @@ export function useBundleController(
           }),
         },
         {
-          // Paket eklemeyle aynı akış: yalnızca başarıda sepete geçilir, hata alt sayfada gösterilir.
-          onSuccess: () => {
-            setSheetOpen(false);
-            onAdded();
-          },
+          // Webdeki gibi sepete geçilmez: kullanıcı paketin yanında kalır, buton kısa süre
+          // "Tekli Ürün Eklendi" yazar. Hata sessizce yutulmaz, alt sayfada gösterilir.
+          onSuccess: () => showAddedItem(item.bundleItemId),
           onError: (error) => setErrorMessage(getApiErrorMessage(error, SINGLE_ADD_ERROR_FALLBACK)),
           onSettled: () => setBuyingItemId(null),
         },
       );
     },
-    [addToCart, onAdded, openItemProduct, selection.selections],
+    [addToCart, openItemProduct, selection.selections, showAddedItem],
   );
 
   return {
@@ -169,6 +176,7 @@ export function useBundleController(
     openItemProduct,
     buySingleItem,
     buyingItemId,
+    addedItemId: addedItem.value,
     selection,
   };
 }

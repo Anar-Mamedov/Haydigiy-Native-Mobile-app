@@ -138,11 +138,20 @@ describe('BundleSelectionSheet', () => {
     const items = [{ ...ITEMS[0], slug: 'kemer-detayli-elbise' }, ITEMS[1]];
     renderSheet({ buyingItemId: 13, items, onBuySingle, selections: { 13: '3577' } });
 
-    fireEvent.press(screen.getByLabelText('Kemer Detaylı Elbise tek satın al'));
+    fireEvent.press(screen.getByLabelText('Kemer Detaylı Elbise, Tekli Satın Al'));
 
     expect(onBuySingle).toHaveBeenCalledWith(items[0]);
-    // Yalnızca isteği süren satır "Ekleniyor..." gösterir.
-    expect(screen.getAllByText('Ekleniyor...')).toHaveLength(1);
+    // Yalnızca isteği süren satır yükleniyor gösterir.
+    expect(screen.getAllByTestId('bundle-buy-single-spinner')).toHaveLength(1);
+    expect(screen.getByLabelText('Kruvaze Ceket, Ekleniyor')).toBeTruthy();
+  });
+
+  it('confirms the single add only on the row that was just added', () => {
+    renderSheet({ addedItemId: 12, onBuySingle: jest.fn(), selections: { 12: '3510', 13: '3577' } });
+
+    expect(screen.getAllByText('Tekli Ürün Eklendi')).toHaveLength(1);
+    expect(screen.getByLabelText('Kemer Detaylı Elbise, Tekli Ürün Eklendi')).toBeTruthy();
+    expect(screen.getByLabelText('Kruvaze Ceket, Tekli Sepete Ekle')).toBeTruthy();
   });
 
   it('reports the selection progress', () => {
@@ -190,7 +199,9 @@ describe('BundleSelectionSheet', () => {
     renderSheet();
 
     expect(screen.getByText('₺2.000,00')).toBeTruthy();
-    expect(screen.getByText('Pakette kazanç:')).toBeTruthy();
+    expect(screen.getByText('Ayrı ayrı alırsan')).toBeTruthy();
+    expect(screen.getByText('₺2.500,00')).toBeTruthy();
+    expect(screen.getByText('Kazancın:')).toBeTruthy();
     expect(screen.getByText('₺500,00')).toBeTruthy();
     expect(screen.getByTestId('bundle-summary-discount-badge')).toBeTruthy();
     expect(screen.getByText('%20')).toBeTruthy();

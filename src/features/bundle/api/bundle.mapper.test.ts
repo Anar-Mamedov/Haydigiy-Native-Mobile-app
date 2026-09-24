@@ -52,7 +52,7 @@ describe('mapBundleItems', () => {
     expect(item.oldPrice).toBe(469.99);
   });
 
-  it('keeps the regular unit price for Tek Satın Al apart from the line prices', () => {
+  it('keeps the regular unit price for Tekli Satın Al apart from the line prices', () => {
     const [item] = mapBundleItems({
       items: [{ ...bundleItemFixture, quantity: 2, bundle_line_total: 899.8, price: 899.8, original_price: 939.98 }],
     });

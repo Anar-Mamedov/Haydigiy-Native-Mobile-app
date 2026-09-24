@@ -57,8 +57,17 @@ export const DISCOUNT_BACKGROUND_COLOR_DARK = 'rgba(46, 184, 114, 0.16)';
  */
 export const DISCOUNT_RATE_BADGE_COLOR = '#cc0407';
 
-/** Paket fiyat kartındaki "Pakette kazanç" rozetinin sabit zemini. */
+/** Paket fiyat kartındaki "Kazancın" rozetinin sabit zemini. */
 export const SAVINGS_BADGE_COLOR = '#cc0407';
+
+/**
+ * Paketsiz, tek başına alım fiyatının kırmızı vurgusu ("Tekli alırsan", "Ayrı ayrı alırsan").
+ * Üstü çizili gösterilir; yanındaki yeşil `$discount` paket fiyatıyla karşılaştırma kurar.
+ * Açık temada web ile birebir aynı kırmızı kullanılır; koyu temada bu ton zeminde okunmadığı
+ * için daha açık bir kırmızıya geçilir. Tamagui prop'larında `$singlePrice` tercih edilmeli.
+ */
+export const SINGLE_PRICE_COLOR = '#cc0407';
+export const SINGLE_PRICE_COLOR_DARK = '#f87171';
 
 /**
  * WhatsApp marka yeşili. Marka rengi olduğu için temaya göre değişmez; yalnızca

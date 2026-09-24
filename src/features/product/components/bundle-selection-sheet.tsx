@@ -23,10 +23,12 @@ export type BundleSelectionSheetProps = {
   onSelectVariant: (bundleItemId: number, variantId: string) => void;
   /** Paketteki bir ürünün detayını açar (görsele dokununca). Verilmezse görseller tıklanmaz. */
   onOpenProduct?: (item: BundleItem) => void;
-  /** Satırdaki "Tek Satın Al". Verilmezse buton gösterilmez. */
+  /** Satırdaki "Tekli Satın Al". Verilmezse buton gösterilmez. */
   onBuySingle?: (item: BundleItem) => void;
-  /** "Tek Satın Al" isteği süren kalemin id'si; o satırın butonu "Ekleniyor..." gösterir. */
+  /** Tekli sepete ekleme isteği süren kalemin id'si; o satırın butonu yükleniyor gösterir. */
   buyingItemId?: number | null;
+  /** Az önce tek başına sepete eklenen kalemin id'si; o satırın butonu "Tekli Ürün Eklendi" yazar. */
+  addedItemId?: number | null;
   missingItemIds: number[];
   missingHighlight: boolean;
   selectedCount: number;
@@ -70,6 +72,7 @@ export function BundleSelectionSheet({
   onOpenProduct,
   onBuySingle,
   buyingItemId = null,
+  addedItemId = null,
   missingItemIds,
   missingHighlight,
   selectedCount,
@@ -189,6 +192,7 @@ export function BundleSelectionSheet({
               {items.map((item, index) => (
                 <BundleItemRow
                   index={index + 1}
+                  isAddedSingle={addedItemId === item.bundleItemId}
                   isBuyingSingle={buyingItemId === item.bundleItemId}
                   isMissing={missingHighlight && missingItemIds.includes(item.bundleItemId)}
                   item={item}

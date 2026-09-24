@@ -39,7 +39,7 @@ export type BundleItem = {
   /** Ürünün paket dışındaki normal satır fiyatı; paket fiyatından yüksek değilse null. Üstü çizili gösterilir. */
   oldPrice: number | null;
   /**
-   * Ürünün paket dışındaki normal birim fiyatı: "Tek Satın Al" ile sepete yansıyan fiyat.
+   * Ürünün paket dışındaki normal birim fiyatı: "Tekli Satın Al" ile sepete yansıyan fiyat.
    * Backend bunu `product.price` olarak sepetle aynı kuralla (indirimli fiyat varsa o) verir.
    */
   regularUnitPrice: number;

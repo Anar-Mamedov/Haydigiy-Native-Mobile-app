@@ -311,7 +311,7 @@ describe('useProductDetailController — paket ürün', () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  it('adds a package item alone and goes to the cart once the request succeeds', () => {
+  it('adds a package item alone and stays on the package once the request succeeds', () => {
     const { result } = setup({ data: makeBundleProduct() });
 
     act(() => result.current.bundle.selection.selectVariant(12, '3510'));
@@ -320,11 +320,12 @@ describe('useProductDetailController — paket ürün', () => {
     // Paket değil, yalnızca seçili bedeniyle bu kalem sepete gider.
     expect(mockAddBundleToCart).not.toHaveBeenCalled();
     expect(mockAddToCart).toHaveBeenCalledWith(expect.objectContaining({ variantId: '3510' }), expect.any(Object));
-    expect(mockGoToCartAfterAdd).not.toHaveBeenCalled();
 
     act(() => mockAddToCart.mock.calls[0][1].onSuccess());
 
-    expect(mockGoToCartAfterAdd).toHaveBeenCalledTimes(1);
+    // Webdeki gibi sepete geçilmez; kalemin butonu "Tekli Ürün Eklendi" onayını gösterir.
+    expect(mockGoToCartAfterAdd).not.toHaveBeenCalled();
+    expect(result.current.bundle.addedItemId).toBe(12);
   });
 });
 
