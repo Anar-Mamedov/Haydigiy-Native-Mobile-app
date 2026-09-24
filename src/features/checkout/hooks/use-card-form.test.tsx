@@ -58,3 +58,27 @@ describe('useCardForm price refresh', () => {
     );
   });
 });
+
+describe('useCardForm Enpara cards', () => {
+  // Regression: an Enpara BIN (5269/5351) used to switch the installment lookup off
+  // and invalidate the card; the backend now routes these cards to İyzico.
+  it('looks up installments and accepts a complete Enpara card', () => {
+    mockedUseInstallmentPlansQuery.mockReturnValue({
+      data: undefined,
+      isFetching: false,
+    } as ReturnType<typeof useInstallmentPlansQuery>);
+
+    const { result } = renderHook(() => useCardForm(3000, true));
+
+    act(() => {
+      result.current.setNumber('5269 4242 4242 4242');
+      result.current.setExpiryMonth('08');
+      result.current.setExpiryYear('29');
+      result.current.setCvv('123');
+      result.current.setOwner('AHMET YILMAZ');
+    });
+
+    expect(mockedUseInstallmentPlansQuery).toHaveBeenLastCalledWith('52694242', 3000, true);
+    expect(result.current.isValid).toBe(true);
+  });
+});

@@ -2,7 +2,12 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckoutController } from './use-checkout-controller';
-import { isGarantiRouterResponse, mapGarantiForm } from '../api/checkout.mapper';
+import {
+  isGarantiRouterResponse,
+  isIyzicoRouterResponse,
+  mapGarantiForm,
+  mapIyzico3dsHandoff,
+} from '../api/checkout.mapper';
 import { getOrderTokenSummaryError, mapOrderTokenSummary } from '../api/order-token-summary.mapper';
 import { buildGarantiFormHtml } from '../utils/build-garanti-form-html';
 import { getApiErrorMessage } from '../utils/error-message';
@@ -12,17 +17,17 @@ import {
   confirmOrderDto,
   getClientIp,
   initializeIyzico3dsDto,
+  Iyzico3dsInitializeResponseDto,
+  PaymentRouterResponseDto,
   routePaymentDto,
 } from '@/services/checkout.service';
 import { cartKeys } from '@/features/cart/api/cart.keys';
+import { Iyzico3dsHandoff } from '@/types/checkout.types';
 
 const IP_REGEX = /^(\d{1,3}\.){3}\d{1,3}$/;
 
 /** A 3D Secure hand-off the screen renders in the payment WebView. */
-export type ThreeDSPayload =
-  | { kind: 'garanti-form'; html: string }
-  | { kind: 'iyzico-html'; html: string }
-  | { kind: 'url'; url: string };
+export type ThreeDSPayload = { kind: 'garanti-form'; html: string } | Iyzico3dsHandoff;
 
 export interface PlaceOrderController {
   submit: () => void;
@@ -39,6 +44,8 @@ export interface PlaceOrderController {
  * - non-card (Kapıda Ödeme …) → `/order/token` → `/order/confirm` → native success
  * - card + single (Tek Çekim) → `/order/token` → `/payment-router` (Garanti) →
  *   `/order/confirm` (pre-confirm) → Garanti 3D form in the WebView
+ * - card + single with an Enpara card → `/order/token` → `/payment-router`, which
+ *   answers with İyzico 3DS → WebView, without the Garanti pre-confirm
  * - card + installment → İyzico `/iyzico-prod/3ds/initialize` → 3DS HTML in
  *   the WebView (the web skips submit-time `/order/token` for this path)
  *
@@ -134,6 +141,17 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
         }
       };
 
+      // Both İyzico entry points reach the same backend `prepare`, which claims the
+      // order and clears the cart itself, so no `/order/confirm` precedes the 3DS.
+      const openIyzico3ds = (
+        response: Iyzico3dsInitializeResponseDto | PaymentRouterResponseDto,
+      ) => {
+        const handoff = mapIyzico3dsHandoff(response);
+        if (!handoff) throw new Error(response.message ?? 'İyzico ödeme sayfası açılamadı.');
+        markOrderSubmitted();
+        setThreeDS(handoff);
+      };
+
       try {
         // ---- Non-card (Kapıda Ödeme, etc.) ----
         if (!isCardPayment) {
@@ -185,30 +203,8 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
             },
           });
 
-          const html =
-            init.threeDSHtmlContent ??
-            init.checkoutFormContent ??
-            init.data?.threeDSHtmlContent ??
-            init.data?.checkoutFormContent;
-          if (html) {
-            markOrderSubmitted();
-            setThreeDS({ kind: 'iyzico-html', html: String(html) });
-            return;
-          }
-
-          const url =
-            init.paymentPageUrl ??
-            init.callbackUrl ??
-            init.url ??
-            init.data?.paymentPageUrl ??
-            init.data?.callbackUrl ??
-            init.data?.url;
-          if (url) {
-            markOrderSubmitted();
-            setThreeDS({ kind: 'url', url: String(url) });
-            return;
-          }
-          throw new Error(init.message ?? 'İyzico ödeme sayfası açılamadı.');
+          openIyzico3ds(init);
+          return;
         }
 
         // ---- Card + single (Tek Çekim) → Garanti 3D ----
@@ -229,6 +225,7 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
           payment_method_id: selectedMethod.id,
           basket,
           card_number: card.digits,
+          card_holder_name: card.values.owner,
           expire_month: card.values.expiryMonth,
           expire_year: card.values.expiryYear,
           cvv: card.values.cvv,
@@ -237,6 +234,11 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
 
         if (routerRes.status === 'error') {
           throw new Error(routerRes.message ?? 'Ödeme işlemi başlatılamadı.');
+        }
+        // The backend routes Enpara cards' single payments to İyzico.
+        if (isIyzicoRouterResponse(routerRes)) {
+          openIyzico3ds(routerRes);
+          return;
         }
         if (!isGarantiRouterResponse(routerRes)) {
           throw new Error(

@@ -129,7 +129,6 @@ export function CheckoutScreen() {
     );
   }
 
-  const showCardSections = controller.isCardPayment && !controller.card.isRestrictedBin;
   // Tutarı değiştiren seçimler, `/order/token` yanıtı gelene ve sipariş gönderimi
   // bitene kadar kilitli kalır (bkz. `isCheckoutLocked`).
   const isSelectionLocked = controller.isCheckoutLocked || placeOrder.isSubmitting;
@@ -227,8 +226,8 @@ export function CheckoutScreen() {
             selectedSlug={controller.selectedMethod?.slug ?? ''}
           />
 
-          {showCardSections ? <CheckoutCardForm card={controller.card} /> : null}
-          {showCardSections ? (
+          {controller.isCardPayment ? <CheckoutCardForm card={controller.card} /> : null}
+          {controller.isCardPayment ? (
             <CheckoutInstallments
               disabled={isSelectionLocked}
               installmentPlans={controller.card.installmentPlans}

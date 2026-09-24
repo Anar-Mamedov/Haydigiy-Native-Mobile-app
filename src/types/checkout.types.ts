@@ -121,6 +121,14 @@ export type GarantiFormData = {
   installmentCount: number;
 };
 
+/**
+ * İyzico's 3D Secure hand-off: HTML to render, or a payment page to open. Returned by
+ * the installment initialize call and by `/payment-router` for Enpara single payments.
+ */
+export type Iyzico3dsHandoff =
+  | { kind: 'iyzico-html'; html: string }
+  | { kind: 'url'; url: string };
+
 /** Minimal order summary shown on the success / pending screens. */
 export type OrderDetails = {
   orderId?: string;

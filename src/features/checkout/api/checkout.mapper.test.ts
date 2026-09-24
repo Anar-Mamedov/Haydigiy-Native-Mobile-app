@@ -1,9 +1,11 @@
 import {
   isGarantiRouterResponse,
+  isIyzicoRouterResponse,
   mapCargoCompany,
   mapCheckoutAddress,
   mapGarantiForm,
   mapInstallmentPlans,
+  mapIyzico3dsHandoff,
   mapPaymentMethod,
 } from './checkout.mapper';
 
@@ -159,6 +161,53 @@ describe('isGarantiRouterResponse', () => {
     expect(
       isGarantiRouterResponse({ data: { gateway_url: 'https://x', OrderNumber: '123' } }),
     ).toBe(false);
+  });
+});
+
+describe('isIyzicoRouterResponse', () => {
+  it('detects İyzico 3DS fields at the top level or under data', () => {
+    expect(isIyzicoRouterResponse({ status: 'success', threeDSHtmlContent: '<html>3ds</html>' })).toBe(true);
+    expect(isIyzicoRouterResponse({ data: { checkoutFormContent: '<form></form>' } })).toBe(true);
+  });
+
+  it('detects an İyzico response by its keys even when the HTML is empty', () => {
+    expect(isIyzicoRouterResponse({ status: 'success', threeDSHtmlContent: '' })).toBe(true);
+  });
+
+  it('does not claim a Garanti response', () => {
+    expect(
+      isIyzicoRouterResponse({
+        data: {
+          gateway_url: 'https://sanalposprov.garanti.com.tr/servlet/gt3dengine',
+          fields: { secure3dhash: 'HASH' },
+        },
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('mapIyzico3dsHandoff', () => {
+  it('prefers the 3DS HTML over a page URL', () => {
+    expect(
+      mapIyzico3dsHandoff({ threeDSHtmlContent: '<html>3ds</html>', paymentPageUrl: 'https://pay.example' }),
+    ).toEqual({ kind: 'iyzico-html', html: '<html>3ds</html>' });
+  });
+
+  it('reads fields nested under data', () => {
+    expect(mapIyzico3dsHandoff({ data: { checkoutFormContent: '<form></form>' } })).toEqual({
+      kind: 'iyzico-html',
+      html: '<form></form>',
+    });
+  });
+
+  it('falls back to the payment page URL when the HTML is empty', () => {
+    expect(
+      mapIyzico3dsHandoff({ threeDSHtmlContent: '', data: { paymentPageUrl: 'https://pay.example' } }),
+    ).toEqual({ kind: 'url', url: 'https://pay.example' });
+  });
+
+  it('returns null when neither HTML nor a URL is present', () => {
+    expect(mapIyzico3dsHandoff({ status: 'success', threeDSHtmlContent: '' })).toBeNull();
   });
 });
 

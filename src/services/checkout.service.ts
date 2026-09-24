@@ -55,7 +55,7 @@ export async function updateOrderTokenDto(
   return response.data;
 }
 
-// ---- /payment-router (single payment → returns the gateway form, e.g. Garanti) ----
+// ---- /payment-router (single payment → Garanti form, or İyzico 3DS for Enpara cards) ----
 
 export interface PaymentRouterRequestDto {
   total_price: number;
@@ -65,6 +65,8 @@ export interface PaymentRouterRequestDto {
   payment_method_id?: number;
   basket: { name: string; price: number; quantity: number }[];
   card_number: string;
+  /** Sent to İyzico when the router picks it; the backend otherwise uses a placeholder name. */
+  card_holder_name: string;
   expire_month: string;
   expire_year: string;
   cvv: string;

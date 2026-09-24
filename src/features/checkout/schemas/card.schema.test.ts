@@ -1,4 +1,4 @@
-import { hasRestrictedCardPrefix, isValidCard } from './card.schema';
+import { isValidCard } from './card.schema';
 
 const validCard = {
   owner: 'AHMET YILMAZ',
@@ -7,18 +7,6 @@ const validCard = {
   expiryYear: '29',
   cvv: '123',
 };
-
-describe('hasRestrictedCardPrefix', () => {
-  it('flags restricted BIN prefixes', () => {
-    expect(hasRestrictedCardPrefix('5269 49')).toBe(true);
-    expect(hasRestrictedCardPrefix('535112')).toBe(true);
-  });
-
-  it('allows other prefixes', () => {
-    expect(hasRestrictedCardPrefix('4242')).toBe(false);
-    expect(hasRestrictedCardPrefix('52')).toBe(false);
-  });
-});
 
 describe('isValidCard', () => {
   it('accepts a complete card (with grouping spaces)', () => {
@@ -39,7 +27,9 @@ describe('isValidCard', () => {
     expect(isValidCard({ ...validCard, owner: '  ' })).toBe(false);
   });
 
-  it('rejects a restricted BIN even when otherwise complete', () => {
-    expect(isValidCard({ ...validCard, number: '5269 4242 4242 4242' })).toBe(false);
+  // Regression: Enpara cards were blocked on the client; the backend now routes them to İyzico.
+  it('accepts Enpara BINs (5269, 5351)', () => {
+    expect(isValidCard({ ...validCard, number: '5269 4242 4242 4242' })).toBe(true);
+    expect(isValidCard({ ...validCard, number: '5351 1242 4242 4242' })).toBe(true);
   });
 });

@@ -81,7 +81,6 @@ function orderSummary(totalPrice: number): OrderTokenSummary {
 
 const card = {
   isValid: true,
-  isRestrictedBin: false,
   digits: '5555444433332222',
   values: {
     owner: 'Test User',
@@ -355,5 +354,70 @@ describe('usePlaceOrder order-token sync', () => {
     await waitFor(() =>
       expect(result.current.threeDS).toEqual(expect.objectContaining({ kind: 'iyzico-html' })),
     );
+  });
+});
+
+// The backend's /payment-router sends Enpara cards' single payments to İyzico.
+describe('usePlaceOrder single payment routed to İyzico', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    clearPurchaseSnapshot();
+  });
+
+  it('opens the İyzico 3DS HTML without the Garanti pre-confirm', async () => {
+    routePaymentDto.mockResolvedValueOnce({
+      status: 'success',
+      threeDSHtmlContent: '<html>enpara-3ds</html>',
+    });
+    const controller = makeController();
+    const { result } = renderPlaceOrder(controller);
+
+    act(() => {
+      result.current.submit();
+    });
+
+    await waitFor(() =>
+      expect(result.current.threeDS).toEqual({ kind: 'iyzico-html', html: '<html>enpara-3ds</html>' }),
+    );
+    expect(routePaymentDto).toHaveBeenCalledWith(
+      expect.objectContaining({ card_holder_name: 'Test User' }),
+    );
+    expect(confirmOrderDto).not.toHaveBeenCalled();
+    expect(controller.markOrderSubmitted).toHaveBeenCalled();
+  });
+
+  it('opens the İyzico payment page when the router sends a URL instead of HTML', async () => {
+    routePaymentDto.mockResolvedValueOnce({
+      status: 'success',
+      threeDSHtmlContent: '',
+      paymentPageUrl: 'https://pay.example/3ds',
+    });
+    const { result } = renderPlaceOrder(makeController());
+
+    act(() => {
+      result.current.submit();
+    });
+
+    await waitFor(() =>
+      expect(result.current.threeDS).toEqual({ kind: 'url', url: 'https://pay.example/3ds' }),
+    );
+    expect(confirmOrderDto).not.toHaveBeenCalled();
+  });
+
+  it('reports an İyzico response without a 3DS target instead of trying Garanti', async () => {
+    routePaymentDto.mockResolvedValueOnce({ status: 'success', threeDSHtmlContent: '' });
+    const controller = makeController();
+    const { result } = renderPlaceOrder(controller);
+
+    act(() => {
+      result.current.submit();
+    });
+
+    await waitFor(() =>
+      expect(controller.setSubmitError).toHaveBeenCalledWith('İyzico ödeme sayfası açılamadı.'),
+    );
+    expect(result.current.threeDS).toBeNull();
+    expect(confirmOrderDto).not.toHaveBeenCalled();
+    expect(controller.markOrderSubmitted).not.toHaveBeenCalled();
   });
 });

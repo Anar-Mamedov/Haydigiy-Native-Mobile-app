@@ -2,6 +2,7 @@ import { PaymentTypeDto } from '@/services/payment-type.service';
 import { CargoCompanyDto } from '@/services/cargo.service';
 import { CouponValidateResponseDto } from '@/services/coupon.service';
 import {
+  Iyzico3dsInitializeResponseDto,
   OrderByTokenResponseDto,
   PaymentRouterResponseDto,
 } from '@/services/checkout.service';
@@ -13,6 +14,7 @@ import {
   CheckoutAddress,
   GarantiFormData,
   InstallmentPlan,
+  Iyzico3dsHandoff,
   OrderDetails,
   PaymentMethod,
 } from '@/types/checkout.types';
@@ -178,4 +180,54 @@ export function mapGarantiForm(
     apiVersion: str(fields.apiversion ?? res.apiversion, '512'),
     installmentCount: installmentCount > 1 ? installmentCount : 1,
   };
+}
+
+// ---- İyzico 3DS hand-off detection + mapping ----
+
+const IYZICO_HTML_KEYS = ['threeDSHtmlContent', 'checkoutFormContent'];
+const IYZICO_URL_KEYS = ['paymentPageUrl', 'callbackUrl', 'url'];
+
+type Iyzico3dsResponse = Iyzico3dsInitializeResponseDto | PaymentRouterResponseDto;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** İyzico fields sit at the top level or under `data`; the top level is read first. */
+function readIyzicoSources(response: Iyzico3dsResponse): Record<string, unknown>[] {
+  return [response, response.data].filter(isRecord);
+}
+
+function readFirstFilled(sources: Record<string, unknown>[], keys: string[]): string | null {
+  for (const source of sources) {
+    for (const key of keys) {
+      const value = source[key];
+      if (value) return String(value);
+    }
+  }
+  return null;
+}
+
+/**
+ * The router answers an Enpara single payment with İyzico's 3DS fields instead of a
+ * bank form. Detected by key presence like the web, so an empty HTML surfaces as an
+ * İyzico error instead of falling through to the Garanti branch.
+ */
+export function isIyzicoRouterResponse(response: PaymentRouterResponseDto): boolean {
+  return readIyzicoSources(response).some((source) =>
+    IYZICO_HTML_KEYS.some((key) => key in source),
+  );
+}
+
+/**
+ * What the payment WebView opens for an İyzico response: the 3DS HTML when present,
+ * otherwise the payment page URL. `null` when the response carries neither.
+ */
+export function mapIyzico3dsHandoff(response: Iyzico3dsResponse): Iyzico3dsHandoff | null {
+  const sources = readIyzicoSources(response);
+  const html = readFirstFilled(sources, IYZICO_HTML_KEYS);
+  if (html) return { kind: 'iyzico-html', html };
+
+  const url = readFirstFilled(sources, IYZICO_URL_KEYS);
+  return url ? { kind: 'url', url } : null;
 }

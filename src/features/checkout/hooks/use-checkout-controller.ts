@@ -363,7 +363,6 @@ export function useCheckoutController() {
   const hint = useMemo(() => {
     if (orderTokenSync.isLoading) return 'Sipariş tutarları API’den alınıyor.';
     if (orderTokenSync.errorMessage) return 'Sipariş tutarları alınamadı.';
-    if (isCardPayment && card.isRestrictedBin) return 'Bu kartla ödeme yapılamaz.';
     if (isCardPayment && !card.isValid) return 'Kart bilgilerini eksiksiz doldurun.';
     if (isCardPayment && card.selectedInstallment > 1 && card.isLoadingInstallments) {
       return 'Güncel taksit tutarları hesaplanıyor.';
@@ -375,7 +374,6 @@ export function useCheckoutController() {
     isCardPayment,
     orderTokenSync.isLoading,
     orderTokenSync.errorMessage,
-    card.isRestrictedBin,
     card.isValid,
     card.isLoadingInstallments,
     card.selectedInstallment,

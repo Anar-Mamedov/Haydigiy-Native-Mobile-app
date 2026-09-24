@@ -35,9 +35,6 @@ export function CheckoutCardForm({ card }: CheckoutCardFormProps) {
         />
 
         <AppInput
-          errorMessage={
-            card.isRestrictedBin ? 'Bu kartla ödeme yapılamaz. Lütfen başka bir kart kullanın.' : undefined
-          }
           inputMode="numeric"
           label="Kart No"
           maxLength={19}

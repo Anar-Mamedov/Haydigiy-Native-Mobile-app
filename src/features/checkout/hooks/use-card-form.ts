@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useInstallmentPlansQuery } from '../api/checkout.queries';
-import { hasRestrictedCardPrefix, isValidCard } from '../schemas/card.schema';
+import { isValidCard } from '../schemas/card.schema';
 import { CardFormValues, InstallmentPlan } from '@/types/checkout.types';
 
 function formatCardNumber(raw: string): string {
@@ -16,7 +16,6 @@ export interface CardFormController {
   setExpiryYear: (value: string) => void;
   setCvv: (value: string) => void;
   setOwner: (value: string) => void;
-  isRestrictedBin: boolean;
   isValid: boolean;
   installmentPlans: InstallmentPlan[];
   isLoadingInstallments: boolean;
@@ -41,13 +40,8 @@ export function useCardForm(singlePaymentAmount: number, enabled: boolean): Card
 
   const digits = number.replace(/\s/g, '');
   const bin = digits.slice(0, 8);
-  const isRestrictedBin = hasRestrictedCardPrefix(digits);
 
-  const installmentsQuery = useInstallmentPlansQuery(
-    bin,
-    Math.max(1, singlePaymentAmount),
-    enabled && !isRestrictedBin,
-  );
+  const installmentsQuery = useInstallmentPlansQuery(bin, Math.max(1, singlePaymentAmount), enabled);
   const installmentPlans = useMemo(() => installmentsQuery.data ?? [], [installmentsQuery.data]);
 
   // Reset the selection when the available plans change (new BIN / amount) and the
@@ -77,7 +71,6 @@ export function useCardForm(singlePaymentAmount: number, enabled: boolean): Card
     setExpiryYear,
     setCvv: (value) => setCvvState(value.replace(/\D/g, '').slice(0, 3)),
     setOwner,
-    isRestrictedBin,
     isValid,
     installmentPlans,
     isLoadingInstallments: installmentsQuery.isFetching,
