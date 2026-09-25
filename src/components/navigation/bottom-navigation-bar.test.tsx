@@ -79,6 +79,16 @@ describe('BottomNavigationBar', () => {
     expect(anchor.queryByText('Sepetim')).toBeNull();
   });
 
+  it('grows the cart badge together with the tab icon under a large OS font', () => {
+    // Test ortamı OS yazı ölçeğini 2 veriyor; alt menü bunu 1.1'e kırpar (18 → 20).
+    // Rakam da hapla aynı ölçüden türer, OS onu ayrıca büyütmez.
+    renderWithTamagui(<BottomNavigationBar />);
+
+    expect(screen.getByTestId('cart-tab-badge')).toHaveStyle({ height: 20, minWidth: 20 });
+    expect(screen.getByText('2')).toHaveStyle({ fontSize: 11, lineHeight: 20 });
+    expect(screen.getByText('2').props.allowFontScaling).toBe(false);
+  });
+
   it('draws the badge only on the cart tab', () => {
     renderWithTamagui(<BottomNavigationBar />);
 

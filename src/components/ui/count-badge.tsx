@@ -1,7 +1,6 @@
 import { type ReactNode } from 'react';
 import { styled, XStack, YStack, type GetProps } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { COMPACT_MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 /** Rozetin varsayılan çapı: ikonların sağ üst köşesine oturan 18pt'lik hap. */
 export const COUNT_BADGE_SIZE = 18;
@@ -33,8 +32,6 @@ export type CountBadgeProps = Omit<GetProps<typeof BadgeFrame>, 'size'> & {
   max?: number;
   /** Hapın çapı. İkonla birlikte ölçeklenmesi gereken yüzeyler kendi ölçüsünü verir. */
   size?: number;
-  /** Yüksekliği sabit yüzeylerde yazı büyümesini sınırlar. */
-  maxFontSizeMultiplier?: number;
 };
 
 /**
@@ -49,7 +46,6 @@ export type CountBadgeProps = Omit<GetProps<typeof BadgeFrame>, 'size'> & {
 export function CountBadge({
   count,
   max = DEFAULT_MAX_COUNT,
-  maxFontSizeMultiplier = COMPACT_MAX_FONT_SCALE,
   size = COUNT_BADGE_SIZE,
   ...frameProps
 }: CountBadgeProps) {
@@ -57,13 +53,16 @@ export function CountBadge({
 
   return (
     <BadgeFrame accessibilityRole="text" height={size} minWidth={size} {...frameProps}>
+      {/* Rakam yalnızca hapın çapından türetilir. OS yazı ölçeği ayrıca uygulanınca
+          rakam sabit çaplı hapa sığmıyor, büyük yazı ayarında hapın sol altına
+          kayıyordu. Yazıyla büyümesi gereken yüzeyler `size`'ı zaten ölçekli verir. */}
       <Paragraph
+        allowFontScaling={false}
         color="white"
         fontSize={Math.round(size * FONT_SIZE_RATIO)}
         fontWeight="900"
         includeFontPadding={false}
         lineHeight={size}
-        maxFontSizeMultiplier={maxFontSizeMultiplier}
         textAlign="center"
       >
         {count > max ? `${max}+` : count}
@@ -72,9 +71,15 @@ export function CountBadge({
   );
 }
 
-export type IconWithCountBadgeProps = Omit<CountBadgeProps, 'testID'> & {
+export type IconWithCountBadgeProps = Pick<CountBadgeProps, 'count' | 'max'> & {
   /** Rozetin çapasını oluşturan ikon. */
   icon: ReactNode;
+  /**
+   * Rozetin çapı. Adı bilerek `size` değil: Tamagui `Button` ikon yuvasına konan
+   * öğeye kendi ikon ölçüsünü `size` ve `color` olarak enjekte ediyor, rozet de
+   * bunu alınca 18 yerine 15 çiziliyordu.
+   */
+  badgeSize?: number;
   /** Çapa kutusunun testID'si. */
   testID?: string;
   /** Rozetin kendi testID'si. */
@@ -85,17 +90,20 @@ export type IconWithCountBadgeProps = Omit<CountBadgeProps, 'testID'> & {
  * Sayaç rozetini ikonun kendi kutusuna çapalar. Rozet doğrudan bir kolonun
  * içine konduğunda kolon, ikondan geniş olan etiketle birlikte ölçüldüğü için
  * rozet ikondan uzağa düşüyordu; o çapa kuralı burada tek yerde tutulur.
+ * Rozete yalnızca tanımlı prop'lar iletilir, ikon yuvasının enjekte ettikleri değil.
  */
 export function IconWithCountBadge({
+  badgeSize,
   badgeTestID,
+  count,
   icon,
+  max,
   testID,
-  ...badgeProps
 }: IconWithCountBadgeProps) {
   return (
     <YStack position="relative" testID={testID}>
       {icon}
-      <CountBadge {...badgeProps} testID={badgeTestID} />
+      <CountBadge count={count} max={max} size={badgeSize} testID={badgeTestID} />
     </YStack>
   );
 }

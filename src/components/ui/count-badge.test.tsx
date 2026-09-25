@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import { screen, within } from '@testing-library/react-native';
-import { CountBadge, IconWithCountBadge } from './count-badge';
+import { Button } from 'tamagui';
+import { COUNT_BADGE_SIZE, CountBadge, IconWithCountBadge } from './count-badge';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
 describe('CountBadge', () => {
@@ -36,6 +37,18 @@ describe('CountBadge', () => {
     expect(screen.queryByTestId('badge')).toBeNull();
   });
 
+  it('sizes the digit from the pill and keeps the OS from rescaling it', () => {
+    // Büyük yazı ayarında OS rakamı ayrıca büyütüyordu; sabit çaplı hapa sığmayan
+    // rakam hapın sol altına kayıyordu.
+    renderWithTamagui(<CountBadge count={1} size={20} testID="badge" />);
+
+    const digit = screen.getByText('1');
+
+    expect(digit.props.allowFontScaling).toBe(false);
+    expect(digit).toHaveStyle({ fontSize: 11, lineHeight: 20 });
+    expect(screen.getByTestId('badge')).toHaveStyle({ height: 20, minWidth: 20 });
+  });
+
   it('keeps its label readable in both themes', () => {
     // Rozet kendi zeminini taşır; metin her iki temada da beyaz kalmalı.
     const light = renderWithTamagui(<CountBadge count={3} testID="badge" />);
@@ -65,6 +78,30 @@ describe('IconWithCountBadge', () => {
 
     expect(anchor.getByTestId('icon')).toBeTruthy();
     expect(anchor.getByTestId('badge')).toBeTruthy();
+  });
+
+  it('passes its own size to the badge', () => {
+    renderWithTamagui(
+      <IconWithCountBadge badgeSize={20} badgeTestID="badge" count={3} icon={<View />} />,
+    );
+
+    expect(screen.getByTestId('badge')).toHaveStyle({ height: 20, minWidth: 20 });
+  });
+
+  it('ignores the size and color a Tamagui Button injects into its icon slot', () => {
+    // Başlıktaki sepet rozeti Button'un ikon ölçüsünü (15) alıp küçük çiziliyordu.
+    renderWithTamagui(
+      <Button
+        chromeless
+        icon={<IconWithCountBadge badgeTestID="badge" count={1} icon={<View />} />}
+        size="$3"
+      />,
+    );
+
+    const badge = screen.getByTestId('badge');
+
+    expect(badge).toHaveStyle({ height: COUNT_BADGE_SIZE, minWidth: COUNT_BADGE_SIZE });
+    expect(badge.props.style).not.toHaveProperty('color');
   });
 
   it('renders the icon alone when there is nothing to count', () => {

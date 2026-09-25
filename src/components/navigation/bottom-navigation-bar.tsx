@@ -212,10 +212,10 @@ export function BottomNavigationBar() {
           >
             <YStack alignItems="center" gap={2}>
               <IconWithCountBadge
+                badgeSize={badgeSize}
                 badgeTestID={`${tabTestId}-tab-badge`}
                 count={badgeCount}
                 icon={item.icon({ color, focused, size: tabIconSize })}
-                size={badgeSize}
                 testID={`${tabTestId}-tab-icon`}
               />
               <Paragraph adjustsFontSizeToFit fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} minimumFontScale={0.8} numberOfLines={1} style={{ color }}>
