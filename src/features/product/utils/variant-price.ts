@@ -4,9 +4,13 @@
  */
 
 import { Product, ProductSize, ProductVariant } from '@/types/product.types';
+import { resolveProductDiscount } from './product-price';
 
 /** Fiyat kutularının ihtiyaç duyduğu alanlar; ürün modelindeki adlarla aynıdır. */
 export type ProductPricing = Pick<Product, 'discountRate' | 'firstPrice' | 'hasDiscount' | 'price'>;
+
+/** Beden rozetinin oranı hesaplarken baktığı, ürünün bedene özel olmayan fiyatları. */
+export type ProductBasePricing = Pick<ProductPricing, 'firstPrice' | 'price'>;
 
 export type SizeSpecialPrice = {
   /** Aynı özel fiyattan satılan, stokta olan bedenler. */
@@ -17,6 +21,20 @@ export type SizeSpecialPrice = {
 /** Bedenin kendi fiyatı var mı? Boş ya da 0 gelen fiyat "bedene özel fiyat yok" demektir. */
 export function hasOwnVariantPrice(price: number | null | undefined): price is number {
   return typeof price === 'number' && Number.isFinite(price) && price > 0;
+}
+
+/** `basePrice`'tan `price`'a yüzde kaç indirim olduğu; backend'in ürün indirimi formülü. */
+function discountRateFrom(basePrice: number, price: number): number {
+  return Math.round(((basePrice - price) / basePrice) * 100);
+}
+
+/**
+ * Beden fiyatındaki indirimin tabanı: `first_price` beden fiyatından yüksekse odur, değilse
+ * taban yoktur. Fiyat kutusu da beden rozeti de bu tek kuralı kullanır; aynı beden için ikisi
+ * farklı oran gösteremez.
+ */
+function resolveFirstPriceBase(firstPrice: number | undefined, variantPrice: number): number | undefined {
+  return firstPrice !== undefined && firstPrice > variantPrice ? firstPrice : undefined;
 }
 
 /**
@@ -36,32 +54,56 @@ export function resolveVariantPricing(
     return { discountRate, firstPrice, hasDiscount, price };
   }
 
-  const isDiscounted = firstPrice !== undefined && firstPrice > variantPrice;
+  const discountBase = resolveFirstPriceBase(firstPrice, variantPrice);
 
   return {
-    discountRate: isDiscounted ? Math.round(((firstPrice - variantPrice) / firstPrice) * 100) : undefined,
+    discountRate: discountBase !== undefined ? discountRateFrom(discountBase, variantPrice) : undefined,
     firstPrice,
-    hasDiscount: isDiscounted,
+    hasDiscount: discountBase !== undefined,
     price: variantPrice,
   };
 }
 
 /**
- * Beden çipindeki indirim rozeti için: bedenin kendi fiyatı ürünün varsayılan fiyatından düşükse
- * yüzde kaç ucuz olduğu (ör. 339,99 → 269,99 için 21; webdeki `getVariantDiscountRate` ile aynı).
+ * Beden çipindeki indirim rozeti: bedenin kendi fiyatı ürünün varsayılan fiyatından düşükse, o
+ * beden seçilince fiyat kutusunun göstereceği toplam indirim. Ürün zaten indirimliyse bedenin ek
+ * indirimi indirimli fiyata göre ayrıca yüzdelenmez, `first_price`'tan okunur (209,99 TL'lik,
+ * %5 indirimle 199,99 TL'ye düşen üründe 159,99 TL'lik beden için %20 değil %24). Fiyat kutusu
+ * indirim göstermeyecekse oran ürünün fiyatından çıkar (339,99 → 269,99 için %21).
  * Bedenin kendi fiyatı yoksa, ucuz değilse ya da fark yuvarlanınca %0'a düşüyorsa `undefined`.
  * Stok ve satış durumu çağıranın kararıdır: rozet yalnızca alınabilen bedende gösterilmeli.
  */
 export function resolveVariantDiscountRate(
   variantPrice: number | null | undefined,
-  productPrice: number | null | undefined,
+  product: ProductBasePricing | null | undefined,
 ): number | undefined {
+  const productPrice = product?.price;
   if (!hasOwnVariantPrice(variantPrice) || !hasOwnVariantPrice(productPrice) || variantPrice >= productPrice) {
     return undefined;
   }
 
-  const rate = Math.round(((productPrice - variantPrice) / productPrice) * 100);
+  const basePrice = resolveFirstPriceBase(product?.firstPrice, variantPrice) ?? productPrice;
+  const rate = discountRateFrom(basePrice, variantPrice);
   return rate > 0 ? rate : undefined;
+}
+
+/**
+ * Beden çipindeki indirim rozeti: o beden seçilince fiyat kutusunda görünecek indirim. Bedene özel
+ * ucuz fiyatı olan beden kendi toplam indirimini (`resolveVariantDiscountRate`), diğer bedenler
+ * ürünün genel indirimini gösterir; bedenler arasındaki fark çiplerden okunur (S %24, L %5). Ürünün
+ * genel indirimi yoksa bedene özel fiyatı olmayan beden rozetsiz kalır.
+ * Stok ve satış durumu çağıranın kararıdır: rozet yalnızca alınabilen bedende gösterilmeli.
+ */
+export function resolveSizeBadgeRate(
+  variant: Pick<ProductVariant, 'price'>,
+  product: ProductPricing | null | undefined,
+): number | undefined {
+  if (!product) return undefined;
+
+  return (
+    resolveVariantDiscountRate(variant.price, product) ??
+    resolveProductDiscount(resolveVariantPricing(product, variant)).discountRate
+  );
 }
 
 /**

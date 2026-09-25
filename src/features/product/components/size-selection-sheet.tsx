@@ -10,7 +10,7 @@ import { DiscountRateBadge } from '@/components/ui/discount-rate-badge';
 import { COMPACT_MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 import { FeatureIcon, ProductVariant } from '@/types/product.types';
 import { resolveProductActionState } from '../utils/product-action-state';
-import { resolveVariantDiscountRate } from '../utils/variant-price';
+import { type ProductPricing, resolveSizeBadgeRate } from '../utils/variant-price';
 import { ProductFeatureDescriptionList } from './product-feature-tags';
 import { ProductDetailDiscountPrice } from './product-price';
 import { resolveProductDiscount } from '../utils/product-price';
@@ -33,10 +33,11 @@ type SizeSelectionSheetProps = {
   /** İndirim öncesi fiyat (`first_price`). */
   firstPrice?: number;
   /**
-   * Ürünün varsayılan (bedene özel olmayan) fiyatı. `price` seçili bedenin fiyatına dönebildiği için
-   * ayrı verilir; bundan ucuza satılan ve alınabilen bedenin köşesinde "%21" indirim rozeti çıkar.
+   * Ürünün bedene özel olmayan fiyat ve indirim bilgisi. `price` seçili bedenin fiyatına dönebildiği
+   * için ayrı verilir; alınabilen her bedenin köşesinde o beden seçilince fiyat kutusunda görünecek
+   * indirim rozeti çıkar: bedene özel fiyatın toplam indirimi ("%24") ya da ürünün genel indirimi ("%5").
    */
-  productPrice?: number;
+  productPricing?: ProductPricing;
   shippingMessage?: string;
   featureIcons?: FeatureIcon[];
   variants: ProductVariant[];
@@ -66,7 +67,7 @@ export function SizeSelectionSheet({
   hasDiscount,
   discountRate,
   firstPrice,
-  productPrice,
+  productPricing,
   shippingMessage,
   featureIcons,
   variants,
@@ -168,7 +169,7 @@ export function SizeSelectionSheet({
                   const available = isApprovedForSale && variant.hasStock && variant.quantity > 0;
                   const selected = isApprovedForSale && selectedVariant?.id === variant.id;
                   // Rozet yalnızca alınabilen bedende: tükenmiş ya da satışa kapalı bedende indirim vaat edilmez.
-                  const discountRate = available ? resolveVariantDiscountRate(variant.price, productPrice) : undefined;
+                  const discountRate = available ? resolveSizeBadgeRate(variant, productPricing) : undefined;
                   return (
                     <XStack
                       accessibilityLabel={

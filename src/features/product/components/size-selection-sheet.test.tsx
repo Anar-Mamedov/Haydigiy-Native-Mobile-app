@@ -286,11 +286,36 @@ describe('SizeSelectionSheet — bedene özel indirim rozeti', () => {
   const cheapSize = { hasStock: true, id: '81', name: '2XL', price: 269.99, quantity: 9 };
   const soldOutCheapSize = { hasStock: false, id: '82', name: '3XL', price: 249.99, quantity: 0 };
 
-  it('marks the size sold below the product price with its discount rate, like the web', () => {
+  it('shows every available size its own discount on an already discounted product', () => {
+    // 209,99 TL'lik ürün %5 indirimle 199,99 TL. Regresyon: S'nin 159,99 TL'lik fiyatına rozet
+    // indirimli fiyata göre %20 diyordu, fiyat kutusu %24. L ürünün genel %5'ini gösterir, tükenen M göstermez.
     renderWithTamagui(
       <SizeSelectionSheet
         {...sheetBaseProps}
-        productPrice={339.99}
+        productPricing={{ discountRate: 5, firstPrice: 209.99, hasDiscount: true, price: 199.99 }}
+        selectedVariant={null}
+        variants={[
+          { hasStock: true, id: '90', name: 'S', price: 159.99, quantity: 23 },
+          { hasStock: false, id: '92', name: 'M', price: 0, quantity: 0 },
+          { hasStock: true, id: '91', name: 'L', price: 0, quantity: 6 },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId('size-sheet-discount-badge-90')).toBeTruthy();
+    expect(screen.getByText('%24')).toBeTruthy();
+    expect(screen.queryByText('%20')).toBeNull();
+    expect(screen.getByLabelText('Beden S, yüzde 24 indirimli')).toBeTruthy();
+    expect(screen.getByTestId('size-sheet-discount-badge-91')).toBeTruthy();
+    expect(screen.getByLabelText('Beden L, yüzde 5 indirimli')).toBeTruthy();
+    expect(screen.queryByTestId('size-sheet-discount-badge-92')).toBeNull();
+  });
+
+  it('marks the size sold below the product price with its discount rate', () => {
+    renderWithTamagui(
+      <SizeSelectionSheet
+        {...sheetBaseProps}
+        productPricing={{ price: 339.99 }}
         selectedVariant={null}
         variants={[regularSize, cheapSize, soldOutCheapSize]}
       />,
@@ -311,7 +336,7 @@ describe('SizeSelectionSheet — bedene özel indirim rozeti', () => {
 
   it('keeps the badge readable on the selected size in the dark theme', () => {
     renderWithTamagui(
-      <SizeSelectionSheet {...sheetBaseProps} productPrice={339.99} selectedVariant={cheapSize} variants={[regularSize, cheapSize]} />,
+      <SizeSelectionSheet {...sheetBaseProps} productPricing={{ price: 339.99 }} selectedVariant={cheapSize} variants={[regularSize, cheapSize]} />,
       'dark',
     );
 

@@ -1,4 +1,11 @@
-import { formatSizeSpecialPriceLabel, hasOwnVariantPrice, resolveSizeSpecialPrice, resolveVariantDiscountRate, resolveVariantPricing } from './variant-price';
+import {
+  formatSizeSpecialPriceLabel,
+  hasOwnVariantPrice,
+  resolveSizeBadgeRate,
+  resolveSizeSpecialPrice,
+  resolveVariantDiscountRate,
+  resolveVariantPricing,
+} from './variant-price';
 
 const discountedProduct = { discountRate: 13, firstPrice: 399.99, hasDiscount: true, price: 349.99 };
 
@@ -85,25 +92,93 @@ describe('formatSizeSpecialPriceLabel', () => {
 });
 
 describe('resolveVariantDiscountRate', () => {
-  it('is how much cheaper the size is than the product price, like the web', () => {
-    // Süet pijama: ürün 339,99 TL, 2XL 269,99 TL → %20,59 → %21.
-    expect(resolveVariantDiscountRate(269.99, 339.99)).toBe(21);
-    expect(resolveVariantDiscountRate(349.99, 439.99)).toBe(20);
+  // Süet pijama: ürünün kendi indirimi yok.
+  const pajama = { price: 339.99 };
+  // 2 İp Bisiklet Yaka Sweat: 209,99 TL, %5 indirimle 199,99 TL.
+  const discountedSweat = { firstPrice: 209.99, price: 199.99 };
+
+  it('is how much cheaper the size is than an undiscounted product', () => {
+    // 2XL 269,99 TL → %20,59 → %21.
+    expect(resolveVariantDiscountRate(269.99, pajama)).toBe(21);
+    expect(resolveVariantDiscountRate(349.99, { price: 439.99 })).toBe(20);
+  });
+
+  it('shows the whole discount from the first price when the product is already discounted', () => {
+    // Regresyon: S bedeni 159,99 TL. Rozet indirimli fiyata göre %20 diyordu, fiyat kutusu
+    // ise S seçilince first_price'a göre %24 gösteriyor.
+    expect(resolveVariantDiscountRate(159.99, discountedSweat)).toBe(24);
+    expect(
+      resolveVariantPricing({ ...discountedSweat, discountRate: 5, hasDiscount: true }, { price: 159.99 })
+        .discountRate,
+    ).toBe(24);
+  });
+
+  it('matches the price box when a stale first price is still above the size price', () => {
+    // first_price güncel fiyatın altında (ürün indirimli değil) ama beden fiyatının üstünde.
+    const product = { firstPrice: 299.99, price: 399.99 };
+
+    expect(resolveVariantDiscountRate(249.99, product)).toBe(
+      resolveVariantPricing(product, { price: 249.99 }).discountRate,
+    );
+  });
+
+  it('falls back to the product price when the first price is not above the size price', () => {
+    // Fiyat kutusu bu bedende indirim göstermez; rozet bedenin ürüne göre ne kadar ucuz olduğunu söyler.
+    expect(resolveVariantDiscountRate(349.99, { firstPrice: 299.99, price: 399.99 })).toBe(13);
   });
 
   it('is empty without an own cheaper price', () => {
-    expect(resolveVariantDiscountRate(0, 339.99)).toBeUndefined();
-    expect(resolveVariantDiscountRate(undefined, 339.99)).toBeUndefined();
-    expect(resolveVariantDiscountRate(339.99, 339.99)).toBeUndefined();
-    expect(resolveVariantDiscountRate(359.99, 339.99)).toBeUndefined();
+    expect(resolveVariantDiscountRate(0, pajama)).toBeUndefined();
+    expect(resolveVariantDiscountRate(undefined, pajama)).toBeUndefined();
+    expect(resolveVariantDiscountRate(339.99, pajama)).toBeUndefined();
+    expect(resolveVariantDiscountRate(359.99, pajama)).toBeUndefined();
+    expect(resolveVariantDiscountRate(204.99, discountedSweat)).toBeUndefined();
   });
 
   it('is empty while the product price is unknown', () => {
     expect(resolveVariantDiscountRate(269.99, undefined)).toBeUndefined();
-    expect(resolveVariantDiscountRate(269.99, 0)).toBeUndefined();
+    expect(resolveVariantDiscountRate(269.99, null)).toBeUndefined();
+    expect(resolveVariantDiscountRate(269.99, { price: 0 })).toBeUndefined();
   });
 
   it('drops a discount that rounds down to zero percent', () => {
-    expect(resolveVariantDiscountRate(339.49, 339.99)).toBeUndefined();
+    expect(resolveVariantDiscountRate(339.49, pajama)).toBeUndefined();
+  });
+});
+
+describe('resolveSizeBadgeRate', () => {
+  // 2 İp Bisiklet Yaka Sweat: 209,99 TL, %5 indirimle 199,99 TL.
+  const discountedSweat = { discountRate: 5, firstPrice: 209.99, hasDiscount: true, price: 199.99 };
+  // Süet pijama: ürünün genel indirimi yok.
+  const pajama = { hasDiscount: false, price: 339.99 };
+
+  it('shows the full discount of a size with its own cheaper price', () => {
+    expect(resolveSizeBadgeRate({ price: 159.99 }, discountedSweat)).toBe(24);
+  });
+
+  it('shows the general discount on a size without its own price, like the price box', () => {
+    // L seçilince fiyat kutusu ürünün kendi %5'ini gösteriyor; çip de aynısını gösterir.
+    expect(resolveSizeBadgeRate({ price: 0 }, discountedSweat)).toBe(5);
+  });
+
+  it('follows the price box for a size priced at or above the product price', () => {
+    expect(resolveSizeBadgeRate({ price: 199.99 }, discountedSweat)).toBe(5);
+    // İlk fiyatın da üstündeki bedende fiyat kutusu indirim göstermez.
+    expect(resolveSizeBadgeRate({ price: 219.99 }, discountedSweat)).toBeUndefined();
+  });
+
+  it('leaves regular sizes unmarked when the product has no general discount', () => {
+    expect(resolveSizeBadgeRate({ price: 0 }, pajama)).toBeUndefined();
+    // Bedene özel ucuz fiyat yine gösterilir (339,99 → 269,99 için %21).
+    expect(resolveSizeBadgeRate({ price: 269.99 }, pajama)).toBe(21);
+  });
+
+  it('shows nothing when the price box has no rate to show', () => {
+    expect(resolveSizeBadgeRate({ price: 0 }, { firstPrice: 209.99, hasDiscount: true, price: 199.99 })).toBeUndefined();
+  });
+
+  it('is empty without product pricing', () => {
+    expect(resolveSizeBadgeRate({ price: 159.99 }, undefined)).toBeUndefined();
+    expect(resolveSizeBadgeRate({ price: 0 }, null)).toBeUndefined();
   });
 });
