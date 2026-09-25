@@ -6,7 +6,7 @@ import { Pressable } from 'react-native';
 import { DiscountRateBadge } from '@/components/ui/discount-rate-badge';
 import { FeatureIcon, ProductVariant } from '@/types/product.types';
 import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
-import { type ProductPricing, resolveSizeBadgeRate } from '../utils/variant-price';
+import { type ProductBasePricing, resolveVariantDiscountRate } from '../utils/variant-price';
 import { ProductFeatureDescriptionList } from './product-feature-tags';
 import { ProductSizeSelectorSkeleton } from './product-size-skeleton';
 import { ProductSaleNotice } from './product-sale-notice';
@@ -14,11 +14,11 @@ import { ProductSaleNotice } from './product-sale-notice';
 interface ProductSizeSelectorProps {
   variants?: ProductVariant[];
   /**
-   * Ürünün bedene özel olmayan fiyat ve indirim bilgisi. Verilirse, alınabilen her bedenin köşesinde
-   * o beden seçilince fiyat kutusunda görünecek indirim rozeti gösterilir: bedene özel fiyatın toplam
-   * indirimi ("%24") ya da ürünün genel indirimi ("%5").
+   * Ürünün bedene özel olmayan fiyatı ve indirim öncesi fiyatı. Verilirse, bundan ucuza satılan ve
+   * alınabilen bedenin köşesinde, o beden seçilince fiyat kutusunda görünecek toplam indirim
+   * rozeti ("%24") gösterilir.
    */
-  productPricing?: ProductPricing;
+  productPricing?: ProductBasePricing;
   featureIcons?: FeatureIcon[];
   isLoading?: boolean;
   isApprovedForSale?: boolean;
@@ -90,7 +90,7 @@ export function ProductSizeSelector({
           const isSelected = isApprovedForSale && selectedVariant?.id === variant.id;
           const isAvailable = isApprovedForSale && variant.hasStock && variant.quantity > 0;
           // Rozet yalnızca alınabilen bedende: tükenmiş ya da satışa kapalı bedende indirim vaat edilmez.
-          const discountRate = isAvailable ? resolveSizeBadgeRate(variant, productPricing) : undefined;
+          const discountRate = isAvailable ? resolveVariantDiscountRate(variant.price, productPricing) : undefined;
           const discountLabel = discountRate !== undefined ? `, yüzde ${discountRate} indirimli` : '';
 
           return (

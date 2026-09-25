@@ -125,50 +125,25 @@ describe('ProductSizeSelector — bedene özel indirim rozeti', () => {
     );
   }
 
-  describe('on an already discounted product', () => {
-    // 2 İp Bisiklet Yaka Sweat: 209,99 TL, %5 indirimle 199,99 TL. S'nin kendi fiyatı 159,99 TL,
-    // L ürün fiyatıyla satılıyor, M ve XL tükendi.
-    const sweatSizes: ProductVariant[] = [
-      { id: 'v-s', name: 'S', quantity: 23, price: 159.99, hasStock: true },
-      { id: 'v-m', name: 'M', quantity: 0, price: 0, hasStock: false },
-      { id: 'v-l', name: 'L', quantity: 6, price: 0, hasStock: true },
-      { id: 'v-xl', name: 'XL', quantity: 0, price: 0, hasStock: false },
-    ];
+  it('shows the whole discount on a size of an already discounted product', () => {
+    // Regresyon: 209,99 TL'lik ürün %5 indirimle 199,99 TL, S bedeni 159,99 TL. S seçilince fiyat
+    // kutusu %24 gösteriyor; rozet indirimli fiyata göre %20 diyordu.
+    renderWithTamagui(
+      <ProductSizeSelector
+        onSelectVariant={jest.fn()}
+        productPricing={{ firstPrice: 209.99, price: 199.99 }}
+        selectedVariant={null}
+        variants={[
+          { id: 'v-s', name: 'S', quantity: 23, price: 159.99, hasStock: true },
+          { id: 'v-l', name: 'L', quantity: 6, price: 0, hasStock: true },
+        ]}
+      />,
+    );
 
-    function renderSweat() {
-      return renderWithTamagui(
-        <ProductSizeSelector
-          onSelectVariant={jest.fn()}
-          productPricing={{ discountRate: 5, firstPrice: 209.99, hasDiscount: true, price: 199.99 }}
-          selectedVariant={null}
-          variants={sweatSizes}
-        />,
-      );
-    }
-
-    it('shows the whole discount on the size with its own price', () => {
-      // Regresyon: S seçilince fiyat kutusu %24 gösteriyor; rozet indirimli fiyata göre %20 diyordu.
-      renderSweat();
-
-      expect(screen.getByText('%24')).toBeTruthy();
-      expect(screen.queryByText('%20')).toBeNull();
-      expect(screen.getByLabelText('Beden S, yüzde 24 indirimli seçilebilir')).toBeTruthy();
-    });
-
-    it('shows the general discount on the other available sizes so the difference is visible', () => {
-      renderSweat();
-
-      expect(screen.getByTestId('size-discount-badge-v-l')).toBeTruthy();
-      expect(screen.getByText('%5')).toBeTruthy();
-      expect(screen.getByLabelText('Beden L, yüzde 5 indirimli seçilebilir')).toBeTruthy();
-    });
-
-    it('does not badge sold-out sizes', () => {
-      renderSweat();
-
-      expect(screen.queryByTestId('size-discount-badge-v-m')).toBeNull();
-      expect(screen.queryByTestId('size-discount-badge-v-xl')).toBeNull();
-    });
+    expect(screen.getByText('%24')).toBeTruthy();
+    expect(screen.queryByText('%20')).toBeNull();
+    expect(screen.getByLabelText('Beden S, yüzde 24 indirimli seçilebilir')).toBeTruthy();
+    expect(screen.queryByTestId('size-discount-badge-v-l')).toBeNull();
   });
 
   it('marks the size sold below the product price with its discount rate', () => {

@@ -1,11 +1,4 @@
-import {
-  formatSizeSpecialPriceLabel,
-  hasOwnVariantPrice,
-  resolveSizeBadgeRate,
-  resolveSizeSpecialPrice,
-  resolveVariantDiscountRate,
-  resolveVariantPricing,
-} from './variant-price';
+import { formatSizeSpecialPriceLabel, hasOwnVariantPrice, resolveSizeSpecialPrice, resolveVariantDiscountRate, resolveVariantPricing } from './variant-price';
 
 const discountedProduct = { discountRate: 13, firstPrice: 399.99, hasDiscount: true, price: 349.99 };
 
@@ -143,42 +136,5 @@ describe('resolveVariantDiscountRate', () => {
 
   it('drops a discount that rounds down to zero percent', () => {
     expect(resolveVariantDiscountRate(339.49, pajama)).toBeUndefined();
-  });
-});
-
-describe('resolveSizeBadgeRate', () => {
-  // 2 İp Bisiklet Yaka Sweat: 209,99 TL, %5 indirimle 199,99 TL.
-  const discountedSweat = { discountRate: 5, firstPrice: 209.99, hasDiscount: true, price: 199.99 };
-  // Süet pijama: ürünün genel indirimi yok.
-  const pajama = { hasDiscount: false, price: 339.99 };
-
-  it('shows the full discount of a size with its own cheaper price', () => {
-    expect(resolveSizeBadgeRate({ price: 159.99 }, discountedSweat)).toBe(24);
-  });
-
-  it('shows the general discount on a size without its own price, like the price box', () => {
-    // L seçilince fiyat kutusu ürünün kendi %5'ini gösteriyor; çip de aynısını gösterir.
-    expect(resolveSizeBadgeRate({ price: 0 }, discountedSweat)).toBe(5);
-  });
-
-  it('follows the price box for a size priced at or above the product price', () => {
-    expect(resolveSizeBadgeRate({ price: 199.99 }, discountedSweat)).toBe(5);
-    // İlk fiyatın da üstündeki bedende fiyat kutusu indirim göstermez.
-    expect(resolveSizeBadgeRate({ price: 219.99 }, discountedSweat)).toBeUndefined();
-  });
-
-  it('leaves regular sizes unmarked when the product has no general discount', () => {
-    expect(resolveSizeBadgeRate({ price: 0 }, pajama)).toBeUndefined();
-    // Bedene özel ucuz fiyat yine gösterilir (339,99 → 269,99 için %21).
-    expect(resolveSizeBadgeRate({ price: 269.99 }, pajama)).toBe(21);
-  });
-
-  it('shows nothing when the price box has no rate to show', () => {
-    expect(resolveSizeBadgeRate({ price: 0 }, { firstPrice: 209.99, hasDiscount: true, price: 199.99 })).toBeUndefined();
-  });
-
-  it('is empty without product pricing', () => {
-    expect(resolveSizeBadgeRate({ price: 159.99 }, undefined)).toBeUndefined();
-    expect(resolveSizeBadgeRate({ price: 0 }, null)).toBeUndefined();
   });
 });

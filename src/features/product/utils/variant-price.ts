@@ -4,7 +4,6 @@
  */
 
 import { Product, ProductSize, ProductVariant } from '@/types/product.types';
-import { resolveProductDiscount } from './product-price';
 
 /** Fiyat kutularının ihtiyaç duyduğu alanlar; ürün modelindeki adlarla aynıdır. */
 export type ProductPricing = Pick<Product, 'discountRate' | 'firstPrice' | 'hasDiscount' | 'price'>;
@@ -85,25 +84,6 @@ export function resolveVariantDiscountRate(
   const basePrice = resolveFirstPriceBase(product?.firstPrice, variantPrice) ?? productPrice;
   const rate = discountRateFrom(basePrice, variantPrice);
   return rate > 0 ? rate : undefined;
-}
-
-/**
- * Beden çipindeki indirim rozeti: o beden seçilince fiyat kutusunda görünecek indirim. Bedene özel
- * ucuz fiyatı olan beden kendi toplam indirimini (`resolveVariantDiscountRate`), diğer bedenler
- * ürünün genel indirimini gösterir; bedenler arasındaki fark çiplerden okunur (S %24, L %5). Ürünün
- * genel indirimi yoksa bedene özel fiyatı olmayan beden rozetsiz kalır.
- * Stok ve satış durumu çağıranın kararıdır: rozet yalnızca alınabilen bedende gösterilmeli.
- */
-export function resolveSizeBadgeRate(
-  variant: Pick<ProductVariant, 'price'>,
-  product: ProductPricing | null | undefined,
-): number | undefined {
-  if (!product) return undefined;
-
-  return (
-    resolveVariantDiscountRate(variant.price, product) ??
-    resolveProductDiscount(resolveVariantPricing(product, variant)).discountRate
-  );
 }
 
 /**
