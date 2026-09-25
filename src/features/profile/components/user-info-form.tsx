@@ -6,11 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Spinner, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton, AppInput, AppSelect } from '@/components/ui';
-import {
-  extractTurkishNationalNumber,
-  formatTurkishPhoneDisplay,
-  sanitizeTurkishMobileInput,
-} from '@/utils/turkish-phone';
+import { formatTurkishPhoneDisplay, sanitizeTurkishMobileInput } from '@/utils/turkish-phone';
 import { UserProfile } from '../api/profile.mapper';
 import { useUpdateProfileMutation } from '../api/profile.mutations';
 import {
@@ -19,42 +15,63 @@ import {
   UserInfoFormData,
 } from '../schemas/user-info.schema';
 import {
-  combineBirthDate,
   getDayOptions,
   getMonthOptions,
   getYearOptions,
   splitBirthDate,
 } from '../utils/birth-date';
 import { parseProfileUpdateError } from '../utils/profile-update-error';
+import { buildProfileUpdatePayload, isProfilePhoneLocked } from '../utils/profile-update-payload';
 import { toPersonName } from '@/utils/normalize-text';
 
 const DAY_OPTIONS = getDayOptions();
 const MONTH_OPTIONS = getMonthOptions();
 const YEAR_OPTIONS = getYearOptions();
 
+const PHONE_LOCKED_NOTE =
+  'Güvenliğiniz için kayıtlı telefon numaranız bu ekrandan değiştirilemez. Değiştirmek için müşteri hizmetleriyle iletişime geçebilirsiniz.';
+
 type UserInfoFormProps = {
   profile: UserProfile;
 };
 
-/** Fixed country-code field shown beside the editable national phone number. */
-function CountryCodeField() {
+type ReadOnlyFieldProps = {
+  accessibilityLabel: string;
+  children: string;
+  flex?: number;
+  width?: number;
+};
+
+/** Input-shaped box for a value this form shows but never edits. */
+function ReadOnlyField({ accessibilityLabel, children, flex, width }: ReadOnlyFieldProps) {
   return (
     <XStack
-      accessibilityLabel="Ülke kodu +90"
+      accessibilityLabel={accessibilityLabel}
+      accessible
       alignItems="center"
       backgroundColor="$color4"
       borderColor="$borderColor"
       borderRadius="$6"
       borderWidth={1}
+      flex={flex}
       height={48}
       opacity={0.7}
       paddingHorizontal="$3"
-      width={92}
+      width={width}
     >
       <Paragraph color="$color11" fontSize={15} numberOfLines={1}>
-        +90
+        {children}
       </Paragraph>
     </XStack>
+  );
+}
+
+/** Fixed country code shown beside the national phone number. */
+function CountryCodeField() {
+  return (
+    <ReadOnlyField accessibilityLabel="Ülke kodu +90" width={92}>
+      +90
+    </ReadOnlyField>
   );
 }
 
@@ -64,7 +81,9 @@ function buildDefaults(profile: UserProfile): UserInfoFormData {
     name: profile.name ?? '',
     surname: profile.surname ?? '',
     email: profile.email ?? '',
-    phone: profile.phone ? extractTurkishNationalNumber(profile.phone) : '',
+    // Only an account without a saved number edits this field; a saved one is
+    // shown read-only and sent back untouched (see `isProfilePhoneLocked`).
+    phone: '',
     gender: profile.gender ?? '',
     day: parts.day,
     month: parts.month,
@@ -97,22 +116,20 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
     }, [profile, reset]),
   );
 
+  const isPhoneLocked = isProfilePhoneLocked(profile);
+  const savedPhone = profile.phone ?? '';
+  const savedPhoneDisplay = formatTurkishPhoneDisplay(savedPhone) || savedPhone;
+
   const onSubmit = async (data: UserInfoFormData) => {
     setServerError(null);
-    const nationalPhone = data.phone.replace(/\D/g, '');
     try {
-      await updateProfile.mutateAsync({
-        name: data.name.trim(),
-        surname: data.surname.trim(),
-        email: data.email.trim(),
-        phone: nationalPhone || null,
-        birth_date: combineBirthDate({ day: data.day, month: data.month, year: data.year }),
-        gender: data.gender || null,
-      });
+      await updateProfile.mutateAsync(buildProfileUpdatePayload(data, profile));
       Alert.alert('Başarılı', 'Bilgileriniz güncellendi.');
     } catch (error: unknown) {
       const updateError = parseProfileUpdateError(error);
-      if (updateError.phoneMessage) {
+      // A locked phone has no editable field to attach its error to, so it falls
+      // back to the form-level message below.
+      if (updateError.phoneMessage && !isPhoneLocked) {
         setError(
           'phone',
           { message: updateError.phoneMessage, type: 'server' },
@@ -191,32 +208,46 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
         <Paragraph color="$color" fontSize={14} fontWeight="600">
           Telefon Numarası
         </Paragraph>
-        <Controller
-          control={control}
-          name="phone"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <XStack alignItems="flex-start" gap="$2">
+        {isPhoneLocked ? (
+          <>
+            <XStack gap="$2">
               <CountryCodeField />
-              <YStack flex={1}>
-                <AppInput
-                  backgroundColor="$color1"
-                  errorMessage={errors.phone?.message}
-                  height={48}
-                  hideVisibleLabel
-                  id="user-info-phone"
-                  keyboardType="phone-pad"
-                  label="Telefon Numarası"
-                  maxLength={14}
-                  onBlur={onBlur}
-                  onChangeText={(text) => onChange(sanitizeTurkishMobileInput(text))}
-                  placeholder="05XX XXX XX XX"
-                  textContentType="telephoneNumber"
-                  value={formatTurkishPhoneDisplay(value)}
-                />
-              </YStack>
+              <ReadOnlyField accessibilityLabel={`Telefon Numarası ${savedPhoneDisplay}`} flex={1}>
+                {savedPhoneDisplay}
+              </ReadOnlyField>
             </XStack>
-          )}
-        />
+            <Paragraph color="$color10" size="$2">
+              {PHONE_LOCKED_NOTE}
+            </Paragraph>
+          </>
+        ) : (
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <XStack alignItems="flex-start" gap="$2">
+                <CountryCodeField />
+                <YStack flex={1}>
+                  <AppInput
+                    backgroundColor="$color1"
+                    errorMessage={errors.phone?.message}
+                    height={48}
+                    hideVisibleLabel
+                    id="user-info-phone"
+                    keyboardType="phone-pad"
+                    label="Telefon Numarası"
+                    maxLength={14}
+                    onBlur={onBlur}
+                    onChangeText={(text) => onChange(sanitizeTurkishMobileInput(text))}
+                    placeholder="05XX XXX XX XX"
+                    textContentType="telephoneNumber"
+                    value={formatTurkishPhoneDisplay(value)}
+                  />
+                </YStack>
+              </XStack>
+            )}
+          />
+        )}
       </YStack>
 
       <YStack gap="$2">

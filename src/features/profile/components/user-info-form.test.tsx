@@ -32,13 +32,40 @@ const profile: UserProfile = {
 describe('UserInfoForm', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('renders the prefilled phone as an editable field with the fixed country code', () => {
+  it('shows a saved phone read-only beside the fixed country code', () => {
     renderWithTamagui(<UserInfoForm profile={profile} />);
 
     expect(screen.getByDisplayValue('Anar')).toBeTruthy();
     expect(screen.getByDisplayValue('Mamedov')).toBeTruthy();
     expect(screen.getByText('+90')).toBeTruthy();
-    expect(screen.getByDisplayValue('0555 123 45 67').props.editable).not.toBe(false);
+    expect(screen.getByLabelText('Telefon Numarası 0555 123 45 67')).toBeTruthy();
+    expect(screen.getByText('0555 123 45 67')).toBeTruthy();
+    expect(screen.queryByDisplayValue('0555 123 45 67')).toBeNull();
+    expect(screen.getByText(/bu ekrandan değiştirilemez/)).toBeTruthy();
+  });
+
+  it('stays readable in dark mode with a locked phone', () => {
+    renderWithTamagui(<UserInfoForm profile={profile} />, 'dark');
+
+    expect(screen.getByText('+90')).toBeTruthy();
+    expect(screen.getByText('0555 123 45 67')).toBeTruthy();
+  });
+
+  it('sends a saved phone back untouched and offers no way to edit it', async () => {
+    // Regression: the saved number used to be an editable field, so it could be
+    // replaced without any verification code.
+    mockMutateAsync.mockResolvedValueOnce(undefined);
+    renderWithTamagui(<UserInfoForm profile={{ ...profile, phone: '+90 555 123 45 67' }} />);
+
+    expect(screen.queryByLabelText('Telefon Numarası')).toBeNull();
+
+    fireEvent.press(screen.getByText('Kaydet'));
+
+    await waitFor(() =>
+      expect(mockMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ phone: '+90 555 123 45 67' }),
+      ),
+    );
   });
 
   it('allows an e-mail account without a phone to add one', async () => {
@@ -83,6 +110,7 @@ describe('UserInfoForm', () => {
           name: 'Anar',
           surname: 'Mamedov',
           email: 'anar@example.com',
+          phone: '5551234567',
           birth_date: '1990-05-08',
           gender: 'male',
         }),

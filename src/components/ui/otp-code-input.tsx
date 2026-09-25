@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Pressable, TextInput } from 'react-native';
+import { KeyboardController } from 'react-native-keyboard-controller';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 
@@ -40,6 +41,20 @@ export function OtpCodeInput({
     onChangeText(text.replace(/\D/g, '').slice(0, length));
   };
 
+  // React Native ignores `focus()` on a field it still treats as focused, even when
+  // the OS has already hidden the keyboard (Android back gesture, a trip to the SMS
+  // app, the screen locking while the code is awaited). Drop that stale focus first
+  // so tapping the boxes always brings the keyboard back.
+  const focusInput = () => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    if (input.isFocused() && !KeyboardController.isVisible()) {
+      input.blur();
+    }
+    input.focus();
+  };
+
   return (
     <YStack width="100%">
       {/* The boxes are a touch target only; the hidden field below carries the
@@ -51,7 +66,7 @@ export function OtpCodeInput({
         accessible={Boolean(focusAccessibilityLabel)}
         disabled={disabled}
         importantForAccessibility={focusAccessibilityLabel ? 'yes' : 'no-hide-descendants'}
-        onPress={() => inputRef.current?.focus()}
+        onPress={focusInput}
         style={{ width: '100%' }}
       >
         <XStack gap="$2" justifyContent="space-between" paddingVertical="$2" width="100%">
