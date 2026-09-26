@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Image } from 'expo-image';
 import { YStack } from 'tamagui';
+import { HOME_SECTION_GAP } from '@/features/product/utils/home-layout';
 import { BannerContent } from '@/types/page-design.types';
 import { handleLinkPress } from '@/utils/link-handler';
 
@@ -23,7 +24,7 @@ export function HomeBannerSection({ content, width }: HomeBannerSectionProps) {
         ];
 
   return (
-    <YStack gap="$2" width={width}>
+    <YStack gap={HOME_SECTION_GAP} width={width}>
       {items.map((item, index) => {
         const imageUri = item.image;
         if (!imageUri) {
@@ -63,11 +64,7 @@ function BannerImageItem({ imageUri, itemText, onPress, width }: BannerImageItem
     <YStack
       accessibilityLabel={itemText || 'Promo banner'}
       accessibilityRole="button"
-      borderColor="rgb(150,152,156)"
-      borderRadius={15}
-      borderWidth={1}
       onPress={onPress}
-      overflow="hidden"
       pressStyle={{ opacity: 0.85 }}
       style={{
         aspectRatio,

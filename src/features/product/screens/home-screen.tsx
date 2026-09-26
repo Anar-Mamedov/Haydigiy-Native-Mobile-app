@@ -15,6 +15,7 @@ import { HomeStorySection } from '@/features/product/components/home-story-secti
 import { HomeTextSection } from '@/features/product/components/home-text-section';
 import { MobileHomeSearch } from '@/features/product/components/mobile-home-search';
 import { HomeFooter } from '@/features/product/components/home-footer';
+import { HOME_SECTION_GAP } from '@/features/product/utils/home-layout';
 import { BannerContent, StoryContent, HeadingContent, TextContent, Section } from '@/types/page-design.types';
 
 export function HomeScreen() {
@@ -156,7 +157,7 @@ export function HomeScreen() {
               <MobileHomeSearch />
             </YStack>
 
-            <YStack gap={12} marginTop={10} width="100%">
+            <YStack gap={HOME_SECTION_GAP} marginTop={10} width="100%">
               {rows.map((row, rowIndex) => {
                 const isSingleFullWidth =
                   row.length === 1 &&
@@ -167,12 +168,11 @@ export function HomeScreen() {
                 }
 
                 return (
-                  <XStack gap={12} key={rowIndex} width="100%">
+                  <XStack gap={HOME_SECTION_GAP} key={rowIndex} width="100%">
                     {row.map((section) => {
                       const span = section.type === 'banner' ? (section.width_ratio ?? 12) : 12;
-                      const gap = 12;
                       const itemWidth =
-                        (span / 12) * containerWidth - ((12 - span) / 12) * gap;
+                        (span / 12) * containerWidth - ((12 - span) / 12) * HOME_SECTION_GAP;
                       return renderSection(section, itemWidth);
                     })}
                   </XStack>
