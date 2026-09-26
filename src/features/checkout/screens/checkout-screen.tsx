@@ -163,6 +163,14 @@ export function CheckoutScreen() {
           showsVerticalScrollIndicator={false}
           testID="checkout-scroll"
         >
+          <CheckoutCartItems
+            expanded={controller.isCartExpanded}
+            items={controller.items}
+            onPressBundleComponent={(component) => controller.openProductBySlug(component.slug)}
+            onPressItem={controller.openProduct}
+            onToggle={controller.toggleCart}
+          />
+
           <CheckoutDeliveryAddress
             addresses={controller.addresses}
             billingAddress={controller.billingAddress}
@@ -195,14 +203,6 @@ export function CheckoutScreen() {
             isRemovingCoupon={controller.isRemovingCoupon}
             onApplyCoupon={controller.applyCoupon}
             onRemoveCoupon={controller.clearCoupon}
-          />
-
-          <CheckoutCartItems
-            expanded={controller.isCartExpanded}
-            items={controller.items}
-            onPressBundleComponent={(component) => controller.openProductBySlug(component.slug)}
-            onPressItem={controller.openProduct}
-            onToggle={controller.toggleCart}
           />
 
           <CheckoutCargoSection

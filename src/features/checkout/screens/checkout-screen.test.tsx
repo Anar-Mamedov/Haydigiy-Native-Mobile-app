@@ -5,12 +5,12 @@ import { renderWithTamagui } from '@/test/render-with-tamagui';
 const AGREEMENT_LABEL = 'Ön bilgilendirme koşullarını ve mesafeli satış sözleşmesini onaylıyorum';
 const SECTION_ORDER_PATTERN =
   /^checkout-(delivery-address|campaign-card|coupon-section|cart-items|cargo-section|shipping-estimate|payment-options|card-form|installments|agreement-consent|contract-preview)$/;
-// Web (f72970150) ile aynı sıra: adres, kampanya ve kupon en üstte; sepet ve kargo onların altında.
+// Sepetteki ürünler en üstte; ardından web (f72970150) sırasıyla adres, kampanya, kupon ve kargo.
 const TOP_SECTIONS = [
+  'checkout-cart-items',
   'checkout-delivery-address',
   'checkout-campaign-card',
   'checkout-coupon-section',
-  'checkout-cart-items',
   'checkout-cargo-section',
   'checkout-shipping-estimate',
 ];
@@ -158,7 +158,7 @@ describe('CheckoutScreen', () => {
 
   // Onay kartı sabit özet çubuğunda ekranın büyük kısmını kaplıyordu; artık
   // kaydırılabilir içerikte, ödeme seçeneklerinin hemen altında durmalı.
-  it('renders the sections in the web order with the agreement below the card payment options', () => {
+  it('renders the cart items first and the agreement below the card payment options', () => {
     renderWithTamagui(<CheckoutScreen />);
 
     expect(renderedSectionOrder()).toEqual([
