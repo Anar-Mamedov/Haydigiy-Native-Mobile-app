@@ -161,6 +161,7 @@ export function CheckoutScreen() {
           contentContainerStyle={{ gap: 12, padding: 12, paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          testID="checkout-scroll"
         >
           <CheckoutCartItems
             expanded={controller.isCartExpanded}
@@ -238,6 +239,17 @@ export function CheckoutScreen() {
             />
           ) : null}
 
+          {/*
+            Onay kartı sabit özet çubuğunda ekranın büyük kısmını kaplıyordu; ödeme
+            seçeneklerinin hemen altında, kaydırılabilir içerikte durur.
+          */}
+          <AgreementConsentCard
+            checked={controller.isAgreementChecked}
+            onChange={controller.setIsAgreementChecked}
+            onOpenDistanceSales={openDistanceSalesContract}
+            onOpenPreInfo={openPreInfoContract}
+          />
+
           <ContractPreviewContent
             onOpenDistanceSales={openDistanceSalesContract}
             onOpenPreInfo={openPreInfoContract}
@@ -252,14 +264,6 @@ export function CheckoutScreen() {
         />
 
         <CheckoutSummaryBar
-          agreementSlot={
-            <AgreementConsentCard
-              checked={controller.isAgreementChecked}
-              onChange={controller.setIsAgreementChecked}
-              onOpenDistanceSales={openDistanceSalesContract}
-              onOpenPreInfo={openPreInfoContract}
-            />
-          }
           canSubmit={controller.canSubmit}
           expanded={controller.isSummaryExpanded}
           hint={placeOrder.isSubmitting ? null : controller.hint}

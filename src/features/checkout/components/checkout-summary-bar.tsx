@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronDown, ChevronUp } from '@/components/ui/icons';
@@ -17,7 +16,6 @@ export interface CheckoutSummaryBarProps {
   submitError: string | null;
   hint: string | null;
   onSubmit: () => void;
-  agreementSlot?: ReactNode;
   reserveBottomSafeArea?: boolean;
 }
 
@@ -124,12 +122,6 @@ export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
               Sipariş tutarları güncelleniyor...
             </Paragraph>
           ) : null}
-        </YStack>
-      ) : null}
-
-      {props.agreementSlot ? (
-        <YStack paddingHorizontal="$3" paddingTop="$3">
-          {props.agreementSlot}
         </YStack>
       ) : null}
 

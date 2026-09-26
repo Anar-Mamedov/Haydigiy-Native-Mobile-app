@@ -1,6 +1,5 @@
 import { StyleSheet } from 'react-native';
 import { screen, within } from '@testing-library/react-native';
-import { Paragraph } from '@/components/ui/app-paragraph';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { CheckoutSummaryBar, CheckoutSummaryBarProps } from './checkout-summary-bar';
 
@@ -30,19 +29,6 @@ const baseProps: CheckoutSummaryBarProps = {
 };
 
 describe('CheckoutSummaryBar', () => {
-  it('renders the agreement slot as part of the sticky total bar', () => {
-    renderWithTamagui(
-      <CheckoutSummaryBar
-        {...baseProps}
-        agreementSlot={<Paragraph>Agreement consent belongs to summary bar</Paragraph>}
-      />,
-    );
-
-    expect(screen.getByText('Agreement consent belongs to summary bar')).toBeTruthy();
-    expect(screen.getByText('Toplam')).toBeTruthy();
-    expect(screen.getByText('Onayla ve Bitir')).toBeTruthy();
-  });
-
   it('can skip bottom safe-area padding when rendered above the tab bar', () => {
     renderWithTamagui(<CheckoutSummaryBar {...baseProps} reserveBottomSafeArea={false} />);
 

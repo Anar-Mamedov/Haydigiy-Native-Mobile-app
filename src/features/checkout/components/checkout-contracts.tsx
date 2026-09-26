@@ -151,13 +151,7 @@ export function AgreementConsentCard({
   onOpenDistanceSales: () => void;
 }) {
   return (
-    <YStack
-      backgroundColor="$background"
-      borderColor="$borderColor"
-      borderRadius="$3"
-      borderWidth={1}
-      padding="$3"
-    >
+    <SectionCard padding="$3.5" testID="checkout-agreement-consent">
       <AppCheckbox
         accessibilityLabel="Ön bilgilendirme koşullarını ve mesafeli satış sözleşmesini onaylıyorum"
         checked={checked}
@@ -187,7 +181,7 @@ export function AgreementConsentCard({
           &apos;ni okudum, onaylıyorum.
         </Paragraph>
       </AppCheckbox>
-    </YStack>
+    </SectionCard>
   );
 }
 
