@@ -4,7 +4,16 @@ import { renderWithTamagui } from '@/test/render-with-tamagui';
 
 const AGREEMENT_LABEL = 'Ön bilgilendirme koşullarını ve mesafeli satış sözleşmesini onaylıyorum';
 const SECTION_ORDER_PATTERN =
-  /^checkout-(payment-options|card-form|installments|agreement-consent|contract-preview)$/;
+  /^checkout-(delivery-address|campaign-card|coupon-section|cart-items|cargo-section|shipping-estimate|payment-options|card-form|installments|agreement-consent|contract-preview)$/;
+// Web (f72970150) ile aynı sıra: adres, kampanya ve kupon en üstte; sepet ve kargo onların altında.
+const TOP_SECTIONS = [
+  'checkout-delivery-address',
+  'checkout-campaign-card',
+  'checkout-coupon-section',
+  'checkout-cart-items',
+  'checkout-cargo-section',
+  'checkout-shipping-estimate',
+];
 
 const mockSetIsAgreementChecked = jest.fn();
 
@@ -39,20 +48,24 @@ jest.mock('@/features/analytics/hooks/use-analytics-commerce-tracking', () => ({
 }));
 
 jest.mock('@/features/shipping/components/shipping-estimate-info', () => ({
-  ShippingEstimateInfo: () => null,
+  ShippingEstimateInfo: mockSection('checkout-shipping-estimate'),
 }));
 
 jest.mock('@/features/cart/components/standard-campaign-card', () => ({
-  StandardCampaignCard: () => null,
+  StandardCampaignCard: mockSection('checkout-campaign-card'),
 }));
 
-jest.mock('../components/checkout-cart-items', () => ({ CheckoutCartItems: () => null }));
-jest.mock('../components/checkout-cargo-section', () => ({ CheckoutCargoSection: () => null }));
+jest.mock('../components/checkout-cart-items', () => ({
+  CheckoutCartItems: mockSection('checkout-cart-items'),
+}));
+jest.mock('../components/checkout-cargo-section', () => ({
+  CheckoutCargoSection: mockSection('checkout-cargo-section'),
+}));
 jest.mock('../components/checkout-delivery-address', () => ({
-  CheckoutDeliveryAddress: () => null,
+  CheckoutDeliveryAddress: mockSection('checkout-delivery-address'),
 }));
 jest.mock('../components/checkout-coupon-section', () => ({
-  CheckoutCouponSection: () => null,
+  CheckoutCouponSection: mockSection('checkout-coupon-section'),
 }));
 jest.mock('../components/checkout-payment-options', () => ({
   CheckoutPaymentOptions: mockSection('checkout-payment-options'),
@@ -145,10 +158,11 @@ describe('CheckoutScreen', () => {
 
   // Onay kartı sabit özet çubuğunda ekranın büyük kısmını kaplıyordu; artık
   // kaydırılabilir içerikte, ödeme seçeneklerinin hemen altında durmalı.
-  it('renders the agreement consent in the scrollable content, below the card payment options', () => {
+  it('renders the sections in the web order with the agreement below the card payment options', () => {
     renderWithTamagui(<CheckoutScreen />);
 
     expect(renderedSectionOrder()).toEqual([
+      ...TOP_SECTIONS,
       'checkout-payment-options',
       'checkout-card-form',
       'checkout-installments',
@@ -166,6 +180,7 @@ describe('CheckoutScreen', () => {
     renderWithTamagui(<CheckoutScreen />);
 
     expect(renderedSectionOrder()).toEqual([
+      ...TOP_SECTIONS,
       'checkout-payment-options',
       'checkout-agreement-consent',
       'checkout-contract-preview',

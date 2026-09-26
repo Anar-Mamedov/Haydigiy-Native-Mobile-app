@@ -1,19 +1,16 @@
 import { Pressable } from 'react-native';
-import { Input, XStack, YStack } from 'tamagui';
+import { Separator, XStack, YStack } from 'tamagui';
+import { CheckCircle, ChevronRight, Info, TicketPercent, X } from '@/components/ui/icons';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { CheckoutSection } from './checkout-section';
-import { AppButton } from '@/components/ui/app-button';
-import { formatCurrency } from '@/utils/format-currency';
+import { SectionCard } from '@/components/ui/section-card';
 import { AppliedCoupon } from '@/types/checkout.types';
 import { Coupon } from '@/types/coupon.types';
-import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
-
-const COUPON_INPUT_PLACEHOLDER = 'Kupon Kodu (Zorunlu Değildir)';
+import { ApplyCoupon, useCheckoutCouponSheet } from '../hooks/use-checkout-coupon-sheet';
+import { CouponCartSnapshot, getAppliedCouponDiscountText } from '../utils/checkout-coupon';
+import { CheckoutCouponSheet } from './checkout-coupon-sheet';
 
 interface CheckoutCouponSectionProps {
-  couponInput: string;
-  onCouponInputChange: (value: string) => void;
-  onApplyCoupon: (code?: string) => void;
+  onApplyCoupon: ApplyCoupon;
   onRemoveCoupon: () => void;
   couponError: string | null;
   appliedCoupon: AppliedCoupon | null;
@@ -21,66 +18,116 @@ interface CheckoutCouponSectionProps {
   isRemovingCoupon: boolean;
   coupons: Coupon[];
   isCouponsLoading: boolean;
+  /** Kupon şartlarının (alt limit, ürün adedi) karşılaştırıldığı sepet değerleri. */
+  cart: CouponCartSnapshot;
   /** Locks coupon actions while `/order/token` is in flight (see `isCheckoutLocked`). */
   disabled?: boolean;
 }
 
-interface CouponCodeInputProps {
-  value: string;
-  onChangeText: (value: string) => void;
-  disabled?: boolean;
-}
-
-function CouponCodeInput({ value, onChangeText, disabled }: CouponCodeInputProps) {
+function AppliedCouponBanner({
+  coupon,
+  isRemoveDisabled,
+  onRemove,
+}: {
+  coupon: AppliedCoupon;
+  isRemoveDisabled: boolean;
+  onRemove: () => void;
+}) {
   return (
-    <XStack flex={1} position="relative">
-      <Input
-        accessibilityLabel="Kupon kodu"
-        autoCapitalize="characters"
-        backgroundColor="$background"
-        borderColor="$borderColor"
-        disabled={disabled}
-        flex={1}
-        height={44}
-        maxFontSizeMultiplier={MAX_FONT_SCALE}
-        multiline={false}
-        numberOfLines={1}
-        onChangeText={onChangeText}
-        opacity={disabled ? 0.6 : 1}
-        placeholder=""
-        value={value}
-      />
-      {!value ? (
-        <XStack
-          accessibilityElementsHidden
-          accessible={false}
-          alignItems="center"
-          bottom={0}
-          importantForAccessibility="no-hide-descendants"
-          left="$3"
-          pointerEvents="none"
-          position="absolute"
-          right="$3"
-          top={0}
-        >
-          <Paragraph color="$color10" ellipsizeMode="tail" fontSize="$4" numberOfLines={1}>
-            {COUPON_INPUT_PLACEHOLDER}
+    <XStack
+      alignItems="center"
+      backgroundColor="$green2"
+      borderColor="$green6"
+      borderRadius="$5"
+      borderWidth={1}
+      gap="$3"
+      minHeight={82}
+      paddingLeft="$3.5"
+      paddingRight="$8"
+      paddingVertical="$3"
+    >
+      <YStack
+        alignItems="center"
+        backgroundColor="$discountBadge"
+        borderRadius={100}
+        height={36}
+        justifyContent="center"
+        width={36}
+      >
+        <CheckCircle color="white" size={20} strokeWidth={2.5} />
+      </YStack>
+      <YStack flex={1} gap="$1" minWidth={0}>
+        <XStack alignItems="center" gap="$1.5">
+          <Paragraph color="$green11" flexShrink={1} fontSize={14} fontWeight="800" numberOfLines={1}>
+            {coupon.code}
           </Paragraph>
+          <XStack backgroundColor="$green4" borderRadius={100} paddingHorizontal="$1.5" paddingVertical={2}>
+            <Paragraph color="$green11" fontSize={9} fontWeight="700" letterSpacing={0.5}>
+              UYGULANDI
+            </Paragraph>
+          </XStack>
         </XStack>
-      ) : null}
+        <Paragraph color="$green11" fontSize={11}>
+          {coupon.isFreeShipping
+            ? 'Ücretsiz kargo avantajın aktif.'
+            : 'Kupon indirimin sepetine yansıtıldı.'}
+        </Paragraph>
+      </YStack>
+      <XStack
+        backgroundColor="$background"
+        borderColor="$green6"
+        borderRadius="$3"
+        borderWidth={1}
+        flexShrink={0}
+        paddingHorizontal="$2.5"
+        paddingVertical="$1.5"
+      >
+        <Paragraph color="$green11" fontSize={11} fontWeight="800">
+          {getAppliedCouponDiscountText(coupon)}
+        </Paragraph>
+      </XStack>
+      <Pressable
+        accessibilityLabel="Uygulanan kuponu kaldır"
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isRemoveDisabled }}
+        disabled={isRemoveDisabled}
+        hitSlop={8}
+        onPress={onRemove}
+        style={{ opacity: isRemoveDisabled ? 0.5 : 1, position: 'absolute', right: 8, top: 8 }}
+      >
+        <X color="$green11" size={14} strokeWidth={2.5} />
+      </Pressable>
     </XStack>
   );
 }
 
-function discountTypeText(coupon: AppliedCoupon): string {
-  if (coupon.discountType === 'percentage') return `%${coupon.discountValue} İndirim`;
-  if (coupon.discountType === 'fixed') return `${formatCurrency(coupon.discountValue)} İndirim`;
-  return 'Ücretsiz Kargo';
+function CouponPrompt({ onOpen }: { onOpen: () => void }) {
+  return (
+    <XStack
+      alignItems="center"
+      backgroundColor="$orange2"
+      borderRadius="$3"
+      gap="$2"
+      minHeight={72}
+      paddingHorizontal="$3"
+    >
+      <Info color="$brand" size={20} />
+      <YStack flex={1} gap="$1" paddingVertical="$2">
+        <Paragraph color="$color" fontSize={12} lineHeight={16}>
+          Kupon avantajından yararlanmak için bir kupon seç veya kod ekle.
+        </Paragraph>
+        <Pressable accessibilityLabel="Kuponları Gör" accessibilityRole="button" hitSlop={8} onPress={onOpen}>
+          <Paragraph color="$brand" fontSize={12} fontWeight="600">
+            Kuponları Gör
+          </Paragraph>
+        </Pressable>
+      </YStack>
+    </XStack>
+  );
 }
 
+/** Ödeme ekranındaki "Kuponlarım" kartı; kupon ekleme ve seçme "Kuponlarım" sayfasında yapılır. */
 export function CheckoutCouponSection({
-  couponInput,
-  onCouponInputChange,
   onApplyCoupon,
   onRemoveCoupon,
   couponError,
@@ -89,108 +136,66 @@ export function CheckoutCouponSection({
   isRemovingCoupon,
   coupons,
   isCouponsLoading,
+  cart,
   disabled = false,
 }: CheckoutCouponSectionProps) {
-  const isApplyBlocked = disabled || isApplyingCoupon;
+  const sheet = useCheckoutCouponSheet(onApplyCoupon);
+
   return (
-    <CheckoutSection title="Kupon Kodu">
-      <YStack gap="$3">
-        {appliedCoupon ? (
-          <XStack
-            alignItems="center"
-            backgroundColor="$green2"
-            borderColor="$green7"
-            borderRadius="$4"
-            borderWidth={1}
-            gap="$2"
-            justifyContent="space-between"
-            padding="$3"
-          >
-            <YStack flex={1}>
-              <Paragraph color="$green11" fontSize={14} fontWeight="700">
-                {appliedCoupon.code}
-              </Paragraph>
-              <Paragraph color="$green10" fontSize={12}>
-                {discountTypeText(appliedCoupon)}
-                {appliedCoupon.discount > 0 ? ` • -${formatCurrency(appliedCoupon.discount)}` : ''}
-              </Paragraph>
-            </YStack>
-            <Pressable
-              accessibilityLabel="Kuponu kaldır"
-              accessibilityRole="button"
-              accessibilityState={{ disabled: disabled || isRemovingCoupon }}
-              disabled={disabled || isRemovingCoupon}
-              onPress={onRemoveCoupon}
-            >
-              <Paragraph
-                color="$red10"
-                fontSize={13}
-                fontWeight="600"
-                opacity={disabled || isRemovingCoupon ? 0.6 : 1}
-              >
-                {isRemovingCoupon ? 'Kaldırılıyor...' : 'Kaldır'}
-              </Paragraph>
-            </Pressable>
-          </XStack>
-        ) : (
-          <XStack gap="$2">
-            <CouponCodeInput
-              disabled={disabled}
-              onChangeText={onCouponInputChange}
-              value={couponInput}
-            />
-            <AppButton
-              backgroundColor="$brand"
-              color="white"
-              disabled={isApplyBlocked || !couponInput.trim()}
-              height={44}
-              onPress={() => onApplyCoupon()}
-              opacity={isApplyBlocked || !couponInput.trim() ? 0.5 : 1}
-            >
-              {isApplyingCoupon ? 'Kontrol...' : 'Uygula'}
-            </AppButton>
-          </XStack>
-        )}
-
-        {couponError ? (
-          <Paragraph color="$red10" fontSize={13}>
-            {couponError}
-          </Paragraph>
-        ) : null}
-
-        {!appliedCoupon && coupons.length > 0 ? (
-          <YStack gap="$2">
-            <Paragraph color="$color10" fontSize={12}>
-              {isCouponsLoading ? 'Kuponlar yükleniyor...' : 'Kullanılabilir kuponlar'}
+    <>
+      <SectionCard overflow="hidden" padding={0}>
+        <Pressable
+          accessibilityHint="Kuponlarını görüntüler veya kupon kodu eklemeni sağlar"
+          accessibilityLabel="Kuponlarım"
+          accessibilityRole="button"
+          onPress={sheet.open}
+        >
+          <XStack alignItems="center" gap="$2" paddingHorizontal="$3.5" paddingVertical="$3">
+            <TicketPercent color="$color" size={16} />
+            <Paragraph color="$color" fontSize={15} fontWeight="700">
+              Kuponlarım
             </Paragraph>
-            <XStack flexWrap="wrap" gap="$2">
-              {coupons.slice(0, 6).map((coupon) => (
-                <Pressable
-                  accessibilityLabel={`${coupon.couponCode} kuponunu uygula`}
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: isApplyBlocked }}
-                  disabled={isApplyBlocked}
-                  key={coupon.id}
-                  onPress={() => onApplyCoupon(coupon.couponCode)}
-                >
-                  <XStack
-                    borderColor="$brand"
-                    borderRadius="$3"
-                    borderWidth={1}
-                    opacity={isApplyBlocked ? 0.6 : 1}
-                    paddingHorizontal="$2.5"
-                    paddingVertical="$1.5"
-                  >
-                    <Paragraph color="$brand" fontSize={12} fontWeight="600">
-                      {coupon.couponCode}
-                    </Paragraph>
-                  </XStack>
-                </Pressable>
-              ))}
-            </XStack>
-          </YStack>
-        ) : null}
-      </YStack>
-    </CheckoutSection>
+            <ChevronRight color="$color" size={16} />
+            <Paragraph color="$brand" fontSize={13} fontWeight="600" marginLeft="auto">
+              + Kupon Kodu Ekle
+            </Paragraph>
+          </XStack>
+        </Pressable>
+        <Separator borderColor="$borderColor" />
+        <YStack gap="$2" padding="$3">
+          {appliedCoupon ? (
+            <AppliedCouponBanner
+              coupon={appliedCoupon}
+              isRemoveDisabled={disabled || isRemovingCoupon}
+              onRemove={onRemoveCoupon}
+            />
+          ) : (
+            <CouponPrompt onOpen={sheet.open} />
+          )}
+          {/* Sayfa kapalıyken de kupon hatası (ör. ödeme yöntemi değişince düşen kupon) görünsün. */}
+          {couponError && !sheet.isOpen ? (
+            <Paragraph accessibilityLiveRegion="polite" color="$red10" fontSize={12}>
+              {couponError}
+            </Paragraph>
+          ) : null}
+        </YStack>
+      </SectionCard>
+
+      <CheckoutCouponSheet
+        appliedCoupon={appliedCoupon}
+        cart={cart}
+        code={sheet.code}
+        couponError={couponError}
+        coupons={coupons}
+        disabled={disabled}
+        isApplyingCoupon={isApplyingCoupon}
+        isCouponsLoading={isCouponsLoading}
+        onApplyCode={sheet.applyTypedCode}
+        onApplyCoupon={sheet.applyCoupon}
+        onClose={sheet.close}
+        onCodeChange={sheet.setCode}
+        open={sheet.isOpen}
+      />
+    </>
   );
 }

@@ -73,6 +73,7 @@ import {
   ThumbsDown as LucideThumbsDown,
   ThumbsUp as LucideThumbsUp,
   Ticket as LucideTicket,
+  TicketPercent as LucideTicketPercent,
   Trash2 as LucideTrash2,
   TrendingDown as LucideTrendingDown,
   TriangleAlert as LucideTriangleAlert,
@@ -184,6 +185,7 @@ export const Tag = withFontScale(LucideTag);
 export const ThumbsDown = withFontScale(LucideThumbsDown);
 export const ThumbsUp = withFontScale(LucideThumbsUp);
 export const Ticket = withFontScale(LucideTicket);
+export const TicketPercent = withFontScale(LucideTicketPercent);
 export const Trash2 = withFontScale(LucideTrash2);
 export const TrendingDown = withFontScale(LucideTrendingDown);
 export const TriangleAlert = withFontScale(LucideTriangleAlert);

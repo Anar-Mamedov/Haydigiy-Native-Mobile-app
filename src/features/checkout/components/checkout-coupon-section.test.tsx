@@ -3,25 +3,26 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { CheckoutCouponSection } from './checkout-coupon-section';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { AppliedCoupon } from '@/types/checkout.types';
-import { Coupon } from '@/types/coupon.types';
+
+jest.mock('tamagui', () => {
+  const React = jest.requireActual('react');
+  const { View } = jest.requireActual('react-native');
+
+  const SheetRoot = function SheetRoot({ children, open }: any) {
+    if (!open) return null;
+    return React.createElement(View, { testID: 'checkout-coupon-sheet' }, children);
+  };
+  SheetRoot.Overlay = function SheetOverlay() {
+    return null;
+  };
+  SheetRoot.Frame = function SheetFrame({ children }: any) {
+    return React.createElement(View, null, children);
+  };
+
+  return { ...jest.requireActual('tamagui'), Sheet: SheetRoot };
+});
 
 type CheckoutCouponSectionProps = ComponentProps<typeof CheckoutCouponSection>;
-
-const availableCoupon: Coupon = {
-  id: 1,
-  name: 'Yaz indirimi',
-  description: null,
-  couponCode: 'SUMMER25',
-  discountType: 'fixed',
-  discountValue: 25,
-  minOrderAmount: null,
-  maxDiscountAmount: null,
-  minItemCount: null,
-  startDate: '2026-06-01',
-  endDate: '2026-09-01',
-  isUserSpecific: false,
-  isCombinable: false,
-};
 
 const appliedCoupon: AppliedCoupon = {
   code: 'SUMMER25',
@@ -34,70 +35,79 @@ const appliedCoupon: AppliedCoupon = {
 function makeProps(overrides: Partial<CheckoutCouponSectionProps> = {}): CheckoutCouponSectionProps {
   return {
     appliedCoupon: null,
+    cart: { subtotal: 300, itemCount: 2 },
     couponError: null,
-    couponInput: '',
     coupons: [],
     isApplyingCoupon: false,
     isCouponsLoading: false,
     isRemovingCoupon: false,
-    onApplyCoupon: jest.fn(),
-    onCouponInputChange: jest.fn(),
+    onApplyCoupon: jest.fn().mockResolvedValue(true),
     onRemoveCoupon: jest.fn(),
     ...overrides,
   };
 }
 
 describe('CheckoutCouponSection', () => {
-  it('renders the empty coupon placeholder as one ellipsized line', () => {
+  it('invites the user to pick a coupon when none is applied', () => {
     renderWithTamagui(<CheckoutCouponSection {...makeProps()} />);
 
-    const input = screen.getByLabelText('Kupon kodu');
-    const placeholder = screen.getByText('Kupon Kodu (Zorunlu Değildir)', {
-      includeHiddenElements: true,
-    });
-
-    expect(input.props.placeholder).toBe('');
-    expect(placeholder.props.ellipsizeMode).toBe('tail');
-    expect(placeholder.props.numberOfLines).toBe(1);
+    expect(screen.getByText('Kuponlarım')).toBeTruthy();
+    expect(screen.getByText('+ Kupon Kodu Ekle')).toBeTruthy();
+    expect(
+      screen.getByText('Kupon avantajından yararlanmak için bir kupon seç veya kod ekle.'),
+    ).toBeTruthy();
+    expect(screen.queryByTestId('checkout-coupon-sheet')).toBeNull();
   });
 
-  it('hides the placeholder overlay when a coupon value exists', () => {
-    renderWithTamagui(<CheckoutCouponSection {...makeProps({ couponInput: 'SUMMER25' })} />);
+  it('opens the coupons sheet from the header and from "Kuponları Gör"', () => {
+    const { unmount } = renderWithTamagui(<CheckoutCouponSection {...makeProps()} />);
 
-    expect(screen.queryByText('Kupon Kodu (Zorunlu Değildir)')).toBeNull();
+    fireEvent.press(screen.getByLabelText('Kuponlarım'));
+    expect(screen.getByTestId('checkout-coupon-sheet')).toBeTruthy();
+    unmount();
+
+    renderWithTamagui(<CheckoutCouponSection {...makeProps()} />);
+    fireEvent.press(screen.getByLabelText('Kuponları Gör'));
+    expect(screen.getByTestId('checkout-coupon-sheet')).toBeTruthy();
   });
 
-  it('stops coupon code editing while the checkout is locked', () => {
-    renderWithTamagui(
-      <CheckoutCouponSection {...makeProps({ couponInput: 'SUMMER25', disabled: true })} />,
-    );
+  it('shows the applied coupon with its discount and removes it', () => {
+    const onRemoveCoupon = jest.fn();
+    renderWithTamagui(<CheckoutCouponSection {...makeProps({ appliedCoupon, onRemoveCoupon })} />);
 
-    expect(screen.getByLabelText('Kupon kodu').props.editable).toBe(false);
-  });
+    expect(screen.getByText('SUMMER25')).toBeTruthy();
+    expect(screen.getByText('UYGULANDI')).toBeTruthy();
+    expect(screen.getByText('₺25,00 İndirim')).toBeTruthy();
+    expect(screen.getByText('Kupon indirimin sepetine yansıtıldı.')).toBeTruthy();
 
-  it('ignores an available-coupon press while the checkout is locked', () => {
-    const onApplyCoupon = jest.fn();
-    renderWithTamagui(
-      <CheckoutCouponSection
-        {...makeProps({ coupons: [availableCoupon], disabled: true, onApplyCoupon })}
-      />,
-    );
-
-    fireEvent.press(screen.getByLabelText('SUMMER25 kuponunu uygula'));
-
-    expect(onApplyCoupon).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByLabelText('Uygulanan kuponu kaldır'));
+    expect(onRemoveCoupon).toHaveBeenCalledTimes(1);
   });
 
   it('ignores a remove press while the checkout is locked', () => {
     const onRemoveCoupon = jest.fn();
     renderWithTamagui(
-      <CheckoutCouponSection
-        {...makeProps({ appliedCoupon: appliedCoupon, disabled: true, onRemoveCoupon })}
-      />,
+      <CheckoutCouponSection {...makeProps({ appliedCoupon, disabled: true, onRemoveCoupon })} />,
     );
 
-    fireEvent.press(screen.getByLabelText('Kuponu kaldır'));
+    fireEvent.press(screen.getByLabelText('Uygulanan kuponu kaldır'));
 
     expect(onRemoveCoupon).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a coupon error on the card while the sheet is closed', () => {
+    renderWithTamagui(
+      <CheckoutCouponSection {...makeProps({ couponError: 'Kupon bu ödeme yönteminde geçersiz.' })} />,
+    );
+
+    expect(screen.getByText('Kupon bu ödeme yönteminde geçersiz.')).toBeTruthy();
+  });
+
+  it('keeps the card labels readable in the dark theme', () => {
+    renderWithTamagui(<CheckoutCouponSection {...makeProps({ appliedCoupon })} />, 'dark');
+
+    expect(screen.getByText('Kuponlarım')).toBeTruthy();
+    expect(screen.getByText('SUMMER25')).toBeTruthy();
+    expect(screen.getByLabelText('Uygulanan kuponu kaldır')).toBeTruthy();
   });
 });

@@ -163,31 +163,6 @@ export function CheckoutScreen() {
           showsVerticalScrollIndicator={false}
           testID="checkout-scroll"
         >
-          <CheckoutCartItems
-            expanded={controller.isCartExpanded}
-            items={controller.items}
-            onPressBundleComponent={(component) => controller.openProductBySlug(component.slug)}
-            onPressItem={controller.openProduct}
-            onToggle={controller.toggleCart}
-          />
-
-          <ShippingEstimateInfo estimate={controller.shippingEstimate} />
-          <StandardCampaignCard
-            campaigns={controller.campaigns}
-            subtotal={controller.campaignBasis}
-          />
-
-          <CheckoutCargoSection
-            campaignCounter={controller.freeShippingCampaign?.counter}
-            campaignEndDate={controller.freeShippingCampaign?.endDate}
-            companies={controller.cargoCompanies}
-            disabled={isSelectionLocked}
-            hasFreeShipping={controller.hasFreeShipping}
-            isLoading={controller.isCargoLoading}
-            onSelect={controller.selectCargo}
-            selectedId={controller.selectedCargo?.id ?? null}
-          />
-
           <CheckoutDeliveryAddress
             addresses={controller.addresses}
             billingAddress={controller.billingAddress}
@@ -204,19 +179,43 @@ export function CheckoutScreen() {
             shippingAddress={controller.shippingAddress}
           />
 
+          <StandardCampaignCard
+            campaigns={controller.campaigns}
+            subtotal={controller.campaignBasis}
+          />
+
           <CheckoutCouponSection
             appliedCoupon={controller.appliedCoupon}
+            cart={controller.couponCart}
             coupons={controller.coupons}
             couponError={controller.couponError}
-            couponInput={controller.couponInput}
             disabled={isSelectionLocked}
             isApplyingCoupon={controller.isApplyingCoupon}
             isCouponsLoading={controller.isCouponsLoading}
             isRemovingCoupon={controller.isRemovingCoupon}
             onApplyCoupon={controller.applyCoupon}
-            onCouponInputChange={controller.setCouponInput}
             onRemoveCoupon={controller.clearCoupon}
           />
+
+          <CheckoutCartItems
+            expanded={controller.isCartExpanded}
+            items={controller.items}
+            onPressBundleComponent={(component) => controller.openProductBySlug(component.slug)}
+            onPressItem={controller.openProduct}
+            onToggle={controller.toggleCart}
+          />
+
+          <CheckoutCargoSection
+            campaignCounter={controller.freeShippingCampaign?.counter}
+            campaignEndDate={controller.freeShippingCampaign?.endDate}
+            companies={controller.cargoCompanies}
+            disabled={isSelectionLocked}
+            hasFreeShipping={controller.hasFreeShipping}
+            isLoading={controller.isCargoLoading}
+            onSelect={controller.selectCargo}
+            selectedId={controller.selectedCargo?.id ?? null}
+          />
+          <ShippingEstimateInfo estimate={controller.shippingEstimate} />
 
           <CheckoutPaymentOptions
             disabled={isSelectionLocked}

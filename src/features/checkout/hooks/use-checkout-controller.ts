@@ -13,7 +13,11 @@ import { useValidateCouponMutation, useRemoveCouponMutation } from '../api/check
 import { isMethodOverLimit } from '../components/checkout-payment-options';
 import { mapAppliedCoupon } from '../api/checkout.mapper';
 import { calculateOrderTotals, getEffectiveCouponDiscount } from '../utils/order-totals';
-import { calculateCartSubtotal, useCartStore } from '@/features/cart/store/use-cart-store';
+import {
+  calculateCartItemCount,
+  calculateCartSubtotal,
+  useCartStore,
+} from '@/features/cart/store/use-cart-store';
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
 import { useCouponsQuery } from '@/features/coupon/api/coupon.queries';
 import { getFreeShippingCampaign, getCartDiscountCampaignTotal } from '@/utils/cart-campaigns';
@@ -73,7 +77,6 @@ export function useCheckoutController() {
   }, []);
 
   // ---- Coupon state ----
-  const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const validateCoupon = useValidateCouponMutation();
@@ -132,6 +135,11 @@ export function useCheckoutController() {
 
   // ---- Pricing inputs ----
   const subtotal = calculateCartSubtotal(items);
+  // Kupon şartları (alt limit, ürün adedi) web'deki gibi sepet ara toplamı ve adediyle karşılaştırılır.
+  const couponCart = useMemo(
+    () => ({ subtotal, itemCount: calculateCartItemCount(items) }),
+    [subtotal, items],
+  );
   const userDiscount = checkoutBootstrap.cartData?.userDiscount ?? 0;
   const campaigns = useMemo(
     () => checkoutBootstrap.cartData?.campaigns ?? [],
@@ -260,16 +268,17 @@ export function useCheckoutController() {
   }, [filteredMethods, selectedMethod, baseTotals.singlePaymentTotal]);
 
   // ---- Coupon actions ----
+  /** Kuponu doğrulayıp uygular; uygulandıysa `true` döner (kupon sayfası buna göre kapanır). */
   const applyCoupon = useCallback(
-    async (codeFromList?: string) => {
-      const code = (codeFromList ?? couponInput).trim();
+    async (couponCode: string): Promise<boolean> => {
+      const code = couponCode.trim();
       if (!code) {
         setCouponError('Lütfen kupon kodu girin.');
-        return;
+        return false;
       }
       if (!selectedMethod) {
         setCouponError('Kupon uygulamak için önce ödeme yöntemi seçin.');
-        return;
+        return false;
       }
       setCouponError(null);
       try {
@@ -281,16 +290,17 @@ export function useCheckoutController() {
         if (!response.valid) {
           setAppliedCoupon(null);
           setCouponError(response.message || 'Kupon doğrulanamadı.');
-          return;
+          return false;
         }
         setAppliedCoupon(mapAppliedCoupon(response, code));
-        setCouponInput(response.coupon_code || code);
+        return true;
       } catch (error) {
         setAppliedCoupon(null);
         setCouponError(getApiErrorMessage(error, 'Kupon doğrulanamadı.'));
+        return false;
       }
     },
-    [couponInput, selectedMethod, cargoPrice, validateCoupon],
+    [selectedMethod, cargoPrice, validateCoupon],
   );
 
   const clearCoupon = useCallback(async () => {
@@ -302,7 +312,6 @@ export function useCheckoutController() {
       return;
     }
     setAppliedCoupon(null);
-    setCouponInput('');
   }, [removeCoupon]);
 
   // ---- Navigation ----
@@ -425,8 +434,6 @@ export function useCheckoutController() {
     // card form
     card,
     // coupon
-    couponInput,
-    setCouponInput,
     applyCoupon,
     clearCoupon,
     couponError,
@@ -434,6 +441,7 @@ export function useCheckoutController() {
     isApplyingCoupon: validateCoupon.isPending,
     isRemovingCoupon: removeCoupon.isPending,
     coupons: couponsQuery.data ?? [],
+    couponCart,
     isCouponsLoading: couponsQuery.isPending,
     // totals
     subtotal,
