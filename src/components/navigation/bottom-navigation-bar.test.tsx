@@ -96,6 +96,25 @@ describe('BottomNavigationBar', () => {
     expect(screen.getByTestId('cart-tab-badge')).toBeTruthy();
   });
 
+  it('hides itself on the checkout screen', () => {
+    mockPathname = '/checkout';
+
+    renderWithTamagui(<BottomNavigationBar />);
+
+    expect(screen.queryByLabelText('Sepetim')).toBeNull();
+    expect(screen.queryByLabelText('Whatsapp')).toBeNull();
+  });
+
+  it('stays visible on the payment result screens with the cart tab selected', () => {
+    for (const pathname of ['/checkout/payment-success', '/checkout/payment-failed']) {
+      mockPathname = pathname;
+      const { unmount } = renderWithTamagui(<BottomNavigationBar />);
+
+      expect(screen.getByLabelText('Sepetim').props.accessibilityState).toEqual({ selected: true });
+      unmount();
+    }
+  });
+
   it('shrinks a label that does not fit its tab instead of cutting it off', () => {
     // Büyük yazı ayarında "Favorilerim" dar ekranda "Favorileri…" diye kesiliyordu.
     renderWithTamagui(<BottomNavigationBar />);

@@ -29,11 +29,12 @@ const baseProps: CheckoutSummaryBarProps = {
 };
 
 describe('CheckoutSummaryBar', () => {
-  it('can skip bottom safe-area padding when rendered above the tab bar', () => {
-    renderWithTamagui(<CheckoutSummaryBar {...baseProps} reserveBottomSafeArea={false} />);
+  it('keeps the actions above the home indicator now that checkout has no tab bar', () => {
+    // jest.setup güvenli alan alt boşluğunu 20 veriyor.
+    renderWithTamagui(<CheckoutSummaryBar {...baseProps} />);
 
     expect(StyleSheet.flatten(screen.getByTestId('checkout-summary-bar').props.style)).toEqual(
-      expect.objectContaining({ paddingBottom: 0 }),
+      expect.objectContaining({ paddingBottom: 20 }),
     );
   });
 

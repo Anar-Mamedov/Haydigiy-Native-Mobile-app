@@ -270,7 +270,6 @@ export function CheckoutScreen() {
           isSubmitting={placeOrder.isSubmitting}
           onSubmit={placeOrder.submit}
           onToggle={controller.toggleSummary}
-          reserveBottomSafeArea={false}
           submitError={controller.submitError ?? controller.orderSummaryError}
           summary={controller.orderSummary}
         />

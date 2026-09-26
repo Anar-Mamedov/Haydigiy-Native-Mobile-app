@@ -114,8 +114,18 @@ const TAB_ITEMS: readonly TabItem[] = [
   { label: 'Hesabım', path: '/profile', icon: ({ color, size }) => <ProfileTabIcon color={color} size={size} /> },
 ] as const;
 
+/**
+ * Alt menünün gösterilmediği ekranlar. Ödeme ekranı kendi alt özet çubuğunu taşır;
+ * web'de de ödeme sayfasında alt menü yoktur. Ödeme sonucu ekranlarında menü kalır.
+ */
+const HIDDEN_ON_PATHS: ReadonlySet<string> = new Set(['/checkout']);
+
 function normalizePathname(pathname: string) {
   return pathname.replace(/^\/\(tabs\)/, '') || '/';
+}
+
+export function isBottomNavigationHidden(pathname: string) {
+  return HIDDEN_ON_PATHS.has(normalizePathname(pathname));
 }
 
 function isTabActive(pathname: string, path: TabItem['path']) {
@@ -180,6 +190,8 @@ export function BottomNavigationBar() {
   const handleWhatsappPress = useCallback(() => {
     void openWhatsapp(WHATSAPP_DEFAULT_MESSAGE);
   }, []);
+
+  if (isBottomNavigationHidden(pathname)) return null;
 
   return (
     <XStack

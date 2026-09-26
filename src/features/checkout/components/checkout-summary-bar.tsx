@@ -16,7 +16,6 @@ export interface CheckoutSummaryBarProps {
   submitError: string | null;
   hint: string | null;
   onSubmit: () => void;
-  reserveBottomSafeArea?: boolean;
 }
 
 function Row({
@@ -42,8 +41,8 @@ function Row({
 }
 
 export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
+  // Ödeme ekranında alt menü yok; çubuk ev göstergesinin (home indicator) üstünde kalmalı.
   const insets = useSafeAreaInsets();
-  const bottomPadding = props.reserveBottomSafeArea === false ? 0 : insets.bottom;
   const summary = props.summary;
   const isFreeShipping = summary?.cargoPrice === 0;
   const totalLabel = summary ? formatCurrency(summary.totalPrice) : '—';
@@ -53,7 +52,7 @@ export function CheckoutSummaryBar(props: CheckoutSummaryBarProps) {
       backgroundColor="$background"
       borderTopColor="$borderColor"
       borderTopWidth={1}
-      paddingBottom={bottomPadding}
+      paddingBottom={insets.bottom}
       position="relative"
       testID="checkout-summary-bar"
       width="100%"
