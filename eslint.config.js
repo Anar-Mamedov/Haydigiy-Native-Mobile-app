@@ -14,6 +14,14 @@ module.exports = defineConfig([
     },
   },
   {
+    // scripts/ altındaki dosyalar uygulamaya paketlenmez; Node'da çalışan geliştirici
+    // araçlarıdır ve `__dirname` gibi Node global'lerini kullanır.
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
     ignores: ['dist/*'],
   },
 ]);
