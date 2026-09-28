@@ -12,6 +12,7 @@
       "icon": "./assets/images/icon.png",
       "buildNumber": "45",
       "bundleIdentifier": "com.faprika.haydigiy.app",
+      "appleTeamId": "PZ2JX5APRL",
       "supportsTablet": true,
       "associatedDomains": [
         "applinks:haydigiy.com",
