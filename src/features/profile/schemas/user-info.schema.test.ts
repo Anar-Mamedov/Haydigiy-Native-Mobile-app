@@ -1,4 +1,4 @@
-import { userInfoSchema } from './user-info.schema';
+import { BIRTH_DATE_INCOMPLETE_MESSAGE, GENDER_OPTIONS, userInfoSchema } from './user-info.schema';
 
 const valid = {
   name: 'Anar',
@@ -25,6 +25,25 @@ describe('userInfoSchema', () => {
     // used to block saving until one was typed.
     expect(userInfoSchema.safeParse({ ...valid, email: '' }).success).toBe(true);
     expect(userInfoSchema.safeParse({ ...valid, email: '   ' }).success).toBe(true);
+  });
+
+  it('offers the same three genders as the web form', () => {
+    expect(GENDER_OPTIONS.map((option) => option.value)).toEqual(['male', 'female', 'other']);
+    expect(GENDER_OPTIONS.map((option) => option.label)).toEqual(['Erkek', 'Kadın', 'Diğer']);
+  });
+
+  it('accepts a fully cleared birth date and gender (sent as null)', () => {
+    expect(userInfoSchema.safeParse({ ...valid, day: '', gender: '', month: '', year: '' }).success).toBe(true);
+  });
+
+  it('rejects a half-cleared birth date so it cannot wipe the saved one by accident', () => {
+    const result = userInfoSchema.safeParse({ ...valid, day: '' });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]).toMatchObject({
+      message: BIRTH_DATE_INCOMPLETE_MESSAGE,
+      path: ['day'],
+    });
   });
 
   it('explains a malformed e-mail in Turkish', () => {

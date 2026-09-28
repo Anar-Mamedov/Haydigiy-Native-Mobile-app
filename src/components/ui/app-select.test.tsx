@@ -134,4 +134,138 @@ describe('AppSelect', () => {
 
     expect(screen.getByText('bekir can akdemir - TR0500064000001190066794')).toBeTruthy();
   });
+
+  describe('clear (×) button', () => {
+    it('empties a clearable field without opening the options sheet', () => {
+      const onClear = jest.fn();
+      renderWithTamagui(
+        <AppSelect
+          label="Cinsiyet"
+          onClear={onClear}
+          onValueChange={jest.fn()}
+          options={OPTIONS}
+          placeholder="Seçiniz"
+          value="01"
+        />,
+      );
+
+      fireEvent.press(screen.getByLabelText('Cinsiyet seçimini kaldır'));
+
+      expect(onClear).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId('app-select-sheet')).toBeNull();
+    });
+
+    it('takes the chevron’s place instead of sitting next to it', () => {
+      // Regression: both icons showed at once and hid the value in narrow fields
+      // such as the birth day. Like the web's allowClear, only one is shown.
+      renderWithTamagui(
+        <AppSelect
+          label="Gün"
+          onClear={jest.fn()}
+          onValueChange={jest.fn()}
+          options={OPTIONS}
+          placeholder="Gün"
+          value="01"
+        />,
+      );
+
+      expect(screen.getByLabelText('Gün seçimini kaldır')).toBeTruthy();
+      expect(screen.queryByTestId('app-select-chevron')).toBeNull();
+    });
+
+    it('shows the chevron again once the field is empty', () => {
+      renderWithTamagui(
+        <AppSelect
+          label="Gün"
+          onClear={jest.fn()}
+          onValueChange={jest.fn()}
+          options={OPTIONS}
+          placeholder="Gün"
+          value={null}
+        />,
+      );
+
+      expect(screen.getByTestId('app-select-chevron')).toBeTruthy();
+      expect(screen.queryByLabelText('Gün seçimini kaldır')).toBeNull();
+    });
+
+    it('keeps the value clear of the × in a narrow field', () => {
+      renderWithTamagui(
+        <AppSelect
+          label="Gün"
+          onClear={jest.fn()}
+          onValueChange={jest.fn()}
+          options={OPTIONS}
+          placeholder="Gün"
+          value="01"
+        />,
+      );
+
+      expect(screen.getByLabelText('Gün')).toHaveStyle({ paddingRight: 40 });
+    });
+
+    it('is hidden while nothing is selected', () => {
+      renderWithTamagui(
+        <AppSelect
+          label="Cinsiyet"
+          onClear={jest.fn()}
+          onValueChange={jest.fn()}
+          options={OPTIONS}
+          placeholder="Seçiniz"
+          value={null}
+        />,
+      );
+
+      expect(screen.queryByLabelText('Cinsiyet seçimini kaldır')).toBeNull();
+    });
+
+    it('is not offered by selects that must keep a value', () => {
+      renderWithTamagui(
+        <AppSelect label="Cinsiyet" onValueChange={jest.fn()} options={OPTIONS} value="01" />,
+      );
+
+      expect(screen.queryByLabelText('Cinsiyet seçimini kaldır')).toBeNull();
+    });
+
+    it('is not offered while the select is disabled', () => {
+      renderWithTamagui(
+        <AppSelect
+          disabled
+          label="Cinsiyet"
+          onClear={jest.fn()}
+          onValueChange={jest.fn()}
+          options={OPTIONS}
+          value="01"
+        />,
+      );
+
+      expect(screen.queryByLabelText('Cinsiyet seçimini kaldır')).toBeNull();
+    });
+
+    it('stays reachable in dark mode', () => {
+      renderWithTamagui(
+        <AppSelect
+          label="Cinsiyet"
+          onClear={jest.fn()}
+          onValueChange={jest.fn()}
+          options={OPTIONS}
+          value="01"
+        />,
+        'dark',
+      );
+
+      expect(screen.getByText('Ay')).toBeTruthy();
+      expect(screen.getByLabelText('Cinsiyet seçimini kaldır')).toBeTruthy();
+    });
+  });
+
+  describe('without a clear action', () => {
+    it('always shows the chevron', () => {
+      renderWithTamagui(
+        <AppSelect label="Gün" onValueChange={jest.fn()} options={OPTIONS} value="01" />,
+      );
+
+      expect(screen.getByTestId('app-select-chevron')).toBeTruthy();
+    });
+  });
 });

@@ -117,6 +117,62 @@ describe('UserInfoForm', () => {
     expect(mockMutateAsync).not.toHaveBeenCalled();
   });
 
+  describe('clearing the birth date and gender with the × buttons', () => {
+    it('sends a cleared gender as null', async () => {
+      mockMutateAsync.mockResolvedValueOnce({ message: 'Profil başarıyla güncellendi.' });
+      renderWithTamagui(<UserInfoForm profile={profile} />);
+
+      fireEvent.press(screen.getByLabelText('Cinsiyet seçimini kaldır'));
+      fireEvent.press(screen.getByText('Kaydet'));
+
+      await waitFor(() =>
+        expect(mockMutateAsync).toHaveBeenCalledWith(expect.objectContaining({ gender: null })),
+      );
+    });
+
+    it('sends a fully cleared birth date as null', async () => {
+      mockMutateAsync.mockResolvedValueOnce({ message: 'Profil başarıyla güncellendi.' });
+      renderWithTamagui(<UserInfoForm profile={profile} />);
+
+      fireEvent.press(screen.getByLabelText('Gün seçimini kaldır'));
+      fireEvent.press(screen.getByLabelText('Ay seçimini kaldır'));
+      fireEvent.press(screen.getByLabelText('Yıl seçimini kaldır'));
+      fireEvent.press(screen.getByText('Kaydet'));
+
+      await waitFor(() =>
+        expect(mockMutateAsync).toHaveBeenCalledWith(expect.objectContaining({ birth_date: null })),
+      );
+    });
+
+    it('blocks a half-cleared birth date instead of wiping the saved one', async () => {
+      renderWithTamagui(<UserInfoForm profile={profile} />);
+
+      fireEvent.press(screen.getByLabelText('Gün seçimini kaldır'));
+      fireEvent.press(screen.getByText('Kaydet'));
+
+      await waitFor(() =>
+        expect(
+          screen.getByText('Doğum tarihini tamamlayın ya da tamamen temizleyin.'),
+        ).toBeTruthy(),
+      );
+      expect(mockMutateAsync).not.toHaveBeenCalled();
+    });
+
+    it('offers "Diğer" like the web form', async () => {
+      mockMutateAsync.mockResolvedValueOnce({ message: 'Profil başarıyla güncellendi.' });
+      renderWithTamagui(<UserInfoForm profile={profile} />);
+
+      // Options of a closed sheet do not take touches, so open the gender select first.
+      fireEvent.press(screen.getByLabelText('Cinsiyet'));
+      fireEvent.press(await screen.findByLabelText('Diğer'));
+      fireEvent.press(screen.getByText('Kaydet'));
+
+      await waitFor(() =>
+        expect(mockMutateAsync).toHaveBeenCalledWith(expect.objectContaining({ gender: 'other' })),
+      );
+    });
+  });
+
   it('does not let a saved phone be cleared', async () => {
     renderWithTamagui(<UserInfoForm profile={profile} />);
 

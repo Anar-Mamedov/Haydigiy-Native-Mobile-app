@@ -2,10 +2,15 @@ import { z } from 'zod';
 import { isValidTurkishMobile } from '@/utils/turkish-phone';
 import { toPersonName } from '@/utils/normalize-text';
 
+/** Same choices as the web profile form; the API accepts `male`, `female` and `other`. */
 export const GENDER_OPTIONS = [
   { label: 'Erkek', value: 'male' },
   { label: 'Kadın', value: 'female' },
+  { label: 'Diğer', value: 'other' },
 ];
+
+export const BIRTH_DATE_INCOMPLETE_MESSAGE =
+  'Doğum tarihini tamamlayın ya da tamamen temizleyin.';
 
 export const userInfoSchema = z.object({
   name: z
@@ -39,6 +44,13 @@ export const userInfoSchema = z.object({
   day: z.string(),
   month: z.string(),
   year: z.string(),
+}).superRefine((data, ctx) => {
+  // A fully cleared date is sent as `null` (removes the saved one); a half-cleared
+  // date would do the same by accident, so it has to be completed or cleared.
+  const filledParts = [data.day, data.month, data.year].filter(Boolean).length;
+  if (filledParts > 0 && filledParts < 3) {
+    ctx.addIssue({ code: 'custom', message: BIRTH_DATE_INCOMPLETE_MESSAGE, path: ['day'] });
+  }
 });
 
 export type UserInfoFormData = z.infer<typeof userInfoSchema>;

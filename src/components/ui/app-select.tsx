@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Keyboard, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, ChevronDown, Search } from '@/components/ui/icons';
-import { Input, Sheet, Spinner, XStack, YStack } from 'tamagui';
+import { Check, ChevronDown, Search, X } from '@/components/ui/icons';
+import { Button, Input, Sheet, Spinner, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { KeyboardAwareSheetScrollView } from '@/components/ui/keyboard-aware-sheet-scroll-view';
@@ -29,6 +29,11 @@ export interface AppSelectProps {
   searchable?: boolean;
   /** Validation message shown below the field; also turns the border red. */
   errorMessage?: string;
+  /**
+   * Shows an × button that empties the field while a value is selected, like the
+   * web `<Select allowClear>`. Leave it out for selects that must keep a value.
+   */
+  onClear?: () => void;
 }
 
 /**
@@ -46,6 +51,7 @@ export function AppSelect({
   loading,
   searchable,
   errorMessage,
+  onClear,
 }: AppSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -56,6 +62,7 @@ export function AppSelect({
       : selected.label
     : undefined;
   const isDisabled = disabled || loading;
+  const canClear = Boolean(onClear && selected && !isDisabled);
 
   const filteredOptions = useMemo(() => {
     if (!searchable || !query.trim()) return options;
@@ -95,34 +102,61 @@ export function AppSelect({
 
   return (
     <>
-      <XStack
-        accessibilityLabel={label ?? placeholder}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: Boolean(isDisabled), expanded: open }}
-        alignItems="center"
-        backgroundColor="$background"
-        borderColor={errorMessage ? '$red8' : '$borderColor'}
-        borderRadius="$4"
-        borderWidth={1}
-        disabled={isDisabled}
-        gap="$2"
-        height={46}
-        justifyContent="space-between"
-        onPress={() => !isDisabled && changeOpen(true)}
-        opacity={isDisabled ? 0.6 : 1}
-        paddingHorizontal="$3"
-        pressStyle={{ backgroundColor: '$backgroundHover' }}
-      >
-        <Paragraph
-          color={selected ? '$color' : '$color9'}
-          flex={1}
-          fontSize={14}
-          numberOfLines={1}
+      <YStack position="relative">
+        <XStack
+          accessibilityLabel={label ?? placeholder}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: Boolean(isDisabled), expanded: open }}
+          alignItems="center"
+          backgroundColor="$background"
+          borderColor={errorMessage ? '$red8' : '$borderColor'}
+          borderRadius="$4"
+          borderWidth={1}
+          disabled={isDisabled}
+          gap="$2"
+          height={46}
+          justifyContent="space-between"
+          onPress={() => !isDisabled && changeOpen(true)}
+          opacity={isDisabled ? 0.6 : 1}
+          paddingHorizontal="$3"
+          // The × takes the chevron's place (like the web's `allowClear`), so narrow
+          // fields such as the day keep room for the selected value.
+          paddingRight={canClear ? 40 : undefined}
+          pressStyle={{ backgroundColor: '$backgroundHover' }}
         >
-          {loading ? 'Yükleniyor...' : (selectedDisplayLabel ?? placeholder)}
-        </Paragraph>
-        {loading ? <Spinner color="$brand" size="small" /> : <ChevronDown color="$color9" size={18} />}
-      </XStack>
+          <Paragraph
+            color={selected ? '$color' : '$color9'}
+            flex={1}
+            fontSize={14}
+            numberOfLines={1}
+          >
+            {loading ? 'Yükleniyor...' : (selectedDisplayLabel ?? placeholder)}
+          </Paragraph>
+          {loading ? (
+            <Spinner color="$brand" size="small" />
+          ) : canClear ? null : (
+            <ChevronDown color="$color9" size={18} testID="app-select-chevron" />
+          )}
+        </XStack>
+
+        {/* A sibling of the field rather than a child: pressing it must not open the
+            sheet, and screen readers reach it as its own control. */}
+        {canClear ? (
+          <XStack alignItems="center" bottom={0} position="absolute" right={6} top={0}>
+            <Button
+              accessibilityLabel={`${label ?? placeholder} seçimini kaldır`}
+              accessibilityRole="button"
+              chromeless
+              circular
+              hitSlop={8}
+              icon={<X color="$color9" size={16} />}
+              onPress={onClear}
+              padding={0}
+              size="$2"
+            />
+          </XStack>
+        ) : null}
+      </YStack>
 
       {errorMessage ? (
         <Paragraph color="$red10" fontSize={12} marginTop="$1.5">

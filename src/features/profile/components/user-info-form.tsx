@@ -311,6 +311,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
               render={({ field: { onChange, value } }) => (
                 <AppSelect
                   label="Gün"
+                  onClear={() => onChange('')}
                   onValueChange={(next) => onChange(String(next))}
                   options={DAY_OPTIONS}
                   placeholder="Gün"
@@ -326,6 +327,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
               render={({ field: { onChange, value } }) => (
                 <AppSelect
                   label="Ay"
+                  onClear={() => onChange('')}
                   onValueChange={(next) => onChange(String(next))}
                   options={MONTH_OPTIONS}
                   placeholder="Ay"
@@ -341,6 +343,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
               render={({ field: { onChange, value } }) => (
                 <AppSelect
                   label="Yıl"
+                  onClear={() => onChange('')}
                   onValueChange={(next) => onChange(String(next))}
                   options={YEAR_OPTIONS}
                   placeholder="Yıl"
@@ -351,6 +354,11 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
             />
           </YStack>
         </XStack>
+        {errors.day?.message ? (
+          <Paragraph color="$red10" size="$2">
+            {errors.day.message}
+          </Paragraph>
+        ) : null}
       </YStack>
 
       <YStack gap="$2">
@@ -363,6 +371,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
           render={({ field: { onChange, value } }) => (
             <AppSelect
               label="Cinsiyet"
+              onClear={() => onChange('')}
               onValueChange={(next) => {
                 console.log('[UI-DEBUG] gender onValueChange', next, 'value was', value);
                 onChange(String(next));
