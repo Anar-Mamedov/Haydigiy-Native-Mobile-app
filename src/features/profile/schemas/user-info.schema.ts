@@ -22,11 +22,14 @@ export const userInfoSchema = z.object({
     .min(2, { message: 'Soyad en az 2 karakter olmalıdır' })
     .transform(toPersonName)
     .refine((value) => value.trim().length >= 2, { message: 'Soyad en az 2 karakter olmalıdır' }),
+  // Optional like on the web: accounts registered with a phone have no e-mail. A
+  // filled-in address still has to be valid, which the backend enforces too.
   email: z
     .string()
     .trim()
-    .min(1, { message: 'E-posta zorunludur' })
-    .email({ message: 'Geçerli bir e-posta adresi giriniz' }),
+    .refine((value) => value === '' || z.email().safeParse(value).success, {
+      message: 'Geçerli bir e-posta adresi giriniz',
+    }),
   phone: z
     .string()
     .refine((value) => value.trim() === '' || isValidTurkishMobile(value), {

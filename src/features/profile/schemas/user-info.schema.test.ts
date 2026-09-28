@@ -20,6 +20,20 @@ describe('userInfoSchema', () => {
     expect(userInfoSchema.safeParse({ ...valid, phone: '' }).success).toBe(true);
   });
 
+  it('treats an empty e-mail as valid, like the web profile form', () => {
+    // Regression: accounts registered with a phone have no e-mail, and the form
+    // used to block saving until one was typed.
+    expect(userInfoSchema.safeParse({ ...valid, email: '' }).success).toBe(true);
+    expect(userInfoSchema.safeParse({ ...valid, email: '   ' }).success).toBe(true);
+  });
+
+  it('explains a malformed e-mail in Turkish', () => {
+    const result = userInfoSchema.safeParse({ ...valid, email: 'anar@' });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe('Geçerli bir e-posta adresi giriniz');
+  });
+
   it('rejects short names, invalid e-mail and invalid phone', () => {
     expect(userInfoSchema.safeParse({ ...valid, name: 'A' }).success).toBe(false);
     expect(userInfoSchema.safeParse({ ...valid, surname: '' }).success).toBe(false);

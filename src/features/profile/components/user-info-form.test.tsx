@@ -1,3 +1,4 @@
+import { Alert } from 'react-native';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { UserInfoForm } from './user-info-form';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -30,46 +31,104 @@ const profile: UserProfile = {
 };
 
 describe('UserInfoForm', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
 
-  it('shows a saved phone read-only beside the fixed country code', () => {
+  it('shows the saved phone in an editable field beside the fixed country code', () => {
     renderWithTamagui(<UserInfoForm profile={profile} />);
 
     expect(screen.getByDisplayValue('Anar')).toBeTruthy();
     expect(screen.getByDisplayValue('Mamedov')).toBeTruthy();
     expect(screen.getByText('+90')).toBeTruthy();
-    expect(screen.getByLabelText('Telefon Numarası 0555 123 45 67')).toBeTruthy();
-    expect(screen.getByText('0555 123 45 67')).toBeTruthy();
-    expect(screen.queryByDisplayValue('0555 123 45 67')).toBeNull();
-    expect(screen.getByText(/bu ekrandan değiştirilemez/)).toBeTruthy();
+    expect(screen.getByLabelText('Telefon Numarası').props.value).toBe('0555 123 45 67');
+    expect(screen.getByText(/yeni numaranıza doğrulama kodu gönderilir/)).toBeTruthy();
   });
 
-  it('stays readable in dark mode with a locked phone', () => {
+  it('stays readable in dark mode', () => {
     renderWithTamagui(<UserInfoForm profile={profile} />, 'dark');
 
     expect(screen.getByText('+90')).toBeTruthy();
-    expect(screen.getByText('0555 123 45 67')).toBeTruthy();
+    expect(screen.getByDisplayValue('0555 123 45 67')).toBeTruthy();
   });
 
-  it('sends a saved phone back untouched and offers no way to edit it', async () => {
-    // Regression: the saved number used to be an editable field, so it could be
-    // replaced without any verification code.
-    mockMutateAsync.mockResolvedValueOnce(undefined);
+  it('sends an unchanged saved phone back exactly as the API returned it', async () => {
+    mockMutateAsync.mockResolvedValueOnce({ message: 'Profil başarıyla güncellendi.' });
     renderWithTamagui(<UserInfoForm profile={{ ...profile, phone: '+90 555 123 45 67' }} />);
-
-    expect(screen.queryByLabelText('Telefon Numarası')).toBeNull();
 
     fireEvent.press(screen.getByText('Kaydet'));
 
     await waitFor(() =>
       expect(mockMutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({ phone: '+90 555 123 45 67' }),
+        expect.objectContaining({ phone: '+90 555 123 45 67', version: 'v2' }),
       ),
     );
+    expect(Alert.alert).toHaveBeenCalledWith('Başarılı', 'Bilgileriniz güncellendi.');
+  });
+
+  it('asks for the SMS code before saving a changed phone', async () => {
+    mockMutateAsync.mockResolvedValueOnce({
+      code_sent: true,
+      message: 'Doğrulama kodu yeni telefon numaranıza gönderildi.',
+      resend_after: 60,
+      success: true,
+      verification_required: true,
+    });
+    renderWithTamagui(<UserInfoForm profile={profile} />);
+
+    fireEvent.changeText(screen.getByLabelText('Telefon Numarası'), '0532 123 45 67');
+    fireEvent.press(screen.getByText('Kaydet'));
+
+    await waitFor(() =>
+      expect(mockMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ phone: '5321234567', version: 'v2' }),
+      ),
+    );
+    // Nothing is saved yet, so no success message; the code sheet takes over.
+    expect(await screen.findByText('Telefon Numarası Doğrulaması')).toBeTruthy();
+    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(mockMutateAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('saves an account without an e-mail without asking for one', async () => {
+    // Regression: the form required an e-mail, unlike the web profile form, so
+    // accounts registered with a phone could not save anything here.
+    mockMutateAsync.mockResolvedValueOnce({ message: 'Profil başarıyla güncellendi.' });
+    renderWithTamagui(<UserInfoForm profile={{ ...profile, email: null }} />);
+
+    fireEvent.press(screen.getByText('Kaydet'));
+
+    await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
+    expect(mockMutateAsync.mock.calls[0][0]).not.toHaveProperty('email');
+    expect(screen.queryByText('E-posta zorunludur')).toBeNull();
+    expect(Alert.alert).toHaveBeenCalledWith('Başarılı', 'Bilgileriniz güncellendi.');
+  });
+
+  it('still rejects a malformed e-mail', async () => {
+    renderWithTamagui(<UserInfoForm profile={{ ...profile, email: null }} />);
+
+    fireEvent.changeText(screen.getByLabelText('E-posta'), 'anar@');
+    fireEvent.press(screen.getByText('Kaydet'));
+
+    await waitFor(() =>
+      expect(screen.getByText('Geçerli bir e-posta adresi giriniz')).toBeTruthy(),
+    );
+    expect(mockMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('does not let a saved phone be cleared', async () => {
+    renderWithTamagui(<UserInfoForm profile={profile} />);
+
+    fireEvent.changeText(screen.getByLabelText('Telefon Numarası'), '');
+    fireEvent.press(screen.getByText('Kaydet'));
+
+    await waitFor(() => expect(screen.getByText('Telefon numarası zorunludur.')).toBeTruthy());
+    expect(mockMutateAsync).not.toHaveBeenCalled();
   });
 
   it('allows an e-mail account without a phone to add one', async () => {
-    mockMutateAsync.mockResolvedValueOnce(undefined);
+    mockMutateAsync.mockResolvedValueOnce({ message: 'Profil başarıyla güncellendi.' });
     renderWithTamagui(<UserInfoForm profile={{ ...profile, phone: null }} />);
 
     fireEvent.changeText(screen.getByLabelText('Telefon Numarası'), '0532 123 45 67');

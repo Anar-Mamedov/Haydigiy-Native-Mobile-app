@@ -6,6 +6,7 @@ import {
   UpdateProfilePayloadDto,
 } from '@/services/user.service';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
+import { isProfileUpdateSaved } from '../utils/profile-update-result';
 
 /**
  * Updates the user profile (`PUT /user/profile`), refreshes the cached profile and
@@ -19,7 +20,10 @@ export function useUpdateProfileMutation() {
     // Validation failures such as a duplicate phone number are permanent for the
     // submitted payload. Retrying would send the same profile update twice.
     retry: false,
-    onSuccess: (_result, payload) => {
+    onSuccess: (result, payload) => {
+      // A `v2` phone change only sent an SMS code: nothing was saved yet.
+      if (!isProfileUpdateSaved(result)) return;
+
       queryClient.invalidateQueries({ queryKey: profileKeys.me() });
 
       const { user, setUser } = useAuthStore.getState();
@@ -28,7 +32,7 @@ export function useUpdateProfileMutation() {
           ...user,
           name: payload.name,
           surname: payload.surname,
-          email: payload.email,
+          email: payload.email ?? user.email,
           phoneNumber: payload.phone ?? undefined,
         });
       }

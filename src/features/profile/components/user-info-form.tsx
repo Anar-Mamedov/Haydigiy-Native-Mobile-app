@@ -7,9 +7,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Spinner, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton, AppInput, AppSelect } from '@/components/ui';
-import { formatTurkishPhoneDisplay, sanitizeTurkishMobileInput } from '@/utils/turkish-phone';
+import {
+  extractTurkishNationalNumber,
+  formatTurkishPhoneDisplay,
+  sanitizeTurkishMobileInput,
+} from '@/utils/turkish-phone';
 import { UserProfile } from '../api/profile.mapper';
-import { useUpdateProfileMutation } from '../api/profile.mutations';
+import { useProfileUpdate } from '../hooks/use-profile-update';
 import {
   GENDER_OPTIONS,
   userInfoSchema,
@@ -22,8 +26,13 @@ import {
   splitBirthDate,
 } from '../utils/birth-date';
 import { parseProfileUpdateError } from '../utils/profile-update-error';
-import { buildProfileUpdatePayload, isProfilePhoneLocked } from '../utils/profile-update-payload';
+import {
+  buildProfileUpdatePayload,
+  isProfilePhoneRequired,
+  PHONE_REQUIRED_MESSAGE,
+} from '../utils/profile-update-payload';
 import { toPersonName } from '@/utils/normalize-text';
+import { PhoneChangeVerificationSheet } from './phone-change-verification-sheet';
 
 // [UI-DEBUG] GEÇİCİ teşhis logu — sorun bulununca silinecek.
 const uiDebugIds = new WeakMap<object, number>();
@@ -42,8 +51,7 @@ const DAY_OPTIONS = getDayOptions();
 const MONTH_OPTIONS = getMonthOptions();
 const YEAR_OPTIONS = getYearOptions();
 
-const PHONE_LOCKED_NOTE =
-  'Güvenliğiniz için kayıtlı telefon numaranız bu ekrandan değiştirilemez. Değiştirmek için müşteri hizmetleriyle iletişime geçebilirsiniz.';
+const PHONE_CHANGE_HINT = 'Numaranızı değiştirirseniz yeni numaranıza doğrulama kodu gönderilir.';
 
 type UserInfoFormProps = {
   profile: UserProfile;
@@ -95,9 +103,9 @@ function buildDefaults(profile: UserProfile): UserInfoFormData {
     name: profile.name ?? '',
     surname: profile.surname ?? '',
     email: profile.email ?? '',
-    // Only an account without a saved number edits this field; a saved one is
-    // shown read-only and sent back untouched (see `isProfilePhoneLocked`).
-    phone: '',
+    // Edited as the national number; an unchanged one is sent back exactly as saved
+    // (see `buildProfileUpdatePayload`).
+    phone: profile.phone ? extractTurkishNationalNumber(profile.phone) : '',
     gender: profile.gender ?? '',
     day: parts.day,
     month: parts.month,
@@ -107,7 +115,10 @@ function buildDefaults(profile: UserProfile): UserInfoFormData {
 
 /** Editable "Kullanıcı Bilgilerim" form mirroring the web profile editor. */
 export function UserInfoForm({ profile }: UserInfoFormProps) {
-  const updateProfile = useUpdateProfileMutation();
+  const profileUpdate = useProfileUpdate({
+    onPhoneVerified: () =>
+      Alert.alert('Başarılı', 'Telefon numaranız doğrulandı ve bilgileriniz güncellendi.'),
+  });
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -162,20 +173,22 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
     }, [profile, reset]),
   );
 
-  const isPhoneLocked = isProfilePhoneLocked(profile);
-  const savedPhone = profile.phone ?? '';
-  const savedPhoneDisplay = formatTurkishPhoneDisplay(savedPhone) || savedPhone;
-
   const onSubmit = async (data: UserInfoFormData) => {
     setServerError(null);
+
+    // A saved number may be replaced (after an SMS code) but never cleared from here.
+    if (isProfilePhoneRequired(profile) && !data.phone.trim()) {
+      setError('phone', { message: PHONE_REQUIRED_MESSAGE, type: 'required' }, { shouldFocus: true });
+      return;
+    }
+
     try {
-      await updateProfile.mutateAsync(buildProfileUpdatePayload(data, profile));
-      Alert.alert('Başarılı', 'Bilgileriniz güncellendi.');
+      const outcome = await profileUpdate.save(buildProfileUpdatePayload(data, profile));
+      // Otherwise the code sheet is open: the form is saved together with the code.
+      if (outcome === 'saved') Alert.alert('Başarılı', 'Bilgileriniz güncellendi.');
     } catch (error: unknown) {
       const updateError = parseProfileUpdateError(error);
-      // A locked phone has no editable field to attach its error to, so it falls
-      // back to the form-level message below.
-      if (updateError.phoneMessage && !isPhoneLocked) {
+      if (updateError.phoneMessage) {
         setError(
           'phone',
           { message: updateError.phoneMessage, type: 'server' },
@@ -257,46 +270,33 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
         <Paragraph color="$color" fontSize={14} fontWeight="600">
           Telefon Numarası
         </Paragraph>
-        {isPhoneLocked ? (
-          <>
-            <XStack gap="$2">
+        <Controller
+          control={control}
+          name="phone"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <XStack alignItems="flex-start" gap="$2">
               <CountryCodeField />
-              <ReadOnlyField accessibilityLabel={`Telefon Numarası ${savedPhoneDisplay}`} flex={1}>
-                {savedPhoneDisplay}
-              </ReadOnlyField>
+              <YStack flex={1}>
+                <AppInput
+                  backgroundColor="$color1"
+                  errorMessage={errors.phone?.message}
+                  height={48}
+                  helperText={PHONE_CHANGE_HINT}
+                  hideVisibleLabel
+                  id="user-info-phone"
+                  keyboardType="phone-pad"
+                  label="Telefon Numarası"
+                  maxLength={14}
+                  onBlur={onBlur}
+                  onChangeText={(text) => onChange(sanitizeTurkishMobileInput(text))}
+                  placeholder="05XX XXX XX XX"
+                  textContentType="telephoneNumber"
+                  value={formatTurkishPhoneDisplay(value)}
+                />
+              </YStack>
             </XStack>
-            <Paragraph color="$color10" size="$2">
-              {PHONE_LOCKED_NOTE}
-            </Paragraph>
-          </>
-        ) : (
-          <Controller
-            control={control}
-            name="phone"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <XStack alignItems="flex-start" gap="$2">
-                <CountryCodeField />
-                <YStack flex={1}>
-                  <AppInput
-                    backgroundColor="$color1"
-                    errorMessage={errors.phone?.message}
-                    height={48}
-                    hideVisibleLabel
-                    id="user-info-phone"
-                    keyboardType="phone-pad"
-                    label="Telefon Numarası"
-                    maxLength={14}
-                    onBlur={onBlur}
-                    onChangeText={(text) => onChange(sanitizeTurkishMobileInput(text))}
-                    placeholder="05XX XXX XX XX"
-                    textContentType="telephoneNumber"
-                    value={formatTurkishPhoneDisplay(value)}
-                  />
-                </YStack>
-              </XStack>
-            )}
-          />
-        )}
+          )}
+        />
       </YStack>
 
       <YStack gap="$2">
@@ -385,13 +385,28 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
         backgroundColor="$brand"
         borderColor="transparent"
         color="white"
-        disabled={isSubmitting}
+        disabled={isSubmitting || profileUpdate.isVerificationOpen}
         id="user-info-submit"
         onPress={handleSubmit(onSubmit)}
         pressStyle={{ opacity: 0.85 }}
       >
         {isSubmitting ? <Spinner color="white" /> : 'Kaydet'}
       </AppButton>
+
+      <PhoneChangeVerificationSheet
+        code={profileUpdate.code}
+        cooldownSeconds={profileUpdate.cooldownSeconds}
+        errorMessage={profileUpdate.errorMessage}
+        infoMessage={profileUpdate.infoMessage}
+        isResending={profileUpdate.isResending}
+        isVerifying={profileUpdate.isVerifying}
+        onCancel={profileUpdate.cancelVerification}
+        onChangeCode={profileUpdate.setCode}
+        onResend={() => void profileUpdate.resendCode()}
+        onSubmit={() => void profileUpdate.submitCode()}
+        open={profileUpdate.isVerificationOpen}
+        phone={profileUpdate.pendingPhone}
+      />
     </YStack>
   );
 }
