@@ -3,13 +3,22 @@ import { Spinner, YStack } from 'tamagui';
 import { AppScreen, EmptyState, ScreenHeader } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useUserProfileQuery } from '../api/profile.queries';
-import { UserInfoForm } from '../components/user-info-form';
+import { UserInfoForm, uiDebugId } from '../components/user-info-form';
 import { DeleteAccountButton } from '../components/delete-account-button';
 
 export function UserInfoScreen() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
   const query = useUserProfileQuery(isAuthenticated);
+  // [UI-DEBUG] GEÇİCİ
+  console.log('[UI-DEBUG] screen render', {
+    authLoading,
+    isAuthenticated,
+    status: query.status,
+    fetchStatus: query.fetchStatus,
+    dataUpdatedAt: query.dataUpdatedAt,
+    profile: uiDebugId(query.data),
+  });
 
   const handleBack = () => {
     if (router.canGoBack()) {

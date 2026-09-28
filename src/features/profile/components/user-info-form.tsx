@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
+import * as ExpoRouter from 'expo-router';
 import { useFocusEffect } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,6 +24,19 @@ import {
 import { parseProfileUpdateError } from '../utils/profile-update-error';
 import { buildProfileUpdatePayload, isProfilePhoneLocked } from '../utils/profile-update-payload';
 import { toPersonName } from '@/utils/normalize-text';
+
+// [UI-DEBUG] GEÇİCİ teşhis logu — sorun bulununca silinecek.
+const uiDebugIds = new WeakMap<object, number>();
+let uiDebugNextId = 1;
+export function uiDebugId(value: object | null | undefined): number {
+  if (!value) return 0;
+  let id = uiDebugIds.get(value);
+  if (!id) {
+    id = uiDebugNextId++;
+    uiDebugIds.set(value, id);
+  }
+  return id;
+}
 
 const DAY_OPTIONS = getDayOptions();
 const MONTH_OPTIONS = getMonthOptions();
@@ -110,8 +124,40 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
   // This screen stays mounted as a hidden tab route, so unsaved edits would survive
   // navigating away and back. Reset to the saved profile each time it regains focus
   // to discard any uncommitted changes.
+  // [UI-DEBUG] GEÇİCİ
+  // Testlerdeki expo-router mock'unda useNavigation yok; orada atlanır.
+  const uiDebugNavigation = ExpoRouter.useNavigation?.();
+  const uiDebugRenders = useRef(0);
+  uiDebugRenders.current += 1;
+  console.log(
+    '[UI-DEBUG] form render',
+    uiDebugRenders.current,
+    'profile#',
+    uiDebugId(profile),
+    'nav#',
+    uiDebugId(uiDebugNavigation),
+  );
+  useEffect(() => {
+    console.log('[UI-DEBUG] form MOUNT');
+    return () => console.log('[UI-DEBUG] form UNMOUNT');
+  }, []);
+  useEffect(() => {
+    if (!uiDebugNavigation) return;
+    const offFocus = uiDebugNavigation.addListener('focus', () =>
+      console.log('[UI-DEBUG] nav FOCUS event'),
+    );
+    const offBlur = uiDebugNavigation.addListener('blur', () =>
+      console.log('[UI-DEBUG] nav BLUR event'),
+    );
+    return () => {
+      offFocus();
+      offBlur();
+    };
+  }, [uiDebugNavigation]);
+
   useFocusEffect(
     useCallback(() => {
+      console.log('[UI-DEBUG] focus-reset RUN profile#', uiDebugId(profile));
       reset(buildDefaults(profile));
     }, [profile, reset]),
   );
@@ -155,7 +201,10 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
             id="user-info-name"
             label="Ad"
             onBlur={onBlur}
-            onChangeText={(text) => onChange(toPersonName(text))}
+            onChangeText={(text) => {
+              console.log('[UI-DEBUG] name onChangeText', JSON.stringify(text), 'value was', JSON.stringify(value));
+              onChange(toPersonName(text));
+            }}
             placeholder="Adınız"
             value={value}
           />
@@ -314,7 +363,10 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
           render={({ field: { onChange, value } }) => (
             <AppSelect
               label="Cinsiyet"
-              onValueChange={(next) => onChange(String(next))}
+              onValueChange={(next) => {
+                console.log('[UI-DEBUG] gender onValueChange', next, 'value was', value);
+                onChange(String(next));
+              }}
               options={GENDER_OPTIONS}
               placeholder="Seçiniz"
               value={value || null}
