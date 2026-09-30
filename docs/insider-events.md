@@ -80,16 +80,19 @@ döndürmeye başladığında mobil tarafta ek değişiklik gerekmez.
 
 `useAuthStore` üzerinden tüm oturum yolları kapsanır:
 
-- **Login / kayıt / hızlı giriş / profil güncelleme** → `insiderTracker.identifyUser(user)`:
+- **Login / kayıt / hızlı giriş** → `insiderTracker.identifyUser(user)`:
   - Identifier'lar: `addUserID` (CRM id), `addEmail`, `addPhoneNumber` →
     `getCurrentUser().login(identifiers)`.
   - Attribute'lar: `setName`, `setSurname`, `setEmail`, `setPhoneNumber`
     (E164: `+90…`), `setLanguage('tr_TR')`, `setLocale('tr_TR')`.
+- **Profil güncelleme** (`setUser`) → `markIdentityChangeIfNeeded(önceki, yeni)` +
+  `refreshUserAttributes(user)`: yalnızca ad, soyad ve dil yazılır; identifier
+  gönderilmez (bkz. kural 4).
 - **Uygulama açılışı (kalıcı oturum)** → `InsiderIdentitySync` →
   `identifyUser(user)`.
 - **Logout ve süresi dolan oturum** → `getCurrentUser().logout()`.
 
-### Kimlik kuralları (yanlış profile yazılmayı önleyen üç kural)
+### Kimlik kuralları (yanlış ya da duplike profili önleyen dört kural)
 
 1. **`addUserID` String almalı.** SDK identifier'ları `typeof === 'string'`
    kontrolünden geçirir ve başka tipte geleni yalnızca `console.warn` ile
@@ -108,6 +111,18 @@ döndürmeye başladığında mobil tarafta ek değişiklik gerekmez.
    hatası) oturum sessizce anonim devam ediyor ve **satın alma dahil tüm
    eventler anonim profile düşüyordu**. `InsiderIdentitySync` açılışta bir kez
    `identifyUser` çağırarak bu boşluğu kapatır.
+4. **Kimlik değişikliğinden sonra 180 sn e-posta/telefon gönderilmez.** Profil
+   kaydı e-posta ya da telefonu değiştirdiyse `InsiderIdentityChangeGate` (MMKV)
+   pencereyi açar. Pencere boyunca `identifyUser` kimliği yalnızca CRM id ile
+   bildirir, `addEmail`/`addPhoneNumber`/`setEmail`/`setPhoneNumber` çağrılmaz.
+   SDK, identifier seti son kaydettiğinden farklıysa yeni bir login isteği
+   gönderir. Kayıttan hemen sonraki açılış (sistem uygulamayı arka planda da
+   kapatabilir) ya da çıkış/tekrar giriş, yeni e-postayı backend'in PATCH'inden
+   önce Insider'a tanıtıyor ve **ikinci bir profil** açılıyordu; web bu sürede
+   değerleri zaten geri tuttuğu için sorun yalnızca mobilde görülüyordu. Süre
+   backend `InsiderIdentityPendingGate::TTL_SECONDS` ve web
+   `INSIDER_IDENTITY_CHANGE_TTL_MS` ile aynıdır. Yeni değer, pencere kapandıktan
+   sonraki ilk girişte ya da açılışta gider.
 
 Hiçbir identifier üretilemiyorsa (id, e-posta ve telefonun üçü de yoksa)
 `login()` hiç çağrılmaz; kimliksiz bir login yalnızca login bayrağını açar,
@@ -127,8 +142,9 @@ segment geçmişi eski profilde kalır. Insider ekibinin bildirdiği duplike kay
 2. React Native SDK'sında karşılığı yok. `login()` yalnızca kimliği bildirir, eski
    değeri yenisiyle **değiştiremez**.
 
-Mobil tarafta değişiklik gerekmez: profil güncellemesi `PUT /user/profile` üzerinden
-gittiği için e-posta/telefon değişimi backend'de zaten görünür.
+Profil güncellemesi `PUT /user/profile` üzerinden gittiği için e-posta/telefon değişimi
+backend'de zaten görünür. Mobil tarafın tek görevi yeni değeri PATCH'ten **önce**
+Insider'a tanıtmamaktır; bkz. yukarıdaki kural 4.
 
 | Katman (`haydigiy/backend`) | Sorumluluk |
 | --- | --- |

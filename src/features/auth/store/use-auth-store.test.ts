@@ -7,6 +7,7 @@ jest.mock('@/features/insider/services/insider-tracker', () => ({
   insiderTracker: {
     identifyUser: jest.fn(),
     refreshUserAttributes: jest.fn(),
+    markIdentityChangeIfNeeded: jest.fn(),
     clearUser: jest.fn(),
     trackUserLogin: jest.fn(),
     trackUserLogout: jest.fn(),
@@ -163,5 +164,32 @@ describe('useAuthStore', () => {
 
     expect(trackerMock.identifyUser).not.toHaveBeenCalled();
     expect(trackerMock.refreshUserAttributes).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Regresyon: değişikliği bildiren tek yer burası. Önceki kullanıcı iletilmezse bekleme
+   * penceresi hiç açılmaz ve kayıttan hemen sonraki açılış/giriş yeni e-postayı Insider'a
+   * backend'den önce tanıtır.
+   */
+  it('reports the saved user together with the previous one to Insider', async () => {
+    const previousUser = {
+      id: 'user-8',
+      name: 'Anar',
+      email: 'eski@example.com',
+      phoneNumber: '5551234567',
+    };
+    await useAuthStore.getState().login('test-token-xyz', previousUser);
+    jest.clearAllMocks();
+
+    const savedUser = { ...previousUser, email: 'yeni@example.com' };
+    useAuthStore.getState().setUser(savedUser);
+
+    expect(trackerMock.markIdentityChangeIfNeeded).toHaveBeenCalledWith(previousUser, savedUser);
+  });
+
+  it('does not report an identifier change when the session expires', () => {
+    useAuthStore.getState().setUser(null);
+
+    expect(trackerMock.markIdentityChangeIfNeeded).not.toHaveBeenCalled();
   });
 });

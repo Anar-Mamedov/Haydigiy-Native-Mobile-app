@@ -3,8 +3,11 @@ import {
   REVIEW_SUBMITTED_EVENT,
   USER_LOGIN_EVENT,
   USER_LOGOUT_EVENT,
-  toE164TurkishPhone,
 } from './insider-tracker';
+import {
+  INSIDER_IDENTITY_CHANGE_TTL_MS,
+  createInsiderIdentityChangeGate,
+} from './insider-identity-change-gate';
 import {
   InsiderEventBuilder,
   InsiderIdentifierSdk,
@@ -149,6 +152,7 @@ function createSdkHarness() {
 
   const recommendationAttribution = createAttributionDouble();
   const onDiagnostic = jest.fn();
+  const identityChange = createIdentityChangeGateHarness();
 
   const tracker = createInsiderTracker({
     isNativeSdkAvailable: () => true,
@@ -163,6 +167,7 @@ function createSdkHarness() {
     onError: jest.fn(),
     onDiagnostic,
     recommendationAttribution,
+    identityChangeGate: identityChange.gate,
   });
 
   return {
@@ -174,7 +179,31 @@ function createSdkHarness() {
     identifiers,
     onDiagnostic,
     recommendationAttribution,
+    clock: identityChange.clock,
   };
+}
+
+/**
+ * Gerçek kimlik değişikliği bayrağı; MMKV yerine bellekte çalışır ve saati test
+ * ilerletir, böylece backend'in bekleme penceresi uçtan uca doğrulanabilir.
+ */
+function createIdentityChangeGateHarness() {
+  const store = new Map<string, string>();
+  const clock = { now: 1_000_000 };
+  const gate = createInsiderIdentityChangeGate({
+    now: () => clock.now,
+    storage: {
+      getItem: (key) => store.get(key) ?? null,
+      removeItem: (key) => {
+        store.delete(key);
+      },
+      setItem: (key, value) => {
+        store.set(key, value);
+      },
+    },
+    ttlMs: INSIDER_IDENTITY_CHANGE_TTL_MS,
+  });
+  return { clock, gate };
 }
 
 /**
@@ -234,6 +263,7 @@ describe('insider tracker', () => {
       onError: jest.fn(),
       onDiagnostic: jest.fn(),
       recommendationAttribution: createAttributionDouble(),
+      identityChangeGate: createIdentityChangeGateHarness().gate,
     });
 
     tracker.trackHomePageView();
@@ -257,6 +287,7 @@ describe('insider tracker', () => {
       onError,
       onDiagnostic: jest.fn(),
       recommendationAttribution: createAttributionDouble(),
+      identityChangeGate: createIdentityChangeGateHarness().gate,
     });
 
     expect(() => tracker.trackHomePageView()).not.toThrow();
@@ -538,6 +569,67 @@ describe('insider tracker', () => {
     expect(identifiers).toHaveLength(0);
   });
 
+  /**
+   * Regresyon: profil kaydı kimliği göndermiyordu ama `identifyUser` her girişte ve her
+   * soğuk açılışta çalışıyor. Kullanıcı kayıttan hemen sonra uygulamayı yeniden açınca ya
+   * da tekrar giriş yapınca yeni e-posta `login()` ile, backend'in Update Identifiers
+   * isteğinden önce Insider'a gidiyor ve ikinci bir profil açılıyordu; web bu sürede
+   * e-posta ve telefonu geri tuttuğu için yalnızca mobilde oluyordu.
+   */
+  it('withholds the new e-mail and phone while the backend replaces the identifier', () => {
+    const { tracker, insiderUser, identifiers, onDiagnostic } = createSdkHarness();
+    const savedUser: User = { ...testUser, email: 'yeni@example.com', phoneNumber: '5559876543' };
+
+    tracker.markIdentityChangeIfNeeded(testUser, savedUser);
+    // Uygulama kayıttan hemen sonra yeniden açıldı; kimlik geri yüklemesi çalışıyor.
+    tracker.identifyUser(savedUser);
+
+    // Profil CRM kimliğiyle çözülmeye devam eder; oturum anonimleşmez.
+    expect(insiderUser.login).toHaveBeenCalledWith(identifiers[0]);
+    expect(identifiers[0].userIds).toEqual(['user-1']);
+    expect(identifiers[0].emails).toEqual([]);
+    expect(identifiers[0].phones).toEqual([]);
+    expect(insiderUser.setEmail).not.toHaveBeenCalled();
+    expect(insiderUser.setPhoneNumber).not.toHaveBeenCalled();
+    expect(insiderUser.setName).toHaveBeenCalledWith('Ayşe');
+    expect(onDiagnostic).toHaveBeenCalledWith(expect.stringContaining('geri tutuldu'));
+  });
+
+  it('sends the new identifiers once the backend budget has passed', () => {
+    const { tracker, insiderUser, identifiers, clock } = createSdkHarness();
+    const savedUser: User = { ...testUser, email: 'yeni@example.com', phoneNumber: '5559876543' };
+
+    tracker.markIdentityChangeIfNeeded(testUser, savedUser);
+    clock.now += INSIDER_IDENTITY_CHANGE_TTL_MS;
+    tracker.identifyUser(savedUser);
+
+    expect(identifiers[0].emails).toEqual(['yeni@example.com']);
+    expect(identifiers[0].phones).toEqual(['+905559876543']);
+    expect(insiderUser.setEmail).toHaveBeenCalledWith('yeni@example.com');
+    expect(insiderUser.setPhoneNumber).toHaveBeenCalledWith('+905559876543');
+  });
+
+  it('does not hold back another account signing in on the same device', () => {
+    const { tracker, identifiers } = createSdkHarness();
+
+    tracker.markIdentityChangeIfNeeded(testUser, { ...testUser, email: 'yeni@example.com' });
+    tracker.identifyUser({ ...testUser, id: 'user-2', email: 'baska@example.com' });
+
+    expect(identifiers[0].userIds).toEqual(['user-2']);
+    expect(identifiers[0].emails).toEqual(['baska@example.com']);
+    expect(identifiers[0].phones).toEqual(['+905321234567']);
+  });
+
+  it('keeps sending the identifiers when the profile save did not change them', () => {
+    const { tracker, identifiers } = createSdkHarness();
+
+    tracker.markIdentityChangeIfNeeded(testUser, { ...testUser, name: 'Ayşe Nur' });
+    tracker.identifyUser(testUser);
+
+    expect(identifiers[0].emails).toEqual(['user@example.com']);
+    expect(identifiers[0].phones).toEqual(['+905321234567']);
+  });
+
   it('logs the Insider user out when the session ends', () => {
     const { tracker, insiderUser } = createSdkHarness();
     tracker.clearUser();
@@ -669,20 +761,5 @@ describe('smart recommender statistics chain', () => {
     await tracker.restoreRecommendationAttribution();
 
     expect(restore).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('toE164TurkishPhone', () => {
-  it.each([
-    ['5321234567', '+905321234567'],
-    ['05321234567', '+905321234567'],
-    ['+905321234567', '+905321234567'],
-    ['0532 123 45 67', '+905321234567'],
-  ])('normalizes %s to %s', (input, expected) => {
-    expect(toE164TurkishPhone(input)).toBe(expected);
-  });
-
-  it.each([[''], ['123'], [undefined], ['1234567890']])('rejects invalid input %s', (input) => {
-    expect(toE164TurkishPhone(input as string | undefined)).toBeNull();
   });
 });

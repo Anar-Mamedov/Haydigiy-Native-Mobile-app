@@ -16,11 +16,13 @@ import { useAuthStore } from '@/features/auth/store/use-auth-store';
  * `identifyUser` idempotent olduğu için SDK zaten doğru kullanıcıyı tanıyorsa
  * çağrı zararsızdır.
  *
- * Aynı zamanda e-posta/telefon değişikliğinin cihaza yansıdığı TEK noktadır:
- * profil güncellemesi kimliği bilerek göndermez (bkz.
+ * Aynı zamanda e-posta/telefon değişikliğinin cihaza yansıdığı noktadır: profil
+ * güncellemesi kimliği bilerek göndermez (bkz.
  * `InsiderTracker.refreshUserAttributes`), çünkü identifier'ı backend Update
- * Identifiers API'si ile değiştirir. Buradaki çağrı bir sonraki açılışta, yani o
- * değişiklik çoktan uygulanmışken çalıştığı için yeni değer duplike profil açmaz.
+ * Identifiers API'si ile değiştirir. Açılış o değişiklikten saniyeler sonra da
+ * gelebilir (sistem uygulamayı arka planda kapatabilir); bu yüzden `identifyUser`,
+ * backend'in bekleme penceresi kapanana kadar yeni değeri geri tutar (bkz.
+ * `InsiderIdentityChangeGate`), aksi halde yeni değer duplike profil açardı.
  */
 export function useInsiderIdentityRestore(): void {
   useEffect(() => {

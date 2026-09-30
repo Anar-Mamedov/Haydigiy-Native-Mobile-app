@@ -16,8 +16,16 @@ import {
   RecommendationAttributionStore,
   recommendationAttributionStore,
 } from './insider-recommendation-attribution';
+import {
+  InsiderIdentityChangeGate,
+  insiderIdentityChangeGate,
+} from './insider-identity-change-gate';
 import { User } from '@/types/auth.types';
-import { extractTurkishNationalNumber, isValidTurkishMobile } from '@/utils/turkish-phone';
+import {
+  hasInsiderIdentifierChanged,
+  toInsiderIdentifierValue,
+  toInsiderUserIdentity,
+} from '../utils/insider-identity';
 import { INSIDER_LANGUAGE, INSIDER_LOCALE } from '../utils/insider-locale';
 
 /**
@@ -78,9 +86,11 @@ export interface InsiderTracker {
    * Kullanıcıyı kimlikleriyle (uuid + e-posta + telefon) Insider'a tanıtır ve
    * attribute'larını yazar.
    *
-   * YALNIZCA kimliğin Insider tarafında güncel olduğu bilinen anlarda çağrılır:
-   * oturum açma ve uygulama açılışında oturumun geri yüklenmesi. Profil ekranından
-   * yapılan e-posta/telefon değişikliğinde çağrılMAZ; bkz. `refreshUserAttributes`.
+   * Oturum açmada ve uygulama açılışında oturumun geri yüklenmesinde çağrılır.
+   * Profil ekranından yapılan e-posta/telefon değişikliğinde çağrılMAZ; bkz.
+   * `refreshUserAttributes`. Değişikliğin ardından bekleme penceresi açıkken
+   * (bkz. `markIdentityChangeIfNeeded`) e-posta ve telefonu geri tutar ve kimliği
+   * yalnızca CRM id ile bildirir.
    */
   identifyUser(user: User): void;
   /**
@@ -103,6 +113,15 @@ export interface InsiderTracker {
    */
   refreshUserAttributes(user: User): void;
   /**
+   * Kaydedilen profil Insider'ın gördüğü e-posta ya da telefonu değiştirdiyse bekleme
+   * penceresini açar; SDK'ya hiçbir şey göndermez.
+   *
+   * Pencere, backend'in Update Identifiers isteğinin en kötü ömrü kadar açık kalır.
+   * Bu sürede uygulama yeniden açılır ya da kullanıcı tekrar giriş yaparsa
+   * `identifyUser` yeni değeri göndermez; bkz. `InsiderIdentityChangeGate`.
+   */
+  markIdentityChangeIfNeeded(previous: User | null, next: User): void;
+  /**
    * Dil/locale attribute'unu oturum durumundan bağımsız tanımlar. Smart Recommender
    * ön koşulu olduğu için misafir ziyaretçilerde de tanımlı olmalı.
    */
@@ -118,6 +137,7 @@ interface InsiderTrackerDependencies {
   /** Tek satırlık, PII taşımayan teşhis günlüğü; cihazda zincir doğrulanabilsin diye. */
   onDiagnostic: (message: string) => void;
   recommendationAttribution: RecommendationAttributionStore;
+  identityChangeGate: InsiderIdentityChangeGate;
 }
 
 const defaultDependencies: InsiderTrackerDependencies = {
@@ -128,33 +148,8 @@ const defaultDependencies: InsiderTrackerDependencies = {
   onError: (message, error) => console.warn(message, error),
   onDiagnostic: (message) => console.info(message),
   recommendationAttribution: recommendationAttributionStore,
+  identityChangeGate: insiderIdentityChangeGate,
 };
-
-/**
- * Insider identifier'ları String bekler ve farklı tipte gelen değeri sessizce
- * düşürür (`react-native-insider/src/InsiderIdentifier.js` → `checkParameters`
- * yalnızca `console.warn` atar). Backend `user.id`'yi JSON number olarak
- * döndürdüğü için `User.id: string` sözleşmesi runtime'da tutmaz ve CRM kimliği
- * hiç gönderilmez; bu yüzden değer sınırda normalize edilir.
- *
- * @see https://academy.insiderone.com/docs/react-native-user-object
- */
-export function toInsiderIdentifierValue(value: unknown): string | null {
-  if (typeof value === 'string') return value.trim() || null;
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  return null;
-}
-
-/** Kayıtlı telefonlar ulusal formatta (5XXXXXXXXX); Insider E164 bekler. */
-export function toE164TurkishPhone(phone: string | undefined): string | null {
-  if (!phone) return null;
-  const trimmed = phone.trim();
-  if (trimmed.startsWith('+')) return trimmed;
-
-  const national = extractTurkishNationalNumber(trimmed);
-  if (!isValidTurkishMobile(national)) return null;
-  return `+90${national}`;
-}
 
 export function createInsiderTracker(
   dependencies: InsiderTrackerDependencies = defaultDependencies,
@@ -423,9 +418,23 @@ export function createInsiderTracker(
         const currentUser = activeSdk.getCurrentUser();
         if (!currentUser) return;
 
-        const userId = toInsiderIdentifierValue(user.id);
-        const email = user.email?.includes('@') ? user.email.trim() : null;
-        const phone = toE164TurkishPhone(user.phoneNumber);
+        const identity = toInsiderUserIdentity(user);
+        const { userId } = identity;
+
+        // Kullanıcı e-postasını/telefonunu az önce değiştirdiyse yeni değer buradan
+        // GÖNDERİLMEZ: backend'in Update Identifiers isteği henüz uygulanmamış olabilir ve
+        // Insider yeni değeri ilk kez cihazdan görürse ikinci bir profil açar. Profil bu
+        // sürede CRM kimliğiyle çözülür; yeni değer pencere kapandıktan sonraki ilk
+        // girişte ya da açılışta gider.
+        const isIdentityChangePending =
+          userId !== null && dependencies.identityChangeGate.isPending(userId);
+        const email = isIdentityChangePending ? null : identity.email;
+        const phone = isIdentityChangePending ? null : identity.phone;
+        if (isIdentityChangePending) {
+          dependencies.onDiagnostic(
+            '[Insider] kimlik değişikliği işleniyor · e-posta/telefon geri tutuldu',
+          );
+        }
 
         // Sıra kritik: attribute'lar o an aktif olan Insider profiline yazılır.
         // Kimlik önce bildirilmezse isim/e-posta/telefon hâlâ anonim (ya da
@@ -456,6 +465,19 @@ export function createInsiderTracker(
         // geçer; Insider da yeni değeri ilk kez gördüğü için ikinci bir profil açar.
         applyProfileAttributes(currentUser, user);
       });
+    },
+
+    markIdentityChangeIfNeeded(previous, next) {
+      // SDK'ya dokunmadığı için `run` dışında; yine de analytics profil kaydını
+      // bozmamalı.
+      try {
+        if (!hasInsiderIdentifierChanged(previous, next)) return;
+
+        const userId = toInsiderIdentifierValue(next.id);
+        if (userId) dependencies.identityChangeGate.markPending(userId);
+      } catch (error) {
+        dependencies.onError('[Insider] kimlik değişikliği işaretlenemedi.', error);
+      }
     },
 
     clearUser() {

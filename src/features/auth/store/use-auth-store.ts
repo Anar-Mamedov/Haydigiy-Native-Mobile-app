@@ -21,7 +21,7 @@ type AuthState = {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isLoading: false,
       login: async (token, user, method) => {
@@ -61,6 +61,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       setUser: (user) => {
+        const previousUser = get().user;
         set({ user });
         // Profil güncellemeleri Insider attribute'larını tazeler; süresi dolan
         // oturumun düşmesi (null) Insider tarafında da logout sayılır.
@@ -69,8 +70,10 @@ export const useAuthStore = create<AuthState>()(
           // anda çalışır; yeni identifier'ı cihazdan göndermek backend'in Update
           // Identifiers isteğiyle yarışır ve genelde onu geçer — Insider yeni değeri ilk
           // kez gördüğü için ikinci bir profil açar ve kullanıcının geçmişi eski profilde
-          // kalır. Identifier'ı backend değiştirir; cihaz yeni kimliği bir sonraki
-          // açılışta `useInsiderIdentityRestore` üzerinden öğrenir.
+          // kalır. Identifier'ı backend değiştirir. Değişiklik bekleme penceresini açar:
+          // uygulama bu sürede yeniden açılsa ya da kullanıcı tekrar giriş yapsa da
+          // `identifyUser` yeni değeri göndermez, pencere kapandıktan sonra gönderir.
+          insiderTracker.markIdentityChangeIfNeeded(previousUser, user);
           insiderTracker.refreshUserAttributes(user);
 
           const identity = userToAnalyticsIdentity(user);

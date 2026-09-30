@@ -3,7 +3,7 @@ import { User } from '@/types/auth.types';
 
 /**
  * Backend `user.id`'yi JSON number olarak döndürüyor; `User.id: string`
- * sözleşmesi runtime'da tutmuyor (aynı tuzak `insider-tracker.ts` içinde de
+ * sözleşmesi runtime'da tutmuyor (aynı tuzak `insider-identity.ts` içinde de
  * belgeli). ClickHouse `user_id` kolonu tam sayı beklediği için dönüşüm tek
  * yerde yapılır.
  */
