@@ -13,7 +13,7 @@ function makeInfo(overrides: Partial<ReturnPaymentInfo> = {}): ReturnPaymentInfo
     message: 'İade kuponunuz oluşturuldu',
     amount: 750,
     couponCode: 'IADEHG123456',
-    expiresAt: '2027-02-07',
+    expiresAt: '03 Nis 2027 - 13:53',
     refundMethodCode: 'gift_voucher',
     ...overrides,
   };
@@ -41,7 +41,7 @@ describe('ReturnGiftVoucherCard', () => {
     expect(screen.getByText('İade kuponunuz oluşturuldu')).toBeTruthy();
     expect(screen.getByText('IADEHG123456')).toBeTruthy();
     expect(screen.getByText('Kupon tutarı: 750.00 TL')).toBeTruthy();
-    expect(screen.getByText('Son kullanma: 2027-02-07')).toBeTruthy();
+    expect(screen.getByText('Son kullanma: 03 Nis 2027 - 13:53')).toBeTruthy();
   });
 
   // Kupon WMS onayından sonra üretiliyor; öncesinde kod/tutar boş gelebilir.

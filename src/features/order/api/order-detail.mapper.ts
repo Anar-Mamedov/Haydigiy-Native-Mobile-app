@@ -13,6 +13,7 @@ import {
   OrderDetailItem,
   ReturnPaymentInfo,
 } from '@/types/order.types';
+import { formatTurkeyDateTime } from '@/utils/format-turkey-date-time';
 import { formatOrderDate, formatOrderTimelineDate, formatReturnDeadline } from '../utils/order-status';
 import { isPendingReturn, normalizeReturnStatus } from '../utils/return-status';
 
@@ -124,7 +125,7 @@ function mapReturnPaymentInfo(
     message: dto.message?.trim() || null,
     amount: Number.isFinite(amount) ? amount : null,
     couponCode: dto.coupon_code?.trim() || null,
-    expiresAt: dto.expires_at?.trim() || null,
+    expiresAt: formatTurkeyDateTime(dto.expires_at),
     refundMethodCode: dto.refund_method?.code?.trim() || null,
   };
 }

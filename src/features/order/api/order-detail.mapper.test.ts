@@ -244,18 +244,19 @@ describe('mapOrderDetail', () => {
           message: 'İade kuponunuz oluşturuldu',
           coupon_code: 'IADEHG123456',
           amount: 750,
-          expires_at: '2027-02-07',
+          expires_at: '2027-04-03T10:53:43.000000Z',
           refund_method: { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' },
         },
       }),
     );
 
+    // Bitiş UTC ISO gelir; kart "İade Tarihi" gibi Türkiye saatli etiket göstermeli.
     expect(order.returnPaymentInfo).toEqual({
       type: 'gift_voucher',
       message: 'İade kuponunuz oluşturuldu',
       amount: 750,
       couponCode: 'IADEHG123456',
-      expiresAt: '2027-02-07',
+      expiresAt: '03 Nis 2027 - 13:53',
       refundMethodCode: 'gift_voucher',
     });
   });
