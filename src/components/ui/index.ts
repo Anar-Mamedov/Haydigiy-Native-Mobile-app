@@ -9,6 +9,7 @@ export * from '@/components/ui/app-select';
 export * from '@/components/ui/app-sheet-overlay';
 export * from '@/components/ui/app-switch';
 export * from '@/components/ui/confirm-dialog';
+export * from '@/components/ui/confirm-sheet';
 export * from '@/components/ui/copy-field';
 export * from '@/components/ui/count-badge';
 export * from '@/components/ui/deferred-mount';

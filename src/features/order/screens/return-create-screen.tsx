@@ -11,6 +11,7 @@ import { ReturnItemRow } from '../components/return-item-row';
 import { OrderItemGroupCard } from '../components/order-item-group-card';
 import { ReturnIbanSection } from '../components/return-iban-section';
 import { ReturnMethodSelector } from '../components/return-method-selector';
+import { ReturnConfirmSheet } from '../components/return-confirm-sheet';
 import { ReturnResultSheets } from '../components/return-result-sheets';
 import { NewIbanModal } from '../components/new-iban-modal';
 import { useReturnCreateController } from '../hooks/use-return-create-controller';
@@ -247,7 +248,7 @@ export function ReturnCreateScreen() {
             borderRadius="$4"
             disabled={!ctrl.canSubmit}
             height={48}
-            onPress={ctrl.handleSubmit}
+            onPress={ctrl.confirmation.request}
             pressStyle={{ opacity: 0.85 }}
           >
             <XStack alignItems="center" gap="$2">
@@ -270,6 +271,17 @@ export function ReturnCreateScreen() {
         onClose={() => setNewIbanOpen(false)}
         onSuccess={() => setNewIbanOpen(false)}
         open={newIbanOpen}
+      />
+
+      <ReturnConfirmSheet
+        isConfirming={ctrl.confirmation.isConfirming}
+        isSchedulingPickup={ctrl.scheduled.pickupSubmitting}
+        onConfirm={ctrl.confirmation.confirm}
+        onOpenChange={(open) => {
+          if (!open) ctrl.confirmation.close();
+        }}
+        open={ctrl.confirmation.open}
+        summary={ctrl.confirmSummary}
       />
 
       <ReturnResultSheets

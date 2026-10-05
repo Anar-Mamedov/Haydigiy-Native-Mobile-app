@@ -25,6 +25,7 @@ jest.mock('../api/return.mutations', () => ({
 }));
 
 jest.mock('./use-scheduled-return', () => ({
+  formatPickupDate: (iso: string) => `tarih:${iso}`,
   useScheduledReturn: jest.fn(() => ({
     canSchedule: false,
     pickupSubmitting: false,
@@ -375,5 +376,116 @@ describe('useReturnCreateController — paket (bundle) satırı', () => {
     );
 
     expect(result.current.selectedItems).toEqual(['8801-0', '8802-0']);
+  });
+});
+
+describe('useReturnCreateController — iade onayı', () => {
+  const useReturnReasonsQuery = returnQueries.useReturnReasonsQuery as jest.MockedFunction<
+    typeof returnQueries.useReturnReasonsQuery
+  >;
+
+  const ORDER = {
+    id: 10,
+    orderNo: 'HG-TEST-3',
+    cargoCompanyName: 'PTT',
+    paymentMethodId: 2,
+    canCreateReturnRequest: true,
+    returnRequestIds: [],
+    items: [
+      {
+        id: 101,
+        quantity: 2,
+        isNonReturnable: false,
+        returnStatus: 'available',
+        name: 'Pijama Takımı',
+        variantName: 'S-M',
+        image: 'https://cdn/pijama.webp',
+      },
+    ],
+  };
+
+  function setup() {
+    useOrderDetailQuery.mockReturnValue({ data: ORDER, isPending: false, isError: false, refetch: jest.fn() });
+    useReturnReasonsQuery.mockReturnValue({
+      data: [{ id: 5, name: 'Beden büyük geldi' }],
+      isPending: false,
+      isError: false,
+    } as never);
+    usePaymentMethodsQuery.mockReturnValue({ data: [SAVED_IBAN], isPending: false, isError: false } as never);
+    useRefundMethodsQuery.mockReturnValue({
+      data: [IBAN_METHOD, GIFT_VOUCHER_METHOD],
+      isPending: false,
+      isError: false,
+    } as never);
+
+    const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
+    act(() => result.current.toggleItem('101-0'));
+    act(() => result.current.toggleItem('101-1'));
+    return result;
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSubmit.mockResolvedValue({ return_code: 'IADE-3' });
+  });
+
+  afterEach(() => {
+    useReturnReasonsQuery.mockReturnValue({ data: [], isPending: false, isError: false } as never);
+  });
+
+  it('summarises the selected products, reasons and refund details for the review sheet', () => {
+    const result = setup();
+    act(() => result.current.setNote('  Kargo poşetiyle göndereceğim.  '));
+
+    expect(result.current.confirmSummary.items).toEqual([
+      {
+        key: '101:5',
+        name: 'Pijama Takımı',
+        variantName: 'S-M',
+        imageUrl: 'https://cdn/pijama.webp',
+        quantity: 2,
+        reasonName: 'Beden büyük geldi',
+        isGift: false,
+      },
+    ]);
+    expect(result.current.confirmSummary.details).toEqual([
+      { label: 'İade Yöntemi', value: 'PTT Kargo Şubesinden Gönder' },
+      { label: 'Geri Ödeme', value: 'IBAN' },
+      { label: "İade IBAN'ı", value: 'TR00 0000 0000 0000 0000 0000 00' },
+      { label: 'IBAN Sahibi', value: 'Test Kullanıcı' },
+      { label: 'Not', value: 'Kargo poşetiyle göndereceğim.' },
+    ]);
+  });
+
+  // İade isteği butona basınca değil, kullanıcı özeti onaylayınca gider.
+  it('opens the review first and submits only after the user confirms', async () => {
+    const result = setup();
+    expect(result.current.canSubmit).toBe(true);
+
+    act(() => result.current.confirmation.request());
+    expect(result.current.confirmation.open).toBe(true);
+    expect(mockSubmit).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await result.current.confirmation.confirm();
+    });
+
+    expect(mockSubmit).toHaveBeenCalledTimes(1);
+    expect(mockSubmit.mock.calls[0][0].items).toEqual([
+      { orderItemId: 101, quantity: 1, returnReasonId: 5, photo: null },
+      { orderItemId: 101, quantity: 1, returnReasonId: 5, photo: null },
+    ]);
+    expect(result.current.confirmation.open).toBe(false);
+    expect(result.current.successMessage).toContain('IADE-3');
+  });
+
+  it('closes the review without sending anything when the user cancels', () => {
+    const result = setup();
+
+    act(() => result.current.confirmation.request());
+    act(() => result.current.confirmation.close());
+
+    expect(result.current.confirmation.open).toBe(false);
+    expect(mockSubmit).not.toHaveBeenCalled();
   });
 });

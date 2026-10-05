@@ -21,8 +21,15 @@ import {
   useSubmitReturnRequestMutation,
 } from '../api/return.mutations';
 import { useRefundMethod } from './use-refund-method';
+import { useReturnConfirmation } from './use-return-confirmation';
 import { useReturnIban } from './use-return-iban';
-import { useScheduledReturn } from './use-scheduled-return';
+import { formatPickupDate, useScheduledReturn } from './use-scheduled-return';
+import {
+  buildReturnConfirmDetails,
+  buildReturnConfirmItems,
+  pickConfirmIban,
+  type ReturnConfirmSummary,
+} from '../utils/return-confirm-summary';
 import { buildReturnBaseMessage, buildReturnSuccessMessage } from '../utils/return-messages';
 import { getReturnErrorMessage, SubmitReturnRequestPayload } from '@/services/return.service';
 import { ReturnMethod, ReturnPhoto, ReturnSubmitItem } from '@/types/order.types';
@@ -334,6 +341,52 @@ export function useReturnCreateController(orderId: string, options: Options) {
     submitMutation,
   ]);
 
+  /** Onay sheet'inin özeti: hangi ürün hangi nedenle, hangi yöntemle iade ediliyor. */
+  const confirmSummary = useMemo<ReturnConfirmSummary>(
+    () => ({
+      items: buildReturnConfirmItems({
+        rows: returnableRows,
+        selectedIds: selectedItems,
+        itemReasons,
+        reasons,
+      }),
+      details: buildReturnConfirmDetails({
+        isStorePickup,
+        returnMethod,
+        pickupDateLabel: scheduled.selectedDate ? formatPickupDate(scheduled.selectedDate) : null,
+        refundMethodName: refund.showSelector ? (refund.selected?.name ?? null) : null,
+        iban: shouldCollectIban
+          ? pickConfirmIban({
+              savedIbans: paymentMethods,
+              selectedIbanId: iban.selectedIbanId,
+              newIban: iban.newIban,
+              newIbanName: iban.newIbanName,
+            })
+          : null,
+        note,
+      }),
+    }),
+    [
+      returnableRows,
+      selectedItems,
+      itemReasons,
+      reasons,
+      isStorePickup,
+      returnMethod,
+      scheduled.selectedDate,
+      refund.showSelector,
+      refund.selected,
+      shouldCollectIban,
+      paymentMethods,
+      iban.selectedIbanId,
+      iban.newIban,
+      iban.newIbanName,
+      note,
+    ],
+  );
+  // "İade Talebi Oluştur" önce bu özeti açar; istek ancak kullanıcı onaylayınca gider.
+  const confirmation = useReturnConfirmation(canSubmit, handleSubmit);
+
   const handleRecreatePtt = useCallback(async () => {
     if (!order) return;
     const resolvedIban = shouldCollectIban ? iban.resolveForPayload() : null;
@@ -426,6 +479,8 @@ export function useReturnCreateController(orderId: string, options: Options) {
     errorMessage,
     clearError: () => setErrorMessage(null),
     handleSubmit,
+    confirmSummary,
+    confirmation,
     handleRecreatePtt,
     closeSuccess,
   };

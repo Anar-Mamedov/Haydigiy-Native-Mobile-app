@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react-native';
+import { fireEvent, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { ReturnCreateScreen } from './return-create-screen';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -41,6 +41,12 @@ jest.mock('../components/return-result-sheets', () => ({
   ReturnResultSheets: () => null,
 }));
 
+const mockConfirmSheet = jest.fn((_props: Record<string, unknown>) => null);
+
+jest.mock('../components/return-confirm-sheet', () => ({
+  ReturnConfirmSheet: (props: Record<string, unknown>) => mockConfirmSheet(props),
+}));
+
 let mockController: Record<string, unknown>;
 
 jest.mock('../hooks/use-return-create-controller', () => ({
@@ -53,6 +59,14 @@ function makeController(overrides: Record<string, unknown> = {}) {
     canSubmit: false,
     clearError: jest.fn(),
     closeSuccess: jest.fn(),
+    confirmation: {
+      close: jest.fn(),
+      confirm: jest.fn(),
+      isConfirming: false,
+      open: false,
+      request: jest.fn(),
+    },
+    confirmSummary: { items: [], details: [] },
     errorMessage: null,
     giftRows: [],
     handleRecreatePtt: jest.fn(),
@@ -112,6 +126,7 @@ function makeController(overrides: Record<string, unknown> = {}) {
 describe('ReturnCreateScreen', () => {
   beforeEach(() => {
     mockSetNote.mockClear();
+    mockConfirmSheet.mockClear();
     mockController = makeController();
   });
 
@@ -187,6 +202,50 @@ describe('ReturnCreateScreen', () => {
 
     expect(screen.getByText('Geri Ödeme Yöntemi')).toBeTruthy();
     expect(screen.queryByText("İade IBAN'ı")).toBeNull();
+  });
+
+  // İade isteği doğrudan gitmez: buton önce ürün/neden özetini onaya açar.
+  it('opens the review sheet instead of submitting straight away', () => {
+    mockController = makeController({ canSubmit: true });
+
+    renderWithTamagui(<ReturnCreateScreen />);
+    fireEvent.press(screen.getByLabelText('İade Talebi Oluştur'));
+
+    const confirmation = mockController.confirmation as { request: jest.Mock };
+    expect(confirmation.request).toHaveBeenCalledTimes(1);
+    expect(mockController.handleSubmit).not.toHaveBeenCalled();
+  });
+
+  it('feeds the review sheet with the summary and confirmation state', () => {
+    const summary = {
+      items: [
+        {
+          key: '10:1',
+          name: 'Pijama Takımı',
+          variantName: 'S-M',
+          imageUrl: null,
+          quantity: 1,
+          reasonName: 'Beden büyük geldi',
+          isGift: false,
+        },
+      ],
+      details: [{ label: 'İade Yöntemi', value: 'PTT Kargo Şubesinden Gönder' }],
+    };
+    const close = jest.fn();
+    mockController = makeController({
+      confirmSummary: summary,
+      confirmation: { close, confirm: jest.fn(), isConfirming: true, open: true, request: jest.fn() },
+      scheduled: { pickupSubmitting: true },
+    });
+
+    renderWithTamagui(<ReturnCreateScreen />);
+
+    const props = mockConfirmSheet.mock.calls.at(-1)?.[0] as Record<string, any>;
+    expect(props).toEqual(
+      expect.objectContaining({ open: true, isConfirming: true, isSchedulingPickup: true, summary }),
+    );
+    props.onOpenChange(false);
+    expect(close).toHaveBeenCalledTimes(1);
   });
 
   it('renders the web-parity blocked screen with a back-to-orders action', () => {
