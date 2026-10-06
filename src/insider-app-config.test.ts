@@ -41,6 +41,11 @@ describe('Insider Expo configuration', () => {
     );
     expect(r8PluginIndex).toBeGreaterThanOrEqual(0);
     expect(r8PluginIndex).toBeLessThan(buildPropertiesIndex);
+
+    // Optimize kaynak küçültme, Insider SDK'sının adıyla aradığı carousel
+    // kaynaklarını release paketinden siliyordu. Koruma listesini yazan plugin
+    // kayıtlı kalmalı (regresyon koruması).
+    expect(config.plugins).toContain('./plugins/with-insider-resource-keep');
     expect(insiderPlugin?.[1]).toEqual(
       expect.objectContaining({
         appGroup: 'group.com.faprika.haydigiy.app',

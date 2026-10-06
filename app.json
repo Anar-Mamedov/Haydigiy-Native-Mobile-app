@@ -2,7 +2,7 @@
   "expo": {
     "name": "Haydigiy",
     "slug": "haydigiy-webview-app",
-    "version": "2.4.2",
+    "version": "2.4.3",
     "platforms": ["ios", "android"],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/icon.png",
-      "buildNumber": "47",
+      "buildNumber": "48",
       "bundleIdentifier": "com.faprika.haydigiy.app",
       "appleTeamId": "PZ2JX5APRL",
       "supportsTablet": true,
@@ -24,7 +24,7 @@
     },
     "android": {
       "package": "com.faprika.haydigiy",
-      "versionCode": 47,
+      "versionCode": 48,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png"

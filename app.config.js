@@ -88,5 +88,10 @@ module.exports = ({ config }) => ({
         minimumDeploymentTarget: '15.1',
       },
     ],
+    // Insider SDK carousel/slider push layout'larını ve görsel boyutlarını adıyla
+    // (`getIdentifier`) arıyor. with-r8-optimization'ın açtığı optimize kaynak
+    // küçültme bunları release paketinden siliyor ve carousel görselsiz geliyordu.
+    // Bu plugin koruma listesini res/raw'a yazar.
+    './plugins/with-insider-resource-keep',
   ],
 });
