@@ -9,8 +9,7 @@ export const GENDER_OPTIONS = [
   { label: 'Diğer', value: 'other' },
 ];
 
-export const BIRTH_DATE_INCOMPLETE_MESSAGE =
-  'Doğum tarihini tamamlayın ya da tamamen temizleyin.';
+export const BIRTH_DATE_INCOMPLETE_MESSAGE = 'Doğum tarihini tamamlayın.';
 
 export const userInfoSchema = z.object({
   name: z
@@ -45,12 +44,14 @@ export const userInfoSchema = z.object({
   month: z.string(),
   year: z.string(),
 }).superRefine((data, ctx) => {
-  // A fully cleared date is sent as `null` (removes the saved one); a half-cleared
-  // date would do the same by accident, so it has to be completed or cleared.
+  // Doğum tarihi silinemez (alanlarda × yok). Yarım kalan tarih — ör. sınır yılı seçilince
+  // boşalan ay — `null` gönderilip kayıtlı tarihi sileceği için tamamlanmadan kaydedilemez.
   const filledParts = [data.day, data.month, data.year].filter(Boolean).length;
   if (filledParts > 0 && filledParts < 3) {
     ctx.addIssue({ code: 'custom', message: BIRTH_DATE_INCOMPLETE_MESSAGE, path: ['day'] });
   }
+  // 16 yaş sınırını web gibi seçim listeleri uygular. Eski kuralla (8 yaş) kaydedilmiş
+  // bir tarih web'de de olduğu gibi geri gönderilir; kullanıcının kaydı engellenmez.
 });
 
 export type UserInfoFormData = z.infer<typeof userInfoSchema>;

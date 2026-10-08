@@ -22,6 +22,7 @@ import { buildProductDetailRoute } from '../utils/product-detail-route';
 import { resolveVariantPricing } from '../utils/variant-price';
 import { useBundleController } from './use-bundle-controller';
 import { useNotifyStock } from './use-notify-stock';
+import { usePreviewColorOptions } from './use-preview-color-options';
 
 const ADD_TO_CART_ERROR = 'Ürün sepete eklenemedi. Lütfen tekrar deneyin.';
 const MISSING_VARIANT_ERROR = 'Bu ürün için beden bilgisi bulunamadı, sepete eklenemedi.';
@@ -181,6 +182,11 @@ export function useProductDetailController() {
   const { isFavorite, toggleFavorite } = useToggleFavorite(displayData);
   const areProductOptionsLoading = isPending && !product;
 
+  // Renk seçici detay isteğini beklemez (web `initialProduct.other_colors`): tam detay gelene kadar
+  // liste kartının ya da açık kardeş rengin önbellekteki renkleri gösterilir.
+  const previewColorOptions = usePreviewColorOptions(idOrSlug, !product);
+  const colorOptions = product ? product.otherColors : previewColorOptions;
+
   // Color variants and similar products replace the current PDP (so back still
   // returns to the origin list) with preview params, so the target renders
   // instantly instead of showing a spinner until its detail request lands.
@@ -310,12 +316,16 @@ export function useProductDetailController() {
   };
 
   // Taşıyıcı için görsel listesi: detay görselleri yoksa tek kapak görseline düşülür.
+  const hasDetailImages = Boolean(displayData?.images && displayData.images.length > 0);
   const productImages =
-    displayData?.images && displayData.images.length > 0
+    hasDetailImages && displayData?.images
       ? displayData.images
       : displayData?.imageUrl
         ? [displayData.imageUrl]
         : [];
+  // Yüksek çözünürlüklü sürümler yalnızca detay görselleriyle sıra sıra eşleşir; kapak görseline
+  // düşüldüyse (önizleme) eşleşecek bir liste yoktur.
+  const productHighResImages = hasDetailImages ? displayData?.largeImages : undefined;
 
   return {
     // Data + durumlar
@@ -328,7 +338,9 @@ export function useProductDetailController() {
     isPending,
     refetch,
     areProductOptionsLoading,
+    colorOptions,
     productImages,
+    productHighResImages,
     productCode: displayData ? extractProductCode(displayData.title) : '',
     initialImageIndex,
     shippingEstimate: shippingQuery.data,

@@ -94,6 +94,27 @@ describe('AccountHub', () => {
     expect(mockPush).toHaveBeenCalledWith('/help');
   });
 
+  it('navigates to the announcement preferences screen when Duyuru Tercihlerim is pressed', () => {
+    renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
+
+    fireEvent.press(screen.getByLabelText('Duyuru Tercihlerim'));
+    expect(mockPush).toHaveBeenCalledWith('/announcement-preferences');
+  });
+
+  it('navigates to the feedback screen when Geri Bildirim is pressed', () => {
+    renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
+
+    fireEvent.press(screen.getByLabelText('Geri Bildirim'));
+    expect(mockPush).toHaveBeenCalledWith('/feedback');
+  });
+
+  it('navigates to the blog when Blog is pressed', () => {
+    renderWithTamagui(<AccountHub onLogout={jest.fn()} />);
+
+    fireEvent.press(screen.getByLabelText('Blog'));
+    expect(mockPush).toHaveBeenCalledWith('/blog');
+  });
+
   it('calls onLogout when Çıkış Yap is pressed', () => {
     const onLogout = jest.fn();
     renderWithTamagui(<AccountHub onLogout={onLogout} />);

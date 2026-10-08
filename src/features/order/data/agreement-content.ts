@@ -85,8 +85,17 @@ export const MESAFELI_CLOSING: AgreementSection[] = [
       'b) Birden fazla parçadan oluşan üründe, alıcı veya alıcı tarafından belirlenen üçüncü kişinin son parçayı teslim aldığı gün,',
       'c) Belirli bir süre boyunca ürünün düzenli tesliminin yapıldığı durumlarda, alıcı veya alıcı tarafından belirlenen üçüncü kişinin ilk ürünü teslim aldığı gün esas alınır.',
       'Ürün teslimi ile hizmet ifasının birlikte olduğu durumlarda, ürün teslimine ilişkin cayma hakkı hükümleri uygulanır.',
+      'Satıcı;',
+      'a) Ürünün teslimi veya hizmetin ifasından önce alıcının cayma hakkını kullanması durumunda cayma hakkının kullanıldığına ilişkin bildirimin kendisine ulaştığı tarihten itibaren,',
+      'b) Ürün’ün tesliminden sonra alıcının cayma hakkını kullanması durumunda, cayma bildiriminin kendisine ulaştığı tarih itibarıyla bedel satıcıya aktarılmamışsa cayma hakkına konu ürünün, iade için öngörülen kargo şirketine teslim edildiği tarihten veya iade için öngörülenin haricinde bir kargo şirketi ile iade edilmesi durumunda da satıcıya ulaştığı tarihten itibaren,',
+      'c) Alıcı’nın siparişinin yasal süre içerisinde teslim edilememesi nedeniyle sözleşmeyi fesih hakkını kullanması durumunda fesih bildiriminin kendisine ulaştığı tarihten itibaren',
+      '14 gün içinde, tahsil ettiği sözleşme konusu bedeli ile teslimat masraflarının alıcıya iadesinden sorumludur.',
       'Cayma hakkının kullanılması halinde alıcı, cayma hakkını kullanmasından itibaren 14 gün içerisinde cayma hakkı kapsamında iade edilecek ürün, ürün kutusu, fatura, ambalajı, varsa standart aksesuarları ve varsa ürün ile hediye edilen diğer ürünlerin de eksiksiz ve hasarsız olarak satıcıya kargo şirketiyle geri gönderir.',
       'Alıcı cayma süresi içinde ürünü, işleyişine, teknik özelliklerine ve kullanım talimatlarına uygun bir şekilde kullandığı takdirde meydana gelen değişiklik ve bozulmalardan sorumlu değildir.',
+      'Cayma hakkının kullanılmasını takip eden 14 gün içerisinde Sözleşme konusu bedeller alıcıya alıcının ödeme yaparken tercih ettiği yöntemi ile iade edilmektedir.',
+      // Web paritesi (iade kargo ücreti): ilk iade satıcıdan, sonrakiler karşı ödemeli.
+      'İade kargo ücreti alıcıya aittir. Her sipariş için ilk iade talebinde kargo ücreti Satıcı tarafından karşılanır; aynı siparişe ilişkin ikinci ve sonraki iade taleplerinde gönderi karşı ödemeli yapılır ve kargo ücreti iade edilecek tutardan düşülür.',
+      'Alıcı iade edeceği ürün/hizmeti Ön Bilgilendirme Formu’nda belirtilen Kargo Şirketi ile satıcıya göndermekle yükümlüdür. Anlaşmalı Kargo Şirketi dışında bir kargo şirketi ile gönderilen iadelerin kargo ücreti de alıcıya aittir.',
       'Alıcı aşağıdaki hallerde cayma hakkını kullanamaz:',
     ],
     bullets: [
@@ -106,7 +115,7 @@ export const MESAFELI_CLOSING: AgreementSection[] = [
     paragraphs: [
       'Alıcı süresi içinde cayma hakkını kullanmadığı takdirde bu hakkını kaybeder.',
       'İade şartlarına uyan ürünler, kargoyu teslim alma tarihinden itibaren 14 iş günü içinde orijinal ambalajında güvenli bir şekilde paketlenerek ve beraberinde gönderilen fatura/irsaliye ile gönderilmelidir.',
-      'Satın alınan ürünün ücretsiz iadesi ve/veya değişimi için belirtilen anlaşmalı kargo şirketi kullanılmalıdır. Aksi taktirde iade kargo ücreti iade edilecek tutardan kesilecektir.',
+      'Satın alınan ürünün iadesi ve/veya değişimi için belirtilen anlaşmalı kargo şirketi kullanılmalıdır. Aksi taktirde iade kargo ücreti alıcıya ait olup, iade edilecek tutardan kesilecektir.',
       'Cayma hakkı bildirimi ve Sözleşmeye ilişkin sair bildirimler Şirket’e ait e-posta ve/veya internet sitesinde belirtilen iletişim kanalları ile gönderilecektir. Cayma hakkının kullanılması için süresi içerisinde Satıcı’ya mevzuat hükümlerine ve internet sitesindeki cayma hakkı kullanım seçeneğine uygun olarak bildirimde bulunulması şarttır, aksi takdirde cayma hakkı kullanılamayacaktır.',
       'Kargo bedava kampanyasıyla oluşturulan siparişler için iade sonrası kalan tutar kampanya şartını sağlamazsa iade edilecek ürün bedelinden teslimatınızın kargo ücreti düşebilir.',
       'İptal ya da iade gerçekleştirildiği halde kampanya koşulları sağlanmaya devam ediyorsa kampanya iptal olmaz.',
@@ -174,7 +183,7 @@ export const ONBILGI_SECTIONS: AgreementSection[] = [
     ],
     bullets: [
       'Ürün orijinal ambalajı ile iade edilmelidir',
-      'İade işlemleri ücretsiz olarak gerçekleştirilmektedir.',
+      'Her sipariş için ilk iadenin kargo ücreti Satıcı tarafından karşılanır; ikinci ve sonraki iadelerde kargo ücreti müşteriye aittir.',
       'Cayma bildirimi yazılı olarak yapılmalıdır',
       'İade Edilemeyecek Ürünler: Kişiye özel hazırlanan ürünler, hijyenik ürünler, açılmış ambalajlı ürünler, dijital ürünler',
     ],

@@ -3,6 +3,8 @@ import { Image } from 'expo-image';
 import { Mail, MapPin, Phone } from '@/components/ui/icons';
 import { Button, Card, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { InfoPageLinkList } from '@/features/info-pages/components/info-page-link-list';
+import { FOOTER_INFO_LINKS } from '@/features/info-pages/data/info-page-links';
 
 const paymentLogos = [
   'https://haydigiy.com/troy-logo.png',
@@ -98,6 +100,9 @@ export function HomeFooter() {
           </XStack>
         </Card>
       </YStack>
+
+      {/* Kurumsal bağlantılar: web alt bilgisindeki yasal sayfalar ve bilgi sayfaları */}
+      <InfoPageLinkList links={FOOTER_INFO_LINKS} title="Kurumsal" />
 
       {/* Payment Logos */}
       <YStack alignItems="center" gap="$3">

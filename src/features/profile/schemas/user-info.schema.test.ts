@@ -1,4 +1,8 @@
-import { BIRTH_DATE_INCOMPLETE_MESSAGE, GENDER_OPTIONS, userInfoSchema } from './user-info.schema';
+import {
+  BIRTH_DATE_INCOMPLETE_MESSAGE,
+  GENDER_OPTIONS,
+  userInfoSchema,
+} from './user-info.schema';
 
 const valid = {
   name: 'Anar',
@@ -43,6 +47,42 @@ describe('userInfoSchema', () => {
     expect(result.error?.issues[0]).toMatchObject({
       message: BIRTH_DATE_INCOMPLETE_MESSAGE,
       path: ['day'],
+    });
+  });
+
+  describe('minimum age (16, like the web form)', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date(2026, 9, 8));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('accepts a birth date exactly 16 years ago', () => {
+      expect(
+        userInfoSchema.safeParse({ ...valid, day: '08', month: '10', year: '2010' }).success,
+      ).toBe(true);
+    });
+
+    // Web paritesi: 16 yaşı seçim listeleri uygular; eski kuralla (8 yaş) kaydedilmiş
+    // bir tarih web'de olduğu gibi geri gönderildiği için kaydı engellemez.
+    it('does not block a date saved under the old 8-year rule', () => {
+      expect(
+        userInfoSchema.safeParse({ ...valid, day: '01', month: '01', year: '2012' }).success,
+      ).toBe(true);
+    });
+
+    it('still lets the user clear the whole birth date', () => {
+      expect(userInfoSchema.safeParse({ ...valid, day: '', month: '', year: '' }).success).toBe(true);
+    });
+
+    it('reports a half-cleared date as incomplete, not as too young', () => {
+      const result = userInfoSchema.safeParse({ ...valid, day: '', month: '10', year: '2018' });
+
+      expect(result.error?.issues).toHaveLength(1);
+      expect(result.error?.issues[0]?.message).toBe(BIRTH_DATE_INCOMPLETE_MESSAGE);
     });
   });
 

@@ -1,5 +1,6 @@
-import { fireEvent, screen, within } from '@testing-library/react-native';
+import { fireEvent, renderHook, screen, within } from '@testing-library/react-native';
 import { BottomNavigationBar } from '@/components/navigation/bottom-navigation-bar';
+import { useTabReselect } from '@/components/navigation/tab-reselect';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
 const mockPush = jest.fn();
@@ -54,12 +55,29 @@ describe('BottomNavigationBar', () => {
     expect(mockReplace).toHaveBeenCalledWith('/');
   });
 
-  it('keeps the user on the home root when Home is pressed on the home route', () => {
+  // Regresyon: ana sayfadayken `replace('/')` aynı ekranı yandan kayarak yeniden getiriyordu.
+  it('does not navigate when Home is pressed on the home root and asks the screen to scroll up instead', () => {
+    const onReselect = jest.fn();
+    renderHook(() => useTabReselect('/', onReselect));
     renderWithTamagui(<BottomNavigationBar />);
 
     fireEvent.press(screen.getByLabelText('Anasayfa'));
 
-    expect(mockReplace).toHaveBeenCalledWith('/');
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(onReselect).toHaveBeenCalledTimes(1);
+  });
+
+  it('notifies a reselect for other tabs on their root without pushing them again', () => {
+    mockPathname = '/favorites';
+    const onReselect = jest.fn();
+    renderHook(() => useTabReselect('/favorites', onReselect));
+    renderWithTamagui(<BottomNavigationBar />);
+
+    fireEvent.press(screen.getByLabelText('Favorilerim'));
+
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(onReselect).toHaveBeenCalledTimes(1);
   });
 
   it('shows the cart badge count', () => {

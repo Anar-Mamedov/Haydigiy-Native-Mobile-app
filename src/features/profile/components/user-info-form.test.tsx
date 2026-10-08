@@ -117,7 +117,7 @@ describe('UserInfoForm', () => {
     expect(mockMutateAsync).not.toHaveBeenCalled();
   });
 
-  describe('clearing the birth date and gender with the × buttons', () => {
+  describe('the × buttons', () => {
     it('sends a cleared gender as null', async () => {
       mockMutateAsync.mockResolvedValueOnce({ message: 'Profil başarıyla güncellendi.' });
       renderWithTamagui(<UserInfoForm profile={profile} />);
@@ -130,31 +130,32 @@ describe('UserInfoForm', () => {
       );
     });
 
-    it('sends a fully cleared birth date as null', async () => {
-      mockMutateAsync.mockResolvedValueOnce({ message: 'Profil başarıyla güncellendi.' });
+    // Doğum tarihi değiştirilebilir ama silinemez.
+    it('offers no × on a saved birth date', () => {
       renderWithTamagui(<UserInfoForm profile={profile} />);
 
-      fireEvent.press(screen.getByLabelText('Gün seçimini kaldır'));
-      fireEvent.press(screen.getByLabelText('Ay seçimini kaldır'));
-      fireEvent.press(screen.getByLabelText('Yıl seçimini kaldır'));
-      fireEvent.press(screen.getByText('Kaydet'));
-
-      await waitFor(() =>
-        expect(mockMutateAsync).toHaveBeenCalledWith(expect.objectContaining({ birth_date: null })),
-      );
+      expect(screen.queryByLabelText('Gün seçimini kaldır')).toBeNull();
+      expect(screen.queryByLabelText('Ay seçimini kaldır')).toBeNull();
+      expect(screen.queryByLabelText('Yıl seçimini kaldır')).toBeNull();
     });
 
-    it('blocks a half-cleared birth date instead of wiping the saved one', async () => {
-      renderWithTamagui(<UserInfoForm profile={profile} />);
+    it('offers no × on a freshly picked birth date either', async () => {
+      renderWithTamagui(<UserInfoForm profile={{ ...profile, birthDate: null }} />);
 
-      fireEvent.press(screen.getByLabelText('Gün seçimini kaldır'));
+      fireEvent.press(screen.getByLabelText('Gün'));
+      fireEvent.press(await screen.findByLabelText('5'));
+
+      expect(screen.queryByLabelText('Gün seçimini kaldır')).toBeNull();
+    });
+
+    it('blocks saving a half-picked birth date', async () => {
+      renderWithTamagui(<UserInfoForm profile={{ ...profile, birthDate: null }} />);
+
+      fireEvent.press(screen.getByLabelText('Gün'));
+      fireEvent.press(await screen.findByLabelText('5'));
       fireEvent.press(screen.getByText('Kaydet'));
 
-      await waitFor(() =>
-        expect(
-          screen.getByText('Doğum tarihini tamamlayın ya da tamamen temizleyin.'),
-        ).toBeTruthy(),
-      );
+      await waitFor(() => expect(screen.getByText('Doğum tarihini tamamlayın.')).toBeTruthy());
       expect(mockMutateAsync).not.toHaveBeenCalled();
     });
 
@@ -170,6 +171,91 @@ describe('UserInfoForm', () => {
       await waitFor(() =>
         expect(mockMutateAsync).toHaveBeenCalledWith(expect.objectContaining({ gender: 'other' })),
       );
+    });
+  });
+
+  describe('16-year minimum age, like the web form', () => {
+    beforeEach(() => {
+      // Yalnız tarih sabitlenir (8 Ekim 2026 → sınır 8 Ekim 2010); zamanlayıcılar gerçek kalır.
+      jest.useFakeTimers({
+        doNotFake: [
+          'cancelAnimationFrame',
+          'cancelIdleCallback',
+          'clearImmediate',
+          'clearInterval',
+          'clearTimeout',
+          'hrtime',
+          'nextTick',
+          'performance',
+          'queueMicrotask',
+          'requestAnimationFrame',
+          'requestIdleCallback',
+          'setImmediate',
+          'setInterval',
+          'setTimeout',
+        ],
+        now: new Date(2026, 9, 8),
+      });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('offers no year newer than 16 years ago', async () => {
+      renderWithTamagui(<UserInfoForm profile={profile} />);
+
+      fireEvent.press(screen.getByLabelText('Yıl'));
+
+      expect(await screen.findByLabelText('2010')).toBeTruthy();
+      expect(screen.queryByLabelText('2011')).toBeNull();
+      expect(screen.queryByLabelText('2018')).toBeNull();
+    });
+
+    it('hides months and days that would make the user younger than 16', async () => {
+      renderWithTamagui(<UserInfoForm profile={{ ...profile, birthDate: '2010-10-05' }} />);
+
+      fireEvent.press(screen.getByLabelText('Ay'));
+      expect(await screen.findByLabelText('Ekim')).toBeTruthy();
+      expect(screen.queryByLabelText('Kasım')).toBeNull();
+
+      fireEvent.press(screen.getByLabelText('Gün'));
+      expect(await screen.findByLabelText('8')).toBeTruthy();
+      expect(screen.queryByLabelText('9')).toBeNull();
+    });
+
+    it('clears a month the newly picked limit year no longer offers', async () => {
+      renderWithTamagui(<UserInfoForm profile={{ ...profile, birthDate: '2009-11-20' }} />);
+
+      fireEvent.press(screen.getByLabelText('Yıl'));
+      fireEvent.press(await screen.findByLabelText('2010'));
+      fireEvent.press(screen.getByText('Kaydet'));
+
+      // Kasım boşaldığı için tarih yarım kalır; kullanıcı ayı yeniden seçmeden kaydedemez.
+      await waitFor(() => expect(screen.getByText('Doğum tarihini tamamlayın.')).toBeTruthy());
+      expect(mockMutateAsync).not.toHaveBeenCalled();
+    });
+
+    // Web paritesi: eski kuralla (8 yaş) kaydedilmiş tarih seçili kalır ve olduğu gibi gönderilir.
+    it('keeps a date saved under the old 8-year rule and saves it as-is', async () => {
+      renderWithTamagui(<UserInfoForm profile={{ ...profile, birthDate: '2012-01-01' }} />);
+
+      fireEvent.press(screen.getByText('Kaydet'));
+
+      await waitFor(() =>
+        expect(mockMutateAsync).toHaveBeenCalledWith(expect.objectContaining({ birth_date: '2012-01-01' })),
+      );
+    });
+
+    it('drops the old year from the list once another year is picked', async () => {
+      renderWithTamagui(<UserInfoForm profile={{ ...profile, birthDate: '2012-01-01' }} />);
+
+      fireEvent.press(screen.getByLabelText('Yıl'));
+      fireEvent.press(await screen.findByLabelText('2009'));
+      fireEvent.press(screen.getByLabelText('Yıl'));
+
+      expect(await screen.findByLabelText('2010')).toBeTruthy();
+      expect(screen.queryByLabelText('2012')).toBeNull();
     });
   });
 

@@ -200,6 +200,12 @@ export type Product = {
   sizes?: ProductSize[];
   hasStock?: boolean;
   images?: string[];
+  /**
+   * Detay görsellerinin yüksek çözünürlüklü (`large`) sürümleri; `images` ile aynı sırada.
+   * Yalnızca detay cevabından gelir: taşıyıcı önce `images`teki orta boy (liste) görseli
+   * gösterir, bu sürüm yüklenince üstüne yumuşakça geçer (web `highResLoaded`).
+   */
+  largeImages?: string[];
   otherColors?: ProductColorOption[];
   videoPath?: string | null;
   featureIcons?: FeatureIcon[];

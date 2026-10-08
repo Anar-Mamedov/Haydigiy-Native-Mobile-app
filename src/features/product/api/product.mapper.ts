@@ -430,6 +430,14 @@ export function mapProductDetailDto(dto: any): Product {
     ? dto.medias.map((m: any) => getImageUrl(m.medium || m.thumb || m.large)).filter(Boolean)
     : [getImageUrl(rawImage)];
 
+  // Taşıyıcıda orta boy görselin üstüne yumuşakça geçilen yüksek çözünürlüklü sürümler. `imagesList`
+  // ile aynı süzgeçten geçer ki iki liste sıra sıra eşleşsin.
+  const largeImagesList: string[] = Array.isArray(dto.medias)
+    ? dto.medias
+        .filter((m: any) => Boolean(getImageUrl(m.medium || m.thumb || m.large)))
+        .map((m: any) => getImageUrl(m.large || m.medium || m.thumb))
+    : [];
+
   const otherColorsMapped = Array.isArray(dto.other_colors)
     ? dto.other_colors.map((color: any) => ({
         id: String(color.id),
@@ -522,6 +530,7 @@ export function mapProductDetailDto(dto: any): Product {
     sizes: variantsMapped.map((v: any) => ({ name: v.name, hasStock: v.hasStock })),
     hasStock: dto.is_stock ?? true,
     images: imagesList,
+    largeImages: largeImagesList,
     otherColors: otherColorsMapped,
     videoPath: dto.video_path ? getImageUrl(dto.video_path) : null,
     featureIcons: featureIconsMapped,

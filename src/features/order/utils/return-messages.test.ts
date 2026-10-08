@@ -1,4 +1,8 @@
-import { buildReturnBaseMessage, buildReturnSuccessMessage } from './return-messages';
+import {
+  buildPttRecreatedMessage,
+  buildReturnBaseMessage,
+  buildReturnSuccessMessage,
+} from './return-messages';
 
 describe('buildReturnBaseMessage', () => {
   it('omits the code line when no code is returned', () => {
@@ -35,5 +39,25 @@ describe('buildReturnSuccessMessage', () => {
     expect(
       buildReturnSuccessMessage({ cargoCompanyName: 'Yurtiçi', returnMethod: 'ptt', code: 'RT-2' }),
     ).toBe('İade talebiniz alındı.\nİade Kodunuz: RT-2');
+  });
+});
+
+describe('buildPttRecreatedMessage', () => {
+  it('reports the existing request as updated to PTT, with its code', () => {
+    expect(buildPttRecreatedMessage({ updatedExisting: true, code: 'PTT-7' })).toBe(
+      'İade talebiniz başarıyla PTT kargo ile güncellendi.\nİade Kodunuz: PTT-7',
+    );
+  });
+
+  it('omits the code line when the backend sends none', () => {
+    expect(buildPttRecreatedMessage({ updatedExisting: true })).toBe(
+      'İade talebiniz başarıyla PTT kargo ile güncellendi.',
+    );
+  });
+
+  it('falls back to the new-request message when no request existed yet', () => {
+    expect(
+      buildPttRecreatedMessage({ updatedExisting: false, code: 'PTT-8', expiresAt: '2026-10-20' }),
+    ).toBe('İade talebiniz alındı.\nİade Kodunuz: PTT-8\nKod geçerlilik: 2026-10-20');
   });
 });

@@ -5,12 +5,14 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { CircleAlert } from '@/components/ui/icons';
 import { AppInput, AppScreen, EmptyState, KeyboardAwareFormScrollView, SectionCard } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
+import { infoPageRoute } from '@/features/info-pages/routes';
 import { OrdersHeader } from '../components/orders-header';
 import { RefundMethodSection } from '../components/refund-method-section';
 import { ReturnItemRow } from '../components/return-item-row';
 import { OrderItemGroupCard } from '../components/order-item-group-card';
 import { ReturnIbanSection } from '../components/return-iban-section';
 import { ReturnMethodSelector } from '../components/return-method-selector';
+import { ReturnConditionsNotice } from '../components/return-conditions-notice';
 import { ReturnConfirmSheet } from '../components/return-confirm-sheet';
 import { ReturnResultSheets } from '../components/return-result-sheets';
 import { NewIbanModal } from '../components/new-iban-modal';
@@ -154,6 +156,10 @@ export function ReturnCreateScreen() {
             </Paragraph>
           </SectionCard>
 
+          {/* Web paritesi: iade koşulları bilgilendirmesi ürün listesinin üstünde; bağlantı web gibi
+              koşulların tam metnini (`/iptal-iade-kosullari`) açar. Form durumu alttaki ekranda kalır. */}
+          <ReturnConditionsNotice onShowAllConditions={() => router.push(infoPageRoute('iptal-iade-kosullari'))} />
+
           {ctrl.giftRows.length > 0 ? (
             <YStack backgroundColor="$yellow2" borderColor="$yellow6" borderRadius="$4" borderWidth={1} padding="$3">
               <Paragraph color="$yellow11" fontSize={12}>
@@ -285,12 +291,14 @@ export function ReturnCreateScreen() {
       />
 
       <ReturnResultSheets
+        canRetry={ctrl.canSubmit}
         errorMessage={ctrl.errorMessage}
         isRecreating={ctrl.isRecreating}
         isStorePickup={ctrl.isStorePickup}
         onCloseError={ctrl.clearError}
         onCloseSuccess={ctrl.closeSuccess}
         onRecreatePtt={ctrl.handleRecreatePtt}
+        onRetry={ctrl.retrySubmit}
         returnMethod={ctrl.returnMethod}
         successMessage={ctrl.successMessage}
       />

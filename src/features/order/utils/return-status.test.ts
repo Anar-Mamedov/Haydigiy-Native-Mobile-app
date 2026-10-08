@@ -1,8 +1,8 @@
 import {
   getReturnProgress,
+  getReturnStatusDetails,
   getReturnStatusNameLabel,
   isPendingReturn,
-  isShippedOrLater,
   normalizeReturnStatus,
   RETURN_PROGRESS_STEPS,
   RETURN_REJECTED_STEPS,
@@ -22,14 +22,37 @@ describe('normalizeReturnStatus', () => {
   });
 });
 
-describe('isPendingReturn / isShippedOrLater', () => {
-  it('detects pending and shipped-or-later states', () => {
+describe('isPendingReturn', () => {
+  it('detects the pending state', () => {
     expect(isPendingReturn('pending')).toBe(true);
+    expect(isPendingReturn(1)).toBe(true);
     expect(isPendingReturn(2)).toBe(false);
-    expect(isShippedOrLater(4)).toBe(true);
-    expect(isShippedOrLater(7)).toBe(true);
-    expect(isShippedOrLater(1)).toBe(false);
-    expect(isShippedOrLater(6)).toBe(false); // iptal edilmiş iade
+  });
+});
+
+describe('getReturnStatusDetails', () => {
+  it('maps each status to the web card title and description', () => {
+    expect(getReturnStatusDetails(1)).toEqual({
+      title: 'İade Talebi Oluşturuldu',
+      description: 'İade talebiniz işleme alındı.',
+    });
+    expect(getReturnStatusDetails(2).title).toBe('İade Onaylandı');
+    expect(getReturnStatusDetails('rejected').title).toBe('İade Reddedildi');
+    expect(getReturnStatusDetails(4)).toEqual({
+      title: 'İade Kargoda',
+      description: 'İade ürünleriniz kargo ile yolda.',
+    });
+    expect(getReturnStatusDetails(5).title).toBe('İade Ürünleri Ulaştı');
+    expect(getReturnStatusDetails(6).title).toBe('İade Talebi İptal Edildi');
+    expect(getReturnStatusDetails(7)).toEqual({
+      title: 'İade Tamamlandı',
+      description: 'İade ödemeniz tamamlandı.',
+    });
+  });
+
+  it('falls back to the "created" copy for unknown statuses', () => {
+    expect(getReturnStatusDetails(null).title).toBe('İade Talebi Oluşturuldu');
+    expect(getReturnStatusDetails(99).title).toBe('İade Talebi Oluşturuldu');
   });
 });
 

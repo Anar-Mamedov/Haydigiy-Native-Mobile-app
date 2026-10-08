@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Spinner, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, EmptyState, ScreenHeader } from '@/components/ui';
+import { InfoPageLinkList } from '@/features/info-pages/components/info-page-link-list';
+import { HELP_INFO_LINKS } from '@/features/info-pages/data/info-page-links';
 import { matchesSearch } from '@/utils/search';
 import { useHelpQuery } from '../api/help.queries';
 import { getDefaultCategoryId } from '../utils/default-category';
@@ -13,10 +15,12 @@ import { HelpArticleItem } from '../components/help-article-item';
 /**
  * "Yardım & Sıkça Sorulan Sorular" — searchable, category-tabbed FAQ accordion
  * backed by `GET /help`, mirroring the web help page. Handles loading, error,
- * empty and success states.
+ * empty and success states. `?kategori={slug}` (web `/yardim?kategori=...`)
+ * selects the initial category; process guides are linked below the FAQ.
  */
 export function HelpScreen() {
   const router = useRouter();
+  const { kategori } = useLocalSearchParams<{ kategori?: string }>();
   const query = useHelpQuery();
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
@@ -73,7 +77,9 @@ export function HelpScreen() {
     );
   }
 
-  const activeCategoryId = selectedCategoryId ?? getDefaultCategoryId(categories);
+  const activeCategoryId =
+    selectedCategoryId ??
+    getDefaultCategoryId(categories, typeof kategori === 'string' ? kategori : undefined);
   const activeCategory = categories.find((category) => category.id === activeCategoryId);
   const filteredArticles =
     activeCategory?.articles.filter((article) => matchesSearch(article.question, search)) ?? [];
@@ -112,6 +118,8 @@ export function HelpScreen() {
             ))}
           </YStack>
         )}
+
+        <InfoPageLinkList links={HELP_INFO_LINKS} title="Faydalı Bilgiler" />
       </YStack>
     </AppScreen>
   );

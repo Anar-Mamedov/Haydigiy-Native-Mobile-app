@@ -103,6 +103,14 @@ describe('BundleItemsPreview', () => {
     expect(screen.queryByText('%0')).toBeNull();
   });
 
+  it('promises no saving when it is 3% or less, matching the price summary', () => {
+    renderPreview({ summary: makeSummary({ savings: 75, savingsPercent: 3, bundlePrice: 2425 }) });
+
+    expect(screen.queryByText(/kazanç/)).toBeNull();
+    expect(screen.queryByTestId('bundle-preview-discount-badge')).toBeNull();
+    expect(screen.queryByText('%3')).toBeNull();
+  });
+
   it('opens the size sheet when tapped', () => {
     const { onPress } = renderPreview();
 

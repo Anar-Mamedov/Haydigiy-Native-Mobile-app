@@ -203,6 +203,7 @@ export function CheckoutScreen() {
             isRemovingCoupon={controller.isRemovingCoupon}
             onApplyCoupon={controller.applyCoupon}
             onRemoveCoupon={controller.clearCoupon}
+            orderSubtotal={controller.orderSummary?.subtotal ?? null}
           />
 
           <CheckoutCargoSection

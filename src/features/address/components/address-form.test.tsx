@@ -1,6 +1,10 @@
-import { fireEvent, screen } from '@testing-library/react-native';
-import { AddressForm } from './address-form';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { AddressForm, EMPTY_ADDRESS_VALUES } from './address-form';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
+import { AddressFormValues } from '@/types/address.types';
+
+const mockAddAddress = jest.fn();
+const mockUpdateAddress = jest.fn();
 
 jest.mock('expo-router', () => {
   const React = jest.requireActual('react');
@@ -17,6 +21,7 @@ jest.mock('@/components/ui', () => {
   const { Pressable, Text, TextInput, View } = jest.requireActual('react-native');
 
   return {
+    AppCheckbox: jest.requireActual('@/components/ui/app-checkbox').AppCheckbox,
     AppButton: ({ children, onPress }: any) =>
       React.createElement(Pressable, { accessibilityLabel: 'Kaydet', onPress }, children),
     AppInput: ({ label, onBlur, onChangeText, placeholder, value }: any) =>
@@ -68,8 +73,8 @@ jest.mock('../api/address.queries', () => ({
 }));
 
 jest.mock('../api/address.mutations', () => ({
-  useAddAddressMutation: () => ({ mutateAsync: jest.fn() }),
-  useUpdateAddressMutation: () => ({ mutateAsync: jest.fn() }),
+  useAddAddressMutation: () => ({ mutateAsync: mockAddAddress }),
+  useUpdateAddressMutation: () => ({ mutateAsync: mockUpdateAddress }),
 }));
 
 jest.mock('./invoice-fields', () => ({
@@ -89,5 +94,92 @@ describe('AddressForm address title', () => {
     fireEvent.press(screen.getByLabelText('Adres Başlığı *:İş Yeri'));
 
     expect(screen.getByTestId('address-title-selected').props.children).toBe('İş Yeri');
+  });
+});
+
+const SAVED_ADDRESS: AddressFormValues = {
+  ...EMPTY_ADDRESS_VALUES,
+  title: 'Ev',
+  name: 'Anar',
+  surname: 'Mamedov',
+  phone: '5551234567',
+  cityId: '34',
+  districtId: '198',
+  neighbourhoodId: '1024',
+  addressLine: 'Cadde 1',
+};
+
+describe('AddressForm default address', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockAddAddress.mockResolvedValue(undefined);
+    mockUpdateAddress.mockResolvedValue(undefined);
+  });
+
+  it('starts unticked for a new address and sends that choice', async () => {
+    const onSuccess = jest.fn();
+    renderWithTamagui(
+      <AddressForm initialValues={SAVED_ADDRESS} mode="create" onSuccess={onSuccess} />,
+    );
+
+    expect(screen.getByText('Varsayılan adres olarak kullan')).toBeTruthy();
+    expect(screen.getByText('Siparişlerde bu adres öncelikli olarak seçilir.')).toBeTruthy();
+    expect(
+      screen.getByLabelText('Varsayılan adres olarak kullan').props.accessibilityState,
+    ).toMatchObject({ checked: false });
+
+    fireEvent.press(screen.getByLabelText('Kaydet'));
+
+    await waitFor(() =>
+      expect(mockAddAddress).toHaveBeenCalledWith(expect.objectContaining({ isDefault: false })),
+    );
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
+  it('sends a ticked box when creating an address', async () => {
+    renderWithTamagui(
+      <AddressForm initialValues={SAVED_ADDRESS} mode="create" onSuccess={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Varsayılan adres olarak kullan'));
+    fireEvent.press(screen.getByLabelText('Kaydet'));
+
+    await waitFor(() =>
+      expect(mockAddAddress).toHaveBeenCalledWith(expect.objectContaining({ isDefault: true })),
+    );
+  });
+
+  it('prefills the saved default flag when editing and sends a change', async () => {
+    renderWithTamagui(
+      <AddressForm
+        addressId="7"
+        initialValues={{ ...SAVED_ADDRESS, isDefault: true }}
+        mode="edit"
+        onSuccess={jest.fn()}
+      />,
+    );
+
+    const checkbox = screen.getByLabelText('Varsayılan adres olarak kullan');
+    expect(checkbox.props.accessibilityState).toMatchObject({ checked: true });
+
+    fireEvent.press(checkbox);
+    fireEvent.press(screen.getByLabelText('Kaydet'));
+
+    await waitFor(() =>
+      expect(mockUpdateAddress).toHaveBeenCalledWith({
+        id: '7',
+        input: expect.objectContaining({ isDefault: false, title: 'Ev' }),
+      }),
+    );
+  });
+
+  it('keeps the checkbox labels readable in dark theme', () => {
+    renderWithTamagui(
+      <AddressForm initialValues={SAVED_ADDRESS} mode="create" onSuccess={jest.fn()} />,
+      'dark',
+    );
+
+    expect(screen.getByText('Varsayılan adres olarak kullan')).toBeTruthy();
+    expect(screen.getByLabelText('Varsayılan adres olarak kullan')).toBeTruthy();
   });
 });

@@ -42,6 +42,7 @@ jest.mock('../components/address-form', () => ({
     companyName: '',
     districtId: '',
     invoiceType: 'individual',
+    isDefault: false,
     isEFatura: false,
     name: '',
     neighbourhoodId: '',

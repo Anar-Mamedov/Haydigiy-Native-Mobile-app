@@ -40,6 +40,10 @@ export async function getProductByIdDto(productId: string): Promise<ProductDto> 
 
 export interface SearchProductsParams {
   c?: string | number;
+  /** Tedarikçi kodu; web `/s/{kod}` listesi API'ye `s` olarak gönderir. */
+  s?: string;
+  /** Menü tabanlı liste sayfası (web `/cok-satanlar` vb.). */
+  menu_url?: string;
   q?: string;
   page?: string | number;
   colors?: string;
@@ -96,6 +100,8 @@ export async function searchProductDtos(params: SearchProductsParams): Promise<S
   const response = await apiClient.get<SearchProductsResponseDto>('/search-products', {
     params: {
       c: params.c,
+      s: params.s,
+      menu_url: params.menu_url,
       q: params.q,
       page: params.page,
       colors: params.colors,
@@ -127,6 +133,7 @@ export async function searchProductDtos(params: SearchProductsParams): Promise<S
   return {
     data: productsData,
     category: raw.category,
+    menu_item: raw.menu_item,
     available_filters: raw.available_filters,
     current_page: currentPage,
     last_page: lastPage,

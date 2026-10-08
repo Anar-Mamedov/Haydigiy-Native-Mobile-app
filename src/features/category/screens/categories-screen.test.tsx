@@ -190,20 +190,15 @@ describe('CategoriesScreen', () => {
     renderWithTamagui(<CategoriesScreen />);
 
     fireEvent.press(screen.getByText('Giyim Tüm Ürünler'));
-    expect(mockPush).toHaveBeenCalledWith({
-      pathname: '/kategori/giyim',
-      params: { c: '20', q: '' },
-    });
+    // Menü bağlantıları derin bağlantı eşlemesinden geçer (utils/link-handler).
+    expect(mockPush).toHaveBeenCalledWith('/kategori/giyim?c=20');
   });
 
   it('navigates when a category grid card is pressed', () => {
     renderWithTamagui(<CategoriesScreen />);
 
     fireEvent.press(screen.getByText('Elbise'));
-    expect(mockPush).toHaveBeenCalledWith({
-      pathname: '/kategori/elbise',
-      params: { c: '30', q: '' },
-    });
+    expect(mockPush).toHaveBeenCalledWith('/kategori/elbise?c=30');
   });
 
   it('filters subcategories when typing in search input', () => {

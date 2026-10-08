@@ -1,98 +1,74 @@
-import { router } from 'expo-router';
+import { type Href, router } from 'expo-router';
 import { Linking } from 'react-native';
+import { resolveDeepLinkPath } from './resolve-deep-link';
+
+/**
+ * Banner, hikâye, vitrin ve kategori menüsü bağlantılarını açar.
+ *
+ * CMS bağlantıları web yollarıdır (`/elbise?c=40`, `/s/123`, `/hakkimizda`,
+ * `/blog/...`) ya da mutlak haydigiy.com adresleridir. Hepsi derin bağlantılarla
+ * aynı eşlemeden (`resolveDeepLinkPath`) geçer; böylece bir banner ile paylaşılan
+ * aynı link aynı ekranı açar. Eskiden her bilinmeyen yol kategori listesine
+ * düşüyordu: ürün slug'ı boş liste, `/blog/abc` "abc" kategorisi, kök `/` tüm
+ * ürünler olarak açılıyordu.
+ *
+ * Yalnızca mağaza dışındaki adresler (sosyal medya, `tel:`, `mailto:`) cihazda
+ * dışarıda açılır.
+ */
+
+/** iOS Universal Links / Android App Links ile uygulamanın sahiplendiği alan adları (app.json). */
+const STORE_HOSTS = new Set(['haydigiy.com', 'www.haydigiy.com']);
+const APP_SCHEME = 'haydigiywebviewapp:';
+const IGNORED_LINKS = new Set(['#', 'javascript:void(0)']);
+const HOME_PATH = '/';
+
+/** `https://kullanici@haydigiy.com:443/yol` → `haydigiy.com`; http(s) değilse `null`. */
+function readHttpHost(link: string): string | null {
+  const match = link.match(/^https?:\/\/([^/?#]+)/i);
+  if (!match) return null;
+
+  const authority = match[1];
+  const host = authority.slice(authority.lastIndexOf('@') + 1).split(':')[0];
+  return host.toLowerCase();
+}
+
+/** Bağlantı uygulama içinde mi açılmalı? Şemasız yollar ve mağaza adresleri evet. */
+export function isInAppLink(link: string): boolean {
+  const host = readHttpHost(link);
+  if (host !== null) return STORE_HOSTS.has(host);
+
+  if (link.toLowerCase().startsWith(APP_SCHEME)) return true;
+
+  // `tel:`, `mailto:`, `whatsapp:` gibi diğer şemalar cihaz uygulamalarına aittir.
+  return !/^[a-z][a-z0-9+.-]*:/i.test(link);
+}
 
 export function handleLinkPress(link: string | null | undefined) {
-  if (!link || link === '#' || link === 'javascript:void(0)') {
+  const trimmed = link?.trim();
+  if (!trimmed || IGNORED_LINKS.has(trimmed)) {
     return;
   }
 
-  // If it's an absolute URL
-  if (link.startsWith('http://') || link.startsWith('https://')) {
-    Linking.openURL(link).catch((err) =>
-      console.warn('Failed to open external link:', link, err)
+  if (!isInAppLink(trimmed)) {
+    Linking.openURL(trimmed).catch((err) =>
+      console.warn('Failed to open external link:', trimmed, err)
     );
     return;
   }
 
-  // Normalize link: ensure it starts with /
-  let normalizedLink = link;
-  if (!normalizedLink.startsWith('/')) {
-    normalizedLink = '/' + normalizedLink;
-  }
+  // Şemasız CMS yolları ("elbise?c=40") da kök yol olarak yorumlanır.
+  const path = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) || trimmed.startsWith('/')
+    ? trimmed
+    : `/${trimmed}`;
 
-  // Parse path and search params
-  const [pathWithSlash, queryString] = normalizedLink.split('?');
-  const path = pathWithSlash.toLowerCase();
+  const target = resolveDeepLinkPath(path);
 
-  // Parse query params
-  const params: Record<string, string> = {};
-  if (queryString) {
-    queryString.split('&').forEach((pair) => {
-      const [key, val] = pair.split('=');
-      if (key) {
-        params[key] = decodeURIComponent(val || '');
-      }
-    });
-  }
-
-  // 1. Cart
-  if (path === '/sepet' || path === '/cart') {
-    router.push('/cart');
+  // Ana sayfa hedefi (kök `/` ya da app karşılığı olmayan web sayfası) üst üste
+  // ikinci bir ana sayfa açmamalı; yığında varsa ona dönülür.
+  if (target === HOME_PATH) {
+    router.dismissTo(HOME_PATH as Href);
     return;
   }
 
-  // 2. Favorites
-  if (path === '/favori-listem' || path === '/favorites') {
-    router.push('/favorites');
-    return;
-  }
-
-  // 3. Profile
-  if (path === '/hesabim' || path === '/profile') {
-    router.push('/profile');
-    return;
-  }
-
-  // 4. Checkout
-  if (path === '/checkout' || path === '/odeme') {
-    router.push('/checkout');
-    return;
-  }
-
-  // 5. Product Detail
-  if (path.startsWith('/product/')) {
-    const parts = pathWithSlash.split('/');
-    const id = parts[parts.length - 1];
-    if (id) {
-      router.push(`/product/${id}` as any);
-      return;
-    }
-  }
-
-  // 6. Search
-  if (path === '/search' || path === '/search-products') {
-    const q = params.q || '';
-    router.push({
-      pathname: '/kategori/search',
-      params: { q },
-    } as any);
-    return;
-  }
-
-  // 7. Category Route
-  // E.g. /kategori/elbise?c=40 or /elbise?c=40
-  const parts = pathWithSlash.split('/').filter(Boolean);
-  let slug = parts[parts.length - 1] || 'all';
-  if (parts[0] === 'kategori' && parts.length > 1) {
-    slug = parts.slice(1).join('/');
-  }
-
-  router.push({
-    pathname: `/kategori/${slug}`,
-    params: {
-      c: params.c || '',
-      q: params.q || '',
-      ...params,
-    },
-  } as any);
+  router.push(target as Href);
 }

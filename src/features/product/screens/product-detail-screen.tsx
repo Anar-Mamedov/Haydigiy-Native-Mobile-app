@@ -104,6 +104,7 @@ export function ProductDetailScreen() {
           {/* Images / Carousel */}
           <ProductCarousel
             images={controller.productImages}
+            highResImages={controller.productHighResImages}
             initialIndex={controller.initialImageIndex}
             isFavorite={controller.isFavorite}
             onImagePress={controller.setGalleryImageIndex}
@@ -135,6 +136,20 @@ export function ProductDetailScreen() {
             <ShippingEstimateInfo estimate={controller.shippingEstimate} variant="product" />
           </YStack>
 
+          {/* Renk seçenekleri tam detayı beklemez (web `initialProduct.other_colors`): önizlemede
+              önbellekteki renkler, detay gelince ürünün kendi renkleri ve kategori kısayolu. */}
+          <ProductColorSelector
+            otherColors={controller.colorOptions}
+            currentProductId={displayData.id}
+            currentProductSlug={displayData.slug}
+            currentProductImage={displayData.imageUrl}
+            onColorSelect={controller.handleColorSelect}
+            categoryName={product?.category}
+            categorySlug={product?.categorySlug}
+            categoryId={product?.categoryId}
+            onCategoryPress={controller.handleCategoryPress}
+          />
+
           {controller.areProductOptionsLoading ? (
             <ProductSizeSelector
               isLoading
@@ -161,19 +176,6 @@ export function ProductDetailScreen() {
                 />
               }
             >
-              {/* Color variants thumbnails & Category redirect */}
-              <ProductColorSelector
-                otherColors={product.otherColors}
-                currentProductId={product.id}
-                currentProductSlug={product.slug}
-                currentProductImage={product.imageUrl}
-                onColorSelect={controller.handleColorSelect}
-                categoryName={product.category}
-                categorySlug={product.categorySlug}
-                categoryId={product.categoryId}
-                onCategoryPress={controller.handleCategoryPress}
-              />
-
               {/* Bundle: tek beden seçici yerine paket özeti; seçim alt sayfada yapılır */}
               {bundle.isBundle && bundle.summary ? (
                 <BundleItemsPreview

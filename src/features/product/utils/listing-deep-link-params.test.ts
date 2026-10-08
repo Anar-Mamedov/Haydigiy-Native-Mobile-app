@@ -1,6 +1,7 @@
 import {
   buildProductListingKey,
   parseProductListingTarget,
+  parseSupplierCode,
 } from './listing-deep-link-params';
 
 describe('parseProductListingTarget', () => {
@@ -82,6 +83,37 @@ describe('parseProductListingTarget', () => {
     expect(parseProductListingTarget({ c: '0' }).categoryId).toBeUndefined();
     expect(parseProductListingTarget({ c: '-3' }).categoryId).toBeUndefined();
   });
+
+  it('reads the supplier code of a supplier listing link', () => {
+    // https://haydigiy.com/s/123?sorting=4 → API `s=123`
+    const target = parseProductListingTarget({ s: '123', sorting: '4' });
+
+    expect(target.supplierCode).toBe('123');
+    expect(target.filters.sorting).toBe('4');
+    expect(target.categoryId).toBeUndefined();
+  });
+
+  it('reads the menu page key of a menu-based listing link', () => {
+    // https://haydigiy.com/cok-satanlar?menu_url=cok-satanlar
+    expect(parseProductListingTarget({ menu_url: 'cok-satanlar' }).menuUrl).toBe('cok-satanlar');
+    expect(parseProductListingTarget({ menu_url: '  ' }).menuUrl).toBeUndefined();
+  });
+});
+
+describe('parseSupplierCode', () => {
+  it('accepts digits only, like the web supplier route', () => {
+    expect(parseSupplierCode('123')).toBe('123');
+    expect(parseSupplierCode(' 0042 ')).toBe('0042');
+    expect(parseSupplierCode(['77', '88'])).toBe('77');
+  });
+
+  it('rejects missing or non-numeric codes', () => {
+    expect(parseSupplierCode(undefined)).toBeUndefined();
+    expect(parseSupplierCode('')).toBeUndefined();
+    expect(parseSupplierCode('abc')).toBeUndefined();
+    expect(parseSupplierCode('12a')).toBeUndefined();
+    expect(parseSupplierCode('-12')).toBeUndefined();
+  });
 });
 
 describe('buildProductListingKey', () => {
@@ -100,6 +132,17 @@ describe('buildProductListingKey', () => {
     const second = buildProductListingKey('search', parseProductListingTarget({ q: 'elbise' }));
 
     expect(second).not.toBe(first);
+  });
+
+  it('changes between two suppliers or two menu pages on the same route', () => {
+    expect(buildProductListingKey('s/1', parseProductListingTarget({ s: '1' }))).not.toBe(
+      buildProductListingKey('s/1', parseProductListingTarget({ s: '2' })),
+    );
+    expect(
+      buildProductListingKey('liste', parseProductListingTarget({ menu_url: 'cok-satanlar' })),
+    ).not.toBe(
+      buildProductListingKey('liste', parseProductListingTarget({ menu_url: 'yeni-gelenler' })),
+    );
   });
 
   it('stays stable for the same target so the list is not remounted needlessly', () => {

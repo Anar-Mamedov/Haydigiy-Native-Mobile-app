@@ -107,6 +107,10 @@ export type OrderDetailItem = {
   /** Scheduled cargo pickup date, formatted for display without a time. */
   returnPickupDate?: string | null;
   returnReceivedAt?: string | null;
+  /** Return approval date as sent by the backend, null until approved. */
+  returnApprovedAt?: string | null;
+  /** Refund amount for this line; null while unknown or zero. */
+  returnRefundAmount?: number | null;
   /** Normalized return status code (1 beklemede … 7 ödeme iadesi), null when unknown. */
   returnStatusCode?: number | null;
   /** Backend status label for the chip; empty → "İşlem Bekliyor". */
@@ -256,8 +260,6 @@ export type OrderDetail = {
   returnDeadline: string | null;
   /** Existing return request ids (latest used for the PTT re-create fallback). */
   returnRequestIds: number[];
-  /** Pending return request that can still be cancelled (web parity), else null. */
-  cancellableReturnRequestId: number | null;
   /** True when any return line was created as a Hepsijet home pickup. */
   hasHepsijetReturn: boolean;
   /** Refund settlement info once the return completes, else null. */

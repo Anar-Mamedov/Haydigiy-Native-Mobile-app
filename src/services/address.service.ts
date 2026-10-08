@@ -90,6 +90,11 @@ export interface NewAddressInput {
   companyName?: string;
   /** E-fatura mükellefi (corporate only). */
   isEFatura?: boolean;
+  /**
+   * "Varsayılan adres olarak kullan". Left out (e.g. the return flow) means the
+   * request does not touch the default flag at all.
+   */
+  isDefault?: boolean;
 }
 
 /** Full address record (`GET /addresses/{id}`) used to prefill the edit form. */
@@ -108,6 +113,7 @@ export interface AddressDetailDto {
   tc_number?: string;
   company_name?: string;
   is_e_invoice?: number | boolean | string;
+  is_default?: number | boolean | string;
   city_id?: number | string;
   district_id?: number | string;
   neighbourhood_id?: number | string;
@@ -138,7 +144,27 @@ function toAddressPayload(input: NewAddressInput) {
     tc_number: input.tcNumber ?? '',
     company_name: isCorporate ? (input.companyName ?? '') : '',
     is_e_invoice: isCorporate ? (input.isEFatura ?? false) : false,
+    ...(input.isDefault === undefined ? {} : { is_default: input.isDefault }),
   };
+}
+
+function isEnabledFlag(value: unknown): boolean {
+  return value === true || value === 1 || value === '1';
+}
+
+/**
+ * Whether a `PUT /addresses/{id}` response already reports the address as the
+ * default one. Accepts both `{ address: {...} }` and a bare address body, like
+ * the web `responseAddressIsDefault`.
+ */
+export function isDefaultAddressResponse(response: unknown): boolean {
+  if (!response || typeof response !== 'object') return false;
+  const record = response as Record<string, unknown>;
+  const address =
+    record.address && typeof record.address === 'object'
+      ? (record.address as Record<string, unknown>)
+      : record;
+  return isEnabledFlag(address.is_default);
 }
 
 /**
@@ -156,9 +182,25 @@ export async function getAddressByIdDto(id: string): Promise<AddressDetailDto | 
   return response.data ?? null;
 }
 
-/** Updates an existing address (`PUT /addresses/{id}`). */
+/** Makes a saved address the default one (`POST /addresses/{id}/make-default`). */
+export async function makeAddressDefaultDto(id: string): Promise<void> {
+  await apiClient.post(`/addresses/${id}/make-default`);
+}
+
+/**
+ * Updates an existing address (`PUT /addresses/{id}`), mirroring the web
+ * `useEditAddress`: turning the default flag on is left out of the PUT body and,
+ * unless the response already reports the address as default, finished through
+ * the dedicated make-default endpoint. Turning it off is sent as `is_default: false`.
+ */
 export async function updateAddressDto(id: string, input: NewAddressInput): Promise<void> {
-  await apiClient.put(`/addresses/${id}`, toAddressPayload(input));
+  const shouldBeDefault = input.isDefault === true;
+  const payload = toAddressPayload(shouldBeDefault ? { ...input, isDefault: undefined } : input);
+  const response = await apiClient.put(`/addresses/${id}`, payload);
+
+  if (shouldBeDefault && !isDefaultAddressResponse(response.data)) {
+    await makeAddressDefaultDto(id);
+  }
 }
 
 /** Deletes a saved address (`DELETE /addresses/{id}`). */

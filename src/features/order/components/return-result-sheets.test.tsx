@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { screen } from '@testing-library/react-native';
+import { fireEvent, screen } from '@testing-library/react-native';
 import { ReturnResultSheets } from './return-result-sheets';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
@@ -25,12 +25,14 @@ describe('ReturnResultSheets', () => {
   it('expands the success sheet to the available screen height and keeps its action above the safe area', () => {
     renderWithTamagui(
       <ReturnResultSheets
+        canRetry
         errorMessage={null}
         isRecreating={false}
         isStorePickup={false}
         onCloseError={jest.fn()}
         onCloseSuccess={jest.fn()}
         onRecreatePtt={jest.fn()}
+        onRetry={jest.fn()}
         returnMethod="hepsijet"
         successMessage="Randevunuz oluşturuldu!"
       />,
@@ -44,4 +46,94 @@ describe('ReturnResultSheets', () => {
     expect(StyleSheet.flatten(scroll.props.contentContainerStyle)?.paddingBottom).toBe(20);
     expect(screen.getByLabelText('Siparişlerime dön')).toBeTruthy();
   });
+
+  it('shows PTT branch info without the old "free return" wording after a PTT flow', () => {
+    renderWithTamagui(
+      <ReturnResultSheets
+        {...makeProps({ successMessage: 'İade talebiniz başarıyla PTT kargo ile güncellendi.' })}
+      />,
+    );
+
+    expect(screen.getByText('PTT Kargo ile gönderilecek')).toBeTruthy();
+    expect(screen.getByText('PTT Kargo şubelerinden iadenizi gönderebilirsiniz.')).toBeTruthy();
+    expect(screen.queryByText('Hepsijet ile evden alım')).toBeNull();
+    expect(screen.queryByText(/ücretsiz/i)).toBeNull();
+  });
+
+  describe('error sheet', () => {
+    it('offers "Yeniden dene" next to "Kapat" for a generic error (web parity)', () => {
+      const onRetry = jest.fn();
+      const onCloseError = jest.fn();
+      renderWithTamagui(
+        <ReturnResultSheets
+          {...makeProps({ errorMessage: 'Sunucu hatası', onRetry, onCloseError })}
+        />,
+      );
+
+      fireEvent.press(screen.getByLabelText('Yeniden dene'));
+      expect(onRetry).toHaveBeenCalledTimes(1);
+
+      fireEvent.press(screen.getByLabelText('Kapat'));
+      expect(onCloseError).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText('PTT İade Talebi Oluştur')).toBeNull();
+    });
+
+    it('disables the retry while the form can no longer be submitted', () => {
+      const onRetry = jest.fn();
+      renderWithTamagui(
+        <ReturnResultSheets
+          {...makeProps({ canRetry: false, errorMessage: 'Sunucu hatası', onRetry })}
+        />,
+      );
+
+      const retry = screen.getByLabelText('Yeniden dene');
+      expect(retry).toBeDisabled();
+      fireEvent.press(retry);
+      expect(onRetry).not.toHaveBeenCalled();
+    });
+
+    it('swaps the retry for the PTT fallback on the Hepsijet "sistemde kayıtlı" error', () => {
+      const onRecreatePtt = jest.fn();
+      renderWithTamagui(
+        <ReturnResultSheets
+          {...makeProps({
+            errorMessage: 'HepsiJet: bu gönderi sistemde kayıtlı.',
+            onRecreatePtt,
+          })}
+        />,
+      );
+
+      expect(screen.queryByLabelText('Yeniden dene')).toBeNull();
+      fireEvent.press(screen.getByText('PTT İade Talebi Oluştur'));
+      expect(onRecreatePtt).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the actions readable in dark mode', () => {
+      renderWithTamagui(
+        <ReturnResultSheets {...makeProps({ errorMessage: 'Sunucu hatası' })} />,
+        'dark',
+      );
+
+      expect(screen.getByText('Yeniden dene')).toBeTruthy();
+      expect(screen.getByText('Kapat')).toBeTruthy();
+    });
+  });
 });
+
+function makeProps(
+  overrides: Partial<Parameters<typeof ReturnResultSheets>[0]> = {},
+): Parameters<typeof ReturnResultSheets>[0] {
+  return {
+    canRetry: true,
+    errorMessage: null,
+    isRecreating: false,
+    isStorePickup: false,
+    onCloseError: jest.fn(),
+    onCloseSuccess: jest.fn(),
+    onRecreatePtt: jest.fn(),
+    onRetry: jest.fn(),
+    returnMethod: 'ptt',
+    successMessage: null,
+    ...overrides,
+  };
+}

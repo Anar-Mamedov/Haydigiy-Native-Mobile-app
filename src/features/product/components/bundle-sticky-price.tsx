@@ -26,7 +26,8 @@ function buildAccessibilityLabel(
 /**
  * Ürün detayının sabit alt barında gerçek paket toplamını gösterir. Kutunun
  * görsel düzeni indirimli tekil ürünle ortaktır (`DiscountPriceBox`); burada
- * yalnızca paket özeti o düzenin beklediği metinlere çevrilir.
+ * yalnızca paket özeti o düzenin beklediği metinlere çevrilir. Kazanç indirim
+ * sayılmıyorsa (%3 ve altı) kutu web'deki gibi turuncu normal fiyat tonuna döner.
  */
 export function BundleStickyPrice({
   maxFontSizeMultiplier,
@@ -46,6 +47,7 @@ export function BundleStickyPrice({
       previousPriceLabel={itemsTotalLabel}
       scale={scale}
       testID="product-sticky-footer-bundle-price"
+      tone={hasSavings ? 'discount' : 'regular'}
     />
   );
 }

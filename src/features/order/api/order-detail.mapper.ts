@@ -15,7 +15,7 @@ import {
 } from '@/types/order.types';
 import { formatTurkeyDateTime } from '@/utils/format-turkey-date-time';
 import { formatOrderDate, formatOrderTimelineDate, formatReturnDeadline } from '../utils/order-status';
-import { isPendingReturn, normalizeReturnStatus } from '../utils/return-status';
+import { normalizeReturnStatus } from '../utils/return-status';
 
 function toNumber(value: number | string | null | undefined): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -70,6 +70,7 @@ function mapItem(dto: OrderDetailItemDto): OrderDetailItem {
 }
 
 function mapReturnedItem(dto: ReturnedItemDetailDto): OrderDetailItem {
+  const refundAmount = toNumber(dto.refund_amount);
   return {
     id: dto.order_item_id ?? 0,
     name: dto.name ?? '',
@@ -85,6 +86,8 @@ function mapReturnedItem(dto: ReturnedItemDetailDto): OrderDetailItem {
     returnRequestedAt: dto.requested_at ?? null,
     returnPickupDate: dto.deliveryDateCurrent ? formatOrderDate(dto.deliveryDateCurrent) : null,
     returnReceivedAt: dto.received_at ?? null,
+    returnApprovedAt: dto.approved_at ?? null,
+    returnRefundAmount: refundAmount > 0 ? refundAmount : null,
     returnStatusCode: normalizeReturnStatus(dto.status),
     returnStatusName: dto.status_name ?? null,
   };
@@ -140,11 +143,6 @@ export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
   const cancelledItems = (dto.cancelled_items ?? []).map(mapCancelledItem);
   const totals = dto.totals ?? {};
 
-  // Web paritesi: beklemede olan ve henüz depoya ulaşmamış ilk iade talebi iptal edilebilir.
-  const cancellableReturnRequestId =
-    (dto.returned_items ?? []).find(
-      (item) => isPendingReturn(item.status) && !item.received_at,
-    )?.return_request_id ?? null;
   const hasHepsijetReturn = (dto.returned_items ?? []).some((item) => item.is_hepsijet === true);
 
   const totalItemsQty = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -184,7 +182,6 @@ export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
     returnBlockReason: dto.return_block_reason ?? null,
     returnDeadline: formatReturnDeadline(dto.delivered_at ?? ''),
     returnRequestIds: (dto.return_requests ?? []).map((request) => request.id),
-    cancellableReturnRequestId,
     hasHepsijetReturn,
     returnPaymentInfo: mapReturnPaymentInfo(dto.return_payment_info),
     shippingAddress: mapAddress(dto.shipping_address),

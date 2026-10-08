@@ -1,12 +1,17 @@
 import { Pressable } from 'react-native';
 import { Separator, XStack, YStack } from 'tamagui';
-import { CheckCircle, ChevronRight, Info, TicketPercent, X } from '@/components/ui/icons';
+import { CheckCircle, ChevronRight, Info, TicketPercent, TriangleAlert, X } from '@/components/ui/icons';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui/section-card';
 import { AppliedCoupon } from '@/types/checkout.types';
 import { Coupon } from '@/types/coupon.types';
 import { ApplyCoupon, useCheckoutCouponSheet } from '../hooks/use-checkout-coupon-sheet';
-import { CouponCartSnapshot, getAppliedCouponDiscountText } from '../utils/checkout-coupon';
+import {
+  CouponCartSnapshot,
+  getAppliedCouponDiscountText,
+  hasUnusedCouponBalance,
+  UNUSED_COUPON_BALANCE_MESSAGE,
+} from '../utils/checkout-coupon';
 import { CheckoutCouponSheet } from './checkout-coupon-sheet';
 
 interface CheckoutCouponSectionProps {
@@ -20,6 +25,11 @@ interface CheckoutCouponSectionProps {
   isCouponsLoading: boolean;
   /** Kupon şartlarının (alt limit, ürün adedi) karşılaştırıldığı sepet değerleri. */
   cart: CouponCartSnapshot;
+  /**
+   * `/order/token` özetindeki ara toplam; kupon tutarı bununla karşılaştırılır (web
+   * paritesi). Özet yenilenirken `null` gelir, o arada sepet ara toplamı kullanılır.
+   */
+  orderSubtotal?: number | null;
   /** Locks coupon actions while `/order/token` is in flight (see `isCheckoutLocked`). */
   disabled?: boolean;
 }
@@ -101,6 +111,29 @@ function AppliedCouponBanner({
   );
 }
 
+/** Sabit tutarlı kupon sepetten büyükken artan tutarın yanacağını bildirir. */
+function UnusedCouponBalanceWarning() {
+  return (
+    <XStack
+      // Web `role="status"` karşılığı: değişince kibarca okunur.
+      accessibilityLiveRegion="polite"
+      alignItems="flex-start"
+      backgroundColor="$yellow2"
+      borderColor="$yellow6"
+      borderRadius="$3"
+      borderWidth={1}
+      gap="$2"
+      paddingHorizontal="$3"
+      paddingVertical="$2"
+    >
+      <TriangleAlert color="$yellow10" size={16} />
+      <Paragraph color="$yellow11" flex={1} fontSize={12} lineHeight={18}>
+        {UNUSED_COUPON_BALANCE_MESSAGE}
+      </Paragraph>
+    </XStack>
+  );
+}
+
 function CouponPrompt({ onOpen }: { onOpen: () => void }) {
   return (
     <XStack
@@ -137,9 +170,11 @@ export function CheckoutCouponSection({
   coupons,
   isCouponsLoading,
   cart,
+  orderSubtotal,
   disabled = false,
 }: CheckoutCouponSectionProps) {
   const sheet = useCheckoutCouponSheet(onApplyCoupon);
+  const showUnusedBalance = hasUnusedCouponBalance(appliedCoupon, orderSubtotal ?? cart.subtotal);
 
   return (
     <>
@@ -172,6 +207,7 @@ export function CheckoutCouponSection({
           ) : (
             <CouponPrompt onOpen={sheet.open} />
           )}
+          {showUnusedBalance ? <UnusedCouponBalanceWarning /> : null}
           {/* Sayfa kapalıyken de kupon hatası (ör. ödeme yöntemi değişince düşen kupon) görünsün. */}
           {couponError && !sheet.isOpen ? (
             <Paragraph accessibilityLiveRegion="polite" color="$red10" fontSize={12}>

@@ -9,6 +9,11 @@
  *
  * Web URL'inde ürün kategorisi filtresi `pc` kısaltmasıyla taşınır; API ve ekran
  * `product_categories` bekler, çeviri burada yapılır.
+ *
+ * Listenin kimliği üç kaynaktan gelebilir: kategori (`c`), menü sayfası
+ * (`menu_url`; web'de `/cok-satanlar` gibi menü tabanlı listeler) ve tedarikçi
+ * (`s`; web `/s/{tedarikçiKodu}`). Tedarikçi listesi uygulamada
+ * `/s/[supplierCode]` rotasıdır; kod yol parametresi olarak gelir.
  */
 
 /** Ekranın durumunu başlatan sıralama/filtre seçimleri. */
@@ -27,7 +32,11 @@ export type ProductListingFilters = {
 export type ProductListingTarget = {
   categoryId?: number;
   filters: ProductListingFilters;
+  /** Web menü tabanlı liste sayfasının anahtarı (`menu_url`). */
+  menuUrl?: string;
   searchQuery?: string;
+  /** Tedarikçi kodu (`s`); yalnızca rakamlardan oluşuyorsa kabul edilir. */
+  supplierCode?: string;
 };
 
 type RawParams = Record<string, string | string[] | undefined>;
@@ -48,10 +57,21 @@ function readCategoryId(value: string | string[] | undefined): number | undefine
   return Number.isSafeInteger(parsed) ? parsed : undefined;
 }
 
+/**
+ * Tedarikçi kodu web'deki gibi yalnızca rakamlardan oluşmalıdır
+ * (`frontend/src/app/s/[supplierCode]/page.tsx`); aksi halde liste açılmaz.
+ */
+export function parseSupplierCode(value: string | string[] | undefined): string | undefined {
+  const raw = readParam(value);
+  return raw && /^\d+$/.test(raw) ? raw : undefined;
+}
+
 export function parseProductListingTarget(params: RawParams): ProductListingTarget {
   return {
     categoryId: readCategoryId(params.c),
+    menuUrl: readParam(params.menu_url),
     searchQuery: readParam(params.q),
+    supplierCode: parseSupplierCode(params.s),
     filters: {
       colors: readParam(params.colors),
       maxPrice: readParam(params.max_price),
@@ -78,6 +98,8 @@ export function buildProductListingKey(
   return [
     slug ?? '',
     target.categoryId ?? '',
+    target.menuUrl ?? '',
+    target.supplierCode ?? '',
     target.searchQuery ?? '',
     target.filters.sorting ?? '',
     target.filters.colors ?? '',

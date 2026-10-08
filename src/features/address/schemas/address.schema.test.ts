@@ -16,6 +16,7 @@ const validIndividual = {
   taxOffice: '',
   companyName: '',
   isEFatura: false,
+  isDefault: false,
 };
 
 describe('addressSchema', () => {
@@ -49,6 +50,14 @@ describe('addressSchema', () => {
 
     expect(addressSchema.safeParse({ ...validIndividual, title: 'Ev Adresim' }).success).toBe(false);
     expect(addressSchema.safeParse({ ...validIndividual, title: 'İş' }).success).toBe(false);
+  });
+
+  it('keeps the "Varsayılan adres" choice as a boolean', () => {
+    const result = addressSchema.safeParse({ ...validIndividual, isDefault: true });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.isDefault).toBe(true);
+    expect(addressSchema.safeParse({ ...validIndividual, isDefault: undefined }).success).toBe(false);
   });
 
   it('requires VKN/TCKN, tax office and company name for corporate invoices', () => {

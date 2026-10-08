@@ -1,21 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, NativeSyntheticEvent, NativeScrollEvent, Pressable, Share, useWindowDimensions } from 'react-native';
-import { Image } from 'expo-image';
 import { Heart, Share2, Play, ChevronLeft, ChevronRight } from '@/components/ui/icons';
 import { XStack, YStack, useThemeName } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { FeatureIcon } from '@/types/product.types';
+import { ProductCarouselImageSlide } from './product-carousel-image-slide';
 import { ProductCarouselVideoSlide } from './product-carousel-video-slide';
-import { ProductFeatureAssetTicker, ProductFeatureDescriptionTicker } from './product-feature-tags';
+import { ProductFeatureDescriptionTicker } from './product-feature-tags';
 import {
   CAROUSEL_HORIZONTAL_PADDING,
   getCarouselImageHeight,
   getCarouselItemWidth,
 } from '../utils/product-carousel-geometry';
+import { getProductCarouselSlides, type ProductCarouselSlide } from '../utils/product-carousel-slides';
 
 interface ProductCarouselProps {
+  /** Orta boy (liste) görseller; önizlemede ve yüksek çözünürlük yüklenene kadar gösterilir. */
   images: string[];
+  /** `images` ile aynı sıradaki yüksek çözünürlüklü sürümler; yüklenince üstlerine yumuşakça geçilir. */
+  highResImages?: string[];
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onVideoPress?: (videoUri: string) => void;
@@ -30,51 +34,15 @@ interface ProductCarouselProps {
   initialIndex?: number;
 }
 
-type ProductCarouselSlide =
-  | {
-      key: string;
-      type: 'image';
-      imageIndex: number;
-      uri: string;
-    }
-  | {
-      key: string;
-      type: 'video';
-      uri: string;
-    };
-
 function getLoopedIndex(index: number, total: number) {
   if (total <= 0) return 0;
 
   return ((index % total) + total) % total;
 }
 
-function getProductCarouselSlides(images: string[], videoPath?: string | null): ProductCarouselSlide[] {
-  const imageSlides = images
-    .filter((uri) => Boolean(uri))
-    .map((uri, index) => ({
-      key: `image-${index}-${uri}`,
-      type: 'image' as const,
-      imageIndex: index,
-      uri,
-    }));
-
-  if (!videoPath) {
-    return imageSlides;
-  }
-
-  return [
-    ...imageSlides,
-    {
-      key: `video-${videoPath}`,
-      type: 'video' as const,
-      uri: videoPath,
-    },
-  ];
-}
-
 export function ProductCarousel({
   images = [],
+  highResImages,
   isFavorite,
   onToggleFavorite,
   onVideoPress,
@@ -90,7 +58,10 @@ export function ProductCarousel({
   const { width: screenWidth } = useWindowDimensions();
   const themeName = useThemeName();
   const isDark = themeName === 'dark' || themeName.includes('dark');
-  const slides = useMemo(() => getProductCarouselSlides(images, videoPath), [images, videoPath]);
+  const slides = useMemo(
+    () => getProductCarouselSlides(images, videoPath, highResImages),
+    [highResImages, images, videoPath],
+  );
   const slideCount = slides.length;
   const videoSlideIndex = slides.findIndex((slide) => slide.type === 'video');
   const hasVideoSlide = videoSlideIndex >= 0;
@@ -264,20 +235,15 @@ export function ProductCarousel({
                   width={itemWidth}
                 />
               ) : (
-                <Pressable
-                  accessibilityLabel={`${item.imageIndex + 1}. görseli tam ekranda aç`}
-                  accessibilityRole="button"
-                  disabled={!onImagePress}
-                  onPress={() => onImagePress?.(item.imageIndex)}
-                  style={{ width: itemWidth, height: carouselHeight }}
-                >
-                  <Image
-                    source={{ uri: item.uri }}
-                    style={{ width: itemWidth, height: carouselHeight }}
-                    contentFit="contain"
-                  />
-                  <ProductFeatureAssetTicker featureIcons={featureIcons} />
-                </Pressable>
+                <ProductCarouselImageSlide
+                  featureIcons={featureIcons}
+                  height={carouselHeight}
+                  imageIndex={item.imageIndex}
+                  onPress={onImagePress}
+                  placeholderUri={item.placeholderUri}
+                  uri={item.uri}
+                  width={itemWidth}
+                />
               )}
             </YStack>
           )}

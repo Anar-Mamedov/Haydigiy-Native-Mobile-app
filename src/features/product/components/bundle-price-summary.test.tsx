@@ -1,5 +1,12 @@
 import { screen } from '@testing-library/react-native';
-import { DISCOUNT_COLOR, SINGLE_PRICE_COLOR, SINGLE_PRICE_COLOR_DARK } from '@/lib/theme/colors';
+import { defaultConfig } from '@tamagui/config/v5';
+import {
+  BRAND_COLOR,
+  DISCOUNT_BACKGROUND_COLOR,
+  DISCOUNT_COLOR,
+  SINGLE_PRICE_COLOR,
+  SINGLE_PRICE_COLOR_DARK,
+} from '@/lib/theme/colors';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { BundlePriceSummary } from './bundle-price-summary';
 import { BundleSummary } from '@/types/bundle.types';
@@ -59,13 +66,48 @@ describe('BundlePriceSummary', () => {
     expect(screen.getByText('₺2.500,00')).not.toHaveStyle({ textDecorationLine: 'line-through' });
   });
 
-  it('omits the percentage when the backend reports none', () => {
+  it('promises no saving when the backend reports no percentage', () => {
+    // Web: `savings > 0 && savingsPercent > 3`; oran yoksa kazanç gösterilmez.
     renderSummary({ savings: 500, savingsPercent: 0 });
 
-    expect(screen.getByText('Kazancın:')).toBeTruthy();
-    expect(screen.getByText('₺500,00')).toBeTruthy();
+    expect(screen.queryByText('Kazancın:')).toBeNull();
     expect(screen.queryByTestId('bundle-summary-discount-badge')).toBeNull();
     expect(screen.queryByText(/%/)).toBeNull();
+  });
+
+  it('paints the box green with the savings when the saving is above 3%', () => {
+    renderSummary();
+
+    expect(screen.getByTestId('bundle-price-summary')).toHaveStyle({
+      backgroundColor: DISCOUNT_BACKGROUND_COLOR,
+      borderTopColor: DISCOUNT_COLOR,
+    });
+  });
+
+  it('treats a saving of 3% or less as no discount and turns the box orange, like the web', () => {
+    renderSummary({ bundlePrice: 2425, savings: 75, savingsPercent: 3 });
+
+    expect(screen.getByText('Paket Fiyatı')).toBeTruthy();
+    expect(screen.getByText('₺2.425,00')).toHaveStyle({ color: BRAND_COLOR });
+    expect(screen.getByTestId('bundle-price-summary')).toHaveStyle({
+      backgroundColor: defaultConfig.themes.light.orange2,
+      borderTopColor: defaultConfig.themes.light.orange5,
+    });
+    expect(screen.queryByText('Ayrı ayrı alırsan')).toBeNull();
+    expect(screen.queryByText('Kazancın:')).toBeNull();
+    expect(screen.queryByTestId('bundle-summary-discount-badge')).toBeNull();
+    expect(screen.queryByText('%3')).toBeNull();
+  });
+
+  it('keeps the orange no-discount box readable in the dark theme', () => {
+    renderSummary({ bundlePrice: 2425, savings: 75, savingsPercent: 3 }, 'dark');
+
+    expect(screen.getByText('Paket Fiyatı')).toBeTruthy();
+    expect(screen.getByText('₺2.425,00')).toHaveStyle({ color: BRAND_COLOR });
+    expect(screen.getByTestId('bundle-price-summary')).toHaveStyle({
+      backgroundColor: defaultConfig.themes.dark.orange2,
+      borderTopColor: defaultConfig.themes.dark.orange5,
+    });
   });
 
   it('stays readable in the dark theme', () => {

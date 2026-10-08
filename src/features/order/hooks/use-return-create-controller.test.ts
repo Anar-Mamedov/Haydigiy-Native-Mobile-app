@@ -18,10 +18,11 @@ jest.mock('../api/return.queries', () => ({
 }));
 
 const mockSubmit = jest.fn();
+const mockRecreate = jest.fn();
 
 jest.mock('../api/return.mutations', () => ({
   useSubmitReturnRequestMutation: jest.fn(() => ({ isPending: false, mutateAsync: mockSubmit })),
-  useRecreateReturnAsPttMutation: jest.fn(() => ({ isPending: false, mutateAsync: jest.fn() })),
+  useRecreateReturnAsPttMutation: jest.fn(() => ({ isPending: false, mutateAsync: mockRecreate })),
 }));
 
 jest.mock('./use-scheduled-return', () => ({
@@ -487,5 +488,138 @@ describe('useReturnCreateController — iade onayı', () => {
 
     expect(result.current.confirmation.open).toBe(false);
     expect(mockSubmit).not.toHaveBeenCalled();
+  });
+});
+
+describe('useReturnCreateController — hata sonrası yeniden deneme ve PTT geri dönüşü', () => {
+  const HEPSIJET_ERROR = 'HepsiJet: bu gönderi sistemde kayıtlı.';
+
+  function setup(returnRequestIds: number[] = []) {
+    useOrderDetailQuery.mockReturnValue({
+      data: { ...makeOrder(6), returnRequestIds },
+      isPending: false,
+      isError: false,
+      refetch: jest.fn(),
+    });
+    const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
+    act(() => result.current.toggleItem('101-0'));
+    act(() => result.current.setItemReason('101-0', 5));
+    return result;
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // Web c2ca07b76: genel hata sheet'indeki "Yeniden dene" talebi aynı seçimlerle tekrar gönderir.
+  it('re-submits the same request from the error sheet and shows the success on retry', async () => {
+    mockSubmit
+      .mockRejectedValueOnce(new Error('Sunucu hatası'))
+      .mockResolvedValueOnce({ return_code: 'IADE-9' });
+    const result = setup();
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+    expect(result.current.errorMessage).toBe('Sunucu hatası');
+
+    await act(async () => {
+      result.current.retrySubmit();
+    });
+
+    expect(mockSubmit).toHaveBeenCalledTimes(2);
+    expect(mockSubmit.mock.calls[1][0]).toEqual(mockSubmit.mock.calls[0][0]);
+    expect(result.current.errorMessage).toBeNull();
+    expect(result.current.successMessage).toContain('IADE-9');
+  });
+
+  it('reopens the error with the new message when the retry fails again', async () => {
+    mockSubmit
+      .mockRejectedValueOnce(new Error('İlk hata'))
+      .mockRejectedValueOnce(new Error('İkinci hata'));
+    const result = setup();
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+    await act(async () => {
+      result.current.retrySubmit();
+    });
+
+    expect(result.current.errorMessage).toBe('İkinci hata');
+  });
+
+  it('does nothing on retry while the form cannot be submitted', async () => {
+    useOrderDetailQuery.mockReturnValue({
+      data: makeOrder(6),
+      isPending: false,
+      isError: false,
+      refetch: jest.fn(),
+    });
+    const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
+
+    await act(async () => {
+      result.current.retrySubmit();
+    });
+
+    expect(result.current.canSubmit).toBe(false);
+    expect(mockSubmit).not.toHaveBeenCalled();
+  });
+
+  // Web 4c4a2194e: PTT ile yeniden oluşturulan talepte başarı ekranı Hepsijet bilgisi göstermez.
+  it('marks the method as PTT after converting the existing request', async () => {
+    mockSubmit.mockRejectedValueOnce(new Error(HEPSIJET_ERROR));
+    mockRecreate.mockResolvedValueOnce({ return_code: 'PTT-1' });
+    const result = setup([31, 35]);
+
+    act(() => result.current.setReturnMethod('hepsijet'));
+    expect(result.current.returnMethod).toBe('hepsijet');
+
+    await act(async () => {
+      await result.current.handleRecreatePtt();
+    });
+
+    expect(mockRecreate).toHaveBeenCalledWith({
+      returnRequestId: 35,
+      payload: expect.objectContaining({ cargoCompany: 'ptt', orderId: 10 }),
+    });
+    expect(result.current.returnMethod).toBe('ptt');
+    expect(result.current.errorMessage).toBeNull();
+    expect(result.current.successMessage).toBe(
+      'İade talebiniz başarıyla PTT kargo ile güncellendi.\nİade Kodunuz: PTT-1',
+    );
+  });
+
+  it('marks the method as PTT when the request is re-submitted as a new PTT return', async () => {
+    mockRecreate.mockResolvedValueOnce({ return_code: 'PTT-2', expires_at: '2026-10-20' });
+    const result = setup([]);
+
+    act(() => result.current.setReturnMethod('hepsijet'));
+    await act(async () => {
+      await result.current.handleRecreatePtt();
+    });
+
+    expect(mockRecreate.mock.calls[0][0].returnRequestId).toBeNull();
+    expect(mockRecreate.mock.calls[0][0].payload.items).toEqual([
+      { orderItemId: 101, quantity: 1, returnReasonId: 5, photo: null },
+    ]);
+    expect(result.current.returnMethod).toBe('ptt');
+    expect(result.current.successMessage).toBe(
+      'İade talebiniz alındı.\nİade Kodunuz: PTT-2\nKod geçerlilik: 2026-10-20',
+    );
+  });
+
+  it('keeps the chosen method and surfaces the error when the PTT fallback fails', async () => {
+    mockRecreate.mockRejectedValueOnce(new Error('PTT servisi yanıt vermedi'));
+    const result = setup([35]);
+
+    act(() => result.current.setReturnMethod('hepsijet'));
+    await act(async () => {
+      await result.current.handleRecreatePtt();
+    });
+
+    expect(result.current.returnMethod).toBe('hepsijet');
+    expect(result.current.errorMessage).toBe('PTT servisi yanıt vermedi');
+    expect(result.current.successMessage).toBeNull();
   });
 });

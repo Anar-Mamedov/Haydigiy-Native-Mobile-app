@@ -305,6 +305,33 @@ describe('mapProductDetailDto', () => {
     });
   });
 
+  it('maps the high-resolution images in the same order as the carousel images', () => {
+    const product = mapProductDetailDto({
+      id: 80872,
+      name: 'Keten Etek',
+      slug: 'keten-etek-80872',
+      price: 219.99,
+      medias: [
+        {
+          medium: 'https://cdn.example.com/storage/products/medium/a.webp',
+          large: 'https://cdn.example.com/storage/products/large/a.webp',
+        },
+        {},
+        { medium: 'https://cdn.example.com/storage/products/medium/b.webp' },
+      ],
+    });
+
+    expect(product.images).toEqual([
+      'https://cdn.example.com/storage/products/medium/a.webp',
+      'https://cdn.example.com/storage/products/medium/b.webp',
+    ]);
+    // Boş medya iki listeden de düşer; `large` yoksa orta boy görselin kendisi kullanılır.
+    expect(product.largeImages).toEqual([
+      'https://cdn.example.com/storage/products/large/a.webp',
+      'https://cdn.example.com/storage/products/medium/b.webp',
+    ]);
+  });
+
   it('maps the ranking badge coming from the detail payload', () => {
     const baseDetailDto = { id: 80872, name: 'Keten Etek', slug: 'keten-etek-80872', price: 219.99 };
 

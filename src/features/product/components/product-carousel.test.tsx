@@ -161,6 +161,53 @@ describe('ProductCarousel', () => {
     expect(onImagePress).toHaveBeenCalledWith(1);
   });
 
+  it('shows the medium image first and fades in the high-resolution one over it, like the web', () => {
+    const highResImages = images.map((uri) => uri.replace('.jpg', '-large.jpg'));
+    renderWithTamagui(
+      <ProductCarousel
+        highResImages={highResImages}
+        images={images}
+        isFavorite={false}
+        onToggleFavorite={jest.fn()}
+      />,
+    );
+
+    // Döngü için ilk görsel sonda klonlanır; her kopya aynı kaynakları taşır.
+    const [firstImage] = screen.getAllByTestId('product-carousel-image-0');
+    // expo-image kaynakları yerel görünüme dizi olarak iletir.
+    expect(firstImage.props.source).toEqual([expect.objectContaining({ uri: highResImages[0] })]);
+    expect(firstImage.props.placeholder).toEqual([expect.objectContaining({ uri: images[0] })]);
+    expect(firstImage.props.placeholderContentFit).toBe('contain');
+    expect(firstImage.props.transition).toEqual({ duration: 300, effect: 'cross-dissolve' });
+  });
+
+  it('renders the preview image without a placeholder or fade while no high-res version is known', () => {
+    renderCarousel([images[0]]);
+
+    const image = screen.getByTestId('product-carousel-image-0');
+    expect(image.props.source).toEqual([expect.objectContaining({ uri: images[0] })]);
+    expect(image.props.placeholder ?? []).toEqual([]);
+    expect(image.props.transition ?? null).toBeNull();
+  });
+
+  it('keeps the loop geometry when the high-resolution images arrive', () => {
+    const highResImages = images.map((uri) => uri.replace('.jpg', '-large.jpg'));
+    renderWithTamagui(
+      <ProductCarousel
+        highResImages={highResImages}
+        images={images}
+        initialIndex={1}
+        isFavorite={false}
+        onToggleFavorite={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText('Slayt 2 / 3')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText('Sonraki görsel'));
+    fireEvent.press(screen.getByLabelText('Sonraki görsel'));
+    expect(screen.getByLabelText('Slayt 1 / 3')).toBeTruthy();
+  });
+
   it('clamps an out-of-range initial index to the available images (never the video)', () => {
     renderWithTamagui(
       <ProductCarousel

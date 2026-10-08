@@ -103,6 +103,75 @@ describe('CheckoutCouponSection', () => {
     expect(screen.getByText('Kupon bu ödeme yönteminde geçersiz.')).toBeTruthy();
   });
 
+  describe('coupon worth more than the cart', () => {
+    const WARNING =
+      'Kupon tutarının sepet toplamını aşan kısmı kullanılamaz. Kalan tutar ise kullanılamayacaktır.';
+    const bigCoupon: AppliedCoupon = { ...appliedCoupon, discountValue: 500, discount: 300 };
+
+    it('warns when a fixed coupon exceeds the order subtotal', () => {
+      renderWithTamagui(
+        <CheckoutCouponSection
+          {...makeProps({
+            appliedCoupon: bigCoupon,
+            cart: { subtotal: 300, itemCount: 1 },
+            orderSubtotal: 300,
+          })}
+        />,
+      );
+
+      expect(screen.getByText(WARNING)).toBeTruthy();
+    });
+
+    it('compares against the order summary subtotal, not the cart, when it is known', () => {
+      renderWithTamagui(
+        <CheckoutCouponSection
+          {...makeProps({
+            appliedCoupon: bigCoupon,
+            cart: { subtotal: 300, itemCount: 1 },
+            orderSubtotal: 600,
+          })}
+        />,
+      );
+
+      expect(screen.queryByText(WARNING)).toBeNull();
+    });
+
+    // Özet yenilenirken uyarı yanıp sönmesin diye sepet ara toplamına düşülür.
+    it('falls back to the cart subtotal while the order summary reloads', () => {
+      renderWithTamagui(
+        <CheckoutCouponSection
+          {...makeProps({
+            appliedCoupon: bigCoupon,
+            cart: { subtotal: 300, itemCount: 1 },
+            orderSubtotal: null,
+          })}
+        />,
+      );
+
+      expect(screen.getByText(WARNING)).toBeTruthy();
+    });
+
+    it('stays hidden for a coupon the cart covers or without a coupon', () => {
+      const { unmount } = renderWithTamagui(
+        <CheckoutCouponSection {...makeProps({ appliedCoupon, orderSubtotal: 300 })} />,
+      );
+      expect(screen.queryByText(WARNING)).toBeNull();
+      unmount();
+
+      renderWithTamagui(<CheckoutCouponSection {...makeProps({ orderSubtotal: 0 })} />);
+      expect(screen.queryByText(WARNING)).toBeNull();
+    });
+
+    it('keeps the warning readable in the dark theme', () => {
+      renderWithTamagui(
+        <CheckoutCouponSection {...makeProps({ appliedCoupon: bigCoupon, orderSubtotal: 100 })} />,
+        'dark',
+      );
+
+      expect(screen.getByText(WARNING)).toBeTruthy();
+    });
+  });
+
   it('keeps the card labels readable in the dark theme', () => {
     renderWithTamagui(<CheckoutCouponSection {...makeProps({ appliedCoupon })} />, 'dark');
 

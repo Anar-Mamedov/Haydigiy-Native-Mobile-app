@@ -1,9 +1,8 @@
 import { useRef, useState } from 'react';
-import { Pressable, RefreshControl } from 'react-native';
+import { RefreshControl } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { Spinner, XStack, YStack } from 'tamagui';
+import { Spinner, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { ArrowLeft, ShoppingCart } from '@/components/ui/icons';
 import { Redirect, useRouter } from 'expo-router';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 
@@ -28,16 +27,22 @@ import { ColorVariantsSheet } from '../components/color-variants-sheet';
 import { QuickFilterDropdown } from '../components/quick-filter-dropdown';
 import { PRODUCT_FILTER_BAR_HEIGHT, ProductFilterBar } from '../components/product-filter-bar';
 import { ProductVideoModal } from '../components/product-video-modal';
+import { ProductListHeader } from '../components/product-list-header';
 import { resolveColorVariantTarget } from '../utils/color-variant-route';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
 import { ProductListingFilters } from '../utils/listing-deep-link-params';
 import { NOT_FOUND_ROUTE } from '@/features/not-found/routes';
 import { isMissingResourceApiError } from '@/utils/api-error';
+import { formatSearchResultsHeading } from '@/utils/format-search-heading';
 
 interface ProductListScreenProps {
   slug: string;
   categoryId?: number;
   searchQuery?: string;
+  /** Tedarikçi listesi (web `/s/{kod}`); API'ye `s` olarak gider. */
+  supplierCode?: string;
+  /** Menü tabanlı liste (web `/cok-satanlar` vb.); API'ye `menu_url` olarak gider. */
+  menuUrl?: string;
   /**
    * Derin bağlantıdan gelen sıralama/filtre seçimleri. Ekran durumunu yalnızca
    * başlatır; sonrasında kullanıcının sayfa içindeki seçimleri geçerlidir.
@@ -52,6 +57,8 @@ export function ProductListScreen({
   slug,
   categoryId,
   searchQuery,
+  supplierCode,
+  menuUrl,
   initialFilters,
 }: ProductListScreenProps) {
   const router = useRouter();
@@ -101,6 +108,8 @@ export function ProductListScreen({
   // TanStack Infinite Query
   const filters = {
     c: categoryId,
+    s: supplierCode,
+    menu_url: menuUrl,
     q: searchQuery,
     colors,
     variants,
@@ -128,6 +137,13 @@ export function ProductListScreen({
   const products = data ? data.pages.flatMap((page) => page.products) : [];
   const firstPage = data?.pages[0];
   const categoryDetails = firstPage?.category;
+  // Web ile aynı öncelik: kategori adı > menü adı > Türkçe başlık biçimli arama
+  // sorgusu > "Ürünler" (tedarikçi listesi de bu son başlığı kullanır).
+  const listTitle =
+    categoryDetails?.name ||
+    firstPage?.menuItemName ||
+    formatSearchResultsHeading(searchQuery) ||
+    'Ürünler';
 
   // Insider "kategori görüntüleme": only real category listings count, search
   // results (q) are not a category page.
@@ -259,59 +275,13 @@ export function ProductListScreen({
     setShowScrollToTop(false);
   };
 
-  // Custom Navigation Header
   const customHeader = (
-    <XStack
-      alignItems="center"
-      backgroundColor="$background"
-      borderBottomWidth={1}
-      borderBottomColor="$borderColor"
-      paddingHorizontal="$3"
-      paddingVertical="$2"
-      gap="$2"
-      height={56}
-      width="100%"
-      justifyContent="space-between"
-    >
-      <XStack alignItems="center" gap="$2" flex={1} minWidth={0}>
-        <Pressable onPress={handleBackPress} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}>
-          <ArrowLeft color="$color" size={24} />
-        </Pressable>
-        <Paragraph fontSize={16} fontWeight="700" color="$color" numberOfLines={1} flex={1}>
-          {categoryDetails?.name || searchQuery || 'Ürünler'}
-        </Paragraph>
-      </XStack>
-
-      <Pressable onPress={handleCartPress} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 6, position: 'relative' })}>
-        <ShoppingCart color="$color" size={22} />
-        {cartCount > 0 ? (
-          <XStack
-            alignItems="center"
-            backgroundColor="$brand"
-            borderRadius={10}
-            height={18}
-            justifyContent="center"
-            minWidth={18}
-            paddingHorizontal={4}
-            position="absolute"
-            right={-2}
-            top={-2}
-          >
-            <Paragraph
-              color="white"
-              fontSize={10}
-              fontWeight="900"
-              includeFontPadding={false}
-              lineHeight={18}
-              textAlign="center"
-              textAlignVertical="center"
-            >
-              {cartCount > 9 ? '9+' : cartCount}
-            </Paragraph>
-          </XStack>
-        ) : null}
-      </Pressable>
-    </XStack>
+    <ProductListHeader
+      cartCount={cartCount}
+      onBack={handleBackPress}
+      onCartPress={handleCartPress}
+      title={listTitle}
+    />
   );
 
   return (

@@ -1,5 +1,7 @@
 /** Ürün fiyatının ekranda nasıl türetilip biçimlendirileceğini belirleyen saf kurallar. */
 
+import { getDiscountPercent, isDisplayableDiscountPercent } from '@/utils/discount-threshold';
+
 export type ProductDiscountInput = {
   /** İndirim yüzdesi (`discount_rate`). */
   discountRate?: number | null;
@@ -31,6 +33,9 @@ function toFiniteNumber(value: number | null | undefined): number | undefined {
  * kullanılamıyorsa indirimli düzen "-%undefined" gibi bozuk bir çıktı üretirdi, bu
  * yüzden böyle bir durumda normal fiyat düzenine geri düşülür. Aynı şekilde güncel
  * fiyattan yüksek olmayan bir `first_price` üstü çizili gösterilmez.
+ *
+ * %3 ve altındaki indirim de indirim sayılmaz (web `has_discount && discount_rate > 3`).
+ * Oran gelmediyse eşik, üstü çizili fiyattan türetilen yüzdeyle uygulanır.
  */
 export function resolveProductDiscount({
   discountRate,
@@ -45,9 +50,11 @@ export function resolveProductDiscount({
   const usableRate = rate !== undefined && rate > 0 ? rate : undefined;
   const usablePreviousPrice =
     previousPrice !== undefined && previousPrice > currentPrice ? previousPrice : undefined;
+  const effectiveRate =
+    usableRate ??
+    (usablePreviousPrice !== undefined ? getDiscountPercent(usablePreviousPrice, currentPrice) : undefined);
 
-  const isDiscounted =
-    hasDiscount === true && (usableRate !== undefined || usablePreviousPrice !== undefined);
+  const isDiscounted = hasDiscount === true && isDisplayableDiscountPercent(effectiveRate);
 
   if (!isDiscounted) {
     return { isDiscounted: false };

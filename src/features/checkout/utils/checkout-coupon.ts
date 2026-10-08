@@ -70,3 +70,17 @@ export function getAppliedCouponDiscountText(coupon: AppliedCoupon): string {
   if (coupon.discountType === 'fixed') return `${formatCurrency(coupon.discountValue)} İndirim`;
   return 'Ücretsiz Kargo';
 }
+
+/** Web ödeme özetindeki uyarının birebir metni. */
+export const UNUSED_COUPON_BALANCE_MESSAGE =
+  'Kupon tutarının sepet toplamını aşan kısmı kullanılamaz. Kalan tutar ise kullanılamayacaktır.';
+
+/**
+ * Sabit tutarlı kuponun yüz değeri sepet ara toplamını aşıyorsa true (web
+ * `hasUnusedCouponBalance`). Yüzde ve ücretsiz kargo kuponlarında artan tutar olmaz.
+ */
+export function hasUnusedCouponBalance(coupon: AppliedCoupon | null, subtotal: number): boolean {
+  if (coupon?.discountType !== 'fixed') return false;
+  const faceValue = Number(coupon.discountValue ?? coupon.discount ?? 0);
+  return faceValue > subtotal;
+}

@@ -20,7 +20,7 @@ export function ReturnMethodSelector({ returnMethod, onChange, scheduled }: Prop
           İade Yöntemi
         </Paragraph>
         <SelectableCard
-          description="İade kodunuzla en yakın PTT şubesinden ücretsiz gönderin."
+          description="İade kodunuzla en yakın PTT şubesinden gönderin."
           onPress={() => onChange('ptt')}
           selected={returnMethod === 'ptt'}
           title="PTT Kargo Şubesinden Gönder"

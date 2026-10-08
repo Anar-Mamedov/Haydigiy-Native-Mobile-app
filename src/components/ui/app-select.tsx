@@ -2,12 +2,15 @@ import { useMemo, useState } from 'react';
 import { Keyboard, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, ChevronDown, Search, X } from '@/components/ui/icons';
-import { Button, Input, Sheet, Spinner, XStack, YStack } from 'tamagui';
+import { Button, ColorTokens, Input, Sheet, Spinner, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { KeyboardAwareSheetScrollView } from '@/components/ui/keyboard-aware-sheet-scroll-view';
 import { matchesSearch } from '@/utils/search';
 import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
+
+/** `AppInput` ile aynı kalıp (Tamagui `$4` boyutu = 44, `$6` köşe); formda ikisi tek aile görünsün. */
+const FIELD_HEIGHT = 44;
 
 export type AppSelectOption = {
   label: string;
@@ -34,6 +37,11 @@ export interface AppSelectProps {
    * web `<Select allowClear>`. Leave it out for selects that must keep a value.
    */
   onClear?: () => void;
+  /**
+   * Alan zemini; varsayılan `$background`. Formdaki `AppInput`'lara farklı bir zemin
+   * verildiyse (ör. profilde `$color1`) aynısı verilir ki seçim kutusu ayrı durmasın.
+   */
+  backgroundColor?: ColorTokens;
 }
 
 /**
@@ -52,6 +60,7 @@ export function AppSelect({
   searchable,
   errorMessage,
   onClear,
+  backgroundColor = '$background',
 }: AppSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -108,13 +117,13 @@ export function AppSelect({
           accessibilityRole="button"
           accessibilityState={{ disabled: Boolean(isDisabled), expanded: open }}
           alignItems="center"
-          backgroundColor="$background"
+          backgroundColor={backgroundColor}
           borderColor={errorMessage ? '$red8' : '$borderColor'}
-          borderRadius="$4"
+          borderRadius="$6"
           borderWidth={1}
           disabled={isDisabled}
           gap="$2"
-          height={46}
+          height={FIELD_HEIGHT}
           justifyContent="space-between"
           onPress={() => !isDisabled && changeOpen(true)}
           opacity={isDisabled ? 0.6 : 1}
@@ -122,7 +131,8 @@ export function AppSelect({
           // The × takes the chevron's place (like the web's `allowClear`), so narrow
           // fields such as the day keep room for the selected value.
           paddingRight={canClear ? 40 : undefined}
-          pressStyle={{ backgroundColor: '$backgroundHover' }}
+          // Açık temada beyaz zeminin "hover" rengi de beyaz; hafif saydamlık her zeminde geri bildirim verir.
+          pressStyle={{ backgroundColor: '$backgroundHover', opacity: 0.85 }}
         >
           <Paragraph
             color={selected ? '$color' : '$color9'}

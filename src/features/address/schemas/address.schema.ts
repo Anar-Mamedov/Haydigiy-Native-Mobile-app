@@ -59,6 +59,7 @@ export const addressSchema = z
     taxOffice: z.string().transform(toAddressText),
     companyName: z.string().transform(toAddressText),
     isEFatura: z.boolean(),
+    isDefault: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.invoiceType !== 'corporate') return;

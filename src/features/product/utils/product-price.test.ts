@@ -47,6 +47,25 @@ describe('resolveProductDiscount', () => {
     });
   });
 
+  it.each([1, 2, 3])('does not treat a %i%% rate as a discount, like the web', (discountRate) => {
+    expect(
+      resolveProductDiscount({ discountRate, firstPrice: 412, hasDiscount: true, price: 400 }),
+    ).toEqual({ isDiscounted: false });
+  });
+
+  it('shows a rate just above the 3% threshold', () => {
+    expect(
+      resolveProductDiscount({ discountRate: 4, firstPrice: 417, hasDiscount: true, price: 400 }),
+    ).toEqual({ discountRate: 4, firstPrice: 417, isDiscounted: true });
+  });
+
+  it('applies the threshold to the first price when the rate is missing', () => {
+    // 410 → 400 = %2,4 → %2: indirim sayılmaz.
+    expect(resolveProductDiscount({ firstPrice: 410, hasDiscount: true, price: 400 })).toEqual({
+      isDiscounted: false,
+    });
+  });
+
   it('ignores non-finite values instead of rendering NaN', () => {
     expect(
       resolveProductDiscount({

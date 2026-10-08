@@ -79,6 +79,10 @@ export interface ReturnedItemDetailDto {
   requested_at?: string | null;
   deliveryDateCurrent?: string | null;
   received_at?: string | null;
+  /** Depo kontrolü sonrası onay tarihi (backend biçimli metin). */
+  approved_at?: string | null;
+  /** İade edilecek/edilen tutar; onaydan önce "0.00" gelebilir. */
+  refund_amount?: number | string | null;
   status?: number | string | null;
   is_hepsijet?: boolean;
 }

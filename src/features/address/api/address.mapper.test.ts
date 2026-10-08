@@ -23,7 +23,15 @@ describe('mapAddress', () => {
       city: 'İstanbul',
       district: 'Kadıköy',
       neighbourhood: 'Moda',
+      isDefault: false,
     });
+  });
+
+  it('reads the default-address flag in every backend format', () => {
+    expect(mapAddress({ id: 1, is_default: 1 }).isDefault).toBe(true);
+    expect(mapAddress({ id: 2, is_default: true }).isDefault).toBe(true);
+    expect(mapAddress({ id: 3, is_default: '1' }).isDefault).toBe(true);
+    expect(mapAddress({ id: 4, is_default: 0 }).isDefault).toBe(false);
   });
 
   it('falls back to the flat *_name fields and keeps an explicit title', () => {
@@ -77,7 +85,15 @@ describe('mapAddressToFormValues', () => {
       taxOffice: 'Kadıköy',
       companyName: 'Acme',
       isEFatura: true,
+      isDefault: false,
     });
+  });
+
+  it('prefills the "Varsayılan adres" checkbox from the saved flag', () => {
+    expect(mapAddressToFormValues({ id: 4, is_default: 1 }).isDefault).toBe(true);
+    expect(mapAddressToFormValues({ id: 5, is_default: true }).isDefault).toBe(true);
+    expect(mapAddressToFormValues({ id: 6, is_default: '0' }).isDefault).toBe(false);
+    expect(mapAddressToFormValues({ id: 7 }).isDefault).toBe(false);
   });
 
   it('defaults to the individual invoice when no invoice flag is present', () => {

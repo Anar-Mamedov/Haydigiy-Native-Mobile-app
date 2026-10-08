@@ -6,7 +6,6 @@ import { Spinner, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton, AppInput, AppSelect, SegmentedControl } from '@/components/ui';
 import { formatTurkishPhoneDisplay, sanitizeTurkishMobileInput } from '@/utils/turkish-phone';
-import { NewAddressInput } from '@/services/address.service';
 import { AddressFormValues } from '@/types/address.types';
 import { addressSchema, AddressFormData, INVOICE_TYPE_OPTIONS } from '../schemas/address.schema';
 import {
@@ -16,6 +15,8 @@ import {
 } from '../api/address.queries';
 import { useAddAddressMutation, useUpdateAddressMutation } from '../api/address.mutations';
 import { ADDRESS_TITLES } from '../utils/address-title';
+import { toNewAddressInput } from '../utils/address-input';
+import { DefaultAddressField } from './default-address-field';
 import { InvoiceFields } from './invoice-fields';
 import { toAddressText, toPersonName } from '@/utils/normalize-text';
 
@@ -38,6 +39,7 @@ export const EMPTY_ADDRESS_VALUES: AddressFormValues = {
   taxOffice: '',
   companyName: '',
   isEFatura: false,
+  isDefault: false,
 };
 
 type AddressFormProps = {
@@ -92,23 +94,7 @@ export function AddressForm({ mode, addressId, initialValues, onSuccess }: Addre
 
   const onSubmit = async (data: AddressFormData) => {
     setServerError(null);
-    const isCorporate = data.invoiceType === 'corporate';
-    const input: NewAddressInput = {
-      title: data.title.trim(),
-      name: data.name.trim(),
-      surname: data.surname.trim(),
-      phone: `0${data.phone}`,
-      tcNumber: data.tcNumber.trim() || undefined,
-      cityId: data.cityId,
-      districtId: data.districtId,
-      neighbourhoodId: data.neighbourhoodId,
-      addressLine: data.addressLine.trim(),
-      invoiceType: data.invoiceType,
-      taxNumber: isCorporate ? data.taxNumber.trim() : undefined,
-      taxOffice: isCorporate ? data.taxOffice.trim() : undefined,
-      companyName: isCorporate ? data.companyName.trim() : undefined,
-      isEFatura: isCorporate ? data.isEFatura : false,
-    };
+    const input = toNewAddressInput(data);
 
     try {
       if (mode === 'edit' && addressId) {
@@ -292,6 +278,14 @@ export function AddressForm({ mode, addressId, initialValues, onSuccess }: Addre
             placeholder="Cadde, mahalle, sokak ve diğer bilgileri giriniz."
             value={value}
           />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="isDefault"
+        render={({ field: { onChange, value } }) => (
+          <DefaultAddressField checked={value} onChange={onChange} />
         )}
       />
 

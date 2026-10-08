@@ -16,9 +16,13 @@ type Props = {
   isStorePickup: boolean;
   returnMethod: ReturnMethod;
   isRecreating: boolean;
+  /** Form hâlâ gönderilebilir mi? "Yeniden dene" buna göre açılır. */
+  canRetry: boolean;
   onCloseSuccess: () => void;
   onCloseError: () => void;
   onRecreatePtt: () => void;
+  /** Genel hatada talebi aynı seçimlerle yeniden gönderir (web paritesi). */
+  onRetry: () => void;
 };
 
 function SuccessInfo({
@@ -66,7 +70,7 @@ function SuccessInfo({
         PTT Kargo ile gönderilecek
       </Paragraph>
       <Paragraph color="$color10" fontSize={13}>
-        PTT Kargo şubelerinden iadenizi ücretsiz olarak gönderebilirsiniz.
+        PTT Kargo şubelerinden iadenizi gönderebilirsiniz.
       </Paragraph>
       <Paragraph color="$color10" fontSize={13}>
         Kargonuzu şubeye teslim ederken iade kodunu görevliyle paylaşmanız yeterlidir.
@@ -82,9 +86,11 @@ export function ReturnResultSheets({
   isStorePickup,
   returnMethod,
   isRecreating,
+  canRetry,
   onCloseSuccess,
   onCloseError,
   onRecreatePtt,
+  onRetry,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { height: frameHeight } = useSafeAreaFrame();
@@ -206,19 +212,38 @@ export function ReturnResultSheets({
                 </Button>
               </YStack>
             ) : (
-              <Button
-                backgroundColor="$background"
-                borderColor="$borderColor"
-                borderRadius="$4"
-                borderWidth={1}
-                height={44}
-                onPress={onCloseError}
-                pressStyle={{ backgroundColor: '$backgroundHover' }}
-              >
-                <Paragraph color="$color" fontWeight="600">
-                  Kapat
-                </Paragraph>
-              </Button>
+              <XStack gap="$2">
+                <Button
+                  accessibilityLabel="Yeniden dene"
+                  accessibilityState={{ disabled: !canRetry }}
+                  backgroundColor={canRetry ? '$brand' : '$color4'}
+                  borderRadius="$4"
+                  disabled={!canRetry}
+                  flex={1}
+                  height={44}
+                  onPress={canRetry ? onRetry : undefined}
+                  pressStyle={{ opacity: 0.85 }}
+                >
+                  <Paragraph color={canRetry ? 'white' : '$color10'} fontWeight="700">
+                    Yeniden dene
+                  </Paragraph>
+                </Button>
+                <Button
+                  accessibilityLabel="Kapat"
+                  backgroundColor="$background"
+                  borderColor="$borderColor"
+                  borderRadius="$4"
+                  borderWidth={1}
+                  flex={1}
+                  height={44}
+                  onPress={onCloseError}
+                  pressStyle={{ backgroundColor: '$backgroundHover' }}
+                >
+                  <Paragraph color="$color" fontWeight="600">
+                    Kapat
+                  </Paragraph>
+                </Button>
+              </XStack>
             )}
           </YStack>
         </Sheet.Frame>

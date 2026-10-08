@@ -1,9 +1,13 @@
 import { BundleItem, BundleSummary } from '@/types/bundle.types';
 import { Product } from '@/types/product.types';
+import { getDiscountPercent, isDisplayableDiscountPercent } from '@/utils/discount-threshold';
 
 /** Paket kazancının ekranda nasıl gösterileceğini belirleyen türetilmiş model. */
 export type BundleSavings = {
-  /** Paket, ürünlerin tek tek toplamından gerçekten ucuz mu. */
+  /**
+   * Paket, ürünlerin tek tek toplamından indirim sayılacak kadar ucuz mu. Yanlışsa paket
+   * kutuları yeşil indirim düzeni yerine turuncu normal fiyat düzenine döner (web ile aynı).
+   */
   hasSavings: boolean;
   /** Rozette gösterilebilir indirim yüzdesi; gösterilemiyorsa `undefined`. */
   discountRate?: number;
@@ -12,18 +16,17 @@ export type BundleSavings = {
 /**
  * Paket özetini "kazanç gösterilsin mi" kararına indirger.
  *
- * Kural tek yerde durur: paket ucuz değilse ne üstü çizili toplam ne de yüzde
- * rozeti çizilir — kullanıcıya olmayan bir indirim vaat edilmez. Yüzde, kazanç
- * olmadan tek başına da gösterilmez; backend tutarsız bir oran gönderse bile
- * ekranda "%0" ya da dayanaksız bir indirim iddiası oluşmaz.
+ * Kural tek yerde durur: paket ucuz değilse ya da kazanç %3'ü geçmiyorsa (web'deki
+ * `savings > 0 && savingsPercent > 3`) ne üstü çizili toplam, ne "Kazancın" etiketi ne de
+ * yüzde rozeti çizilir — kullanıcıya indirim sayılmayan bir fark vaat edilmez. Backend
+ * tutarsız bir oran gönderse bile ekranda "%0" ya da dayanaksız bir indirim iddiası oluşmaz.
  */
 export function resolveBundleSavings(summary: BundleSummary): BundleSavings {
-  const hasSavings = summary.savings > 0;
   const rate = summary.savingsPercent;
-  const canShowRate = hasSavings && Number.isFinite(rate) && rate > 0;
+  const hasSavings = summary.savings > 0 && isDisplayableDiscountPercent(rate);
 
   return {
-    discountRate: canShowRate ? rate : undefined,
+    discountRate: hasSavings ? rate : undefined,
     hasSavings,
   };
 }
@@ -49,8 +52,8 @@ export type BundleListingSavings = {
 /**
  * Liste kartında paketin kazancını çözer. Liste cevabı paketlerde indirim alanlarını boş gönderir;
  * kazanç, paketteki ürünlerin tekil fiyat toplamı ile paket fiyatının farkıdır. Paket değilse, toplam
- * yoksa ya da paket fiyatından yüksek değilse null döner — kullanıcıya olmayan bir kazanç vaat edilmez.
- * Yuvarlanınca %0'a düşen kazanç da gösterilmez ("-%0" rozeti çıkmasın).
+ * yoksa, paket fiyatından yüksek değilse ya da kazanç %3'ü geçmiyorsa null döner ve kart normal
+ * fiyatını gösterir (web `getListingBundlePrice` ve detaydaki paket kutusuyla aynı eşik).
  */
 export function resolveBundleListingSavings(
   product: Pick<Product, 'isBundle' | 'price' | 'bundleItemsTotal'>,
@@ -59,6 +62,6 @@ export function resolveBundleListingSavings(
   if (!product.isBundle || itemsTotal === undefined || !Number.isFinite(itemsTotal)) return null;
   if (!(product.price > 0) || itemsTotal <= product.price) return null;
 
-  const savingsPercent = Math.round(((itemsTotal - product.price) / itemsTotal) * 100);
-  return savingsPercent > 0 ? { itemsTotal, savingsPercent } : null;
+  const savingsPercent = getDiscountPercent(itemsTotal, product.price);
+  return isDisplayableDiscountPercent(savingsPercent) ? { itemsTotal, savingsPercent } : null;
 }

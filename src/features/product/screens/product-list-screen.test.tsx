@@ -201,6 +201,92 @@ describe('ProductListScreen', () => {
     );
   });
 
+  it('titles a search listing with the Turkish title-cased query, like the web', () => {
+    // Web e213dccb7/e3e9620b9: ham sorgu yerine "Işıklı Pijama" için sonuçlar.
+    (useInfiniteSearchProductsQuery as jest.Mock).mockReturnValue({
+      data: {
+        pages: [
+          {
+            products: mockProducts,
+            category: undefined,
+            availableFilters: mockAvailableFilters,
+            pagination: { current_page: 1, last_page: 1, total: 2, per_page: 20 },
+          },
+        ],
+      },
+      isPending: false,
+      isError: false,
+      refetch: mockRefetch,
+      fetchNextPage: mockFetchNextPage,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    });
+
+    renderWithTamagui(<ProductListScreen searchQuery="ışıklı pijama" slug="search" />);
+
+    expect(screen.getByText('"Işıklı Pijama" için sonuçlar')).toBeTruthy();
+    expect(screen.queryByText('ışıklı pijama')).toBeNull();
+  });
+
+  it('opens a supplier listing with the supplier code and the generic title', () => {
+    (useInfiniteSearchProductsQuery as jest.Mock).mockReturnValue({
+      data: {
+        pages: [
+          {
+            products: mockProducts,
+            category: null,
+            availableFilters: mockAvailableFilters,
+            pagination: { current_page: 1, last_page: 1, total: 2, per_page: 20 },
+          },
+        ],
+      },
+      isPending: false,
+      isError: false,
+      refetch: mockRefetch,
+      fetchNextPage: mockFetchNextPage,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    });
+
+    renderWithTamagui(
+      <ProductListScreen initialFilters={{ sorting: '4' }} slug="s/123" supplierCode="123" />,
+    );
+
+    expect(useInfiniteSearchProductsQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ s: '123', sorting: '4', c: undefined, q: undefined }),
+    );
+    expect(screen.getByText('Ürünler')).toBeTruthy();
+  });
+
+  it('titles a menu-based listing with the menu item name', () => {
+    (useInfiniteSearchProductsQuery as jest.Mock).mockReturnValue({
+      data: {
+        pages: [
+          {
+            products: mockProducts,
+            category: null,
+            menuItemName: 'Çok Satanlar',
+            availableFilters: mockAvailableFilters,
+            pagination: { current_page: 1, last_page: 1, total: 2, per_page: 20 },
+          },
+        ],
+      },
+      isPending: false,
+      isError: false,
+      refetch: mockRefetch,
+      fetchNextPage: mockFetchNextPage,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    });
+
+    renderWithTamagui(<ProductListScreen menuUrl="cok-satanlar" slug="cok-satanlar" />);
+
+    expect(useInfiniteSearchProductsQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ menu_url: 'cok-satanlar' }),
+    );
+    expect(screen.getByText('Çok Satanlar')).toBeTruthy();
+  });
+
   it('starts with no filters when the link carries none', () => {
     renderWithTamagui(<ProductListScreen categoryId={40} slug="elbise" />);
 

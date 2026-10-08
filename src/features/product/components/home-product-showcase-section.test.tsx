@@ -44,8 +44,8 @@ const showcase: ProductShowcase = {
 const renderSection = (overrides: Partial<ComponentProps<typeof HomeProductShowcaseSection>> = {}) => {
   const props: ComponentProps<typeof HomeProductShowcaseSection> = {
     onAddToCartPress: jest.fn(),
-    onCtaPress: jest.fn(),
     onProductPress: jest.fn(),
+    onShowcasePress: jest.fn(),
     showcase,
     ...overrides,
   };
@@ -104,7 +104,95 @@ describe('HomeProductShowcaseSection', () => {
     });
 
     fireEvent.press(screen.getByLabelText('Öne Çıkanlar: Tümünü Gör'));
-    expect(props.onCtaPress).toHaveBeenCalledTimes(1);
+    expect(props.onShowcasePress).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the call to action when the label has no link, like the web', () => {
+    renderSection({ showcase: { ...showcase, ctaLabel: 'Tümünü Gör', ctaLink: '' } });
+
+    expect(screen.queryByText('Tümünü Gör')).toBeNull();
+  });
+
+  describe('vitrin bağlantısı (web 604a15132)', () => {
+    const linked: ProductShowcase = { ...showcase, ctaLabel: 'Tümünü Gör', ctaLink: '/one-cikanlar?c=207' };
+
+    it('opens the showcase link when the section background is tapped', () => {
+      const props = renderSection({ showcase: linked });
+
+      fireEvent.press(screen.getByTestId('home-product-showcase'));
+
+      expect(props.onShowcasePress).toHaveBeenCalledTimes(1);
+    });
+
+    it('opens the showcase link when the header title is tapped', () => {
+      const props = renderSection({ showcase: linked });
+
+      fireEvent.press(screen.getByText('Öne Çıkanlar'));
+
+      expect(props.onShowcasePress).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the card, favorite and add-to-cart actions instead of opening the showcase', () => {
+      const props = renderSection({ showcase: linked });
+
+      fireEvent.press(screen.getByLabelText('Ürün detayını aç: Tüllü Tayt'));
+      fireEvent.press(screen.getByText('Tüllü Tayt'));
+      fireEvent.press(screen.getByLabelText('Sepete ekle: Dabıl Bağcıklı Pantolon'));
+      fireEvent.press(screen.getByLabelText('Dabıl Bağcıklı Pantolon favorilere ekle'));
+
+      expect(props.onProductPress).toHaveBeenCalledTimes(2);
+      expect(props.onAddToCartPress).toHaveBeenCalledTimes(1);
+      expect(mockToggleFavorite).toHaveBeenCalledWith('1');
+      expect(props.onShowcasePress).not.toHaveBeenCalled();
+    });
+
+    it('lets the product rail claim taps so gaps between cards do not open the showcase', () => {
+      renderSection({ showcase: linked });
+
+      expect(screen.getByTestId('home-product-showcase-rail').props.onStartShouldSetResponder()).toBe(true);
+    });
+
+    it('announces the title as the link when there is no call-to-action label', () => {
+      const props = renderSection({ showcase: { ...linked, ctaLabel: '' } });
+
+      const titleLink = screen.getByRole('link', { name: 'Öne Çıkanlar' });
+      fireEvent.press(titleLink);
+
+      expect(props.onShowcasePress).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps a single accessible link for the showcase when the call to action exists', () => {
+      renderSection({ showcase: linked });
+
+      expect(screen.getAllByRole('link')).toHaveLength(1);
+    });
+
+    it('stays inert without a link', () => {
+      const props = renderSection();
+
+      fireEvent.press(screen.getByTestId('home-product-showcase'));
+      fireEvent.press(screen.getByText('Öne Çıkanlar'));
+
+      expect(props.onShowcasePress).not.toHaveBeenCalled();
+      expect(screen.queryByRole('link')).toBeNull();
+    });
+
+    it('keeps the linked showcase readable and tappable in dark mode', () => {
+      const onShowcasePress = jest.fn();
+      renderWithTamagui(
+        <HomeProductShowcaseSection
+          onAddToCartPress={jest.fn()}
+          onProductPress={jest.fn()}
+          onShowcasePress={onShowcasePress}
+          showcase={linked}
+        />,
+        'dark',
+      );
+
+      expect(screen.getByText('Tümünü Gör')).toBeTruthy();
+      fireEvent.press(screen.getByTestId('home-product-showcase'));
+      expect(onShowcasePress).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('renders nothing without products', () => {
@@ -117,8 +205,8 @@ describe('HomeProductShowcaseSection', () => {
     renderWithTamagui(
       <HomeProductShowcaseSection
         onAddToCartPress={jest.fn()}
-        onCtaPress={jest.fn()}
         onProductPress={jest.fn()}
+        onShowcasePress={jest.fn()}
         showcase={showcase}
       />,
       'dark',

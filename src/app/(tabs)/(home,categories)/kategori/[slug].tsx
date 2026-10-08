@@ -21,8 +21,10 @@ export default function CategoryRoute() {
       key={buildProductListingKey(slug, target)}
       categoryId={target.categoryId}
       initialFilters={target.filters}
+      menuUrl={target.menuUrl}
       searchQuery={target.searchQuery}
       slug={slug ?? ''}
+      supplierCode={target.supplierCode}
     />
   );
 }

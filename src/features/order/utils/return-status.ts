@@ -34,19 +34,43 @@ export function normalizeReturnStatus(status: number | string | null | undefined
   return null;
 }
 
+/** Ödeme iadesi yapılmış (tamamlanmış) iade talebinin durum kodu. */
+export const RETURN_COMPLETED_STATUS = 7;
+
 export function isPendingReturn(status: number | string | null | undefined): boolean {
   return normalizeReturnStatus(status) === 1;
 }
 
-/** Kargoya verilmiş ve sonrası (iptal edilemez); iptal edilmiş iade hariç. */
-export function isShippedOrLater(status: number | string | null | undefined): boolean {
-  const normalized = normalizeReturnStatus(status);
-  if (normalized === null) return false;
-  if (normalized === 6) return false;
-  return normalized >= 4;
+export type ReturnStatusDetails = {
+  /** İade kartının başlığı (ör. "İade Kargoda"). */
+  title: string;
+  /** Başlık altındaki açıklama; "N ürün için …" cümlesine eklenir. */
+  description: string;
+};
+
+/** İade talebi kartının başlık/açıklama metni — web `getReturnStatusDetails` ile aynı. */
+export function getReturnStatusDetails(
+  status: number | string | null | undefined,
+): ReturnStatusDetails {
+  switch (normalizeReturnStatus(status)) {
+    case 3:
+      return { title: 'İade Reddedildi', description: 'İade talebiniz reddedildi.' };
+    case 4:
+      return { title: 'İade Kargoda', description: 'İade ürünleriniz kargo ile yolda.' };
+    case 5:
+      return { title: 'İade Ürünleri Ulaştı', description: 'İade ürünleriniz tarafımıza ulaştı.' };
+    case 2:
+      return { title: 'İade Onaylandı', description: 'İade talebiniz onaylandı.' };
+    case RETURN_COMPLETED_STATUS:
+      return { title: 'İade Tamamlandı', description: 'İade ödemeniz tamamlandı.' };
+    case 6:
+      return { title: 'İade Talebi İptal Edildi', description: 'İade talebiniz iptal edildi.' };
+    default:
+      return { title: 'İade Talebi Oluşturuldu', description: 'İade talebiniz işleme alındı.' };
+  }
 }
 
-/** Ürün kartındaki durum çipi: backend adı boşsa "İşlem Bekliyor". */
+/** Ürün kartındaki depo kontrolü çipi (İyi, Defolu, …): backend adı boşsa "İşlem Bekliyor". */
 export function getReturnStatusNameLabel(statusName: string | null | undefined): string {
   if (!statusName || statusName.trim() === '') return 'İşlem Bekliyor';
   return statusName.trim();

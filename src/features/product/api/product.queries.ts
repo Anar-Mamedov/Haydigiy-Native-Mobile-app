@@ -57,6 +57,7 @@ export function useInfiniteSearchProductsQuery(filters: Omit<SearchProductsParam
       return {
         products: (response.data || []).map(mapSearchProductDto),
         category: response.category,
+        menuItemName: response.menu_item?.name || undefined,
         availableFilters: mapAvailableFilters(response.available_filters),
         pagination: {
           current_page: response.current_page || 1,

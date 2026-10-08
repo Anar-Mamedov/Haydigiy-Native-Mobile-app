@@ -5,10 +5,16 @@ import { resolveAccountDeepLinkPath } from './resolve-account-deep-link';
  * `haydigiywebviewapp://` custom scheme) uygulama rotasına çevirir.
  *
  * Web (haydigiy.com) ile uygulama rota yapıları farklıdır:
- *   web  haydigiy.com/{slug}          →  app  /product/{slug}
- *   web  haydigiy.com/{slug}?c={id}   →  app  /kategori/{slug}?c={id}
- *   web  haydigiy.com/kategori/{slug} →  app  /kategori/{slug}
- *   web  haydigiy.com/search?q=...    →  app  /kategori/search?q=...
+ *   web  haydigiy.com/{slug}               →  app  /product/{slug}
+ *   web  haydigiy.com/{slug}?c={id}        →  app  /kategori/{slug}?c={id}
+ *   web  haydigiy.com/{slug}?menu_url={m}  →  app  /kategori/{slug}?menu_url={m}
+ *   web  haydigiy.com/cok-satanlar         →  app  /kategori/cok-satanlar?menu_url=cok-satanlar
+ *   web  haydigiy.com/kategori/{slug}      →  app  /kategori/{slug}
+ *   web  haydigiy.com/search?q=...         →  app  /kategori/search?q=...
+ *   web  haydigiy.com/s/{tedarikçiKodu}    →  app  /s/{tedarikçiKodu}
+ *   web  haydigiy.com/blog[/...]           →  app  /blog[/...]
+ *   web  haydigiy.com/hakkimizda vb.       →  app  /bilgi/{slug}
+ *   web  haydigiy.com/yardim?kategori=...  →  app  /help?kategori=...
  *   web  haydigiy.com/hesabim/... → app'teki ilgili hesap ekranı
  * Bu yüzden gelen yol burada eşlenir. Tanınmayan her şey güvenli biçimde ana
  * ekrana (`/`) düşer; asla +not-found'a gitmez.
@@ -33,6 +39,7 @@ const APP_ROUTE_ROOTS = new Set([
   'return-create',
   'checkout',
   'sifremi-sifirla',
+  'bilgi',
 ]);
 
 /** Expo'nun development build'i başlatmak için kullandığı, app rotası olmayan yollar. */
@@ -43,8 +50,46 @@ const RESERVED_NATIVE_ROOTS = new Set(['expo-development-client']);
  * ürün listesi ekranıdır ve uygulama içi arama ile aynı `search` slug'ını
  * kullanır (bkz. search-suggestions-screen, link-handler).
  */
-const WEB_SEARCH_ROOT = 'search';
+const WEB_SEARCH_ROOTS = new Set(['search', 'search-products']);
 const APP_SEARCH_PATH = '/kategori/search';
+
+/** Web blog kökü; app'te aynı yapıda `/blog` rotaları vardır. */
+const BLOG_ROOT = 'blog';
+/** Blog altında makale olmayan web yolları (RSS vb.) → blog ana sayfası. */
+const BLOG_NON_ARTICLE_SEGMENTS = new Set(['feed.xml']);
+
+/** Web tedarikçi listesi kökü (`/s/{kod}`); app'te de aynı yoldur. */
+const SUPPLIER_ROOT = 's';
+
+/**
+ * Web bilgi ve sözleşme sayfaları. App'te `/bilgi/{slug}` altında web ile aynı
+ * slug'la açılır (bkz. features/info-pages/routes). Web `/m/hakkimizda` gibi
+ * mobil-web takma adları da aynı ekrana gider.
+ */
+const WEB_INFO_PAGE_ROOTS = new Set([
+  'cerez-politikasi',
+  'hakkimizda',
+  'iptal-iade-kosullari',
+  'islem-rehberi',
+  'kisisel-verilerin-korunmasi',
+  'kullanim-kosullari',
+  'subeden-al',
+  'uyelik-sozlesmesi',
+]);
+const APP_INFO_PAGE_ROOT = '/bilgi';
+
+/**
+ * Web'de `c` olmadan da menü tabanlı liste olan özel sayfalar; web bunları
+ * `menu_url={slug}` ile listeler (bkz. frontend `src/app/[slug]/page.tsx`).
+ */
+const WEB_MENU_LISTING_ROOTS = new Set(['cok-satanlar', 'yeni-gelenler', 'indirimdekiler']);
+
+/** Yardım sayfası; web `?kategori=` ile açılacak SSS kategorisini seçer. */
+const WEB_HELP_ROOT = 'yardim';
+const APP_HELP_PATH = '/help';
+/** Web "İade & Değişim" sayfası, yardımın iptal-iade kategorisidir. */
+const WEB_RETURN_HELP_ROOT = 'iade-degisim';
+const RETURN_HELP_CATEGORY = 'iptal-iade';
 
 /** Web kök yolu → app rotası (app karşılığı olan ticari sayfalar). */
 const WEB_TO_APP: Record<string, string> = {
@@ -52,7 +97,6 @@ const WEB_TO_APP: Record<string, string> = {
   'favori-listem': '/favorites',
   profile: '/profile',
   kategoriler: '/categories',
-  yardim: '/help',
   'banka-hesabimiz': '/bank-account',
 };
 
@@ -62,25 +106,21 @@ const WEB_TO_APP: Record<string, string> = {
  * değişirse burası güncellenmelidir.
  */
 const RESERVED_WEB_ROOTS = new Set([
+  'api',
   'cache-temizle',
-  'cerez-politikasi',
   'dogrulama',
   'error',
+  'favicon.ico',
   'garanti',
   'giris',
   'guncelle',
-  'hakkimizda',
   'hizli-giris',
-  'iade-degisim',
   'iletisim',
   'indir',
-  'iptal-iade-kosullari',
   'isbank',
-  'islem-rehberi',
   'kariyer',
   'kayit-ol',
-  'kisisel-verilerin-korunmasi',
-  'kullanim-kosullari',
+  'llms.txt',
   'm',
   'misyon-vizyon',
   'not-found-page',
@@ -90,8 +130,10 @@ const RESERVED_WEB_ROOTS = new Set([
   'odememesaj',
   'payten',
   'paytr',
+  'robots.txt',
   'sayfa-tasarimi',
   'sentry-example-page',
+  'sitemap-images.xml',
   'sitemap-main.xml',
   'sitemap-urunler',
   'sitemap.xml',
@@ -100,7 +142,6 @@ const RESERVED_WEB_ROOTS = new Set([
   'surocevaplar',
   'telefon-ile-giris',
   'uye-ol',
-  'uyelik-sozlesmesi',
   'yapim-asamasinda',
   'yorum',
 ]);
@@ -148,6 +189,50 @@ function getQueryParam(search: string, key: string): string | null {
   return null;
 }
 
+/** Sorgu dizesinin başına `key=value` ekler; mevcut parametreler korunur. */
+function prependQueryParam(search: string, key: string, value: string): string {
+  const query = search.startsWith('?') ? search.slice(1) : search;
+  const pair = `${key}=${encodeURIComponent(value)}`;
+  return `?${query ? `${pair}&${query}` : pair}`;
+}
+
+/** Yalnızca `kategori` parametresini taşıyan yardım yolu (utm vb. atılır). */
+function helpPath(category: string | null): string {
+  return category ? `${APP_HELP_PATH}?kategori=${encodeURIComponent(category)}` : APP_HELP_PATH;
+}
+
+/** `/blog`, `/blog/{slug}`, `/blog/kategori/{kategori}`; diğer her şey blog ana sayfası. */
+function resolveBlogPath(segments: string[]): string {
+  const [, second, third] = segments;
+  if (!second) return '/blog';
+
+  if (second.toLowerCase() === 'kategori') {
+    return third && segments.length === 3 ? `/blog/kategori/${third}` : '/blog';
+  }
+
+  if (segments.length === 2 && !BLOG_NON_ARTICLE_SEGMENTS.has(second.toLowerCase())) {
+    return `/blog/${second}`;
+  }
+  return '/blog';
+}
+
+/** Web tedarikçi listesi; kod web'deki gibi yalnızca rakam olmalıdır. */
+function resolveSupplierPath(segments: string[], search: string): string {
+  const code = segments[1];
+  if (segments.length !== 2 || !code || !/^\d+$/.test(code)) return '/';
+  return `/s/${code}${search}`;
+}
+
+/** Bilgi/sözleşme sayfası (`/hakkimizda`, `/m/hakkimizda`) ise app yolunu döndürür. */
+function resolveInfoPagePath(segments: string[]): string | null {
+  const isMobileWebAlias = segments[0].toLowerCase() === 'm' && segments.length === 2;
+  const pageSegments = isMobileWebAlias ? segments.slice(1) : segments;
+  if (pageSegments.length !== 1) return null;
+
+  const slug = pageSegments[0].toLowerCase();
+  return WEB_INFO_PAGE_ROOTS.has(slug) ? `${APP_INFO_PAGE_ROOT}/${slug}` : null;
+}
+
 function readTarget(input: string): Target {
   const raw = (input || '').trim();
   if (!raw) return { segments: [], search: '' };
@@ -185,11 +270,25 @@ export function resolveDeepLinkPath(input: string): string {
 
     // Web araması app'te ürün listesi ekranıdır; sorgu dizesi (`q` ve varsa
     // sıralama/filtreler) olduğu gibi taşınır.
-    if (first === WEB_SEARCH_ROOT) return `${APP_SEARCH_PATH}${search}`;
+    if (WEB_SEARCH_ROOTS.has(first)) return `${APP_SEARCH_PATH}${search}`;
+
+    // Blog yolları app'te aynı yapıdadır; ürün slug'ı sanılmamalı.
+    if (first === BLOG_ROOT) return resolveBlogPath(segments);
+
+    // Tedarikçi listesi (`/s/{kod}`); sıralama/filtre sorgusu taşınır.
+    if (first === SUPPLIER_ROOT) return resolveSupplierPath(segments, search);
 
     // Frontend hesap yollarını genel web eşlemelerinden önce çöz.
     const accountPath = resolveAccountDeepLinkPath(segments, search);
     if (accountPath) return accountPath;
+
+    // Bilgi ve sözleşme sayfaları (`/m/` takma adları dahil).
+    const infoPagePath = resolveInfoPagePath(segments);
+    if (infoPagePath) return infoPagePath;
+
+    // Yardım: web'in seçtiği SSS kategorisi korunur.
+    if (first === WEB_HELP_ROOT) return helpPath(getQueryParam(search, 'kategori'));
+    if (first === WEB_RETURN_HELP_ROOT) return helpPath(RETURN_HELP_CATEGORY);
 
     // Bilinen web → app eşlemesi.
     if (WEB_TO_APP[first]) return WEB_TO_APP[first];
@@ -197,11 +296,22 @@ export function resolveDeepLinkPath(input: string): string {
     // Rezerve web sayfaları (app karşılığı yok) → ana ekran.
     if (RESERVED_WEB_ROOTS.has(first)) return '/';
 
+    // Buradan sonrası yalnızca kök seviyedeki tek segmentli web sayfalarıdır;
+    // tanınmayan çok segmentli yollar ürün sanılmaz.
+    if (segments.length > 1) return '/';
+
     // Web kategori sayfaları da ürünler gibi kök seviyededir; `c` parametresi
     // sayfanın kategori kimliğidir. Uygulamadaki liste rotasına taşı.
     const categoryId = getQueryParam(search, 'c');
     if (categoryId && /^[1-9]\d*$/.test(categoryId)) {
       return `/kategori/${segments[0]}${search}`;
+    }
+
+    // Menü tabanlı liste: `menu_url` taşıyan bağlantı ya da web'in `c`
+    // olmadan listelediği özel sayfa (`/cok-satanlar`).
+    if (getQueryParam(search, 'menu_url')) return `/kategori/${segments[0]}${search}`;
+    if (WEB_MENU_LISTING_ROOTS.has(first)) {
+      return `/kategori/${segments[0]}${prependQueryParam(search, 'menu_url', first)}`;
     }
 
     // Kök seviyede tek segment ve rezerve değil → ürün slug'ı.

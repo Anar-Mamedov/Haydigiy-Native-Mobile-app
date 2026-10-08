@@ -19,12 +19,7 @@ import {
   userInfoSchema,
   UserInfoFormData,
 } from '../schemas/user-info.schema';
-import {
-  getDayOptions,
-  getMonthOptions,
-  getYearOptions,
-  splitBirthDate,
-} from '../utils/birth-date';
+import { splitBirthDate } from '../utils/birth-date';
 import { parseProfileUpdateError } from '../utils/profile-update-error';
 import {
   buildProfileUpdatePayload,
@@ -32,6 +27,7 @@ import {
   PHONE_REQUIRED_MESSAGE,
 } from '../utils/profile-update-payload';
 import { toPersonName } from '@/utils/normalize-text';
+import { BirthDateFields } from './birth-date-fields';
 import { PhoneChangeVerificationSheet } from './phone-change-verification-sheet';
 
 // [UI-DEBUG] GEÇİCİ teşhis logu — sorun bulununca silinecek.
@@ -47,11 +43,9 @@ export function uiDebugId(value: object | null | undefined): number {
   return id;
 }
 
-const DAY_OPTIONS = getDayOptions();
-const MONTH_OPTIONS = getMonthOptions();
-const YEAR_OPTIONS = getYearOptions();
-
 const PHONE_CHANGE_HINT = 'Numaranızı değiştirirseniz yeni numaranıza doğrulama kodu gönderilir.';
+/** Formun bütün alanlarının zemini; giriş ve seçim kutuları aynı görünsün. */
+const FIELD_BACKGROUND = '$color1';
 
 type UserInfoFormProps = {
   profile: UserProfile;
@@ -209,7 +203,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
         name="name"
         render={({ field: { onChange, onBlur, value } }) => (
           <AppInput
-            backgroundColor="$color1"
+            backgroundColor={FIELD_BACKGROUND}
             errorMessage={errors.name?.message}
             id="user-info-name"
             label="Ad"
@@ -229,7 +223,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
         name="surname"
         render={({ field: { onChange, onBlur, value } }) => (
           <AppInput
-            backgroundColor="$color1"
+            backgroundColor={FIELD_BACKGROUND}
             errorMessage={errors.surname?.message}
             id="user-info-surname"
             label="Soyad"
@@ -248,7 +242,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
           render={({ field: { onChange, onBlur, value } }) => (
             <AppInput
               autoCapitalize="none"
-              backgroundColor="$color1"
+              backgroundColor={FIELD_BACKGROUND}
               errorMessage={errors.email?.message}
               id="user-info-email"
               keyboardType="email-address"
@@ -278,7 +272,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
               <CountryCodeField />
               <YStack flex={1}>
                 <AppInput
-                  backgroundColor="$color1"
+                  backgroundColor={FIELD_BACKGROUND}
                   errorMessage={errors.phone?.message}
                   height={48}
                   helperText={PHONE_CHANGE_HINT}
@@ -299,67 +293,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
         />
       </YStack>
 
-      <YStack gap="$2">
-        <Paragraph color="$color" fontSize={14} fontWeight="600">
-          Doğum Tarihi
-        </Paragraph>
-        <XStack gap="$2">
-          <YStack flex={1}>
-            <Controller
-              control={control}
-              name="day"
-              render={({ field: { onChange, value } }) => (
-                <AppSelect
-                  label="Gün"
-                  onClear={() => onChange('')}
-                  onValueChange={(next) => onChange(String(next))}
-                  options={DAY_OPTIONS}
-                  placeholder="Gün"
-                  value={value || null}
-                />
-              )}
-            />
-          </YStack>
-          <YStack flex={1.4}>
-            <Controller
-              control={control}
-              name="month"
-              render={({ field: { onChange, value } }) => (
-                <AppSelect
-                  label="Ay"
-                  onClear={() => onChange('')}
-                  onValueChange={(next) => onChange(String(next))}
-                  options={MONTH_OPTIONS}
-                  placeholder="Ay"
-                  value={value || null}
-                />
-              )}
-            />
-          </YStack>
-          <YStack flex={1.1}>
-            <Controller
-              control={control}
-              name="year"
-              render={({ field: { onChange, value } }) => (
-                <AppSelect
-                  label="Yıl"
-                  onClear={() => onChange('')}
-                  onValueChange={(next) => onChange(String(next))}
-                  options={YEAR_OPTIONS}
-                  placeholder="Yıl"
-                  searchable
-                  value={value || null}
-                />
-              )}
-            />
-          </YStack>
-        </XStack>
-        {errors.day?.message ? (
-          <Paragraph color="$red10" size="$2">
-            {errors.day.message}
-          </Paragraph>
-        ) : null}
-      </YStack>
+      <BirthDateFields control={control} errorMessage={errors.day?.message} fieldBackgroundColor={FIELD_BACKGROUND} />
 
       <YStack gap="$2">
         <Paragraph color="$color" fontSize={14} fontWeight="600">
@@ -370,6 +304,7 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
           name="gender"
           render={({ field: { onChange, value } }) => (
             <AppSelect
+              backgroundColor={FIELD_BACKGROUND}
               label="Cinsiyet"
               onClear={() => onChange('')}
               onValueChange={(next) => {

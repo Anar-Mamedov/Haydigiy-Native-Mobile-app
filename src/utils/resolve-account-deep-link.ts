@@ -16,13 +16,11 @@ const STATIC_ACCOUNT_ROUTES: Record<string, string> = {
   gezdiklerim: '/gezdiklerim',
   sozlesmeler: '/agreements',
   yardim: '/help',
+  duyurular: '/announcement-preferences',
+  'geri-bildirim': '/feedback',
 
   // Frontend bu sayfayı masaüstünde zaten siparişlere yönlendiriyor.
   bildirimlerim: '/orders',
-  // Native'de henüz ayrı tercih ve genel geri bildirim ekranları bulunmuyor.
-  // Kullanıcıyı aynı alanın en yakın işlevsel ekranında tut.
-  duyurular: '/user-info',
-  'geri-bildirim': '/help',
 };
 
 const DYNAMIC_ACCOUNT_ROUTES: Record<string, string> = {

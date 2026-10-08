@@ -16,6 +16,23 @@ export function buildReturnBaseMessage(code?: string, expiresAt?: string): strin
 }
 
 /**
+ * Hepsijet→PTT geri dönüşünün başarı metni. Mevcut talep PTT'ye çevrildiyse
+ * "güncellendi" yazılır; talep hiç oluşmadıysa yeni PTT talebinin metni kullanılır.
+ */
+export function buildPttRecreatedMessage({
+  updatedExisting,
+  code,
+  expiresAt,
+}: {
+  updatedExisting: boolean;
+  code?: string;
+  expiresAt?: string;
+}): string {
+  if (!updatedExisting) return buildReturnBaseMessage(code, expiresAt);
+  return `İade talebiniz başarıyla PTT kargo ile güncellendi.${code ? `\nİade Kodunuz: ${code}` : ''}`;
+}
+
+/**
  * Builds the success message shown after a return is created, mirroring the web
  * flow: store returns are simple, Hepsijet pickups prepend the appointment line.
  */

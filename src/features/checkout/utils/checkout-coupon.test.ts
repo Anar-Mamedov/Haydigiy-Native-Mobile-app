@@ -6,6 +6,7 @@ import {
   getCouponExpiryLabel,
   getCouponTicketState,
   getCouponValueLabel,
+  hasUnusedCouponBalance,
   isCouponActive,
   meetsCouponRequirements,
 } from './checkout-coupon';
@@ -98,5 +99,44 @@ describe('checkout coupon labels', () => {
     expect(
       getAppliedCouponDiscountText({ ...appliedYaz, discountType: 'free_shipping', isFreeShipping: true }),
     ).toBe('Ücretsiz Kargo');
+  });
+});
+
+describe('hasUnusedCouponBalance', () => {
+  const fixed: AppliedCoupon = {
+    code: 'HEDIYE500',
+    discountType: 'fixed',
+    discountValue: 500,
+    discount: 300,
+    isFreeShipping: false,
+  };
+
+  // Web: `discountType === 'fixed' && couponFaceValue > subtotal`.
+  it('flags a fixed coupon whose face value is larger than the cart subtotal', () => {
+    expect(hasUnusedCouponBalance(fixed, 300)).toBe(true);
+    expect(hasUnusedCouponBalance(fixed, 499.99)).toBe(true);
+  });
+
+  it('stays quiet when the cart covers the coupon value', () => {
+    expect(hasUnusedCouponBalance(fixed, 500)).toBe(false);
+    expect(hasUnusedCouponBalance(fixed, 750)).toBe(false);
+  });
+
+  it('compares the face value, not the discount the backend applied', () => {
+    // İndirim sepete kırpılmış olsa bile (300) yüz değeri (500) esas alınır.
+    expect(hasUnusedCouponBalance({ ...fixed, discountValue: 500, discount: 300 }, 400)).toBe(true);
+  });
+
+  it('ignores percentage and free-shipping coupons and an empty coupon', () => {
+    const percentage: AppliedCoupon = { ...fixed, discountType: 'percentage', discountValue: 90 };
+
+    expect(hasUnusedCouponBalance(percentage, 50)).toBe(false);
+    expect(hasUnusedCouponBalance({ ...fixed, discountType: 'free_shipping' }, 0)).toBe(false);
+    expect(hasUnusedCouponBalance(null, 0)).toBe(false);
+  });
+
+  // Web paritesi: sipariş özetinden gelen kupon önceki değeri bilmiyorsa yüz değeri 0 olur.
+  it('does not warn when the face value is unknown', () => {
+    expect(hasUnusedCouponBalance({ ...fixed, discountValue: 0 }, 100)).toBe(false);
   });
 });

@@ -3,6 +3,11 @@ import { extractTurkishNationalNumber } from '@/utils/turkish-phone';
 import { Address, AddressFormValues } from '@/types/address.types';
 import { isAddressTitle } from '../utils/address-title';
 
+/** Backend bayrakları `true`, `1` ya da `"1"` olarak gelebilir. */
+function isEnabledFlag(value: unknown): boolean {
+  return value === true || value === 1 || value === '1';
+}
+
 /** Maps a raw address DTO to the domain model used by the list card. */
 export function mapAddress(dto: AddressDto): Address {
   const fullName = `${dto.name ?? ''} ${dto.surname ?? ''}`.trim();
@@ -16,13 +21,12 @@ export function mapAddress(dto: AddressDto): Address {
     city: dto.city?.name || dto.city_name || '',
     district: dto.district?.name || dto.district_name || '',
     neighbourhood: dto.neighbourhood?.name || dto.neighbourhood_name || '',
+    isDefault: isEnabledFlag(dto.is_default),
   };
 }
 
 /** Maps a full address detail DTO into the editable form values. */
 export function mapAddressToFormValues(dto: AddressDetailDto): AddressFormValues {
-  const isEnabledFlag = (value: unknown): boolean =>
-    value === true || value === 1 || value === '1';
   const locationId = (
     relation: { id?: number; name?: string } | null | undefined,
     fallback: number | string | undefined,
@@ -47,5 +51,6 @@ export function mapAddressToFormValues(dto: AddressDetailDto): AddressFormValues
     taxOffice: dto.tax_office ?? '',
     companyName: dto.company_name ?? '',
     isEFatura: isEnabledFlag(dto.is_e_invoice),
+    isDefault: isEnabledFlag(dto.is_default),
   };
 }

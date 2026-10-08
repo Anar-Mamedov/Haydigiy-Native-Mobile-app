@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import {
+  Bell,
   CreditCard,
   Eye,
   FileText,
@@ -7,10 +8,12 @@ import {
   CircleHelp,
   Landmark,
   LogOut,
+  Mail,
   MapPin,
   MessageCircle,
   MessageSquare,
   Package,
+  Palette,
   RotateCcw,
   ShieldCheck,
   Ticket,
@@ -20,7 +23,7 @@ import { YStack } from 'tamagui';
 import { AppButton } from '@/components/ui';
 // Temporarily disabled with the appearance card below.
 // import { Paragraph, XStack } from 'tamagui';
-// import { Palette } from '@/components/ui/icons';
+// (Palette, Blog satırı için yukarıda zaten import ediliyor.)
 // import { SectionCard, ThemeToggle } from '@/components/ui';
 // import { useAppTheme } from '@/lib/theme/use-app-theme';
 import { AccountOrdersCard } from './account-orders-card';
@@ -120,6 +123,12 @@ export function AccountHub({ onLogout }: AccountHubProps) {
       onPress: () => router.push('/bank-account'),
     },
     {
+      // Web mobil hesap menüsünde de "Banka Hesabımız"ın hemen ardından geliyor.
+      icon: <Bell color="$purple10" size={MENU_ICON_SIZE} />,
+      label: 'Duyuru Tercihlerim',
+      onPress: () => router.push('/announcement-preferences'),
+    },
+    {
       icon: <FileText color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Sözleşmeler',
       onPress: () => router.push('/agreements'),
@@ -131,6 +140,17 @@ export function AccountHub({ onLogout }: AccountHubProps) {
       icon: <CircleHelp color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Yardım & Sıkça Sorulan Sorular',
       onPress: () => router.push('/help'),
+    },
+    {
+      icon: <Mail color="$purple10" size={MENU_ICON_SIZE} />,
+      label: 'Geri Bildirim',
+      onPress: () => router.push('/feedback'),
+    },
+    {
+      // Web blog bağlantısı ana sayfa altbilgisinde; uygulamada keşif girişi burada.
+      icon: <Palette color="$purple10" size={MENU_ICON_SIZE} />,
+      label: 'Blog',
+      onPress: () => router.push('/blog'),
     },
   ];
 

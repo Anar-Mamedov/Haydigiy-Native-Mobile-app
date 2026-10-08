@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import { ProductStickyFooter } from './product-sticky-footer';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { BundleSummary } from '@/types/bundle.types';
+import { defaultConfig } from '@tamagui/config/v5';
 import {
   DISCOUNT_BACKGROUND_COLOR,
   DISCOUNT_BACKGROUND_COLOR_DARK,
@@ -55,6 +56,42 @@ describe('ProductStickyFooter', () => {
     expect(screen.queryByTestId('product-sticky-footer-discount-price')).toBeNull();
     expect(screen.getByText('199,90')).toBeTruthy();
   });
+
+  it('keeps the regular orange price box for a discount of 3% or less, like the web', () => {
+    renderWithTamagui(
+      <ProductStickyFooter {...baseProps} discountRate={3} firstPrice={205.9} hasDiscount />,
+    );
+
+    expect(screen.queryByTestId('product-sticky-footer-discount-price')).toBeNull();
+    expect(screen.queryByText('%3')).toBeNull();
+    expect(screen.queryByText('205,90 TL')).toBeNull();
+    expect(screen.getByText('199,90')).toBeTruthy();
+  });
+
+  it.each([
+    ['light', defaultConfig.themes.light],
+    ['dark', defaultConfig.themes.dark],
+  ] as const)(
+    'paints a package saving of 3%% or less as an orange regular price in the %s theme',
+    (theme, palette) => {
+      renderWithTamagui(
+        <ProductStickyFooter
+          {...baseProps}
+          bundleSummary={{ ...bundleSummary, bundlePrice: 2425, savings: 75, savingsPercent: 3 }}
+        />,
+        theme,
+      );
+
+      expect(screen.getByTestId('product-sticky-footer-bundle-price')).toHaveStyle({
+        backgroundColor: palette.orange2,
+        borderTopColor: palette.orange5,
+      });
+      expect(screen.getByText('₺2.425,00')).toBeTruthy();
+      expect(screen.queryByText('₺2.500,00')).toBeNull();
+      expect(screen.queryByText('%3')).toBeNull();
+      expect(screen.getByLabelText('Paket fiyatı ₺2.425,00')).toBeTruthy();
+    },
+  );
 
   it('uses the bundle summary instead of the generic product price for a package', () => {
     renderWithTamagui(<ProductStickyFooter {...baseProps} bundleSummary={bundleSummary} />);

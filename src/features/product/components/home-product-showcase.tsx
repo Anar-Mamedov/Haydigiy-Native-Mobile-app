@@ -31,8 +31,8 @@ export function HomeProductShowcase({ content }: HomeProductShowcaseProps) {
     <YStack width="100%">
       <HomeProductShowcaseSection
         onAddToCartPress={quickAdd.open}
-        onCtaPress={() => handleLinkPress(showcase.ctaLink)}
         onProductPress={handleProductPress}
+        onShowcasePress={() => handleLinkPress(showcase.ctaLink)}
         showcase={showcase}
       />
       {quickAdd.isOpen ? <ShowcaseQuickAddSheet controller={quickAdd} /> : null}

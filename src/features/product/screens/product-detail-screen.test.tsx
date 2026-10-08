@@ -48,6 +48,10 @@ jest.mock('@/utils/recently-viewed', () => ({
   trackViewedProduct: jest.fn(),
 }));
 
+jest.mock('../hooks/use-preview-color-options', () => ({
+  usePreviewColorOptions: () => undefined,
+}));
+
 describe('ProductDetailScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();

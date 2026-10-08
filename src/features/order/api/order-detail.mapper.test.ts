@@ -70,9 +70,9 @@ describe('mapOrderDetail', () => {
     expect(order.shippingAddress?.city).toBe('Niğde');
   });
 
-  // Web sipariş detayı paritesi: iade kartları kod/tarih/durum taşır ve
-  // beklemedeki (henüz depoya ulaşmamış) talep iptal edilebilir olarak işaretlenir.
-  it('maps return metadata and picks the cancellable pending return request', () => {
+  // Web sipariş detayı paritesi: iade kartları kod/tarih/durum, onay tarihi ve
+  // iade tutarı taşır; talep bazında gruplama `return-groups` yardımcısının işidir.
+  it('maps return metadata onto returned items', () => {
     const order = mapOrderDetail(
       baseDetail({
         returned_items: [
@@ -97,18 +97,37 @@ describe('mapOrderDetail', () => {
             return_request_id: 43,
             status: 4,
             received_at: null,
+            refund_amount: '0.00',
+          },
+          {
+            order_item_id: 7,
+            name: 'Onaylanan İade',
+            quantity: 1,
+            price: '199.99',
+            return_request_id: 44,
+            status: 2,
+            received_at: '06 Tem 2026 - 10:00',
+            approved_at: '07 Tem 2026 - 11:15',
+            refund_amount: '199.99',
           },
         ],
       }),
     );
 
-    const [pending, shipped] = order.returnedItems;
+    const [pending, shipped, approved] = order.returnedItems;
     expect(pending?.returnCode).toBe('HG1-R');
+    expect(pending?.returnRequestId).toBe(42);
     expect(pending?.returnRequestedAt).toBe('04 Tem 2026 - 23:26');
     expect(pending?.returnPickupDate).toBe('17 Tem 2026');
     expect(pending?.returnStatusCode).toBe(1);
+    expect(pending?.returnApprovedAt).toBeNull();
+    expect(pending?.returnRefundAmount).toBeNull();
     expect(shipped?.returnStatusCode).toBe(4);
-    expect(order.cancellableReturnRequestId).toBe(42);
+    // "0.00" henüz belirlenmemiş tutardır; kartta gösterilmez.
+    expect(shipped?.returnRefundAmount).toBeNull();
+    expect(approved?.returnReceivedAt).toBe('06 Tem 2026 - 10:00');
+    expect(approved?.returnApprovedAt).toBe('07 Tem 2026 - 11:15');
+    expect(approved?.returnRefundAmount).toBe(199.99);
     expect(order.hasHepsijetReturn).toBe(true);
   });
 
@@ -132,7 +151,7 @@ describe('mapOrderDetail', () => {
     });
   });
 
-  it('leaves no cancellable return when all requests shipped or were received', () => {
+  it('flags no Hepsijet return when no returned line was a home pickup', () => {
     const order = mapOrderDetail(
       baseDetail({
         returned_items: [
@@ -142,7 +161,6 @@ describe('mapOrderDetail', () => {
       }),
     );
 
-    expect(order.cancellableReturnRequestId).toBeNull();
     expect(order.hasHepsijetReturn).toBe(false);
   });
 

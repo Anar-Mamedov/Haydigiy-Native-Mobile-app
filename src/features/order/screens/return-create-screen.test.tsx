@@ -4,10 +4,11 @@ import { ReturnCreateScreen } from './return-create-screen';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
 const mockSetNote = jest.fn();
+const mockPush = jest.fn();
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'order-1' }),
-  useRouter: () => ({ back: jest.fn(), canGoBack: () => false, replace: jest.fn() }),
+  useRouter: () => ({ back: jest.fn(), canGoBack: () => false, push: mockPush, replace: jest.fn() }),
 }));
 
 jest.mock('@/features/auth/hooks/use-auth-status', () => ({
@@ -37,8 +38,10 @@ jest.mock('../components/new-iban-modal', () => ({
   NewIbanModal: () => null,
 }));
 
+const mockResultSheets = jest.fn((_props: Record<string, unknown>) => null);
+
 jest.mock('../components/return-result-sheets', () => ({
-  ReturnResultSheets: () => null,
+  ReturnResultSheets: (props: Record<string, unknown>) => mockResultSheets(props),
 }));
 
 const mockConfirmSheet = jest.fn((_props: Record<string, unknown>) => null);
@@ -71,6 +74,7 @@ function makeController(overrides: Record<string, unknown> = {}) {
     giftRows: [],
     handleRecreatePtt: jest.fn(),
     handleSubmit: jest.fn(),
+    retrySubmit: jest.fn(),
     iban: { setIbanError: jest.fn() },
     isError: false,
     isLoading: false,
@@ -127,6 +131,8 @@ describe('ReturnCreateScreen', () => {
   beforeEach(() => {
     mockSetNote.mockClear();
     mockConfirmSheet.mockClear();
+    mockResultSheets.mockClear();
+    mockPush.mockClear();
     mockController = makeController();
   });
 
@@ -259,5 +265,27 @@ describe('ReturnCreateScreen', () => {
     expect(screen.getByText('İade Talebi Oluşturulamıyor')).toBeTruthy();
     expect(screen.getByText('Bu sipariş için zaten iade talebi oluşturulmuştur.')).toBeTruthy();
     expect(screen.getByLabelText('Siparişlerime Dön')).toBeTruthy();
+  });
+
+  // Web 18c98462e: iade koşulları kutusu ürün listesinin üstünde, bağlantı tüm koşulları açar.
+  it('shows the return conditions notice and opens the full policy page from its link', () => {
+    renderWithTamagui(<ReturnCreateScreen />);
+
+    expect(screen.getByText('İade Koşulları')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('Tüm iptal ve iade koşullarını inceleyin'));
+
+    expect(mockPush).toHaveBeenCalledWith('/bilgi/iptal-iade-kosullari');
+  });
+
+  it('wires the error sheet retry to the controller and gates it on submittability', () => {
+    mockController = makeController({ canSubmit: true, errorMessage: 'Sunucu hatası' });
+
+    renderWithTamagui(<ReturnCreateScreen />);
+
+    const props = mockResultSheets.mock.calls.at(-1)?.[0] as Record<string, any>;
+    expect(props.canRetry).toBe(true);
+    expect(props.onRetry).toBe(mockController.retrySubmit);
+    expect(props.onRecreatePtt).toBe(mockController.handleRecreatePtt);
   });
 });

@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { RefreshControl, useWindowDimensions } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { RefreshControl, ScrollView as RNScrollView, useWindowDimensions } from 'react-native';
 import { ScrollView, Spinner, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppHeader, AppScreen, EmptyState } from '@/components/ui';
+import { useTabReselect } from '@/components/navigation/tab-reselect';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { useMobilePageDesignQuery } from '@/features/product/api/page-design.queries';
 import { InsiderRecommendationSections } from '@/features/insider/components/insider-recommendation-sections';
@@ -40,6 +41,11 @@ export function HomeScreen() {
   } = useMobilePageDesignQuery();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Ana sayfadayken alt menüdeki "Anasayfa"ya basılırsa ekran yeniden açılmaz, en üste kayar.
+  const scrollRef = useRef<RNScrollView>(null);
+  const scrollToTop = useCallback(() => scrollRef.current?.scrollTo({ animated: true, y: 0 }), []);
+  useTabReselect('/', scrollToTop);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -157,6 +163,7 @@ export function HomeScreen() {
       {!isPending && !isError ? (
         <ScrollView
           flex={1}
+          ref={scrollRef}
           refreshControl={
             <RefreshControl
               colors={[BRAND_COLOR]}

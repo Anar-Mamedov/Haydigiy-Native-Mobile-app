@@ -89,8 +89,8 @@ describe('resolveDeepLinkPath', () => {
     ['/hesabim/sozlesmeler', '/agreements'],
     ['/hesabim/yardim', '/help'],
     ['/hesabim/bildirimlerim', '/orders'],
-    ['/hesabim/duyurular', '/user-info'],
-    ['/hesabim/geri-bildirim', '/help'],
+    ['/hesabim/duyurular', '/announcement-preferences'],
+    ['/hesabim/geri-bildirim', '/feedback'],
   ])('maps the web account path %s to %s', (webPath, appPath) => {
     expect(resolveDeepLinkPath(`https://haydigiy.com${webPath}`)).toBe(appPath);
   });
@@ -142,6 +142,110 @@ describe('resolveDeepLinkPath', () => {
     expect(resolveDeepLinkPath('https://haydigiy.com/giris')).toBe('/');
     expect(resolveDeepLinkPath('https://haydigiy.com/odeme-basarili')).toBe('/');
     expect(resolveDeepLinkPath('https://haydigiy.com/sitemap.xml')).toBe('/');
+  });
+
+  it('opens the supplier listing instead of a product named "s"', () => {
+    // Regresyon: `/s/123` → `/product/s` açılıyordu.
+    expect(resolveDeepLinkPath('https://haydigiy.com/s/123')).toBe('/s/123');
+    expect(resolveDeepLinkPath('https://haydigiy.com/s/123?sorting=4&colors=siyah')).toBe(
+      '/s/123?sorting=4&colors=siyah',
+    );
+    expect(resolveDeepLinkPath('haydigiywebviewapp://s/123')).toBe('/s/123');
+  });
+
+  it('sends invalid supplier links home like the web 404 instead of a product', () => {
+    expect(resolveDeepLinkPath('https://haydigiy.com/s')).toBe('/');
+    expect(resolveDeepLinkPath('https://haydigiy.com/s/abc')).toBe('/');
+    expect(resolveDeepLinkPath('https://haydigiy.com/s/12/extra')).toBe('/');
+  });
+
+  it.each([
+    ['/blog', '/blog'],
+    ['/blog/', '/blog'],
+    ['/blog/kis-kombin-onerileri', '/blog/kis-kombin-onerileri'],
+    ['/blog/kategori/moda', '/blog/kategori/moda'],
+    ['/blog/kategori', '/blog'],
+    ['/blog/feed.xml', '/blog'],
+    ['/blog/a/b', '/blog'],
+    ['/blog/kis-kombin-onerileri?utm_source=instagram', '/blog/kis-kombin-onerileri'],
+  ])('maps the web blog path %s to %s instead of a product', (webPath, appPath) => {
+    // Regresyon: `/blog/abc` → `/product/blog` açılıyordu.
+    expect(resolveDeepLinkPath(`https://haydigiy.com${webPath}`)).toBe(appPath);
+  });
+
+  it.each([
+    'hakkimizda',
+    'islem-rehberi',
+    'iptal-iade-kosullari',
+    'uyelik-sozlesmesi',
+    'subeden-al',
+    'cerez-politikasi',
+    'kisisel-verilerin-korunmasi',
+    'kullanim-kosullari',
+  ])('opens the /%s info page on its app screen', (slug) => {
+    // Regresyon: bilgi sayfaları ana ekrana, `/subeden-al` ürün ekranına düşüyordu.
+    expect(resolveDeepLinkPath(`https://haydigiy.com/${slug}`)).toBe(`/bilgi/${slug}`);
+    expect(resolveDeepLinkPath(`haydigiywebviewapp://${slug}`)).toBe(`/bilgi/${slug}`);
+  });
+
+  it('opens info pages from mobile-web aliases, any letter case and app links', () => {
+    expect(resolveDeepLinkPath('https://haydigiy.com/m/hakkimizda')).toBe('/bilgi/hakkimizda');
+    expect(resolveDeepLinkPath('https://haydigiy.com/HAKKIMIZDA')).toBe('/bilgi/hakkimizda');
+    expect(resolveDeepLinkPath('https://haydigiy.com/subeden-al?utm_source=sms')).toBe(
+      '/bilgi/subeden-al',
+    );
+    expect(resolveDeepLinkPath('haydigiywebviewapp://bilgi/islem-rehberi')).toBe(
+      '/bilgi/islem-rehberi',
+    );
+  });
+
+  it('keeps web-only pages without an app screen on the home screen', () => {
+    expect(resolveDeepLinkPath('https://haydigiy.com/kariyer')).toBe('/');
+    expect(resolveDeepLinkPath('https://haydigiy.com/misyon-vizyon')).toBe('/');
+    expect(resolveDeepLinkPath('https://haydigiy.com/iletisim')).toBe('/');
+    expect(resolveDeepLinkPath('https://haydigiy.com/m/kategori')).toBe('/');
+    expect(resolveDeepLinkPath('https://haydigiy.com/api/health')).toBe('/');
+    expect(resolveDeepLinkPath('https://haydigiy.com/robots.txt')).toBe('/');
+  });
+
+  it('opens the help screen on the FAQ category chosen by the web link', () => {
+    expect(resolveDeepLinkPath('https://haydigiy.com/yardim')).toBe('/help');
+    expect(resolveDeepLinkPath('https://haydigiy.com/yardim?kategori=iptal-iade')).toBe(
+      '/help?kategori=iptal-iade',
+    );
+    expect(resolveDeepLinkPath('https://haydigiy.com/yardim?utm_source=x&kategori=odeme')).toBe(
+      '/help?kategori=odeme',
+    );
+    // Web "İade & Değişim" sayfası yardımın iptal-iade kategorisidir.
+    expect(resolveDeepLinkPath('https://haydigiy.com/iade-degisim')).toBe(
+      '/help?kategori=iptal-iade',
+    );
+  });
+
+  it('opens menu-based listings instead of treating them as products', () => {
+    // Regresyon: yalnızca `menu_url` taşıyan bağlantı ürün sanılıyordu.
+    expect(resolveDeepLinkPath('https://haydigiy.com/firsatlar?menu_url=firsatlar')).toBe(
+      '/kategori/firsatlar?menu_url=firsatlar',
+    );
+    expect(resolveDeepLinkPath('https://haydigiy.com/cok-satanlar')).toBe(
+      '/kategori/cok-satanlar?menu_url=cok-satanlar',
+    );
+    expect(resolveDeepLinkPath('https://haydigiy.com/yeni-gelenler?sorting=4')).toBe(
+      '/kategori/yeni-gelenler?menu_url=yeni-gelenler&sorting=4',
+    );
+    // `c` varsa web de kategori olarak listeler.
+    expect(resolveDeepLinkPath('https://haydigiy.com/indirimdekiler?c=300')).toBe(
+      '/kategori/indirimdekiler?c=300',
+    );
+  });
+
+  it('never turns an unknown multi-segment web path into a product', () => {
+    expect(resolveDeepLinkPath('https://haydigiy.com/bilinmeyen/yol')).toBe('/');
+    expect(resolveDeepLinkPath('https://haydigiy.com/spor-ayakkabi-123/yorumlar')).toBe('/');
+  });
+
+  it('treats the legacy search-products path as a search', () => {
+    expect(resolveDeepLinkPath('/search-products?q=elbise')).toBe('/kategori/search?q=elbise');
   });
 
   it('opens the home screen for the app-download QR link', () => {

@@ -1,13 +1,20 @@
+import { Pressable } from 'react-native';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { ChevronRight } from '@/components/ui/icons';
 import { AgreementBlock } from '../data/agreement.types';
 
 type AgreementContentProps = {
   blocks: AgreementBlock[];
+  /**
+   * Called with a `link` block's `href`. Without it link blocks render as plain
+   * text, so hosts that cannot navigate never show a dead control.
+   */
+  onLinkPress?: (href: string) => void;
 };
 
-/** Renders an agreement's content blocks (paragraphs, headings, terms, bullets). */
-export function AgreementContent({ blocks }: AgreementContentProps) {
+/** Renders an agreement's content blocks (paragraphs, headings, terms, bullets, links). */
+export function AgreementContent({ blocks, onLinkPress }: AgreementContentProps) {
   return (
     <YStack gap="$3">
       {blocks.map((block, index) => {
@@ -56,6 +63,28 @@ export function AgreementContent({ blocks }: AgreementContentProps) {
                   {block.text}
                 </Paragraph>
               </XStack>
+            );
+          case 'link':
+            return onLinkPress ? (
+              <Pressable
+                accessibilityLabel={block.text}
+                accessibilityRole="link"
+                hitSlop={6}
+                key={index}
+                onPress={() => onLinkPress(block.href)}
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+              >
+                <XStack alignItems="center" gap="$1">
+                  <Paragraph color="$brand" flexShrink={1} fontSize={13} fontWeight="700" lineHeight={19}>
+                    {block.text}
+                  </Paragraph>
+                  <ChevronRight color="$brand" size={14} />
+                </XStack>
+              </Pressable>
+            ) : (
+              <Paragraph color="$color11" fontSize={13} key={index} lineHeight={19}>
+                {block.text}
+              </Paragraph>
             );
           case 'paragraph':
           default:

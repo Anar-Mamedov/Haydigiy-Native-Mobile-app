@@ -16,10 +16,8 @@ import {
   useRefundMethodsQuery,
   useReturnReasonsQuery,
 } from '../api/return.queries';
-import {
-  useRecreateReturnAsPttMutation,
-  useSubmitReturnRequestMutation,
-} from '../api/return.mutations';
+import { useSubmitReturnRequestMutation } from '../api/return.mutations';
+import { useRecreatePttReturn } from './use-recreate-ptt-return';
 import { useRefundMethod } from './use-refund-method';
 import { useReturnConfirmation } from './use-return-confirmation';
 import { useReturnIban } from './use-return-iban';
@@ -30,7 +28,7 @@ import {
   pickConfirmIban,
   type ReturnConfirmSummary,
 } from '../utils/return-confirm-summary';
-import { buildReturnBaseMessage, buildReturnSuccessMessage } from '../utils/return-messages';
+import { buildReturnSuccessMessage } from '../utils/return-messages';
 import { getReturnErrorMessage, SubmitReturnRequestPayload } from '@/services/return.service';
 import { ReturnMethod, ReturnPhoto, ReturnSubmitItem } from '@/types/order.types';
 
@@ -81,7 +79,6 @@ export function useReturnCreateController(orderId: string, options: Options) {
   const [returnMethod, setReturnMethod] = useState<ReturnMethod>('ptt');
   const scheduled = useScheduledReturn(order, options.enabled && returnMethod === 'hepsijet');
   const submitMutation = useSubmitReturnRequestMutation();
-  const recreateMutation = useRecreateReturnAsPttMutation();
 
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [itemReasons, setItemReasons] = useState<Record<string, number>>({});
@@ -276,14 +273,37 @@ export function useReturnCreateController(orderId: string, options: Options) {
     return ids.length > 0 ? Math.max(...ids) : null;
   }, [order?.returnRequestIds]);
 
+  /**
+   * Gönderim ve PTT geri dönüşünün ortak istek gövdesi. IBAN gerekiyorsa ama
+   * çözülemediyse (hata `iban` hook'unda gösterilir) null döner.
+   */
+  const buildPayload = useCallback(
+    (cargoCompany: ReturnMethod): SubmitReturnRequestPayload | null => {
+      if (!order) return null;
+      const resolvedIban = shouldCollectIban ? iban.resolveForPayload() : null;
+      if (shouldCollectIban && !resolvedIban) return null;
+
+      return {
+        orderId: order.id,
+        cargoCompany,
+        note: note.trim() || undefined,
+        refundMethodId: shouldShowIbanSelect ? refund.selectedId : undefined,
+        iban: resolvedIban?.iban,
+        ibanName: resolvedIban?.ibanName,
+        items: buildItemsPayload(),
+      };
+    },
+    [order, shouldCollectIban, iban, note, shouldShowIbanSelect, refund.selectedId, buildItemsPayload],
+  );
+
   const handleSubmit = useCallback(async () => {
     if (!order || !allSelectedHaveReasons) return;
     if (missingPhotoIds.length > 0) {
       setErrorMessage('Fotoğraf istenen ürünler için görsel yüklemelisiniz.');
       return;
     }
-    const resolvedIban = shouldCollectIban ? iban.resolveForPayload() : null;
-    if (shouldCollectIban && !resolvedIban) return;
+    const payload = buildPayload(returnMethod);
+    if (!payload) return;
 
     let hepsijetPickupCreated = false;
     if (returnMethod === 'hepsijet') {
@@ -294,16 +314,6 @@ export function useReturnCreateController(orderId: string, options: Options) {
       }
       hepsijetPickupCreated = true;
     }
-
-    const payload: SubmitReturnRequestPayload = {
-      orderId: order.id,
-      cargoCompany: returnMethod,
-      note: note.trim() || undefined,
-      refundMethodId: shouldShowIbanSelect ? refund.selectedId : undefined,
-      iban: resolvedIban?.iban,
-      ibanName: resolvedIban?.ibanName,
-      items: buildItemsPayload(),
-    };
 
     try {
       const result = await submitMutation.mutateAsync(payload);
@@ -330,16 +340,22 @@ export function useReturnCreateController(orderId: string, options: Options) {
     order,
     allSelectedHaveReasons,
     missingPhotoIds.length,
-    iban,
+    buildPayload,
     returnMethod,
     scheduled,
-    note,
-    shouldShowIbanSelect,
-    shouldCollectIban,
-    refund.selectedId,
-    buildItemsPayload,
     submitMutation,
   ]);
+
+  /**
+   * Hata sheet'indeki "Yeniden dene" (web paritesi): sheet kapanır ve talep aynı
+   * seçimlerle yeniden gönderilir; yine başarısız olursa hata sheet'i yeni
+   * mesajla tekrar açılır.
+   */
+  const retrySubmit = useCallback(() => {
+    if (!canSubmit) return;
+    setErrorMessage(null);
+    void handleSubmit();
+  }, [canSubmit, handleSubmit]);
 
   /** Onay sheet'inin özeti: hangi ürün hangi nedenle, hangi yöntemle iade ediliyor. */
   const confirmSummary = useMemo<ReturnConfirmSummary>(
@@ -387,47 +403,19 @@ export function useReturnCreateController(orderId: string, options: Options) {
   // "İade Talebi Oluştur" önce bu özeti açar; istek ancak kullanıcı onaylayınca gider.
   const confirmation = useReturnConfirmation(canSubmit, handleSubmit);
 
-  const handleRecreatePtt = useCallback(async () => {
-    if (!order) return;
-    const resolvedIban = shouldCollectIban ? iban.resolveForPayload() : null;
-    if (shouldCollectIban && !resolvedIban) return;
-
-    const payload: SubmitReturnRequestPayload = {
-      orderId: order.id,
-      cargoCompany: 'ptt',
-      note: note.trim() || undefined,
-      refundMethodId: shouldShowIbanSelect ? refund.selectedId : undefined,
-      iban: resolvedIban?.iban,
-      ibanName: resolvedIban?.ibanName,
-      items: buildItemsPayload(),
-    };
-
-    try {
-      const result = await recreateMutation.mutateAsync({
-        returnRequestId: lastReturnRequestId,
-        payload,
-      });
-      const code = result.return_code ?? result.code;
-      setErrorMessage(null);
-      setSuccessMessage(
-        lastReturnRequestId
-          ? `İade talebiniz başarıyla PTT kargo ile güncellendi.${code ? `\nİade Kodunuz: ${code}` : ''}`
-          : buildReturnBaseMessage(code, result.expires_at),
-      );
-    } catch (error) {
-      setErrorMessage(getReturnErrorMessage(error));
-    }
-  }, [
-    order,
-    iban,
-    note,
-    shouldShowIbanSelect,
-    shouldCollectIban,
-    refund.selectedId,
-    buildItemsPayload,
-    recreateMutation,
+  const buildPttPayload = useCallback(() => buildPayload('ptt'), [buildPayload]);
+  const handlePttRecreated = useCallback((message: string) => {
+    // Talep artık PTT ile kayıtlı; başarı sheet'i Hepsijet bilgisini göstermemeli.
+    setReturnMethod('ptt');
+    setErrorMessage(null);
+    setSuccessMessage(message);
+  }, []);
+  const pttFallback = useRecreatePttReturn({
+    buildPayload: buildPttPayload,
     lastReturnRequestId,
-  ]);
+    onSuccess: handlePttRecreated,
+    onError: setErrorMessage,
+  });
 
   const closeSuccess = useCallback(() => {
     setSuccessMessage(null);
@@ -474,14 +462,15 @@ export function useReturnCreateController(orderId: string, options: Options) {
     reasonsError: reasonsQuery.isError ? 'İade nedenleri alınamadı.' : null,
     canSubmit,
     isSubmitting: submitMutation.isPending,
-    isRecreating: recreateMutation.isPending,
+    isRecreating: pttFallback.isRecreating,
     successMessage,
     errorMessage,
     clearError: () => setErrorMessage(null),
     handleSubmit,
+    retrySubmit,
     confirmSummary,
     confirmation,
-    handleRecreatePtt,
+    handleRecreatePtt: pttFallback.recreate,
     closeSuccess,
   };
 }

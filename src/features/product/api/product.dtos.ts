@@ -166,6 +166,8 @@ export interface SearchProductsResponseDto {
       slug: string;
     }[];
   };
+  /** Menü tabanlı listede (`menu_url`) listenin başlığı; diğer listelerde `null`. */
+  menu_item?: { name?: string | null } | null;
   available_filters?: {
     colors?: {
       id: number;

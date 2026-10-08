@@ -6,6 +6,7 @@ import { useSavedAddressesQuery } from '@/features/order/api/return.queries';
 import * as addressService from '@/services/address.service';
 import { useAddressesQuery } from './address.queries';
 import { useUpdateAddressMutation } from './address.mutations';
+import { addressKeys } from './address.keys';
 
 jest.mock('@/services/address.service', () => ({
   ...jest.requireActual('@/services/address.service'),
@@ -116,6 +117,40 @@ describe('saved-address cache invalidation', () => {
     await waitFor(() =>
       expect(result.current.addresses.data?.[0]?.addressLine).toBe('Yeni adres'),
     );
+    unmount();
+    queryClient.clear();
+  });
+
+  // Varsayılan adres değişince diğer adreslerin bayrağı da değişir; açık kalan
+  // başka bir adresin düzenleme verisi de bayat sayılmalı.
+  it('marks every cached address detail stale after an update', async () => {
+    updateAddressDto.mockResolvedValue(undefined);
+    const { queryClient, wrapper } = createQueryHarness();
+    queryClient.setQueryData(addressKeys.detail('7'), { title: 'Ev' });
+    queryClient.setQueryData(addressKeys.detail('9'), { title: 'İş Yeri' });
+
+    const { result, unmount } = renderHook(() => useUpdateAddressMutation(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        id: '7',
+        input: {
+          title: 'Ev',
+          name: 'Anar',
+          surname: 'Mamedov',
+          phone: '05551234567',
+          cityId: '34',
+          districtId: '198',
+          neighbourhoodId: '1024',
+          addressLine: 'Yeni adres',
+          invoiceType: 'individual',
+          isDefault: true,
+        },
+      });
+    });
+
+    expect(queryClient.getQueryState(addressKeys.detail('7'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(addressKeys.detail('9'))?.isInvalidated).toBe(true);
     unmount();
     queryClient.clear();
   });

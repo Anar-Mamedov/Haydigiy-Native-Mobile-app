@@ -12,8 +12,9 @@ export type BundlePriceSummaryProps = {
 /**
  * "Ayrı ayrı alsan X, pakette Y" fiyat satırı. Ayrı alım toplamı, kalem satırlarındaki tekli
  * fiyatla aynı dilde (`$singlePrice` kırmızısı, üstü çizili) paket fiyatının üstünde durur.
- * Paket fiyatı ürünlerin toplamından ucuz değilse ne bu satır ne de kazanç rozeti gösterilir —
- * kullanıcıya olmayan bir indirim vaat edilmez.
+ * Paket fiyatı ürünlerin toplamından ucuz değilse ya da kazanç %3'ü geçmiyorsa ne bu satır ne de
+ * kazanç rozeti gösterilir; kutu yeşil yerine web'deki gibi turuncu normal fiyat tonunda çizilir —
+ * kullanıcıya indirim sayılmayan bir fark vaat edilmez.
  */
 export function BundlePriceSummary({ summary }: BundlePriceSummaryProps) {
   const { discountRate, hasSavings } = resolveBundleSavings(summary);
@@ -22,8 +23,8 @@ export function BundlePriceSummary({ summary }: BundlePriceSummaryProps) {
   return (
     <XStack
       alignItems="flex-end"
-      backgroundColor="$discountBackground"
-      borderColor="$discount"
+      backgroundColor={hasSavings ? '$discountBackground' : '$orange2'}
+      borderColor={hasSavings ? '$discount' : '$orange5'}
       borderRadius="$4"
       borderWidth={1}
       gap="$1"
@@ -31,6 +32,7 @@ export function BundlePriceSummary({ summary }: BundlePriceSummaryProps) {
       paddingHorizontal="$3"
       paddingVertical="$2.5"
       position="relative"
+      testID="bundle-price-summary"
     >
       <DiscountRateBadge
         position="absolute"
@@ -63,7 +65,7 @@ export function BundlePriceSummary({ summary }: BundlePriceSummaryProps) {
         <Paragraph color="$color" fontSize={16} fontWeight="600">
           Paket Fiyatı
         </Paragraph>
-        <Paragraph color="$discount" fontSize={22} fontWeight="800">
+        <Paragraph color={hasSavings ? '$discount' : '$brand'} fontSize={22} fontWeight="800">
           {formatCurrency(summary.bundlePrice)}
         </Paragraph>
       </YStack>

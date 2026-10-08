@@ -29,9 +29,23 @@ export function AddressCard({ address, onEdit, onDelete }: AddressCardProps) {
         paddingHorizontal="$4"
         paddingVertical="$3"
       >
-        <Paragraph color="$brand" flex={1} fontSize={15} fontWeight="800" numberOfLines={1}>
-          {address.title}
-        </Paragraph>
+        <XStack alignItems="center" flex={1} gap="$2">
+          <Paragraph color="$brand" flexShrink={1} fontSize={15} fontWeight="800" numberOfLines={1}>
+            {address.title}
+          </Paragraph>
+          {address.isDefault ? (
+            <XStack
+              backgroundColor="$background"
+              borderRadius="$2"
+              paddingHorizontal="$2"
+              paddingVertical={2}
+            >
+              <Paragraph color="$brand" fontSize={11} fontWeight="600">
+                Varsayılan
+              </Paragraph>
+            </XStack>
+          ) : null}
+        </XStack>
         <XStack gap="$4">
           <XStack
             accessibilityLabel="Adresi düzenle"

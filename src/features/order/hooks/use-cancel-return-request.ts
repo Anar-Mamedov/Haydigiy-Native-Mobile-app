@@ -15,14 +15,16 @@ import { OrderDetail } from '@/types/order.types';
  */
 export function useCancelReturnRequest(order: OrderDetail | null) {
   const queryClient = useQueryClient();
-  const [isCanceling, setIsCanceling] = useState(false);
+  /** İptali süren talep; kartlar yalnızca kendi talepleri için "İptal ediliyor..." gösterir. */
+  const [cancelingId, setCancelingId] = useState<number | null>(null);
+  const isCanceling = cancelingId !== null;
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const cancelReturn = useCallback(
     async (returnRequestId: number) => {
       if (!order || isCanceling) return;
-      setIsCanceling(true);
+      setCancelingId(returnRequestId);
       setErrorMessage(null);
       try {
         if (order.hasHepsijetReturn && order.orderNo) {
@@ -47,7 +49,7 @@ export function useCancelReturnRequest(order: OrderDetail | null) {
       } catch (error) {
         setErrorMessage(getReturnErrorMessage(error, 'İade talebi iptal edilemedi.'));
       } finally {
-        setIsCanceling(false);
+        setCancelingId(null);
       }
     },
     [order, isCanceling, queryClient],
@@ -56,6 +58,7 @@ export function useCancelReturnRequest(order: OrderDetail | null) {
   return {
     cancelReturn,
     isCanceling,
+    cancelingId,
     errorMessage,
     clearError: useCallback(() => setErrorMessage(null), []),
     successMessage,

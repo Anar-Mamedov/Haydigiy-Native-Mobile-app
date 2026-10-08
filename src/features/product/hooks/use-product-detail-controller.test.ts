@@ -56,6 +56,12 @@ jest.mock('@/utils/recently-viewed', () => ({
   trackViewedProduct: jest.fn(),
 }));
 
+// Renk önizlemesi sorgu önbelleğini okur; burada yalnızca kontrolcünün onu nasıl kullandığı sınanır.
+const mockPreviewColorOptions = jest.fn();
+jest.mock('./use-preview-color-options', () => ({
+  usePreviewColorOptions: (...args: unknown[]) => mockPreviewColorOptions(...args),
+}));
+
 jest.mock('./use-notify-stock', () => ({
   useNotifyStock: () => ({
     closeConfirmation: jest.fn(),
@@ -148,6 +154,7 @@ function setup(
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockPreviewColorOptions.mockReturnValue(undefined);
   mockCanGoBack = true;
   jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
 });
@@ -409,6 +416,44 @@ describe('useProductDetailController — türetilen görünüm verisi', () => {
 
     expect(result.current.shippingMessage).toBe('Yarın kargoda');
     expect(result.current.shippingEstimate).toEqual({ message: 'Yarın kargoda' });
+  });
+
+  it('shows the cached colours before the detail arrives, like the web initialProduct', () => {
+    const cachedColors = [{ id: '95237', imageUrl: 'https://cdn/beyaz.webp', name: 'Beyaz', price: 0, slug: 'beyaz-gomlek' }];
+    mockPreviewColorOptions.mockReturnValue(cachedColors);
+
+    const { result } = setup(
+      { data: undefined, isPending: true },
+      { id: 'uzun-kollu-cepli-gomlek-siyah', title: 'Önizleme Ürünü', price: '149.9', imageUrl: 'https://cdn/p.webp' },
+    );
+
+    expect(mockPreviewColorOptions).toHaveBeenCalledWith('uzun-kollu-cepli-gomlek-siyah', true);
+    expect(result.current.colorOptions).toEqual(cachedColors);
+  });
+
+  it('switches to the product colours once the detail arrives', () => {
+    const productColors = [{ id: '95238', imageUrl: 'https://cdn/lacivert.webp', name: 'Lacivert', price: 0, slug: 'lacivert-gomlek' }];
+
+    const { result } = setup({ data: makeProduct({ otherColors: productColors }) });
+
+    expect(mockPreviewColorOptions).toHaveBeenCalledWith('deneme-urun', false);
+    expect(result.current.colorOptions).toEqual(productColors);
+  });
+
+  it('pairs the high-resolution images with the gallery images for the carousel fade', () => {
+    const images = ['https://cdn/medium/1.webp', 'https://cdn/medium/2.webp'];
+    const largeImages = ['https://cdn/large/1.webp', 'https://cdn/large/2.webp'];
+    const { result } = setup({ data: makeProduct({ images, largeImages }) });
+
+    expect(result.current.productImages).toEqual(images);
+    expect(result.current.productHighResImages).toEqual(largeImages);
+  });
+
+  it('has no high-resolution pair while only the cover or preview image is shown', () => {
+    const { result } = setup({ data: makeProduct({ largeImages: ['https://cdn/large/1.webp'] }) });
+
+    expect(result.current.productImages).toEqual(['https://cdn/gomlek.webp']);
+    expect(result.current.productHighResImages).toBeUndefined();
   });
 });
 

@@ -113,6 +113,19 @@ describe('ProductCard', () => {
     expect(screen.queryByText(/^-%/)).toBeNull();
   });
 
+  it('shows the plain price for a discount of 3% or less, like the web', () => {
+    renderWithTamagui(
+      <ProductCard
+        onOpen={jest.fn()}
+        product={{ ...product, discountRate: 3, firstPrice: 155, hasDiscount: true }}
+      />,
+    );
+
+    expect(screen.getByText('150,00 TL')).toBeTruthy();
+    expect(screen.queryByText(/^-%/)).toBeNull();
+    expect(screen.queryByText('155,00 TL')).toBeNull();
+  });
+
   it('keeps the discounted price row readable after switching to the dark theme', () => {
     const discounted: Product = { ...product, discountRate: 25, firstPrice: 200, hasDiscount: true };
 
@@ -145,6 +158,15 @@ describe('ProductCard', () => {
       renderWithTamagui(<ProductCard onOpen={jest.fn()} product={{ ...bundle, bundleItemsTotal: undefined }} />);
 
       expect(screen.getByText('299,98 TL')).toBeTruthy();
+      expect(screen.queryByText(/^-%/)).toBeNull();
+      expect(screen.queryByTestId('bundle-separate-price-note')).toBeNull();
+    });
+
+    it('shows the plain price when the package saving is 3% or less, like the web', () => {
+      // 10 / 339,98 = %2,9 → %3: indirim sayılmaz.
+      renderWithTamagui(<ProductCard onOpen={jest.fn()} product={{ ...bundle, price: 329.98 }} />);
+
+      expect(screen.getByText('329,98 TL')).toBeTruthy();
       expect(screen.queryByText(/^-%/)).toBeNull();
       expect(screen.queryByTestId('bundle-separate-price-note')).toBeNull();
     });

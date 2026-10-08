@@ -1,7 +1,6 @@
 import { Check, Truck } from '@/components/ui/icons';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { CampaignCountdown } from '@/features/cart/components/campaign-countdown';
 import { CartCampaign } from '@/types/cart.types';
 import { formatCeilAmount } from '@/utils/format-currency';
 import { getFreeShippingCampaign } from '@/utils/cart-campaigns';
@@ -20,8 +19,11 @@ function formatPrice(amount: number) {
 
 /**
  * Free-shipping progress card. Shows remaining amount + progress bar, or a
- * "Kargo ücretsiz" success state, plus an optional countdown — a 1:1 port of the
- * web `FreeShippingCampaignCard`.
+ * "Kargo ücretsiz" success state — a 1:1 port of the web `FreeShippingCampaignCard`.
+ *
+ * Geri sayım bilerek yok: web bu kartta sayacı `SHOW_FREE_SHIPPING_COUNTDOWN = false`
+ * ile her durumda gizliyor (backend `counter` alanına bakmadan). Sayaç yalnızca
+ * `StandardCampaignCard` ve kargo satırında, `counter === 1` iken görünür.
  */
 export function FreeShippingCampaignCard({
   campaigns,
@@ -94,8 +96,6 @@ export function FreeShippingCampaignCard({
           >
             <YStack backgroundColor="$brand" borderRadius={100} height="100%" width={`${progress}%`} />
           </YStack>
-
-          <CampaignCountdown endDate={campaign.endDate} />
         </YStack>
       </XStack>
     </YStack>

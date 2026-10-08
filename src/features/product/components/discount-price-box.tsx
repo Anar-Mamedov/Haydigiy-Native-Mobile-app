@@ -1,6 +1,33 @@
-import { XStack, YStack } from 'tamagui';
+import { styled, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { DiscountRateBadge } from '@/components/ui/discount-rate-badge';
+
+/**
+ * Kutunun renk dili. `discount`: yeşil çerçeveli indirim kutusu. `regular`: indirim sayılmayan
+ * fiyatın turuncu kutusu (web `border-orange-100 bg-orange-50/80` + `#f27a1a` fiyat) — sticky
+ * footer'daki indirimsiz fiyat kutusuyla aynı tema token'ları.
+ */
+export type PriceBoxTone = 'discount' | 'regular';
+
+const PriceBoxFrame = styled(YStack, {
+  name: 'DiscountPriceBox',
+  borderRadius: 8,
+  borderWidth: 1,
+  paddingHorizontal: 10,
+  paddingVertical: 6,
+  position: 'relative',
+
+  variants: {
+    tone: {
+      discount: { backgroundColor: '$discountBackground', borderColor: '$discount' },
+      regular: { backgroundColor: '$orange2', borderColor: '$orange5' },
+    },
+  } as const,
+
+  defaultVariants: { tone: 'discount' },
+});
+
+const PRICE_COLOR = { discount: '$discount', regular: '$brand' } as const;
 
 export type DiscountPriceBoxProps = {
   /** Ekran okuyucular kutuyu parça parça değil tek cümle olarak duysun. */
@@ -15,15 +42,17 @@ export type DiscountPriceBoxProps = {
   /** Satır yüksekliklerini kullanıcının yazı ölçeğiyle birlikte büyütür. */
   scale?: number;
   testID?: string;
+  /** Varsayılan `discount`; indirim sayılmayan fiyat `regular` ile turuncu çizilir. */
+  tone?: PriceBoxTone;
 };
 
 /**
- * Ürün detayındaki yeşil fiyat kutusunun ortak gövdesi: üstü çizili karşılaştırma
+ * Ürün detayındaki fiyat kutusunun ortak gövdesi: üstü çizili karşılaştırma
  * fiyatı, vurgulu güncel fiyat ve sağ üst köşede indirim oranı rozeti.
  *
- * Yalnızca sunumdan sorumludur — hangi sayının nereden geldiği ve nasıl
- * biçimlendirildiği çağıranın işidir. Böylece indirimli tekil ürün ile paket
- * toplamı aynı görsel dili tek bir yerden paylaşır.
+ * Yalnızca sunumdan sorumludur — hangi sayının nereden geldiği, nasıl
+ * biçimlendirildiği ve hangi tonda çizileceği çağıranın işidir. Böylece indirimli
+ * tekil ürün ile paket toplamı aynı görsel dili tek bir yerden paylaşır.
  */
 export function DiscountPriceBox({
   accessibilityLabel,
@@ -33,20 +62,15 @@ export function DiscountPriceBox({
   previousPriceLabel,
   scale = 1,
   testID,
+  tone = 'discount',
 }: DiscountPriceBoxProps) {
   return (
-    <YStack
+    <PriceBoxFrame
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="text"
       accessible
-      backgroundColor="$discountBackground"
-      borderColor="$discount"
-      borderRadius={8}
-      borderWidth={1}
-      paddingHorizontal={10}
-      paddingVertical={6}
-      position="relative"
       testID={testID}
+      tone={tone}
     >
       <XStack alignItems="baseline" gap={6}>
         {previousPriceLabel ? (
@@ -62,7 +86,7 @@ export function DiscountPriceBox({
           </Paragraph>
         ) : null}
         <Paragraph
-          color="$discount"
+          color={PRICE_COLOR[tone]}
           fontSize={20}
           fontWeight="900"
           letterSpacing={-0.5}
@@ -81,6 +105,6 @@ export function DiscountPriceBox({
         size="sm"
         top={-10}
       />
-    </YStack>
+    </PriceBoxFrame>
   );
 }

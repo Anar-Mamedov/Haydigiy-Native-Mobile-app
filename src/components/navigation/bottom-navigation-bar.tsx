@@ -10,6 +10,7 @@ import { useCartCount } from '@/features/cart/api/cart.queries';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
 import { openWhatsapp } from '@/utils/whatsapp';
+import { notifyTabReselect } from './tab-reselect';
 
 type TabItem = {
   label: string;
@@ -176,6 +177,13 @@ export function BottomNavigationBar() {
 
   const navigate = useCallback(
     (path: TabItem['path']) => {
+      // Sekmenin kök ekranındayken yeniden gezinilmez: `replace` aynı ekranı yandan kayarak
+      // yeniden getiriyordu. Ekran olayı dinler (ana sayfa en üste kayar).
+      if (pathname === path) {
+        notifyTabReselect(path);
+        return;
+      }
+
       if (path === '/') {
         router.replace(path);
         return;

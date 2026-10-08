@@ -32,16 +32,29 @@ describe('resolveBundleSavings', () => {
     expect(savings).toEqual({ discountRate: undefined, hasSavings: false });
   });
 
-  it('keeps the saving but drops the rate when the backend reports no percentage', () => {
+  it('promises no saving when the backend reports no percentage', () => {
+    // Web: `savings > 0 && savingsPercent > 3`; oran yoksa paket indirimli sayılmaz.
     const savings = resolveBundleSavings(makeSummary({ savingsPercent: 0 }));
 
-    expect(savings).toEqual({ discountRate: undefined, hasSavings: true });
+    expect(savings).toEqual({ discountRate: undefined, hasSavings: false });
   });
 
   it('ignores a malformed percentage instead of rendering it', () => {
     const savings = resolveBundleSavings(makeSummary({ savingsPercent: Number.NaN }));
 
-    expect(savings).toEqual({ discountRate: undefined, hasSavings: true });
+    expect(savings).toEqual({ discountRate: undefined, hasSavings: false });
+  });
+
+  it.each([1, 2, 3])('does not treat a %i%% saving as a discount, like the web', (savingsPercent) => {
+    const savings = resolveBundleSavings(makeSummary({ savings: 75, savingsPercent }));
+
+    expect(savings).toEqual({ discountRate: undefined, hasSavings: false });
+  });
+
+  it('shows a saving just above the 3% threshold', () => {
+    const savings = resolveBundleSavings(makeSummary({ savings: 100, savingsPercent: 4 }));
+
+    expect(savings).toEqual({ discountRate: 4, hasSavings: true });
   });
 });
 
@@ -96,5 +109,15 @@ describe('resolveBundleListingSavings', () => {
   it('drops a saving that rounds down to zero percent', () => {
     // 0,50 / 339,98 = %0,15 → "-%0" rozeti çıkmasın.
     expect(resolveBundleListingSavings({ isBundle: true, price: 339.48, bundleItemsTotal: 339.98 })).toBeNull();
+  });
+
+  it('shows the normal price for a saving of 3% or less, like the web', () => {
+    // 10 / 339,98 = %2,9 → %3: indirim sayılmaz, kart normal fiyatını gösterir.
+    expect(resolveBundleListingSavings({ isBundle: true, price: 329.98, bundleItemsTotal: 339.98 })).toBeNull();
+    // 12 / 300 = %4 → eşiğin üstünde, kazanç gösterilir.
+    expect(resolveBundleListingSavings({ isBundle: true, price: 288, bundleItemsTotal: 300 })).toEqual({
+      itemsTotal: 300,
+      savingsPercent: 4,
+    });
   });
 });

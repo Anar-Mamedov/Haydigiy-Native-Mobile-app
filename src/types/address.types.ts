@@ -11,6 +11,8 @@ export type Address = {
   city: string;
   district: string;
   neighbourhood: string;
+  /** Siparişlerde öncelikli seçilen adres (web `is_default`). */
+  isDefault: boolean;
 };
 
 /**
@@ -34,4 +36,6 @@ export type AddressFormValues = {
   taxOffice: string;
   companyName: string;
   isEFatura: boolean;
+  /** "Varsayılan adres olarak kullan" kutusu. */
+  isDefault: boolean;
 };
