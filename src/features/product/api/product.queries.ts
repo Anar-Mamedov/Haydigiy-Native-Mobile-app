@@ -2,9 +2,12 @@ import { useMemo } from 'react';
 import { useQuery, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { productKeys } from '@/features/product/api/product.keys';
 import {
+  PRODUCT_DETAIL_STALE_TIME,
+  productDetailQueryOptions,
+} from '@/features/product/api/product.query-options';
+import {
   mapAvailableFilters,
   mapPopularProductDto,
-  mapProductDetailDto,
   mapProductDto,
   mapSearchProductDto,
   mergeProductDetailReviewPage,
@@ -15,8 +18,6 @@ import {
   searchProductDtos,
   SearchProductsParams,
   getSearchSuggestions,
-  getProductDetailBySlug,
-  getCurrentSlugById,
   getProductReviews,
   getProductReviewPageDto,
 } from '@/services/product.service';
@@ -98,14 +99,6 @@ export function usePopularProductsQuery(enabled = true) {
 }
 
 /**
- * Browsing back and forth between the list and the same product within this
- * window reuses the cached detail instead of re-running the request chain;
- * after it, a background refetch still refreshes price/stock without blanking
- * the screen.
- */
-const PRODUCT_DETAIL_STALE_TIME = 60 * 1000;
-
-/**
  * Product detail for the PDP. The base detail request resolves on its own so
  * variants, colors and sizes render as soon as it lands; the review page is
  * fetched by a separate dependent query and merged in when available.
@@ -115,27 +108,8 @@ const PRODUCT_DETAIL_STALE_TIME = 60 * 1000;
  */
 export function useProductDetailsQuery(idOrSlug: string) {
   const detailQuery = useQuery({
+    ...productDetailQueryOptions(idOrSlug),
     enabled: Boolean(idOrSlug),
-    queryKey: productKeys.detail(idOrSlug),
-    staleTime: PRODUCT_DETAIL_STALE_TIME,
-    queryFn: async () => {
-      let slug = idOrSlug;
-      const isNumeric = /^\d+$/.test(idOrSlug);
-
-      if (isNumeric) {
-        try {
-          const res = await getCurrentSlugById(idOrSlug);
-          if (res?.success && res.slug) {
-            slug = res.slug;
-          }
-        } catch (error) {
-          console.warn('Failed to resolve slug by id, falling back to direct slug fetch:', error);
-        }
-      }
-
-      const rawDetail = await getProductDetailBySlug(slug);
-      return mapProductDetailDto(rawDetail);
-    },
   });
 
   const detail = detailQuery.data;

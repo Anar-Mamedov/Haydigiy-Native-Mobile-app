@@ -106,13 +106,21 @@ export function useRemoveFavoriteMutation() {
   });
 }
 
-export function useToggleFavorite(product?: Product | null) {
-  const isFavorite = useFavoriteStore((state) => state.isFavorite(product?.id ?? ''));
+/**
+ * Favori ekle/çıkar. Tam `Product` modeli olmayan yüzeyler (ör. ana sayfa vitrini)
+ * kimliği ve Insider anlık görüntüsünü kuran fonksiyonu verir; görüntü yalnızca
+ * ekleme anında kurulur.
+ */
+export function useFavoriteToggle(
+  productId: string | undefined,
+  buildTracking: () => InsiderProductInput | undefined,
+) {
+  const isFavorite = useFavoriteStore((state) => state.isFavorite(productId ?? ''));
   const addMutation = useAddFavoriteMutation();
   const removeMutation = useRemoveFavoriteMutation();
 
   const toggleFavorite = useCallback(async () => {
-    if (!product?.id) return;
+    if (!productId) return;
 
     if (!(await isAuthenticated())) {
       Alert.alert('Uyarı', 'Giriş yapmadan favorilere eklenemez.');
@@ -121,21 +129,30 @@ export function useToggleFavorite(product?: Product | null) {
 
     try {
       if (isFavorite) {
-        await removeMutation.mutateAsync(product.id);
+        await removeMutation.mutateAsync(productId);
       } else {
         await addMutation.mutateAsync({
-          productId: product.id,
-          tracking: productToInsiderInput(product),
+          productId,
+          tracking: buildTracking(),
         });
       }
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
     }
-  }, [isFavorite, product, addMutation, removeMutation]);
+  }, [isFavorite, productId, buildTracking, addMutation, removeMutation]);
 
   return {
     isFavorite,
     toggleFavorite,
     isPending: addMutation.isPending || removeMutation.isPending,
   };
+}
+
+export function useToggleFavorite(product?: Product | null) {
+  const buildTracking = useCallback(
+    () => (product ? productToInsiderInput(product) : undefined),
+    [product],
+  );
+
+  return useFavoriteToggle(product?.id, buildTracking);
 }

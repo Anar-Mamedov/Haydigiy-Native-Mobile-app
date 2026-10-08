@@ -10,13 +10,21 @@ import { useLastViewedInsiderProduct } from '@/features/insider/hooks/use-last-v
 import { useTrackHomePageView } from '@/features/insider/hooks/use-insider-page-tracking';
 import { HomeBannerSection } from '@/features/product/components/home-banner-section';
 import { HomeHeadingSection } from '@/features/product/components/home-heading-section';
+import { HomeProductShowcase } from '@/features/product/components/home-product-showcase';
 import { HomeSliderSection } from '@/features/product/components/home-slider-section';
 import { HomeStorySection } from '@/features/product/components/home-story-section';
 import { HomeTextSection } from '@/features/product/components/home-text-section';
 import { MobileHomeSearch } from '@/features/product/components/mobile-home-search';
 import { HomeFooter } from '@/features/product/components/home-footer';
 import { HOME_SECTION_GAP } from '@/features/product/utils/home-layout';
-import { BannerContent, StoryContent, HeadingContent, TextContent, Section } from '@/types/page-design.types';
+import {
+  BannerContent,
+  StoryContent,
+  HeadingContent,
+  ProductShowcaseContent,
+  TextContent,
+  Section,
+} from '@/types/page-design.types';
 
 export function HomeScreen() {
   useTrackHomePageView();
@@ -112,6 +120,13 @@ export function HomeScreen() {
         return (
           <HomeTextSection
             content={section.content as TextContent}
+            key={section.id}
+          />
+        );
+      case 'product_showcase':
+        return (
+          <HomeProductShowcase
+            content={section.content as ProductShowcaseContent}
             key={section.id}
           />
         );
