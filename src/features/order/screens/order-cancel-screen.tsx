@@ -90,7 +90,7 @@ export function OrderCancelScreen() {
               <Paragraph color="$color" fontSize={14} marginTop="$1">
                 Toplam:{' '}
                 <Paragraph color="$brand" fontSize={14} fontWeight="800">
-                  {formatOrderPrice(order.totals.total)}
+                  {formatOrderPrice(order.totals.payableTotal)}
                 </Paragraph>
               </Paragraph>
             </YStack>
