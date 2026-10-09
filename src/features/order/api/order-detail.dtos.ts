@@ -99,6 +99,53 @@ export interface CancelledItemDetailDto {
   cancelled_at?: string | null;
 }
 
+/** A missing product/part report ("eksik ürün/parça bildirimi") raised on the order. */
+export interface MissingItemCaseDto {
+  id: number;
+  case_no?: string | null;
+  /** `resolved` once closed; any other value means the report is still open. */
+  status?: string | null;
+  status_label?: string | null;
+  stored_status?: string | null;
+  reported_at?: string | null;
+  resolved_at?: string | null;
+  resolution_note?: string | null;
+  tracking_code?: string | null;
+  items?: MissingItemLineDto[] | null;
+}
+
+export interface MissingItemLineDto {
+  id: number;
+  order_item_id?: number | null;
+  name?: string | null;
+  /** The report's own image URL; not derived from the order line. */
+  image?: string | null;
+  variant_name?: string | null;
+  missing_quantity?: number | string | null;
+  compensation_amount?: number | string | null;
+  resolution_type?: string | null;
+}
+
+/** Compensation shipment created for a report; `order_no` equals the report's `case_no`. */
+export interface MissingDeliveryItemDto {
+  /** Order id of the compensation shipment, used for `/order/{id}/cargo-tracking`. */
+  id: number;
+  order_no?: string | null;
+  status_id?: number | null;
+  status?: string | null;
+  cargo_company_name?: string | null;
+  tracking_code?: string | null;
+  tracking_url?: string | null;
+  created_at?: string | null;
+  items?: { id: number; name?: string | null; quantity?: number | string | null }[] | null;
+}
+
+export interface MissingItemsDto {
+  products?: MissingItemCaseDto[] | null;
+  parts?: MissingItemCaseDto[] | null;
+  delivery_items?: MissingDeliveryItemDto[] | null;
+}
+
 export interface OrderTotalsDto {
   subtotal?: number | string;
   tax_total?: number | string;
@@ -149,4 +196,5 @@ export interface OrderDetailResponseDto {
   display_items?: OrderDetailDisplayItemDto[] | null;
   returned_items?: ReturnedItemDetailDto[] | null;
   cancelled_items?: CancelledItemDetailDto[] | null;
+  missing_items?: MissingItemsDto | null;
 }

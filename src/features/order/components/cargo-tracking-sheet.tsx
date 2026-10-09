@@ -20,16 +20,18 @@ import { useOrderCargoTrackingQuery } from '../api/order.queries';
 import { formatTrackingCode } from '../api/order-tracking.mapper';
 import { getCustomerTrackingCode } from '../utils/cargo-tracking';
 import {
+  CargoShipment,
   OrderAddress,
   OrderCargoMovement,
   OrderCargoTrackingStage,
-  OrderDetail,
 } from '@/types/order.types';
 
 type CargoTrackingSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  order: OrderDetail;
+  /** The order's own shipment or a missing-item compensation shipment. */
+  shipment: CargoShipment;
+  shippingAddress: OrderAddress | null;
 };
 
 function getErrorMessage(error: unknown): string {
@@ -171,18 +173,23 @@ function MovementRow({ movement }: { movement: OrderCargoMovement }) {
   );
 }
 
-export function CargoTrackingSheet({ open, onOpenChange, order }: CargoTrackingSheetProps) {
+export function CargoTrackingSheet({
+  open,
+  onOpenChange,
+  shipment,
+  shippingAddress,
+}: CargoTrackingSheetProps) {
   const insets = useSafeAreaInsets();
   const [movementsExpanded, setMovementsExpanded] = useState(true);
-  const query = useOrderCargoTrackingQuery(String(order.id), open);
+  const query = useOrderCargoTrackingQuery(shipment.orderId, open);
   const tracking = query.data;
-  const companyName = tracking?.cargoCompanyName ?? order.cargoCompanyName ?? '';
+  const companyName = tracking?.cargoCompanyName ?? shipment.cargoCompanyName ?? '';
   // Aras Kargo'nun iç takip değeri (`HG…`) gerçek takip numarası değil; burada da gösterilmez.
   const trackingCode =
     getCustomerTrackingCode({
       cargoCompanyName: companyName,
-      orderNo: tracking?.orderNo ?? order.orderNo,
-      trackingCode: tracking?.trackingCode ?? order.trackingCode,
+      orderNo: tracking?.orderNo ?? shipment.orderNo,
+      trackingCode: tracking?.trackingCode ?? shipment.trackingCode,
     }) ?? '';
 
   useEffect(() => {
@@ -265,12 +272,12 @@ export function CargoTrackingSheet({ open, onOpenChange, order }: CargoTrackingS
             </YStack>
           ) : tracking ? (
             <>
-              {order.cargoCompanyLogo ? (
+              {shipment.cargoCompanyLogo ? (
                 <XStack justifyContent="center" paddingTop="$1">
                   <Image
                     accessibilityLabel={companyName || 'Kargo firması'}
                     contentFit="contain"
-                    source={{ uri: order.cargoCompanyLogo }}
+                    source={{ uri: shipment.cargoCompanyLogo }}
                     style={{ width: 116, height: 36 }}
                   />
                 </XStack>
@@ -291,20 +298,20 @@ export function CargoTrackingSheet({ open, onOpenChange, order }: CargoTrackingS
                 <TrackingStageTimeline delivered={tracking.delivered} stages={tracking.stages} />
 
                 <YStack gap="$4">
-                  {order.items.length > 0 ? (
+                  {shipment.itemCount > 0 ? (
                     <XStack alignItems="center" gap="$2">
                       <Package color="$color9" size={17} />
                       <Paragraph color="$color10" flex={1} fontSize={13}>
                         Paketinizde{' '}
                         <Paragraph color="$color" fontSize={13} fontWeight="800">
-                          {order.items.length}
+                          {shipment.itemCount}
                         </Paragraph>{' '}
                         ürün bulunmaktadır.
                       </Paragraph>
                     </XStack>
                   ) : null}
 
-                  <AddressBlock address={order.shippingAddress} />
+                  <AddressBlock address={shippingAddress} />
 
                   {tracking.lastMovement?.location ? (
                     <YStack gap="$1.5">

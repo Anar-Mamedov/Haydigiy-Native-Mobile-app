@@ -42,6 +42,7 @@ function makeOrder(overrides: Partial<OrderDetail> = {}): OrderDetail {
     items: [],
     returnedItems: [],
     cancelledItems: [],
+    missingCases: [],
     totals: {
       subtotal: 0,
       userDiscount: 0,

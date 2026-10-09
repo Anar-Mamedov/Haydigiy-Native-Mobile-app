@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 import { CargoTrackingSheet } from './cargo-tracking-sheet';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
-import { OrderCargoTracking, OrderDetail } from '@/types/order.types';
+import { CargoShipment, OrderAddress, OrderCargoTracking } from '@/types/order.types';
 
 const mockUseOrderCargoTrackingQuery = jest.fn();
 
@@ -27,79 +27,39 @@ jest.mock('../api/order.queries', () => ({
   useOrderCargoTrackingQuery: (...args: unknown[]) => mockUseOrderCargoTrackingQuery(...args),
 }));
 
-function makeOrder(overrides: Partial<OrderDetail> = {}): OrderDetail {
+const SHIPPING_ADDRESS: OrderAddress = {
+  name: 'Anar',
+  surname: 'Mammadov',
+  phone: '0507654321',
+  email: null,
+  addressLine: 'Adres satırı',
+  neighbourhood: 'Mahalle',
+  district: 'İlçe',
+  city: 'İstanbul',
+  zipCode: null,
+};
+
+function makeShipment(overrides: Partial<CargoShipment> = {}): CargoShipment {
   return {
-    id: 12,
+    orderId: '12',
     orderNo: 'HG123',
-    createdAt: '2026-07-06',
-    deliveredAt: '',
-    status: 'Kargoda',
-    statusId: 6,
     trackingCode: 'TRK12345678',
     cargoCompanyName: 'Hepsijet',
     cargoCompanyLogo: null,
-    invoicePdfUrl: null,
-    paymentMethodId: 1,
-    canCreateReturnRequest: false,
-    returnBlockReason: null,
-    returnDeadline: null,
-    returnRequestIds: [],
-    hasHepsijetReturn: false,
-    returnPaymentInfo: null,
-    shippingAddress: {
-      name: 'Anar',
-      surname: 'Mammadov',
-      phone: '0507654321',
-      email: null,
-      addressLine: 'Adres satırı',
-      neighbourhood: 'Mahalle',
-      district: 'İlçe',
-      city: 'İstanbul',
-      zipCode: null,
-    },
-    billingAddress: null,
-    billingType: 'individual',
-    tcNumber: null,
-    taxNumber: null,
-    taxOffice: null,
-    items: [
-      {
-        id: 1,
-        image: null,
-        kind: 'normal',
-        name: 'Ürün',
-        price: 100,
-        quantity: 1,
-        slug: 'urun',
-        variantName: 'M',
-      },
-    ],
-    returnedItems: [],
-    cancelledItems: [],
-    totals: {
-      subtotal: 0,
-      userDiscount: 0,
-      couponDiscount: 0,
-      couponCode: null,
-      campaignDiscount: 0,
-      cargoFee: 0,
-      codFee: 0,
-      paymentFee: 0,
-      returnTotal: 0,
-      total: 0,
-      paymentMethod: '',
-      installmentCount: null,
-      interestAmount: 0,
-      totalWithInterest: 0,
-      hasInstallmentInfo: false,
-      payableTotal: 0,
-    },
-    totalItemsQty: 1,
-    returnedQty: 0,
-    cancelledQty: 0,
-    isFullyCancelled: false,
+    itemCount: 1,
     ...overrides,
   };
+}
+
+function renderSheet(shipment: CargoShipment = makeShipment()) {
+  return renderWithTamagui(
+    <CargoTrackingSheet
+      onOpenChange={jest.fn()}
+      open
+      shipment={shipment}
+      shippingAddress={SHIPPING_ADDRESS}
+    />,
+  );
 }
 
 function makeTracking(): OrderCargoTracking {
@@ -156,7 +116,7 @@ describe('CargoTrackingSheet', () => {
   });
 
   it('loads tracking only when open and renders the tracking details', () => {
-    renderWithTamagui(<CargoTrackingSheet onOpenChange={jest.fn()} open order={makeOrder()} />);
+    renderSheet();
 
     expect(mockUseOrderCargoTrackingQuery).toHaveBeenCalledWith('12', true);
     expect(screen.getByText('Kargo Takibi')).toBeTruthy();
@@ -167,11 +127,28 @@ describe('CargoTrackingSheet', () => {
   });
 
   it('collapses and expands detailed cargo movements', () => {
-    renderWithTamagui(<CargoTrackingSheet onOpenChange={jest.fn()} open order={makeOrder()} />);
+    renderSheet();
 
     fireEvent.press(screen.getByTestId('cargo-tracking-movements-toggle'));
 
     expect(screen.queryByText('Dağıtıma çıktı')).toBeNull();
     expect(screen.getByText('Göster')).toBeTruthy();
+  });
+
+  it('tracks a compensation shipment by its own order id and item count', () => {
+    mockUseOrderCargoTrackingQuery.mockReturnValue({
+      data: { ...makeTracking(), orderNo: null, trackingCode: null },
+      error: null,
+      isError: false,
+      isPending: false,
+      refetch: jest.fn(),
+    });
+
+    renderSheet(makeShipment({ orderId: '991', orderNo: 'EK-1001', trackingCode: 'TELAFI0001', itemCount: 2 }));
+
+    expect(mockUseOrderCargoTrackingQuery).toHaveBeenCalledWith('991', true);
+    // Takip yanıtında numara yoksa gönderinin kendi numarasına düşülür.
+    expect(screen.getByText('TELA FI00 01')).toBeTruthy();
+    expect(screen.getByText('2')).toBeTruthy();
   });
 });

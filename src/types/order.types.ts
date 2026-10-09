@@ -237,6 +237,55 @@ export type CancelPreview = {
   blockMessage: string | null;
 };
 
+/** Whether a missing-item report is for a whole product or a part of one. */
+export type MissingCaseKind = 'product' | 'part';
+
+/** One order line reported as missing within a report. */
+export type MissingCaseLine = {
+  id: number;
+  name: string;
+  /** The report's own image, not the order line's. */
+  image: string | null;
+  variantName: string;
+  missingQuantity: number;
+  /** Product slug resolved from the matching order line; empty when not found. */
+  slug: string;
+};
+
+/** Compensation shipment sent for a report; trackable like a normal order. */
+export type MissingCaseDelivery = {
+  /** Order id of the shipment, queried with `/order/{id}/cargo-tracking`. */
+  orderId: number;
+  orderNo: string;
+  status: string;
+  cargoCompanyName: string | null;
+  trackingCode: string | null;
+  itemCount: number;
+};
+
+/** A missing product/part report ("eksik ürün/parça bildirimi") on an order. */
+export type MissingCase = {
+  id: number;
+  caseNo: string;
+  kind: MissingCaseKind;
+  isResolved: boolean;
+  /** Backend label, falling back to "Çözüldü" / "Bildirildi". */
+  statusLabel: string;
+  resolutionNote: string | null;
+  lines: MissingCaseLine[];
+  delivery: MissingCaseDelivery | null;
+};
+
+/** The shipment shown in the cargo tracking sheet: the order itself or a compensation shipment. */
+export type CargoShipment = {
+  orderId: string;
+  orderNo: string | null;
+  trackingCode: string | null;
+  cargoCompanyName: string | null;
+  cargoCompanyLogo: string | null;
+  itemCount: number;
+};
+
 export type OrderDetail = {
   id: number;
   orderNo: string;
@@ -278,6 +327,8 @@ export type OrderDetail = {
   displayItems?: OrderDetailItem[];
   returnedItems: OrderDetailItem[];
   cancelledItems: OrderDetailItem[];
+  /** Missing product reports first, then missing part reports. */
+  missingCases: MissingCase[];
   totals: OrderTotalsView;
   totalItemsQty: number;
   returnedQty: number;

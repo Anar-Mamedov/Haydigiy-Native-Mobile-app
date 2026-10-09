@@ -16,6 +16,7 @@ import {
 import { formatTurkeyDateTime } from '@/utils/format-turkey-date-time';
 import { formatOrderDate, formatOrderTimelineDate, formatReturnDeadline } from '../utils/order-status';
 import { normalizeReturnStatus } from '../utils/return-status';
+import { mapMissingCases } from './missing-items.mapper';
 
 function toNumber(value: number | string | null | undefined): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -134,7 +135,8 @@ function mapReturnPaymentInfo(
 }
 
 export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
-  const items = toArray(dto.items).map(mapItem);
+  const itemDtos = toArray(dto.items);
+  const items = itemDtos.map(mapItem);
   // Müşteri görünümü: bundle tek satır. Gelmezse `items` kullanılır (eski siparişler bozulmaz).
   const displayItems = Array.isArray(dto.display_items) && dto.display_items.length > 0
     ? dto.display_items.map(mapItem)
@@ -194,6 +196,7 @@ export function mapOrderDetail(dto: OrderDetailResponseDto): OrderDetail {
     displayItems,
     returnedItems,
     cancelledItems,
+    missingCases: mapMissingCases(dto.missing_items, itemDtos),
     totals: {
       subtotal: toNumber(totals.subtotal),
       userDiscount: toNumber(totals.user_discount_amount),

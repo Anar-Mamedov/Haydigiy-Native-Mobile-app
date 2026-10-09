@@ -183,6 +183,27 @@ describe('mapOrderDetail', () => {
     expect(order.items).toHaveLength(2);
   });
 
+  it('defaults to no missing-item reports', () => {
+    expect(mapOrderDetail(baseDetail()).missingCases).toEqual([]);
+  });
+
+  it('maps missing-item reports and resolves line slugs from keyed order items', () => {
+    const order = mapOrderDetail(
+      baseDetail({
+        items: { 0: { id: 1, name: 'A', slug: 'a' } },
+        missing_items: {
+          products: [
+            { id: 5, case_no: 'EK-5', status: 'reported', items: [{ id: 50, order_item_id: 1, name: 'A', missing_quantity: 1 }] },
+          ],
+        },
+      }),
+    );
+
+    expect(order.missingCases).toHaveLength(1);
+    expect(order.missingCases[0]).toMatchObject({ caseNo: 'EK-5', kind: 'product' });
+    expect(order.missingCases[0].lines[0].slug).toBe('a');
+  });
+
   it('flags a fully cancelled order', () => {
     const order = mapOrderDetail(
       baseDetail({

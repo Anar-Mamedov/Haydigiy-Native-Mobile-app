@@ -56,6 +56,7 @@ function makeController(totals: Record<string, unknown>) {
     itemReasons: {},
     order: {
       cancelledItems: [],
+      missingCases: [],
       createdAt: '09 Eki 2026',
       orderNo: 'HG0910261931529',
       status: 'Onaylandı',

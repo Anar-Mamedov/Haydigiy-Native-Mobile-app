@@ -21,10 +21,12 @@ import { OrderAddressCard } from '../components/order-address-card';
 import { OrderPaymentCard } from '../components/order-payment-card';
 import { OrderReviewSheet } from '../components/order-review-sheet';
 import { CargoTrackingSheet } from '../components/cargo-tracking-sheet';
+import { MissingItemsCard } from '../components/missing-items-card';
 import { AgreementTab, OrderAgreementSheet } from '../components/order-agreement-sheet';
 import { isOrderCancellableStatus } from '../utils/order-status';
 import { getReturnBlockBannerMessage } from '../utils/return-block';
-import { OrderDetailItem } from '@/types/order.types';
+import { getMissingDeliveryCargoShipment, getOrderCargoShipment } from '../utils/cargo-shipment';
+import { MissingCaseDelivery, OrderDetailItem } from '@/types/order.types';
 
 const REVIEWABLE_STATUSES = ['Teslim Edildi', 'Sipariş tamamlandı'];
 
@@ -40,6 +42,11 @@ export function OrderDetailScreen() {
   const [reviewItem, setReviewItem] = useState<OrderDetailItem | null>(null);
   const [agreementTab, setAgreementTab] = useState<AgreementTab | null>(null);
   const [cargoTrackingOpen, setCargoTrackingOpen] = useState(false);
+  /**
+   * Takip edilen telafi gönderisi; null ise siparişin kendi kargosu. Kapanışta
+   * sıfırlanmaz ki sheet kapanma animasyonunda başka gönderiye geçmesin.
+   */
+  const [trackedDelivery, setTrackedDelivery] = useState<MissingCaseDelivery | null>(null);
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -67,6 +74,10 @@ export function OrderDetailScreen() {
     () => buildOrderDisplayRows(order?.items, order?.displayItems),
     [order?.items, order?.displayItems],
   );
+  const openCargoTracking = (delivery: MissingCaseDelivery | null) => {
+    setTrackedDelivery(delivery);
+    setCargoTrackingOpen(true);
+  };
   const showReturnEntry = canCreateReturn && hasReturnableItems;
   const returnBlockMessage = order ? getReturnBlockBannerMessage(order, isCancelable) : null;
   // Web paritesi: satır iptal de iade de edilemiyorsa "Tekrar Satın Al" gösterilir.
@@ -131,6 +142,10 @@ export function OrderDetailScreen() {
     );
   }
 
+  const cargoShipment = trackedDelivery
+    ? getMissingDeliveryCargoShipment(order, trackedDelivery)
+    : getOrderCargoShipment(order);
+
   return (
     <AppScreen gap={0} header={header} padding={0} scrollable={false}>
       <YStack backgroundColor="$backgroundHover" flex={1}>
@@ -146,8 +161,14 @@ export function OrderDetailScreen() {
           }
           showsVerticalScrollIndicator={false}
         >
-          <OrderDetailSummary order={order} onPressCargoTracking={() => setCargoTrackingOpen(true)} />
+          <OrderDetailSummary order={order} onPressCargoTracking={() => openCargoTracking(null)} />
           <OrderTimeline statusId={order.statusId} timelineDates={order.timelineDates} />
+
+          <MissingItemsCard
+            cases={order.missingCases}
+            onPressProduct={openProduct}
+            onTrackDelivery={openCargoTracking}
+          />
 
           <OrderItemsSection
             items={order.cancelledItems}
@@ -286,7 +307,8 @@ export function OrderDetailScreen() {
       <CargoTrackingSheet
         onOpenChange={setCargoTrackingOpen}
         open={cargoTrackingOpen}
-        order={order}
+        shipment={cargoShipment}
+        shippingAddress={order.shippingAddress}
       />
     </AppScreen>
   );
