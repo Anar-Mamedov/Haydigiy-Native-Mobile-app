@@ -7,6 +7,8 @@ import { AppInput } from '@/components/ui/app-input';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { KeyboardAwareSheetScrollView } from '@/components/ui/keyboard-aware-sheet-scroll-view';
 import { SheetBottomCover } from '@/components/ui/sheet-bottom-cover';
+import { SheetSwipeCloseArea } from '@/components/ui/sheet-swipe-close-area';
+import { useFitSheetMaxHeight } from '@/components/ui/use-fit-sheet-max-height';
 import { AppliedCoupon } from '@/types/checkout.types';
 import { Coupon } from '@/types/coupon.types';
 import {
@@ -93,6 +95,7 @@ export function CheckoutCouponSheet({
   cart,
   disabled = false,
 }: CheckoutCouponSheetProps) {
+  const maxHeight = useFitSheetMaxHeight();
   const isLocked = disabled || isApplyingCoupon;
   const canApplyCode = !isLocked && code.trim().length > 0;
   // Doğrulama sürerken ikinci dokunuş aynı kodu tekrar göndermesin.
@@ -119,33 +122,35 @@ export function CheckoutCouponSheet({
         borderBottomRightRadius={0}
         borderTopLeftRadius="$6"
         borderTopRightRadius="$6"
-        maxHeight="92%"
+        maxHeight={maxHeight}
         overflow="visible"
         testID="checkout-coupon-sheet-frame"
       >
         <SheetBottomCover testID="checkout-coupon-sheet-bottom-cover" />
 
-        <XStack
-          alignItems="center"
-          borderBottomColor="$borderColor"
-          borderBottomWidth={1}
-          justifyContent="center"
-          paddingHorizontal="$4"
-          paddingVertical="$4"
-        >
-          <Paragraph color="$color" fontSize={16} fontWeight="700">
-            Kuponlarım
-          </Paragraph>
-          <Pressable
-            accessibilityLabel="Kuponları kapat"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={onClose}
-            style={{ position: 'absolute', right: 16 }}
+        <SheetSwipeCloseArea onClose={onClose} testID="checkout-coupon-sheet-swipe-close">
+          <XStack
+            alignItems="center"
+            borderBottomColor="$borderColor"
+            borderBottomWidth={1}
+            justifyContent="center"
+            paddingHorizontal="$4"
+            paddingVertical="$4"
           >
-            <X color="$color11" size={24} />
-          </Pressable>
-        </XStack>
+            <Paragraph color="$color" fontSize={16} fontWeight="700">
+              Kuponlarım
+            </Paragraph>
+            <Pressable
+              accessibilityLabel="Kuponları kapat"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={onClose}
+              style={{ position: 'absolute', right: 16 }}
+            >
+              <X color="$color11" size={24} />
+            </Pressable>
+          </XStack>
+        </SheetSwipeCloseArea>
 
         <KeyboardAwareSheetScrollView testID="checkout-coupon-keyboard-aware-scroll">
           <YStack gap="$3" padding="$4">

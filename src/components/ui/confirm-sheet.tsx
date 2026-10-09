@@ -4,6 +4,7 @@ import { Button, ScrollView, Sheet, Spinner, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { SheetBottomCover } from '@/components/ui/sheet-bottom-cover';
+import { useFitSheetMaxHeight } from '@/components/ui/use-fit-sheet-max-height';
 
 const MIN_BOTTOM_PADDING = 16;
 
@@ -43,6 +44,7 @@ export function ConfirmSheet({
   testID = 'confirm-sheet',
 }: ConfirmSheetProps) {
   const insets = useSafeAreaInsets();
+  const maxHeight = useFitSheetMaxHeight();
   const bottomPadding = Math.max(insets.bottom, MIN_BOTTOM_PADDING);
   const confirmText = isConfirming ? confirmingLabel : confirmLabel;
 
@@ -67,7 +69,7 @@ export function ConfirmSheet({
         borderBottomRightRadius={0}
         borderTopLeftRadius="$6"
         borderTopRightRadius="$6"
-        maxHeight="92%"
+        maxHeight={maxHeight}
         overflow="visible"
         testID={`${testID}-frame`}
       >

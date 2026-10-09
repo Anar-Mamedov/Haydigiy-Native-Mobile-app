@@ -1,7 +1,8 @@
 import { ComponentProps } from 'react';
-import { StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { CheckoutCouponSheet } from './checkout-coupon-sheet';
+import { getFitSheetMaxHeight } from '@/components/ui/use-fit-sheet-max-height';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { AppliedCoupon } from '@/types/checkout.types';
 import { Coupon } from '@/types/coupon.types';
@@ -77,7 +78,7 @@ describe('CheckoutCouponSheet', () => {
     const frame = screen.getByTestId('checkout-coupon-sheet-frame');
     expect(frame.props.adjustPaddingForOffscreenContent).toBe(true);
     expect(frame.props.overflow).toBe('visible');
-    expect(frame.props.maxHeight).toBe('92%');
+    expect(frame.props.maxHeight).toBe(getFitSheetMaxHeight(Dimensions.get('window').height, 40));
     expect(screen.getByTestId('checkout-coupon-sheet-bottom-cover')).toBeTruthy();
 
     const scroll = screen.getByTestId('checkout-coupon-keyboard-aware-scroll');
@@ -87,6 +88,29 @@ describe('CheckoutCouponSheet', () => {
     expect(scroll.props.keyboardShouldPersistTaps).toBe('handled');
 
     expect(screen.getByLabelText('Kupon Kodu')).toBeTruthy();
+  });
+
+  // Yüzde maxHeight fit modunda yok sayılıyordu; uzun kupon listesinde sheet ekranın tepesine
+  // yapışıyor, iOS'ta başlık ve kapatma butonu durum çubuğunun altında kalıyordu.
+  it('bounds the frame with an absolute height that clears the status bar', () => {
+    renderWithTamagui(<CheckoutCouponSheet {...makeProps()} />);
+
+    const { maxHeight } = screen.getByTestId('checkout-coupon-sheet-frame').props;
+    expect(typeof maxHeight).toBe('number');
+    expect(maxHeight).toBeLessThanOrEqual(Dimensions.get('window').height - 40);
+  });
+
+  // HMA-1: sheet başlıktan aşağı kaydırılarak da kapatılabilmeli (bottom snap point eklemeden).
+  it('closes when the header is swiped down, without a bottom snap point', () => {
+    const onClose = jest.fn();
+    renderWithTamagui(<CheckoutCouponSheet {...makeProps({ onClose })} />);
+
+    const header = screen.getByTestId('checkout-coupon-sheet-swipe-close');
+    fireEvent(header, 'touchStart', { nativeEvent: { pageY: 100, timestamp: 1000 } });
+    fireEvent(header, 'touchEnd', { nativeEvent: { pageY: 300, timestamp: 1400 } });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('checkout-coupon-sheet').props.dismissOnSnapToBottom).toBeUndefined();
   });
 
   it('applies the typed code only when a code is entered', () => {

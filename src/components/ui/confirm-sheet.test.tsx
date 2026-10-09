@@ -1,6 +1,7 @@
-import { Text } from 'react-native';
+import { Dimensions, Text } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
+import { getFitSheetMaxHeight } from '@/components/ui/use-fit-sheet-max-height';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
 jest.mock('tamagui', () => {
@@ -86,7 +87,7 @@ describe('ConfirmSheet', () => {
 
     expect(screen.getByTestId('sheet-root').props.snapPointsMode).toBe('fit');
     const frame = screen.getByTestId('return-confirm-frame');
-    expect(frame.props.maxHeight).toBe('92%');
+    expect(frame.props.maxHeight).toBe(getFitSheetMaxHeight(Dimensions.get('window').height, 40));
     expect(frame.props.overflow).toBe('visible');
     expect(frame.props.adjustPaddingForOffscreenContent).toBe(true);
     expect(screen.getByTestId('return-confirm-bottom-cover')).toBeTruthy();
@@ -95,6 +96,16 @@ describe('ConfirmSheet', () => {
     expect(scroll.props.bounces).toBe(false);
     expect(scroll.props.alwaysBounceVertical).toBe(false);
     expect(scroll.props.overScrollMode).toBe('never');
+  });
+
+  // Yüzde maxHeight fit modunda yok sayılıyordu; uzun iade özetinde sheet tam ekrana uzuyor,
+  // başlık durum çubuğunun, onay butonu Android gezinme çubuğunun altında kalıyordu.
+  it('bounds the frame with an absolute height that clears the status bar', () => {
+    renderWithTamagui(<ConfirmSheet {...baseProps} testID="return-confirm" />);
+
+    const { maxHeight } = screen.getByTestId('return-confirm-frame').props;
+    expect(typeof maxHeight).toBe('number');
+    expect(maxHeight).toBeLessThanOrEqual(Dimensions.get('window').height - 40);
   });
 
   it('keeps every label readable in the dark theme', () => {

@@ -13,6 +13,7 @@ import { useValidateCouponMutation, useRemoveCouponMutation } from '../api/check
 import { isMethodOverLimit } from '../components/checkout-payment-options';
 import { mapAppliedCoupon } from '../api/checkout.mapper';
 import { calculateOrderTotals, getEffectiveCouponDiscount } from '../utils/order-totals';
+import { filterCargoForPaymentMethod, filterPaymentMethodsForCargo } from '../utils/cargo-payment-rules';
 import {
   calculateCartItemCount,
   calculateCartSubtotal,
@@ -28,9 +29,6 @@ import {
   PaymentMethod,
 } from '@/types/checkout.types';
 import { CartLineItem } from '@/types/cart.types';
-
-/** Cargo id 5 is the in-store/special option that only allows card payment (web parity). */
-const CARD_ONLY_CARGO_ID = 5;
 
 /**
  * Orchestrates the checkout/payment screen: cart + addresses + cargo + payment
@@ -101,7 +99,11 @@ export function useCheckoutController() {
     }
   }, [addresses, shippingAddress, billingAddress]);
 
-  const cargoCompanies = useMemo(() => cargoQuery.data ?? [], [cargoQuery.data]);
+  // Kapıda Ödeme seçiliyken yalnızca kartla ödenebilen "Mağazadan Al" listelenmez.
+  const cargoCompanies = useMemo(
+    () => filterCargoForPaymentMethod(cargoQuery.data ?? [], selectedMethod, selectedCargo),
+    [cargoQuery.data, selectedMethod, selectedCargo],
+  );
   // Default cargo = the backend's prepared `cargo_id` (web `initialCargoId`),
   // falling back to the first in the list. A late-arriving default still wins over
   // the initial first-item pick, but never overrides a manual user choice.
@@ -126,12 +128,10 @@ export function useCheckoutController() {
   }, []);
 
   const paymentMethods = useMemo(() => paymentTypesQuery.data ?? [], [paymentTypesQuery.data]);
-  const filteredMethods = useMemo(() => {
-    if (selectedCargo?.id === CARD_ONLY_CARGO_ID) {
-      return paymentMethods.filter((m) => m.slug === 'credit_card');
-    }
-    return paymentMethods;
-  }, [paymentMethods, selectedCargo]);
+  const filteredMethods = useMemo(
+    () => filterPaymentMethodsForCargo(paymentMethods, selectedCargo),
+    [paymentMethods, selectedCargo],
+  );
 
   // ---- Pricing inputs ----
   const subtotal = calculateCartSubtotal(items);
