@@ -6,6 +6,7 @@ import {
   formatReturnDeadline,
   getOrderStatusIcon,
   getOrderStatusText,
+  getOrderTimelineStepStates,
   PENDING_PAYMENT_STATUS_TEXT,
 } from './order-status';
 
@@ -81,5 +82,32 @@ describe('formatOrderTimelineDate', () => {
   it('normalizes empty and ISO values for timeline display', () => {
     expect(formatOrderTimelineDate(null)).toBeNull();
     expect(formatOrderTimelineDate('2026-06-10T17:31:50.000000Z')).toBe('2026-06-10');
+  });
+});
+
+describe('getOrderTimelineStepStates', () => {
+  const reachedLabels = (statusId: number) =>
+    getOrderTimelineStepStates(statusId)
+      .filter((step) => step.reached)
+      .map((step) => step.label);
+
+  it('counts the current step as reached so a shipped order shows four checks', () => {
+    const steps = getOrderTimelineStepStates(7);
+
+    expect(reachedLabels(7)).toEqual(['Sipariş Alındı', 'Onaylandı', 'Hazırlanıyor', 'Kargoya Verildi']);
+    expect(steps.find((step) => step.current)?.label).toBe('Kargoya Verildi');
+    // Teslim Edildi'ye giden çizgi gri kalır.
+    expect(steps.map((step) => step.connectorReached)).toEqual([true, true, true, false, false]);
+  });
+
+  it('checks the first step of a new order and every step of a delivered order', () => {
+    expect(reachedLabels(1)).toEqual(['Sipariş Alındı']);
+    expect(reachedLabels(8)).toHaveLength(5);
+  });
+
+  it('reaches no step for an unknown status', () => {
+    const steps = getOrderTimelineStepStates(999);
+
+    expect(steps.some((step) => step.reached || step.current || step.connectorReached)).toBe(false);
   });
 });

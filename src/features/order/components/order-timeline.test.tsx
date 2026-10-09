@@ -36,6 +36,34 @@ describe('OrderTimeline', () => {
     expect(screen.queryByText('08 Tem 2026 - 12:00')).toBeNull();
   });
 
+  it('checks the current step too, so a shipped order is not read as still preparing', () => {
+    renderWithTamagui(
+      <OrderTimeline
+        statusId={7}
+        timelineDates={{
+          orderedAt: '23 Eyl 2026 - 16:39',
+          confirmedAt: '23 Eyl 2026 - 16:41',
+          preparedAt: null,
+          shippedAt: '24 Eyl 2026 - 16:57',
+          deliveredAt: null,
+        }}
+      />,
+    );
+
+    expect(screen.getAllByLabelText(/: tamamlandı/)).toHaveLength(4);
+    expect(
+      screen.getByLabelText('Kargoya Verildi: tamamlandı, mevcut aşama, 24 Eyl 2026 - 16:57'),
+    ).toBeTruthy();
+    expect(screen.getByLabelText('Teslim Edildi: bekleniyor')).toBeTruthy();
+  });
+
+  it('checks every step of a delivered order', () => {
+    renderWithTamagui(<OrderTimeline statusId={8} />, 'dark');
+
+    expect(screen.getAllByLabelText(/: tamamlandı/)).toHaveLength(5);
+    expect(screen.getByLabelText('Teslim Edildi: tamamlandı, mevcut aşama')).toBeTruthy();
+  });
+
   it('renders the cancelled state for cancelled orders', () => {
     renderWithTamagui(<OrderTimeline statusId={4} />);
 

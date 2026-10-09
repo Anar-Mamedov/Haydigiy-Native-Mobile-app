@@ -3,7 +3,7 @@ import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { SectionCard } from '@/components/ui';
 import { OrderTimelineDates } from '@/types/order.types';
-import { getOrderTimelineActiveIndex, ORDER_TIMELINE_STEPS } from '../utils/order-status';
+import { getOrderTimelineStepStates } from '../utils/order-status';
 
 const STEP_ICONS = [ShoppingBag, ClipboardCheck, Package, Truck, Home];
 
@@ -21,6 +21,19 @@ function getTimelineDateByIndex(dates: OrderTimelineDates | undefined, index: nu
     dates.shippedAt,
     dates.deliveredAt,
   ][index] ?? null;
+}
+
+/** Screen-reader text for a step, e.g. "Kargoya Verildi: tamamlandı, mevcut aşama, 24 Eyl 2026". */
+function getStepAccessibilityLabel(
+  label: string,
+  reached: boolean,
+  current: boolean,
+  date: string | null,
+): string {
+  const parts = [`${label}: ${reached ? 'tamamlandı' : 'bekleniyor'}`];
+  if (current) parts.push('mevcut aşama');
+  if (reached && date) parts.push(date);
+  return parts.join(', ');
 }
 
 function VerticalConnector({ active, hidden }: { active: boolean; hidden?: boolean }) {
@@ -63,50 +76,53 @@ export function OrderTimeline({ statusId, timelineDates }: OrderTimelineProps) {
     );
   }
 
-  const activeIndex = getOrderTimelineActiveIndex(statusId);
-  const lastIndex = ORDER_TIMELINE_STEPS.length - 1;
+  const steps = getOrderTimelineStepStates(statusId);
+  const lastIndex = steps.length - 1;
 
   return (
     <SectionCard padding="$4">
       <YStack gap={0}>
-        {ORDER_TIMELINE_STEPS.map((label, index) => {
+        {steps.map(({ label, reached, current, connectorReached }, index) => {
           const Icon = STEP_ICONS[index];
-          const isCompleted = index < activeIndex;
-          const isActive = index === activeIndex;
-          const isPending = index > activeIndex;
           const date = getTimelineDateByIndex(timelineDates, index);
 
           return (
-            <XStack alignItems="stretch" gap="$3" key={label}>
+            <XStack
+              accessibilityLabel={getStepAccessibilityLabel(label, reached, current, date)}
+              accessible
+              alignItems="stretch"
+              gap="$3"
+              key={label}
+            >
               <YStack alignItems="center" width={40}>
                 <XStack
                   alignItems="center"
-                  backgroundColor={isCompleted ? '$brand' : '$background'}
-                  borderColor={isCompleted || isActive ? '$brand' : '$borderColor'}
+                  backgroundColor={reached ? '$brand' : '$background'}
+                  borderColor={reached ? '$brand' : '$borderColor'}
                   borderRadius={100}
-                  borderWidth={isActive ? 2 : 1}
+                  borderWidth={1}
                   height={34}
                   justifyContent="center"
                   width={34}
                 >
-                  {isCompleted ? (
+                  {reached ? (
                     <Check color="white" size={15} />
                   ) : (
-                    <Icon color={isActive ? '$brand' : '$color9'} size={16} />
+                    <Icon color="$color9" size={16} />
                   )}
                 </XStack>
-                <VerticalConnector active={index < activeIndex} hidden={index === lastIndex} />
+                <VerticalConnector active={connectorReached} hidden={index === lastIndex} />
               </YStack>
               <YStack flex={1} gap="$1" paddingBottom={index === lastIndex ? 0 : '$4'} paddingTop="$1">
                 <Paragraph
-                  color={isCompleted ? '$brand' : isActive ? '$color' : '$color10'}
+                  color={reached ? '$brand' : '$color10'}
                   fontSize={13}
                   fontWeight="700"
                   lineHeight={18}
                 >
                   {label}
                 </Paragraph>
-                {date && !isPending ? (
+                {date && reached ? (
                   <Paragraph color="$color10" fontSize={11} lineHeight={16}>
                     {date}
                   </Paragraph>

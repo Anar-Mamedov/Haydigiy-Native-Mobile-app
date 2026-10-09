@@ -94,6 +94,30 @@ export function getOrderTimelineActiveIndex(statusId: number): number {
   return -1;
 }
 
+export type OrderTimelineStepState = {
+  label: string;
+  /** The order has reached this step; shown checked, including the current step. */
+  reached: boolean;
+  /** The step the order is currently at. */
+  current: boolean;
+  /** The line to the next step is filled only once the next step is reached. */
+  connectorReached: boolean;
+};
+
+/**
+ * Step states for the order timeline. The current step counts as reached: customers
+ * read an unchecked "Kargoya Verildi" as "not shipped yet" even when it has a date.
+ */
+export function getOrderTimelineStepStates(statusId: number): OrderTimelineStepState[] {
+  const activeIndex = getOrderTimelineActiveIndex(statusId);
+  return ORDER_TIMELINE_STEPS.map((label, index) => ({
+    label,
+    reached: index <= activeIndex,
+    current: index === activeIndex,
+    connectorReached: index < activeIndex,
+  }));
+}
+
 const CANCELLABLE_STATUS_IDS = new Set([1, 2, 3, 5, 6, 14, 16]);
 const CANCELLABLE_STATUS_LABELS = new Set([
   'sipariş alındı',
