@@ -103,9 +103,10 @@ export function useProductDetailController() {
     setShowProductCode((prev) => (prev === visible ? prev : visible));
   };
 
-  // Pulling the content down while it rests at the top closes the screen
-  // (falls back to home when the PDP was opened directly, e.g. via deep link).
-  const handlePullDismiss = () => {
+  // Header back button and pulling the content down while it rests at the top
+  // both close the screen; with nothing to go back to (e.g. opened from a link)
+  // they fall back to home instead of doing nothing.
+  const handleBack = () => {
     if (router.canGoBack()) {
       router.back();
     } else {
@@ -371,7 +372,7 @@ export function useProductDetailController() {
     headerHeight,
     setHeaderHeight,
     handleProductScrollOffset,
-    handlePullDismiss,
+    handleBack,
 
     // Modal durumları
     showSizeSheet,

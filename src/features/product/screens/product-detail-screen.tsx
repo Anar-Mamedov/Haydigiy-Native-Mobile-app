@@ -51,7 +51,7 @@ export function ProductDetailScreen() {
   if (controller.isPending && !controller.previewProduct) {
     return (
       <AppScreen scrollable={false} padding={0} gap={0}>
-        <ProductDetailHeader />
+        <ProductDetailHeader onBack={controller.handleBack} />
         <YStack flex={1} alignItems="center" justifyContent="center" gap="$3">
           <Spinner size="large" color="$brand" />
           <Paragraph color="$color10">Ürün detayları yükleniyor...</Paragraph>
@@ -67,7 +67,7 @@ export function ProductDetailScreen() {
   if (controller.isError) {
     return (
       <AppScreen scrollable={false} padding={0} gap={0}>
-        <ProductDetailHeader />
+        <ProductDetailHeader onBack={controller.handleBack} />
         <EmptyState
           actionLabel="Tekrar Dene"
           description="Ürün bilgileri yüklenirken hata oluştu."
@@ -81,7 +81,7 @@ export function ProductDetailScreen() {
   if (!displayData || !displayPricing) {
     return (
       <AppScreen scrollable={false} padding={0} gap={0}>
-        <ProductDetailHeader />
+        <ProductDetailHeader onBack={controller.handleBack} />
         <EmptyState description="Seçilen ürün bulunamadı." title="Ürün Bulunamadı" />
       </AppScreen>
     );
@@ -90,11 +90,11 @@ export function ProductDetailScreen() {
   return (
     <AppScreen scrollable={false} padding={0} gap={0}>
       <YStack onLayout={(e) => controller.setHeaderHeight(e.nativeEvent.layout.height)}>
-        <ProductDetailHeader />
+        <ProductDetailHeader onBack={controller.handleBack} />
       </YStack>
 
       <PullToDismissScrollView
-        onDismiss={controller.handlePullDismiss}
+        onDismiss={controller.handleBack}
         onScrollOffsetChange={controller.handleProductScrollOffset}
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: controller.contentBottomPadding }}

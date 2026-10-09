@@ -498,10 +498,10 @@ describe('useProductDetailController — yönlendirme', () => {
     );
   });
 
-  it('goes back when the content is pulled down and there is history', () => {
+  it('goes back from the header or a pull-down when there is history', () => {
     const { result } = setup();
 
-    act(() => result.current.handlePullDismiss());
+    act(() => result.current.handleBack());
 
     expect(mockBack).toHaveBeenCalledTimes(1);
     expect(mockReplace).not.toHaveBeenCalled();
@@ -511,7 +511,7 @@ describe('useProductDetailController — yönlendirme', () => {
     mockCanGoBack = false;
     const { result } = setup();
 
-    act(() => result.current.handlePullDismiss());
+    act(() => result.current.handleBack());
 
     expect(mockReplace).toHaveBeenCalledWith('/');
     expect(mockBack).not.toHaveBeenCalled();

@@ -16,6 +16,15 @@ import { NotificationPermissionRequest } from '@/features/notifications/componen
 import { PhoneVerificationGate } from '@/features/profile/components/phone-verification-gate';
 import { loadWebStyles } from '../theme/web-css';
 
+/**
+ * Linkle doğrudan açılan kök ekranların (ürün, blog, bilgi sayfaları) altına
+ * sekmeler (ana sayfa) konur; böylece geri butonu ve iOS kenardan kaydırma
+ * hareketi ana sayfaya döner. `anchor` yalnızca derin bağlantıda kullanılır.
+ */
+export const unstable_settings = {
+  anchor: '(tabs)',
+};
+
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync();
 

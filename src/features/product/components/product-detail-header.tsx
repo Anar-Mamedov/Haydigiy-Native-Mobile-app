@@ -5,7 +5,12 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { Pressable } from 'react-native';
 
-export function ProductDetailHeader() {
+type ProductDetailHeaderProps = {
+  /** Geri gidecek ekran yoksa ana sayfaya dönen geri işlemi (controller'dan gelir). */
+  onBack: () => void;
+};
+
+export function ProductDetailHeader({ onBack }: ProductDetailHeaderProps) {
   const router = useRouter();
   const cartCount = useCartCount();
   const theme = useTheme();
@@ -35,7 +40,7 @@ export function ProductDetailHeader() {
         chromeless
         circular
         icon={<ArrowLeft color={iconColor as any} size={22} />}
-        onPress={() => router.back()}
+        onPress={onBack}
         pressStyle={{ backgroundColor: '$backgroundPress' }}
         size="$3"
         padding={0}
