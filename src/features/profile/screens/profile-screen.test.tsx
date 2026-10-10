@@ -30,9 +30,15 @@ jest.mock('@/features/app-update/components/profile-app-update-banner', () => ({
   ProfileAppUpdateBanner: () => null,
 }));
 
+const mockUseUserProfileQuery = jest.fn();
+jest.mock('../api/profile.queries', () => ({
+  useUserProfileQuery: (...args: unknown[]) => mockUseUserProfileQuery(...args),
+}));
+
 describe('ProfileScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseUserProfileQuery.mockReturnValue({ data: undefined, isLoading: false });
     useAuthStore.setState({
       user: null,
       isLoading: false,
@@ -93,6 +99,60 @@ describe('ProfileScreen', () => {
 
     fireEvent.press(screen.getByLabelText('Anar Mamedov'));
     expect(mockPush).toHaveBeenCalledWith('/user-info');
+  });
+
+  it('shows the profile completion card and opens user info from Tamamla', () => {
+    (useAuthStatus as jest.Mock).mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+    });
+    mockUseUserProfileQuery.mockReturnValue({
+      data: {
+        name: 'Anar',
+        surname: 'Mamedov',
+        email: 'anar@example.com',
+        phone: '5551234567',
+        birthDate: null,
+        gender: 'male',
+        emailVerified: false,
+        phoneVerified: true,
+        needsPhoneVerification: false,
+        phoneVerificationStatus: 'verified',
+      },
+      isLoading: false,
+    });
+    useAuthStore.setState({
+      user: {
+        id: 'user-123',
+        name: 'Anar',
+        surname: 'Mamedov',
+        email: 'anar@example.com',
+        phoneNumber: '5551234567',
+      },
+    });
+
+    renderWithTamagui(<ProfileScreen />);
+
+    expect(screen.getByText('%71')).toBeTruthy();
+    expect(screen.getByText('Eksik: Doğum tarihi, E-posta doğrulaması')).toBeTruthy();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Profili tamamla' }));
+    expect(mockPush).toHaveBeenCalledWith('/user-info');
+  });
+
+  it('shows the card skeleton while the profile is loading', () => {
+    (useAuthStatus as jest.Mock).mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+    });
+    mockUseUserProfileQuery.mockReturnValue({ data: undefined, isLoading: true });
+    useAuthStore.setState({
+      user: { id: 'user-123', name: 'Anar', email: 'anar@example.com' },
+    });
+
+    renderWithTamagui(<ProfileScreen />);
+
+    expect(screen.getByTestId('profile-completion-skeleton', { includeHiddenElements: true })).toBeTruthy();
   });
 
   it('calls logout when Çıkış Yap button is pressed', async () => {

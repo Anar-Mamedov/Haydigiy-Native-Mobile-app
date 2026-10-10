@@ -14,6 +14,8 @@ import { ForgotPasswordForm } from '../../auth/components/forgot-password-form';
 import { OtpVerification } from '../../auth/components/otp-verification';
 import { AccountHub } from '../components/account-hub';
 import { AccountHeader } from '../components/account-header';
+import { ProfileCompletionCard } from '../components/profile-completion-card';
+import { getProfileCompletion } from '../utils/profile-completion';
 import { useUserProfileQuery } from '../api/profile.queries';
 import { ProfileAppUpdateBanner } from '@/features/app-update/components/profile-app-update-banner';
 
@@ -25,7 +27,8 @@ export function ProfileScreen() {
   const logout = useAuthStore((state) => state.logout);
   const { isAuthenticated, isLoading: authChecking } = useAuthStatus();
   // Profile holds the authoritative e-mail verification flag (from /user/profile).
-  const { data: profile } = useUserProfileQuery(isAuthenticated);
+  const { data: profile, isLoading: profileLoading } = useUserProfileQuery(isAuthenticated);
+  const profileCompletion = profile ? getProfileCompletion(profile) : null;
 
   // Drives the collapsing account header (transparent at top, solid once scrolled).
   const [headerScrolled, setHeaderScrolled] = useState(false);
@@ -99,6 +102,11 @@ export function ProfileScreen() {
       >
         <YStack gap="$4">
           <ProfileAppUpdateBanner />
+          <ProfileCompletionCard
+            completion={profileCompletion}
+            loading={profileLoading}
+            onComplete={handleUserInfoPress}
+          />
           <AccountHub onLogout={handleLogout} />
         </YStack>
       </AppScreen>

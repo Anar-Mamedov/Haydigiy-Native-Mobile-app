@@ -1,10 +1,11 @@
-import { ReactElement, useCallback } from 'react';
+import { ComponentType, useCallback } from 'react';
 import { Pressable } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { XStack, YStack, useTheme } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { type AppIconProps, Heart, Home, Menu, ShoppingCart, UserRound } from '@/components/ui/icons';
 import { IconWithCountBadge } from '@/components/ui/count-badge';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { BRAND_COLOR } from '@/lib/theme/colors';
@@ -15,71 +16,23 @@ import { notifyTabReselect } from './tab-reselect';
 type TabItem = {
   label: string;
   path: '/' | '/categories' | '/favorites' | '/cart' | '/profile';
-  icon: (props: { color: string; focused: boolean; size: number }) => ReactElement;
+  Icon: ComponentType<AppIconProps>;
+  /** Seçili sekmede ikon içi dolu çizilir (favori kalbi). */
+  fillWhenFocused?: boolean;
 };
 
-function HomeTabIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M3 9.75L12 4l9 5.75v8.25a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 18V9.75z"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
+/**
+ * Sekme ikonları header'daki ikonlarla aynı (`app-header.tsx`: Menu, Heart, ShoppingCart,
+ * UserRound). Header'da ana sayfa ikonu yok; aynı aileden Home kullanılır. İkonlar
+ * OS yazı ölçeğini kendileri uygular, alt menünün sıkı tavanıyla birlikte.
+ */
+const TAB_ICON_SIZE = 25;
 
-function CategoriesTabIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M4 6h16M4 12h16M4 18h7"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
+function TabIcon({ color, fillWhenFocused, focused, Icon }: Pick<TabItem, 'fillWhenFocused' | 'Icon'> & { color: string; focused: boolean }) {
+  // Renk tema değerinden (`.val`) gelen düz bir hex; ikon prop'u Tamagui renk tipini bekliyor.
+  const iconColor = color as AppIconProps['color'];
 
-function FavoritesTabIcon({
-  color,
-  focused,
-  size,
-}: {
-  color: string;
-  focused: boolean;
-  size: number;
-}) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill={focused ? color : 'none'}>
-      <Path
-        d="M12 21l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3 9.24 3 10.91 3.81 12 5.09 13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.18L12 21z"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function CartTabIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 7M7 13l-2 4m14-4l2 4M6 17h12"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
+  return <Icon color={iconColor} fill={fillWhenFocused && focused ? color : 'none'} maxFontScale={COMPACT_MAX_FONT_SCALE} size={TAB_ICON_SIZE} />;
 }
 
 /** Destek sohbeti bu metinle açılır. */
@@ -93,26 +46,12 @@ function WhatsappTabIcon({ color, size }: { color: string; size: number }) {
   );
 }
 
-function ProfileTabIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M5.121 17.804A9 9 0 0112 15a9 9 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 const TAB_ITEMS: readonly TabItem[] = [
-  { label: 'Anasayfa', path: '/', icon: ({ color, size }) => <HomeTabIcon color={color} size={size} /> },
-  { label: 'Kategoriler', path: '/categories', icon: ({ color, size }) => <CategoriesTabIcon color={color} size={size} /> },
-  { label: 'Favorilerim', path: '/favorites', icon: ({ color, focused, size }) => <FavoritesTabIcon color={color} focused={focused} size={size} /> },
-  { label: 'Sepetim', path: '/cart', icon: ({ color, size }) => <CartTabIcon color={color} size={size} /> },
-  { label: 'Hesabım', path: '/profile', icon: ({ color, size }) => <ProfileTabIcon color={color} size={size} /> },
+  { label: 'Anasayfa', path: '/', Icon: Home },
+  { label: 'Kategoriler', path: '/categories', Icon: Menu },
+  { label: 'Favorilerim', path: '/favorites', Icon: Heart, fillWhenFocused: true },
+  { label: 'Sepetim', path: '/cart', Icon: ShoppingCart },
+  { label: 'Hesabım', path: '/profile', Icon: UserRound },
 ] as const;
 
 /**
@@ -235,7 +174,7 @@ export function BottomNavigationBar() {
                 badgeSize={badgeSize}
                 badgeTestID={`${tabTestId}-tab-badge`}
                 count={badgeCount}
-                icon={item.icon({ color, focused, size: tabIconSize })}
+                icon={<TabIcon color={color} fillWhenFocused={item.fillWhenFocused} focused={focused} Icon={item.Icon} />}
                 testID={`${tabTestId}-tab-icon`}
               />
               <Paragraph adjustsFontSizeToFit fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} minimumFontScale={0.8} numberOfLines={1} style={{ color }}>
@@ -282,7 +221,7 @@ export function BottomNavigationBar() {
             })}
           >
             <YStack alignItems="center" gap={2}>
-              {item.icon({ color, focused, size: tabIconSize })}
+              <TabIcon color={color} fillWhenFocused={item.fillWhenFocused} focused={focused} Icon={item.Icon} />
               <Paragraph adjustsFontSizeToFit fontSize={9.5} fontWeight="600" lineHeight={tabLabelLineHeight} maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE} minimumFontScale={0.8} numberOfLines={1} style={{ color }}>
                 {item.label}
               </Paragraph>
