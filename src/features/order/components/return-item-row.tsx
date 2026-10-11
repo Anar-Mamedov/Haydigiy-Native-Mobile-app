@@ -1,11 +1,11 @@
-import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
-import { Camera, Image as ImagePlaceholderIcon, X } from '@/components/ui/icons';
+import { Image as ImagePlaceholderIcon } from '@/components/ui/icons';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppCheckbox, AppSelect } from '@/components/ui';
 import { PHOTO_REQUIRED_REASON_ID, ExpandedReturnItem } from '../hooks/use-return-create-controller';
 import { ReturnPhoto, ReturnReason } from '@/types/order.types';
+import { ReturnPhotoField } from './return-photo-field';
 
 const THUMB_SIZE = 64;
 
@@ -42,20 +42,6 @@ export function ReturnItemRow({
 }: Props) {
   const { item } = row;
   const requiresPhoto = reasonId === PHOTO_REQUIRED_REASON_ID;
-
-  const pickPhoto = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
-    const asset = result.canceled ? undefined : result.assets[0];
-    if (asset) {
-      onPhotoChange({
-        uri: asset.uri,
-        name: asset.fileName ?? 'return.jpg',
-        type: asset.mimeType ?? 'image/jpeg',
-      });
-    }
-  };
 
   return (
     <YStack
@@ -117,61 +103,7 @@ export function ReturnItemRow({
             />
           </YStack>
 
-          {requiresPhoto ? (
-            <YStack gap="$2">
-              <Paragraph color="$color10" fontSize={12}>
-                Fotoğraf yükleyin <Paragraph color="$red10" fontSize={12}>*</Paragraph>
-              </Paragraph>
-              {photo ? (
-                <XStack alignItems="center" gap="$3">
-                  <Image
-                    contentFit="cover"
-                    source={{ uri: photo.uri }}
-                    style={{ width: 56, height: 56, borderRadius: 8 }}
-                  />
-                  <XStack
-                    accessibilityLabel="Fotoğrafı kaldır"
-                    accessibilityRole="button"
-                    alignItems="center"
-                    gap="$1.5"
-                    onPress={() => onPhotoChange(null)}
-                    pressStyle={{ opacity: 0.7 }}
-                  >
-                    <X color="$red10" size={16} />
-                    <Paragraph color="$red10" fontSize={13} fontWeight="600">
-                      Kaldır
-                    </Paragraph>
-                  </XStack>
-                </XStack>
-              ) : (
-                <XStack
-                  accessibilityLabel="Fotoğraf yükle"
-                  accessibilityRole="button"
-                  alignItems="center"
-                  alignSelf="flex-start"
-                  backgroundColor="$background"
-                  borderColor="$brand"
-                  borderRadius="$3"
-                  borderWidth={1}
-                  gap="$2"
-                  onPress={pickPhoto}
-                  paddingHorizontal="$3"
-                  paddingVertical="$2"
-                  pressStyle={{ backgroundColor: '$backgroundHover' }}
-                >
-                  <Camera color="$brand" size={16} />
-                  <Paragraph color="$brand" fontSize={13} fontWeight="700">
-                    Fotoğraf Yükle
-                  </Paragraph>
-                </XStack>
-              )}
-              {!photo ? (
-                <Paragraph color="$red10" fontSize={11}>
-                  Bu iade nedeni için fotoğraf zorunludur.
-                </Paragraph>
-              ) : null}
-            </YStack>
-          ) : null}
+          {requiresPhoto ? <ReturnPhotoField onPhotoChange={onPhotoChange} photo={photo} /> : null}
         </YStack>
       ) : null}
     </YStack>
