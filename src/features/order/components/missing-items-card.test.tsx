@@ -8,7 +8,7 @@ function makeCase(overrides: Partial<MissingCase> = {}): MissingCase {
     id: 1,
     caseNo: 'EK-1001',
     kind: 'product',
-    isResolved: false,
+    status: 'open',
     statusLabel: 'Bildirildi',
     resolutionNote: 'Telafi gönderisi hazırlandı.',
     lines: [
@@ -30,7 +30,7 @@ const PART_CASE = makeCase({
   id: 2,
   caseNo: 'EP-2002',
   kind: 'part',
-  isResolved: true,
+  status: 'resolved',
   statusLabel: 'Çözüldü',
   resolutionNote: 'Parça notu',
   lines: [{ id: 200, name: 'Ceket', image: null, variantName: '', missingQuantity: 1, slug: '' }],
@@ -70,11 +70,27 @@ describe('MissingItemsCard', () => {
     expect(screen.getByText('Eksik: 2 adet')).toBeTruthy();
   });
 
-  it('shows the resolution note only on missing product reports', () => {
+  it('shows the resolution note on both missing product and missing part reports', () => {
     renderCard([makeCase(), PART_CASE]);
 
     expect(screen.getByText('Telafi gönderisi hazırlandı.')).toBeTruthy();
-    expect(screen.queryByText('Parça notu')).toBeNull();
+    expect(screen.getByText('Parça notu')).toBeTruthy();
+  });
+
+  it('marks a rejected report with its own status badge and shows the rejection note', () => {
+    renderCard([
+      makeCase({
+        status: 'rejected',
+        statusLabel: 'Reddedildi',
+        resolutionNote: 'Paket eksiksiz teslim edilmiş.',
+      }),
+      PART_CASE,
+    ]);
+
+    expect(screen.getByTestId('missing-case-status-rejected')).toBeTruthy();
+    expect(screen.getByTestId('missing-case-status-resolved')).toBeTruthy();
+    expect(screen.getByText('Reddedildi')).toBeTruthy();
+    expect(screen.getByText('Paket eksiksiz teslim edilmiş.')).toBeTruthy();
   });
 
   it('opens the product only for lines that resolve to a product', () => {
@@ -116,10 +132,14 @@ describe('MissingItemsCard', () => {
   });
 
   it('keeps labels and the tracking action readable in dark theme', () => {
-    renderCard([makeCase(), PART_CASE], 'dark');
+    renderCard(
+      [makeCase(), PART_CASE, makeCase({ id: 3, caseNo: 'EK-3003', status: 'rejected', statusLabel: 'Reddedildi' })],
+      'dark',
+    );
 
     expect(screen.getByText('Eksik Ürün Bildirimleri')).toBeTruthy();
     expect(screen.getByText('EKSİK PARÇA')).toBeTruthy();
-    expect(screen.getByText('Kargo Takip')).toBeTruthy();
+    expect(screen.getByText('Reddedildi')).toBeTruthy();
+    expect(screen.getAllByText('Kargo Takip').length).toBeGreaterThan(0);
   });
 });

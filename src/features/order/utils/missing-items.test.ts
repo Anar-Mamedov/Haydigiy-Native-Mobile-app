@@ -6,7 +6,7 @@ function makeCase(overrides: Partial<MissingCase> = {}): MissingCase {
     id: 1,
     caseNo: 'EK-1',
     kind: 'product',
-    isResolved: false,
+    status: 'open',
     statusLabel: 'Bildirildi',
     resolutionNote: null,
     lines: [
@@ -21,14 +21,14 @@ describe('getMissingCasesSummary', () => {
   it('counts open reports and the total missing quantity', () => {
     const summary = getMissingCasesSummary([
       makeCase(),
-      makeCase({ id: 2, kind: 'part', isResolved: true }),
+      makeCase({ id: 2, kind: 'part', status: 'resolved' }),
     ]);
 
     expect(summary).toBe('1 bildiriminiz inceleniyor. Toplam 4 adet ürün için kayıt bulunuyor.');
   });
 
   it('reports that every case is resolved', () => {
-    expect(getMissingCasesSummary([makeCase({ isResolved: true })])).toBe(
+    expect(getMissingCasesSummary([makeCase({ status: 'resolved' })])).toBe(
       'Eksik ürün bildirimleriniz çözümlendi. Toplam 2 adet ürün için kayıt bulunuyor.',
     );
   });

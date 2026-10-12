@@ -10,10 +10,19 @@ import {
   MissingCaseDelivery,
   MissingCaseKind,
   MissingCaseLine,
+  MissingCaseStatus,
 } from '@/types/order.types';
 import { resolveCdnUrl } from '@/utils/cdn';
 
-const RESOLVED_STATUS = 'resolved';
+const FALLBACK_STATUS_LABELS: Record<MissingCaseStatus, string> = {
+  open: 'Bildirildi',
+  resolved: 'Çözüldü',
+  rejected: 'Reddedildi',
+};
+
+function toStatus(value: string | null | undefined): MissingCaseStatus {
+  return value === 'resolved' || value === 'rejected' ? value : 'open';
+}
 
 function toNumber(value: number | string | null | undefined): number {
   const parsed = typeof value === 'string' ? Number(value) : value;
@@ -49,7 +58,7 @@ function mapCase(
   slugByOrderItemId: Map<number, string>,
 ): MissingCase {
   const caseNo = dto.case_no?.trim() ?? '';
-  const isResolved = dto.status === RESOLVED_STATUS;
+  const status = toStatus(dto.status);
   // Telafi gönderisi, bildirim numarasıyla aynı sipariş numarasını taşır.
   const delivery = caseNo ? deliveries.find((item) => item.order_no?.trim() === caseNo) : undefined;
 
@@ -57,8 +66,8 @@ function mapCase(
     id: dto.id,
     caseNo,
     kind,
-    isResolved,
-    statusLabel: dto.status_label?.trim() || (isResolved ? 'Çözüldü' : 'Bildirildi'),
+    status,
+    statusLabel: dto.status_label?.trim() || FALLBACK_STATUS_LABELS[status],
     resolutionNote: dto.resolution_note?.trim() || null,
     lines: (dto.items ?? []).map((line) => mapLine(line, slugByOrderItemId)),
     delivery: delivery ? mapDelivery(delivery) : null,

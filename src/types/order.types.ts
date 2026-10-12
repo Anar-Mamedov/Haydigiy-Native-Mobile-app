@@ -263,13 +263,16 @@ export type MissingCaseDelivery = {
   itemCount: number;
 };
 
+/** Report outcome: closed as resolved, closed as rejected, or still open (any other backend status). */
+export type MissingCaseStatus = 'open' | 'resolved' | 'rejected';
+
 /** A missing product/part report ("eksik ürün/parça bildirimi") on an order. */
 export type MissingCase = {
   id: number;
   caseNo: string;
   kind: MissingCaseKind;
-  isResolved: boolean;
-  /** Backend label, falling back to "Çözüldü" / "Bildirildi". */
+  status: MissingCaseStatus;
+  /** Backend label, falling back to "Çözüldü" / "Reddedildi" / "Bildirildi". */
   statusLabel: string;
   resolutionNote: string | null;
   lines: MissingCaseLine[];

@@ -3,10 +3,22 @@ import { Image } from 'expo-image';
 import { Button, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { Image as ImagePlaceholderIcon, Truck } from '@/components/ui/icons';
-import { MissingCase, MissingCaseDelivery, MissingCaseLine } from '@/types/order.types';
+import {
+  MissingCase,
+  MissingCaseDelivery,
+  MissingCaseLine,
+  MissingCaseStatus,
+} from '@/types/order.types';
 import { getCustomerTrackingCode } from '../utils/cargo-tracking';
 
 const THUMB_SIZE = 56;
+
+// Web paritesi: çözüldü yeşil, reddedildi koyu kırmızı, açık bildirim sarı.
+const STATUS_BADGE_COLORS = {
+  open: { background: '$yellow4', text: '$yellow11' },
+  resolved: { background: '$green3', text: '$green11' },
+  rejected: { background: '$red10', text: 'white' },
+} as const satisfies Record<MissingCaseStatus, { background: string; text: string }>;
 
 type MissingCaseCardProps = {
   missingCase: MissingCase;
@@ -130,6 +142,7 @@ function DeliveryFooter({
 /** A single missing product/part report: its lines, resolution note and compensation shipment. */
 export function MissingCaseCard({ missingCase, onPressProduct, onTrackDelivery }: MissingCaseCardProps) {
   const isPart = missingCase.kind === 'part';
+  const statusColors = STATUS_BADGE_COLORS[missingCase.status];
 
   return (
     <YStack
@@ -164,17 +177,14 @@ export function MissingCaseCard({ missingCase, onPressProduct, onTrackDelivery }
           </YStack>
         </XStack>
         <YStack
-          backgroundColor={missingCase.isResolved ? '$green3' : '$yellow4'}
+          backgroundColor={statusColors.background}
           borderRadius={100}
           flexShrink={0}
           paddingHorizontal="$2"
           paddingVertical={2}
+          testID={`missing-case-status-${missingCase.status}`}
         >
-          <Paragraph
-            color={missingCase.isResolved ? '$green11' : '$yellow11'}
-            fontSize={11}
-            fontWeight="700"
-          >
+          <Paragraph color={statusColors.text} fontSize={11} fontWeight="700">
             {missingCase.statusLabel}
           </Paragraph>
         </YStack>
@@ -186,8 +196,8 @@ export function MissingCaseCard({ missingCase, onPressProduct, onTrackDelivery }
         </YStack>
       ))}
 
-      {/* Web paritesi: çözüm notu yalnızca eksik ürün bildirimlerinde gösterilir. */}
-      {!isPart && missingCase.resolutionNote ? (
+      {/* Çözüm notu (ör. ret gerekçesi) hem eksik ürün hem eksik parça bildirimlerinde gösterilir. */}
+      {missingCase.resolutionNote ? (
         <Paragraph
           backgroundColor="$backgroundHover"
           borderTopColor="$borderColor"

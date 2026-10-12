@@ -84,17 +84,24 @@ describe('mapMissingCases', () => {
     expect(part.lines[0].image).toBe('https://cdn.haydigiy.com/urun/ceket.jpg');
   });
 
-  it('uses the backend status label and falls back by resolution state', () => {
+  it('uses the backend status label and falls back by status', () => {
     const [product, part] = mapMissingCases(baseMissingItems(), ORDER_ITEMS);
 
-    expect(product).toMatchObject({ isResolved: false, statusLabel: 'İnceleniyor' });
-    expect(part).toMatchObject({ isResolved: true, statusLabel: 'Çözüldü' });
+    expect(product).toMatchObject({ status: 'open', statusLabel: 'İnceleniyor' });
+    expect(part).toMatchObject({ status: 'resolved', statusLabel: 'Çözüldü' });
 
-    const [open] = mapMissingCases(
-      baseMissingItems({ products: [{ id: 3, case_no: 'EK-3', status: 'reported', items: [] }], parts: [] }),
+    const [open, rejected] = mapMissingCases(
+      baseMissingItems({
+        products: [
+          { id: 3, case_no: 'EK-3', status: 'reported', items: [] },
+          { id: 4, case_no: 'EK-4', status: 'rejected', items: [] },
+        ],
+        parts: [],
+      }),
       ORDER_ITEMS,
     );
-    expect(open.statusLabel).toBe('Bildirildi');
+    expect(open).toMatchObject({ status: 'open', statusLabel: 'Bildirildi' });
+    expect(rejected).toMatchObject({ status: 'rejected', statusLabel: 'Reddedildi' });
   });
 
   it('attaches the compensation shipment whose order number matches the case number', () => {

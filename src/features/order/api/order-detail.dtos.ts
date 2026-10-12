@@ -103,7 +103,7 @@ export interface CancelledItemDetailDto {
 export interface MissingItemCaseDto {
   id: number;
   case_no?: string | null;
-  /** `resolved` once closed; any other value means the report is still open. */
+  /** `resolved` / `rejected` once closed; any other value means the report is still open. */
   status?: string | null;
   status_label?: string | null;
   stored_status?: string | null;
