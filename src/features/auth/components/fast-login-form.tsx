@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { YStack, Spinner } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppInput, AppButton } from '@/components/ui';
 import { fastLoginSchema, FastLoginFormData } from '../schemas/auth.schema';
 import { useFastLoginInitMutation } from '../api/auth.mutations';
+import { useOtpCooldown } from '../hooks/use-otp-cooldown';
+import { formatOtpCooldown, getOtpRateLimit } from '../utils/otp-delivery';
 import {
   extractTurkishNationalNumber,
   formatTurkishPhoneDisplay,
@@ -22,6 +24,9 @@ interface FastLoginFormProps {
 
 export function FastLoginForm({ onSuccess, onBackToLogin }: FastLoginFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
+  // The backend's 429 lock is per number, so only that number waits out the countdown.
+  const [rateLimitedNumber, setRateLimitedNumber] = useState<string | null>(null);
+  const { isCoolingDown, secondsLeft, start: startCooldown } = useOtpCooldown();
   const fastLoginInit = useFastLoginInitMutation();
 
   const {
@@ -34,13 +39,15 @@ export function FastLoginForm({ onSuccess, onBackToLogin }: FastLoginFormProps) 
       phone: '',
     },
   });
+  const phone = useWatch({ control, name: 'phone' });
+  const isRateLimited =
+    isCoolingDown && rateLimitedNumber !== null && extractTurkishNationalNumber(phone) === rateLimitedNumber;
 
   const onSubmit = async (data: FastLoginFormData) => {
     setServerError(null);
+    // National number (without leading 0) is what the backend expects.
+    const nationalNumber = extractTurkishNationalNumber(data.phone);
     try {
-      // National number (without leading 0) is what the backend expects.
-      const nationalNumber = extractTurkishNationalNumber(data.phone);
-
       const response = await fastLoginInit.mutateAsync({ identifier: nationalNumber });
 
       const isNewUser = Boolean(response.is_new_user);
@@ -49,6 +56,13 @@ export function FastLoginForm({ onSuccess, onBackToLogin }: FastLoginFormProps) 
       onSuccess(nationalNumber, isNewUser, 'phone', remainingSeconds);
     } catch (error: any) {
       console.error('Fast login init error:', error);
+      const rateLimit = getOtpRateLimit(error);
+      if (rateLimit) {
+        setRateLimitedNumber(nationalNumber);
+        startCooldown(rateLimit.cooldownSeconds);
+        setServerError(rateLimit.message);
+        return;
+      }
       const apiMessage = error?.response?.data?.message || error?.message;
       setServerError(apiMessage || 'Giriş kodu gönderilirken bir hata oluştu.');
     }
@@ -96,10 +110,17 @@ export function FastLoginForm({ onSuccess, onBackToLogin }: FastLoginFormProps) 
         color="white"
         borderColor="transparent"
         onPress={handleSubmit(onSubmit)}
-        disabled={isSubmitting}
+        disabled={isSubmitting || isRateLimited}
+        opacity={isRateLimited ? 0.6 : 1}
         pressStyle={{ opacity: 0.8 }}
       >
-        {isSubmitting ? <Spinner color="white" /> : 'Devam Et'}
+        {isSubmitting ? (
+          <Spinner color="white" />
+        ) : isRateLimited ? (
+          `Kalan Süre: ${formatOtpCooldown(secondsLeft)}`
+        ) : (
+          'Devam Et'
+        )}
       </AppButton>
 
       <AppButton

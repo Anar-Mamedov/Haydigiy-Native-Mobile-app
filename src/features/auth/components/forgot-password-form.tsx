@@ -7,6 +7,7 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton, AppInput } from '@/components/ui';
 import { useForgotPasswordMutation } from '../api/auth.mutations';
 import { forgotPasswordSchema, ForgotPasswordFormData } from '../schemas/auth.schema';
+import { formatOtpCooldown, parseOtpCooldownSeconds } from '../utils/otp-delivery';
 import { extractTurkishNationalNumber, formatTurkishPhoneDisplay } from '@/utils/turkish-phone';
 
 const DEFAULT_COOLDOWN_SECONDS = 60;
@@ -19,7 +20,7 @@ interface ForgotPasswordFormProps {
 
 interface ResetErrorResponse {
   message?: string;
-  remaining_seconds?: number;
+  remaining_seconds?: number | string;
 }
 
 function isEmailLikeInput(value: string): boolean {
@@ -85,8 +86,10 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
       setDeliveryType(type);
     } catch (error: unknown) {
       const apiError = getApiError(error);
-      if (typeof apiError.remaining_seconds === 'number' && apiError.remaining_seconds > 0) {
-        setCooldown(apiError.remaining_seconds);
+      // 429: the backend refuses a new code for `remaining_seconds`; its message is shown as-is.
+      const remainingSeconds = parseOtpCooldownSeconds(apiError.remaining_seconds);
+      if (remainingSeconds > 0) {
+        setCooldown(remainingSeconds);
       }
       setServerError(
         apiError.message ?? 'Ağ hatası oluştu veya sunucuya ulaşılamadı. Lütfen tekrar deneyin.',
@@ -125,7 +128,7 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
           disabled={cooldown > 0}
           onPress={() => setDeliveryType(null)}
         >
-          {cooldown > 0 ? `${cooldown} sn bekle` : 'Tekrar Gönder'}
+          {cooldown > 0 ? `Kalan Süre: ${formatOtpCooldown(cooldown)}` : 'Tekrar Gönder'}
         </AppButton>
 
         <AppButton
@@ -187,7 +190,7 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
         {isSubmitting || forgotPasswordMutation.isPending ? (
           <Spinner color="white" />
         ) : cooldown > 0 ? (
-          `${cooldown} sn bekle`
+          `Kalan Süre: ${formatOtpCooldown(cooldown)}`
         ) : (
           'Şifremi Yenile'
         )}

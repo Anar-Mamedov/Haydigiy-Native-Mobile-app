@@ -60,4 +60,34 @@ describe('OtpVerification profile flow', () => {
     );
     expect(onSuccess).toHaveBeenCalledTimes(1);
   });
+
+  it('shows the lock message as-is and hides resend until the backend window ends', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const lockMessage =
+      'Çok fazla hatalı doğrulama kodu girdiniz. Lütfen 3 dakika 55 saniye sonra tekrar deneyin.';
+    mockVerifyCode.mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        data: { message: lockMessage, remaining_attempts: 0, remaining_seconds: 235 },
+        status: 429,
+      },
+    });
+    const view = renderWithTamagui(
+      <OtpVerification
+        flowType="profile"
+        identifier="5076534634"
+        initialCooldown={0}
+        onCancel={jest.fn()}
+        onSuccess={jest.fn()}
+      />,
+    );
+    expect(screen.getByText('Kodu Tekrar Gönder')).toBeTruthy();
+
+    fireEvent.changeText(view.UNSAFE_getByType(TextInput), '111111');
+    fireEvent.press(screen.getByText('Doğrula ve Devam Et'));
+
+    expect(await screen.findByText(lockMessage)).toBeTruthy();
+    expect(screen.getByText('03:55')).toBeTruthy();
+    expect(screen.queryByText('Kodu Tekrar Gönder')).toBeNull();
+  });
 });

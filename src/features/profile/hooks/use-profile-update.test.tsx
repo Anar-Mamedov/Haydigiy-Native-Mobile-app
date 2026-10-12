@@ -201,6 +201,31 @@ describe('useProfileUpdate', () => {
     );
   });
 
+  it('locks resend for the backend window when too many wrong codes were entered', async () => {
+    const { result } = renderProfileUpdate();
+    await openVerification(result);
+
+    const lockMessage =
+      'Çok fazla hatalı doğrulama kodu girdiniz. Lütfen 3 dakika 55 saniye sonra tekrar deneyin.';
+    updateProfileDto.mockRejectedValueOnce(
+      apiError(429, {
+        message: lockMessage,
+        remaining_attempts: 0,
+        remaining_seconds: 235,
+        success: false,
+        verification_required: true,
+      }),
+    );
+    act(() => result.current.setCode('111111'));
+    await act(async () => {
+      await result.current.submitCode();
+    });
+
+    expect(result.current.cooldownSeconds).toBe(235);
+    expect(result.current.errorMessage).toBe(lockMessage);
+    expect(result.current.code).toBe('');
+  });
+
   it('resends the code for the same frozen payload and restarts the countdown', async () => {
     const { result } = renderProfileUpdate();
     const { payload } = await openVerification(result);

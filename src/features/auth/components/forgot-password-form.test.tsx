@@ -61,4 +61,22 @@ describe('ForgotPasswordForm', () => {
       }),
     );
   });
+
+  it('shows a 429 lock message as-is and blocks the request until the window ends', async () => {
+    const lockMessage =
+      'Çok fazla hatalı doğrulama kodu girdiniz. Lütfen 3 dakika 55 saniye sonra tekrar deneyin.';
+    mockMutateAsync.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { data: { message: lockMessage, remaining_attempts: 0, remaining_seconds: 235 }, status: 429 },
+    });
+    renderWithTamagui(<ForgotPasswordForm onBackToLogin={jest.fn()} />);
+
+    fireEvent.changeText(screen.getByLabelText('E-posta veya Telefon Numarası'), '0532 123 45 67');
+    fireEvent.press(screen.getByText('Şifremi Yenile'));
+
+    expect(await screen.findByText(lockMessage)).toBeTruthy();
+    expect(screen.getByText('Kalan Süre: 03:55')).toBeTruthy();
+    fireEvent.press(screen.getByText('Kalan Süre: 03:55'));
+    expect(mockMutateAsync).toHaveBeenCalledTimes(1);
+  });
 });

@@ -20,3 +20,13 @@ export function isAccountDeletionCompleted(result: DeactivateAccountResponse | u
 export function isAccountDeletionCodeSent(result: DeactivateAccountResponse | undefined): boolean {
   return result?.verification_required === true;
 }
+
+/**
+ * `true` when a rejected request still belongs to a pending deletion: it was sent
+ * again inside the resend window, so the code already sent stays valid and the code
+ * screen should open with the backend's countdown instead of an error.
+ */
+export function isAccountDeletionStillPending(error: unknown): boolean {
+  const data = (error as { response?: { data?: unknown } })?.response?.data;
+  return Boolean(data && typeof data === 'object' && isAccountDeletionCodeSent(data as DeactivateAccountResponse));
+}

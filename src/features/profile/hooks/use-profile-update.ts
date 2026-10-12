@@ -1,6 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
 import { useOtpCooldown } from '@/features/auth/hooks/use-otp-cooldown';
-import { getOtpSendErrorFeedback, parseOtpCooldownSeconds } from '@/features/auth/utils/otp-delivery';
+import {
+  getOtpRateLimit,
+  getOtpSendErrorFeedback,
+  parseOtpCooldownSeconds,
+} from '@/features/auth/utils/otp-delivery';
 import type { UpdateProfilePayloadDto, UpdateProfileResponseDto } from '@/services/user.service';
 import { getApiErrorMessage } from '@/utils/api-error';
 import { useUpdateProfileMutation } from '../api/profile.mutations';
@@ -153,6 +157,15 @@ export function useProfileUpdate({ onPhoneVerified }: UseProfileUpdateOptions) {
       setErrorMessage(result.message ?? VERIFY_ERROR);
       setCode('');
     } catch (error) {
+      // Too many wrong codes: the number is locked, so resend waits out the backend's window.
+      const rateLimit = getOtpRateLimit(error);
+      if (rateLimit) {
+        startCooldown(rateLimit.cooldownSeconds);
+        setErrorMessage(rateLimit.message);
+        setCode('');
+        return;
+      }
+
       const remainingAttempts = getRemainingCodeAttempts(error);
       // Out of attempts: the backend dropped the code, so a new one may be asked for at once.
       if (remainingAttempts === 0) startCooldown(0);

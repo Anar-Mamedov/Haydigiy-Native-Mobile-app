@@ -3,7 +3,11 @@ import { useRouter } from 'expo-router';
 import { useDeactivateAccountMutation } from '@/features/auth/api/auth.mutations';
 import { useOtpCooldown } from '@/features/auth/hooks/use-otp-cooldown';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
-import { getOtpSendErrorFeedback, parseOtpCooldownSeconds } from '@/features/auth/utils/otp-delivery';
+import {
+  getOtpRateLimit,
+  getOtpSendErrorFeedback,
+  parseOtpCooldownSeconds,
+} from '@/features/auth/utils/otp-delivery';
 import {
   ACCOUNT_DELETION_API_VERSION,
   ACCOUNT_DELETION_CODE_LENGTH,
@@ -12,6 +16,7 @@ import {
 import {
   isAccountDeletionCodeSent,
   isAccountDeletionCompleted,
+  isAccountDeletionStillPending,
 } from '@/features/profile/utils/account-deletion-result';
 import { getApiErrorMessage } from '@/utils/api-error';
 
@@ -90,6 +95,18 @@ export function useAccountDeletion() {
       setStartError(result.message ?? START_ERROR);
     } catch (error) {
       setIsConfirmOpen(false);
+
+      // Asked again inside the resend window: the code already sent stays valid, so
+      // the code screen opens with the backend's countdown and its message as-is.
+      if (isAccountDeletionStillPending(error)) {
+        const feedback = getOtpSendErrorFeedback(error);
+        resetVerificationState();
+        startCooldown(feedback.cooldownSeconds);
+        setInfoMessage(feedback.message);
+        setIsVerificationOpen(true);
+        return;
+      }
+
       setStartError(getApiErrorMessage(error, START_ERROR));
     }
   }, [completeDeletion, requestDeletion, resetVerificationState, startCooldown]);
@@ -119,10 +136,14 @@ export function useAccountDeletion() {
       setErrorMessage(result.message ?? VERIFY_ERROR);
       setCode('');
     } catch (error) {
-      setErrorMessage(getApiErrorMessage(error, VERIFY_ERROR));
+      // Too many wrong codes: resend waits out the backend's lock window.
+      const rateLimit = getOtpRateLimit(error);
+      if (rateLimit) startCooldown(rateLimit.cooldownSeconds);
+
+      setErrorMessage(rateLimit?.message ?? getApiErrorMessage(error, VERIFY_ERROR));
       setCode('');
     }
-  }, [code, completeDeletion, confirmDeletion]);
+  }, [code, completeDeletion, confirmDeletion, startCooldown]);
 
   /** Step 2b — the code never arrived, ask for a new one. */
   const resendCode = useCallback(async () => {

@@ -180,4 +180,59 @@ describe('useAccountDeletion', () => {
     expect(result.current.isVerificationOpen).toBe(false);
     expect(mockLogout).not.toHaveBeenCalled();
   });
+
+  it('locks resend for the backend window when too many wrong codes were entered', async () => {
+    const lockMessage =
+      'Çok fazla hatalı doğrulama kodu girdiniz. Lütfen 3 dakika 55 saniye sonra tekrar deneyin.';
+    deactivateAccountApi
+      .mockResolvedValueOnce({ code_sent: true, verification_required: true })
+      .mockRejectedValueOnce({
+        isAxiosError: true,
+        response: {
+          data: { message: lockMessage, remaining_attempts: 0, remaining_seconds: 235 },
+          status: 429,
+        },
+      });
+
+    const { result } = renderAccountDeletion();
+    await act(async () => {
+      await result.current.startDeletion();
+    });
+    act(() => result.current.setCode('111111'));
+    await act(async () => {
+      await result.current.submitCode();
+    });
+
+    expect(result.current.cooldownSeconds).toBe(235);
+    expect(result.current.errorMessage).toBe(lockMessage);
+    expect(result.current.code).toBe('');
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it('opens the code screen with the backend countdown when asked again inside the resend window', async () => {
+    deactivateAccountApi.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        data: {
+          message: 'Doğrulama kodunu tekrar göndermek için lütfen 42 saniye bekleyin.',
+          remaining_seconds: 42,
+          success: false,
+          verification_required: true,
+        },
+        status: 429,
+      },
+    });
+
+    const { result } = renderAccountDeletion();
+    await act(async () => {
+      await result.current.startDeletion();
+    });
+
+    expect(result.current.isVerificationOpen).toBe(true);
+    expect(result.current.startError).toBeNull();
+    expect(result.current.cooldownSeconds).toBe(42);
+    expect(result.current.infoMessage).toBe(
+      'Doğrulama kodunu tekrar göndermek için lütfen 42 saniye bekleyin.',
+    );
+  });
 });

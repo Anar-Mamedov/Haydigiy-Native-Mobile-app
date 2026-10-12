@@ -2,7 +2,13 @@ import { createElement } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react-native';
 import * as authService from '@/services/auth.service';
-import { useSendCodeMutation, useVerifyCodeMutation } from './auth.mutations';
+import {
+  useFastLoginInitMutation,
+  useFastLoginVerifyMutation,
+  useForgotPasswordMutation,
+  useSendCodeMutation,
+  useVerifyCodeMutation,
+} from './auth.mutations';
 
 jest.mock('@/services/auth.service', () => ({
   deactivateAccountApi: jest.fn(),
@@ -19,6 +25,15 @@ jest.mock('@/services/auth.service', () => ({
 const sendCodeApi = authService.sendCodeApi as jest.MockedFunction<typeof authService.sendCodeApi>;
 const verifyCodeApi = authService.verifyCodeApi as jest.MockedFunction<
   typeof authService.verifyCodeApi
+>;
+const fastLoginInitApi = authService.fastLoginInitApi as jest.MockedFunction<
+  typeof authService.fastLoginInitApi
+>;
+const fastLoginVerifyApi = authService.fastLoginVerifyApi as jest.MockedFunction<
+  typeof authService.fastLoginVerifyApi
+>;
+const forgotPasswordApi = authService.forgotPasswordApi as jest.MockedFunction<
+  typeof authService.forgotPasswordApi
 >;
 
 function createMutationHarness() {
@@ -67,6 +82,39 @@ describe('OTP auth mutations', () => {
     });
 
     expect(verifyCodeApi).toHaveBeenCalledTimes(1);
+    unmount();
+    queryClient.clear();
+  });
+
+  // A retried wrong code would count twice toward the backend's 5-attempt lock.
+  it('does not retry rejected fast-login and password-reset requests', async () => {
+    const error = { response: { status: 429, data: { remaining_seconds: 235 } } };
+    fastLoginInitApi.mockRejectedValueOnce(error);
+    fastLoginVerifyApi.mockRejectedValueOnce(error);
+    forgotPasswordApi.mockRejectedValueOnce(error);
+    const { queryClient, wrapper } = createMutationHarness();
+    const { result, unmount } = renderHook(
+      () => ({
+        forgotPassword: useForgotPasswordMutation(),
+        init: useFastLoginInitMutation(),
+        verify: useFastLoginVerifyMutation(),
+      }),
+      { wrapper },
+    );
+
+    await act(async () => {
+      await expect(result.current.init.mutateAsync({ identifier: '5076534634' })).rejects.toBe(error);
+      await expect(
+        result.current.verify.mutateAsync({ code: '123456', identifier: '5076534634', type: 'phone' }),
+      ).rejects.toBe(error);
+      await expect(
+        result.current.forgotPassword.mutateAsync({ country_code: '+90', phone: '5076534634', type: 'phone' }),
+      ).rejects.toBe(error);
+    });
+
+    expect(fastLoginInitApi).toHaveBeenCalledTimes(1);
+    expect(fastLoginVerifyApi).toHaveBeenCalledTimes(1);
+    expect(forgotPasswordApi).toHaveBeenCalledTimes(1);
     unmount();
     queryClient.clear();
   });

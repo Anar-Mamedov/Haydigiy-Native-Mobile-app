@@ -15,6 +15,7 @@ import { analytics } from '@/features/analytics/services/analytics-dispatcher';
 import { KVKK_DISCLOSURE_TEXT, COMMERCIAL_CONSENT_TEXT } from '../constants/auth-texts';
 import {
   formatOtpCooldown,
+  getOtpRateLimit,
   getOtpSendErrorFeedback,
   parseOtpCooldownSeconds,
 } from '../utils/otp-delivery';
@@ -147,6 +148,15 @@ export function OtpVerification({
       }
     } catch (err: any) {
       console.error('OTP verify error:', err);
+      // Too many wrong codes: no new code is accepted until the lock ends, so the
+      // resend countdown restarts from the backend's remaining time.
+      const rateLimit = getOtpRateLimit(err);
+      if (rateLimit) {
+        startCooldown(rateLimit.cooldownSeconds);
+        setError(rateLimit.message);
+        setCode('');
+        return;
+      }
       const apiMessage = err?.response?.data?.message || err?.message;
       setError(apiMessage || 'Girdiğiniz kod hatalı veya süresi dolmuş.');
     } finally {

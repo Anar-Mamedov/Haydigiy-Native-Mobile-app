@@ -29,16 +29,18 @@ export function useRegisterMutation() {
   return useMutation({ mutationFn: registerApi });
 }
 
+// OTP send/verify calls never retry on their own: a repeated wrong code burns a second
+// attempt toward the backend's lock, and a refused (429) send is refused again.
 export function useFastLoginInitMutation() {
-  return useMutation({ mutationFn: fastLoginInitApi });
+  return useMutation({ mutationFn: fastLoginInitApi, retry: false });
 }
 
 export function useFastLoginVerifyMutation() {
-  return useMutation({ mutationFn: fastLoginVerifyApi });
+  return useMutation({ mutationFn: fastLoginVerifyApi, retry: false });
 }
 
 export function useForgotPasswordMutation() {
-  return useMutation({ mutationFn: forgotPasswordApi });
+  return useMutation({ mutationFn: forgotPasswordApi, retry: false });
 }
 
 export function useResetPasswordMutation() {
