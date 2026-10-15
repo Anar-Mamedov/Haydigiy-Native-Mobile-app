@@ -15,6 +15,12 @@ type ProductDetailHeaderProps = {
 /** Görünen arama kutusunun yüksekliği; dokunma alanı bunun etrafında 48dp'dir. */
 const SEARCH_PILL_HEIGHT = 36;
 
+/**
+ * Material üst çubuk ikon boyutu. Dokunma alanı 48dp'de sabit olduğundan ikonlar arasındaki görünen
+ * boşluk, ikon küçüldükçe büyür; 24dp ikonla iki ikon arasında 24dp kalır.
+ */
+const HEADER_ICON_SIZE = 24;
+
 export function ProductDetailHeader({ onBack }: ProductDetailHeaderProps) {
   const router = useRouter();
   const cartCount = useCartCount();
@@ -26,7 +32,8 @@ export function ProductDetailHeader({ onBack }: ProductDetailHeaderProps) {
   const iconColor = theme.color.val;
   const searchBg = theme.backgroundHover.val;
 
-  // Beş ikon 48dp dokunma alanıyla yan yana durduğu için kenar ve grup boşlukları dar tutulur.
+  // Beş ikon 48dp dokunma alanıyla yan yana durduğu için kutular arasına ayrıca boşluk konmaz;
+  // ikonları ayıran boşluk kutuların kendi iç payıdır.
   return (
     <XStack
       alignItems="center"
@@ -36,20 +43,19 @@ export function ProductDetailHeader({ onBack }: ProductDetailHeaderProps) {
       height={56}
       justifyContent="space-between"
       paddingHorizontal="$1.5"
-      gap="$1"
       width="100%"
     >
       <IconButton accessibilityLabel="Geri dön" onPress={onBack}>
-        <ArrowLeft color={iconColor as any} size={22} />
+        <ArrowLeft color={iconColor as any} size={HEADER_ICON_SIZE} />
       </IconButton>
 
       {/* Shortcuts: Home & Categories */}
       <XStack alignItems="center">
         <IconButton accessibilityLabel="Ana sayfa" onPress={() => router.push('/')}>
-          <Home color={iconColor as any} size={20} />
+          <Home color={iconColor as any} size={HEADER_ICON_SIZE} />
         </IconButton>
         <IconButton accessibilityLabel="Kategoriler" onPress={() => router.push('/categories')}>
-          <Grid color={iconColor as any} size={20} />
+          <Grid color={iconColor as any} size={HEADER_ICON_SIZE} />
         </IconButton>
       </XStack>
 
@@ -81,12 +87,12 @@ export function ProductDetailHeader({ onBack }: ProductDetailHeaderProps) {
           <IconWithCountBadge
             badgeTestID="product-header-cart-badge"
             count={cartCount}
-            icon={<ShoppingCart color={iconColor as any} size={22} />}
+            icon={<ShoppingCart color={iconColor as any} size={HEADER_ICON_SIZE} />}
           />
         </IconButton>
 
         <IconButton accessibilityLabel="Hesabım" onPress={() => router.push('/profile')}>
-          <UserRound color={iconColor as any} size={22} />
+          <UserRound color={iconColor as any} size={HEADER_ICON_SIZE} />
         </IconButton>
       </XStack>
     </XStack>
