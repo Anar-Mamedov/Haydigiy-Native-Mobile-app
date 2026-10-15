@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from '@/components/ui/icons';
 import { YStack, XStack, Button, Separator, ScrollView } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { AppScreen } from '@/components/ui';
+import { AppScreen, HeaderBackButton } from '@/components/ui';
 import { useAuthStore } from '../../auth/store/use-auth-store';
 import { useAuthStatus } from '../../auth/hooks/use-auth-status';
 import { LoginForm } from '../../auth/components/login-form';
@@ -120,15 +119,7 @@ export function ProfileScreen() {
         <YStack gap="$4" paddingBottom="$6">
           {/* Header Bar with Back Arrow */}
           <XStack alignItems="center" gap="$3" paddingVertical="$2">
-            <Button
-              id="auth-back-btn"
-              icon={<ArrowLeft size={24} color="$color" />}
-              chromeless
-              circular
-              onPress={handleBackPress}
-              pressStyle={{ opacity: 0.6 }}
-              accessibilityLabel="Geri Dön"
-            />
+            <HeaderBackButton onPress={handleBackPress} />
             <Paragraph fontSize={20} fontWeight="700" color="$color">
               {activeView === 'login'
                 ? 'Giriş Yap'

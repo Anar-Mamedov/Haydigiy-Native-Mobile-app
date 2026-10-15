@@ -49,6 +49,9 @@ module.exports = ({ config }) => ({
     // zincirde en son calisir ve ileride expo-build-properties ayni native dosyalara
     // yazmaya baslarsa bizim degisikligimizi ezemez.
     './plugins/with-r8-optimization',
+    // Play Console'daki en sık kilitlenme (findShadowNodeByTagRecursively SIGSEGV):
+    // RN 0.88'de varsayılan olan yarış durumu düzeltmesini MainApplication'da açar.
+    './plugins/with-find-shadow-node-race-fix',
     // iOS framework modu STATIC olmalı, başka bir değer değil:
     // - Insider push extension'ları (InsiderNotificationService/Content) Podfile'da
     //   `use_frameworks!` ile geliyor. CocoaPods, host ve embedded target'ın aynı

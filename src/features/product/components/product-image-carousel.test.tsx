@@ -25,7 +25,8 @@ describe('ProductImageCarousel', () => {
       <ProductImageCarousel images={images} onOpen={onOpen} productId="product-1" title="Test" />,
     );
 
-    fireEvent.press(screen.getByLabelText('Test ürün görseli'));
+    layout(200);
+    fireEvent.press(screen.getByLabelText('Test ürün görseli, 1 / 3'));
 
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
@@ -56,6 +57,21 @@ describe('ProductImageCarousel', () => {
 
     expect(screen.getByLabelText('Görsel 3 / 3')).toBeTruthy();
     expect(onIndexChange).toHaveBeenLastCalledWith(2);
+  });
+
+  it('gives every pager image its own accessible name', () => {
+    // Regresyon: her görsel "<ad> ürün görseli" etiketini taşıyordu; Play erişilebilirlik raporu
+    // aynı okunabilir metni paylaşan tıklanabilir öğeleri ayrı bir sorun olarak işaretledi.
+    renderWithTamagui(
+      <ProductImageCarousel images={images} onOpen={jest.fn()} productId="product-1" title="Test" />,
+    );
+
+    layout(200);
+
+    expect(screen.getByLabelText('Test ürün görseli, 1 / 3')).toBeTruthy();
+    expect(screen.getByLabelText('Test ürün görseli, 2 / 3')).toBeTruthy();
+    expect(screen.getByLabelText('Test ürün görseli, 3 / 3')).toBeTruthy();
+    expect(screen.queryByLabelText('Test ürün görseli')).toBeNull();
   });
 
   it('renders a single tappable image without a pager when there is one image', () => {

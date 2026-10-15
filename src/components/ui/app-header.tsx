@@ -2,6 +2,7 @@ import { useRouter, usePathname } from 'expo-router';
 import { Heart, Menu, ShoppingCart, UserRound, Search } from '@/components/ui/icons';
 import { Button, XStack, useTheme, useThemeName } from 'tamagui';
 import { IconWithCountBadge } from '@/components/ui/count-badge';
+import { IconButton, MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { Image } from 'expo-image';
 
@@ -57,30 +58,21 @@ export function AppHeader() {
       borderBottomWidth={1}
       height={56}
       justifyContent="space-between"
-      paddingHorizontal="$3"
+      paddingHorizontal="$1.5"
       width="100%"
     >
       {/* Left side: Hamburger menu and Image Logo */}
-      <XStack alignItems="center" gap="$2">
+      <XStack alignItems="center" gap="$1.5">
+        <IconButton accessibilityLabel="Kategoriler" onPress={handleMenuPress}>
+          <Menu color={iconColor as any} size={24} />
+        </IconButton>
         <Button
-          accessibilityLabel="Open categories menu"
-          backgroundColor="transparent"
-          chromeless
-          circular
-          hoverStyle={{ backgroundColor: '$backgroundHover' }}
-          icon={<Menu color={iconColor as any} size={24} />}
-          onPress={handleMenuPress}
-          pressStyle={{ backgroundColor: '$backgroundPress' }}
-          size="$3"
-          padding={0}
-        />
-        <Button
-          accessibilityLabel="Go to home"
+          accessibilityLabel="Ana sayfa"
           backgroundColor="transparent"
           chromeless
           onPress={handleLogoPress}
           padding={0}
-          height={32}
+          height={MIN_TOUCH_TARGET}
           width={128}
           justifyContent="flex-start"
           alignItems="center"
@@ -96,77 +88,35 @@ export function AppHeader() {
       </XStack>
 
       {/* Right side: context-aware action buttons */}
-      <XStack alignItems="center" gap="$1">
+      <XStack alignItems="center">
         {isHomePage ? (
           <>
-            <Button
-              accessibilityLabel="My Account"
-              backgroundColor="transparent"
-              chromeless
-              circular
-              hoverStyle={{ backgroundColor: '$backgroundHover' }}
-              icon={<UserRound color={iconColor as any} size={22} />}
-              onPress={handleAccountPress}
-              pressStyle={{ backgroundColor: '$backgroundPress' }}
-              size="$3"
-            />
+            <IconButton accessibilityLabel="Hesabım" onPress={handleAccountPress}>
+              <UserRound color={iconColor as any} size={22} />
+            </IconButton>
 
-            <Button
-              accessibilityLabel="My Favorites"
-              backgroundColor="transparent"
-              chromeless
-              circular
-              hoverStyle={{ backgroundColor: '$backgroundHover' }}
-              icon={<Heart color={iconColor as any} size={22} />}
-              onPress={handleFavoritesPress}
-              pressStyle={{ backgroundColor: '$backgroundPress' }}
-              size="$3"
-            />
+            <IconButton accessibilityLabel="Favorilerim" onPress={handleFavoritesPress}>
+              <Heart color={iconColor as any} size={22} />
+            </IconButton>
 
-            <Button
-              accessibilityLabel="Shopping Cart"
-              backgroundColor="transparent"
-              chromeless
-              circular
-              hoverStyle={{ backgroundColor: '$backgroundHover' }}
-              icon={
-                <IconWithCountBadge
-                  badgeTestID="header-cart-badge"
-                  count={cartCount}
-                  icon={<ShoppingCart color={iconColor as any} size={22} />}
-                  testID="header-cart-icon"
-                />
-              }
-              onPress={handleCartPress}
-              pressStyle={{ backgroundColor: '$backgroundPress' }}
-              size="$3"
-            />
+            <IconButton accessibilityLabel="Sepetim" onPress={handleCartPress}>
+              <IconWithCountBadge
+                badgeTestID="header-cart-badge"
+                count={cartCount}
+                icon={<ShoppingCart color={iconColor as any} size={22} />}
+                testID="header-cart-icon"
+              />
+            </IconButton>
           </>
         ) : (
           <>
-            <Button
-              accessibilityLabel="Search products"
-              backgroundColor="transparent"
-              chromeless
-              circular
-              hoverStyle={{ backgroundColor: '$backgroundHover' }}
-              icon={<Search color={iconColor as any} size={22} />}
-              onPress={handleSearchPress}
-              pressStyle={{ backgroundColor: '$backgroundPress' }}
-              size="$3"
-            />
+            <IconButton accessibilityLabel="Ürün ara" onPress={handleSearchPress}>
+              <Search color={iconColor as any} size={22} />
+            </IconButton>
 
-            <Button
-              accessibilityLabel="My Favorites"
-              backgroundColor="transparent"
-              chromeless
-              circular
-              hoverStyle={{ backgroundColor: '$backgroundHover' }}
-              icon={<Heart color={iconColor as any} size={22} />}
-              onPress={handleFavoritesPress}
-              pressStyle={{ backgroundColor: '$backgroundPress' }}
-              size="$3"
-            />
+            <IconButton accessibilityLabel="Favorilerim" onPress={handleFavoritesPress}>
+              <Heart color={iconColor as any} size={22} />
+            </IconButton>
           </>
         )}
       </XStack>

@@ -1,37 +1,17 @@
-import { useCallback, useRef, useState } from 'react';
-import { RefreshControl, ScrollView as RNScrollView, useWindowDimensions } from 'react-native';
-import { ScrollView, Spinner, XStack, YStack } from 'tamagui';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { FlashListRef } from '@shopify/flash-list';
+import { Spinner, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppHeader, AppScreen, EmptyState } from '@/components/ui';
 import { useTabReselect } from '@/components/navigation/tab-reselect';
-import { BRAND_COLOR } from '@/lib/theme/colors';
 import { useMobilePageDesignQuery } from '@/features/product/api/page-design.queries';
-import { InsiderRecommendationSections } from '@/features/insider/components/insider-recommendation-sections';
-import { useLastViewedInsiderProduct } from '@/features/insider/hooks/use-last-viewed-insider-product';
 import { useTrackHomePageView } from '@/features/insider/hooks/use-insider-page-tracking';
-import { HomeBannerSection } from '@/features/product/components/home-banner-section';
-import { HomeHeadingSection } from '@/features/product/components/home-heading-section';
-import { HomeProductShowcase } from '@/features/product/components/home-product-showcase';
-import { HomeSliderSection } from '@/features/product/components/home-slider-section';
-import { HomeStorySection } from '@/features/product/components/home-story-section';
-import { HomeTextSection } from '@/features/product/components/home-text-section';
-import { MobileHomeSearch } from '@/features/product/components/mobile-home-search';
-import { HomeFooter } from '@/features/product/components/home-footer';
-import { HOME_SECTION_GAP } from '@/features/product/utils/home-layout';
-import {
-  BannerContent,
-  StoryContent,
-  HeadingContent,
-  ProductShowcaseContent,
-  TextContent,
-  Section,
-} from '@/types/page-design.types';
+import { HomeSectionList } from '@/features/product/components/home-section-list';
+import { HomeListItem } from '@/features/product/utils/home-list-items';
+import { buildHomeRows } from '@/features/product/utils/home-rows';
 
 export function HomeScreen() {
   useTrackHomePageView();
-
-  const { width: windowWidth } = useWindowDimensions();
-  const containerWidth = windowWidth - 20; // 10px padding on each side to match web mobile layout
 
   const {
     data: designData,
@@ -43,103 +23,22 @@ export function HomeScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Ana sayfadayken alt menüdeki "Anasayfa"ya basılırsa ekran yeniden açılmaz, en üste kayar.
-  const scrollRef = useRef<RNScrollView>(null);
-  const scrollToTop = useCallback(() => scrollRef.current?.scrollTo({ animated: true, y: 0 }), []);
+  const listRef = useRef<FlashListRef<HomeListItem>>(null);
+  const scrollToTop = useCallback(() => listRef.current?.scrollToOffset({ animated: true, offset: 0 }), []);
   useTabReselect('/', scrollToTop);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await refetchDesign();
     setIsRefreshing(false);
-  };
+  }, [refetchDesign]);
 
   const handleRetry = () => {
     refetchDesign();
   };
 
-  // Group dynamic sections in order
-  const activeSections = designData?.sections
-    ? [...designData.sections]
-        .filter((section) => section.status)
-        .sort((a, b) => a.order - b.order)
-    : [];
-
-  // Group sections by row matching the 12-column CSS grid system of the web mobile layout
-  const rows: Section[][] = [];
-  let currentRow: Section[] = [];
-  let currentSpan = 0;
-
-  activeSections.forEach((section) => {
-    const span = section.type === 'banner' ? (section.width_ratio ?? 12) : 12;
-
-    if (currentSpan + span > 12) {
-      if (currentRow.length > 0) {
-        rows.push(currentRow);
-      }
-      currentRow = [section];
-      currentSpan = span;
-    } else {
-      currentRow.push(section);
-      currentSpan += span;
-    }
-  });
-
-  if (currentRow.length > 0) {
-    rows.push(currentRow);
-  }
-
-  // Ana sayfadaki "Son Görüntülenenler" kampanyası ürünlü SDK metodunu gerektiriyor.
-  const lastViewedProduct = useLastViewedInsiderProduct();
-
-  const renderSection = (section: Section, width: number) => {
-    switch (section.type) {
-      case 'story':
-        return (
-          <HomeStorySection
-            content={section.content as StoryContent}
-            key={section.id}
-          />
-        );
-      case 'slider':
-        return (
-          <HomeSliderSection
-            content={section.content as StoryContent}
-            key={section.id}
-          />
-        );
-      case 'banner':
-        return (
-          <HomeBannerSection
-            content={section.content as BannerContent}
-            key={section.id}
-            width={width}
-          />
-        );
-      case 'heading':
-        return (
-          <HomeHeadingSection
-            content={section.content as HeadingContent}
-            key={section.id}
-          />
-        );
-      case 'text':
-        return (
-          <HomeTextSection
-            content={section.content as TextContent}
-            key={section.id}
-          />
-        );
-      case 'product_showcase':
-        return (
-          <HomeProductShowcase
-            content={section.content as ProductShowcaseContent}
-            key={section.id}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+  // Bölümler 12 kolonlu web mobil ızgarasına göre satırlara bölünür.
+  const rows = useMemo(() => buildHomeRows(designData?.sections), [designData?.sections]);
 
   return (
     <AppScreen scrollable={false} header={<AppHeader />} padding={0} gap={0}>
@@ -161,52 +60,14 @@ export function HomeScreen() {
       ) : null}
 
       {!isPending && !isError ? (
-        <ScrollView
-          flex={1}
-          ref={scrollRef}
-          refreshControl={
-            <RefreshControl
-              colors={[BRAND_COLOR]}
-              onRefresh={handleRefresh}
-              refreshing={isRefreshing}
-              tintColor={BRAND_COLOR}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        >
-          <YStack paddingTop={8} paddingHorizontal={10} paddingBottom="$4" width="100%">
-            <YStack paddingHorizontal={8} width="100%">
-              <MobileHomeSearch />
-            </YStack>
-
-            <YStack gap={HOME_SECTION_GAP} marginTop={10} width="100%">
-              {rows.map((row, rowIndex) => {
-                const isSingleFullWidth =
-                  row.length === 1 &&
-                  (row[0].type !== 'banner' || (row[0].width_ratio ?? 12) === 12);
-
-                if (isSingleFullWidth) {
-                  return renderSection(row[0], containerWidth);
-                }
-
-                return (
-                  <XStack gap={HOME_SECTION_GAP} key={rowIndex} width="100%">
-                    {row.map((section) => {
-                      const span = section.type === 'banner' ? (section.width_ratio ?? 12) : 12;
-                      const itemWidth =
-                        (span / 12) * containerWidth - ((12 - span) / 12) * HOME_SECTION_GAP;
-                      return renderSection(section, itemWidth);
-                    })}
-                  </XStack>
-                );
-              })}
-            </YStack>
-
-            <InsiderRecommendationSections product={lastViewedProduct} slot="home" />
-
-            <HomeFooter />
-          </YStack>
-        </ScrollView>
+        <HomeSectionList
+          listRef={listRef}
+          onRefresh={() => {
+            void handleRefresh();
+          }}
+          refreshing={isRefreshing}
+          rows={rows}
+        />
       ) : null}
     </AppScreen>
   );

@@ -4,6 +4,7 @@ import { Star, Camera, ChevronDown } from '@/components/ui/icons';
 import { XStack, YStack, Button, useThemeName } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { ScrollView, Dimensions, Pressable } from 'react-native';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { ProductReview } from '@/types/product.types';
 
 interface ProductReviewsSectionProps {
@@ -82,7 +83,12 @@ export function ProductReviewsSection({
       ) : (
         <>
           {/* Average Rating Row */}
-          <Pressable onPress={onReviewsPress}>
+          <Pressable
+            accessibilityLabel={`Ortalama puan ${averageRating.toFixed(1)}, ${reviews.length} değerlendirme`}
+            accessibilityRole="button"
+            disabled={!onReviewsPress}
+            onPress={onReviewsPress}
+          >
             <XStack alignItems="center" gap="$3" paddingBottom="$3" borderBottomWidth={1} borderBottomColor="$borderColor">
               <Paragraph fontSize={28} fontWeight="900" color="$color">
                 {averageRating.toFixed(1)}
@@ -120,7 +126,7 @@ export function ProductReviewsSection({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 12, paddingVertical: 4 }}
           >
-            {reviews.map((review) => (
+            {reviews.map((review, reviewIndex) => (
               <YStack
                 key={review.id}
                 width={cardWidth}
@@ -157,7 +163,8 @@ export function ProductReviewsSection({
 
                   {review.photo ? (
                     <Pressable
-                      accessibilityLabel="Degerlendirme fotografini ac"
+                      // Sıra numarası etiketi tekil yapar; aynı etiketli butonlar ekran okuyucuda ayırt edilemiyordu.
+                      accessibilityLabel={`${reviewIndex + 1}. değerlendirmenin fotoğrafını aç`}
                       accessibilityRole="button"
                       disabled={!onReviewsPress}
                       onPress={onReviewsPress}
@@ -201,7 +208,7 @@ export function ProductReviewsSection({
               borderColor="transparent"
               borderWidth={0}
               borderRadius={22}
-              height={44}
+              height={MIN_TOUCH_TARGET}
               onPress={onReviewsPress}
               pressStyle={{ backgroundColor: '#e5e7eb' }}
               marginTop="$2"

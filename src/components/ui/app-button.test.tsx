@@ -26,3 +26,26 @@ describe('AppButton', () => {
     expect(colorOf('Kaydet')).toBe('#123456');
   });
 });
+
+describe('AppButton touch target', () => {
+  function heightStyleOf(testID: string) {
+    return StyleSheet.flatten(screen.getByTestId(testID).props.style);
+  }
+
+  it('defaults to the 48dp size', () => {
+    // Regresyon: varsayılan `$4` (44dp) Play "Dokunma hedefi boyutu" uyarısı veriyordu.
+    renderWithTamagui(<AppButton testID="default-button">Kaydet</AppButton>);
+
+    expect(heightStyleOf('default-button')).toMatchObject({ height: 48, minHeight: 48 });
+  });
+
+  it('keeps a 48dp minimum even when a screen asks for a smaller button', () => {
+    renderWithTamagui(
+      <AppButton height={32} size="$2" testID="small-button">
+        Şifremi Unuttum
+      </AppButton>,
+    );
+
+    expect(heightStyleOf('small-button')).toMatchObject({ minHeight: 48 });
+  });
+});

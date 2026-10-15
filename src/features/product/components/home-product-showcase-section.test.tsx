@@ -1,5 +1,7 @@
 import type { ComponentProps } from 'react';
+import { PixelRatio } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
+import { HorizontalRail } from '@/components/ui/horizontal-rail';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { ProductShowcase } from '../api/product-showcase.mapper';
 import { HomeProductShowcaseSection } from './home-product-showcase-section';
@@ -214,5 +216,26 @@ describe('HomeProductShowcaseSection', () => {
 
     expect(screen.getByText('Öne Çıkanlar')).toBeTruthy();
     expect(screen.getAllByText('SEPETE EKLE')).toHaveLength(2);
+  });
+
+  it('shows the cards in a windowed rail instead of mounting them all in a ScrollView', () => {
+    renderSection();
+
+    expect(screen.UNSAFE_getByType(HorizontalRail).props.data).toBe(showcase.products);
+  });
+
+  it('requests the smallest pre-generated image variant that covers the card', () => {
+    const medium = 'https://cdn.haydigiy.com/uploads/2026/01/30/m1_201381884_053/medium/pantolon_0.webp';
+    const spy = jest.spyOn(PixelRatio, 'getPixelSizeForLayoutSize').mockImplementation((size) => Math.round(size));
+
+    renderSection({
+      showcase: { ...showcase, products: [{ ...showcase.products[0], imageUrl: medium }] },
+    });
+
+    // 148 dp on a 1× screen → the 200 px wide `thumb` variant is enough.
+    expect(screen.getByLabelText('Dabıl Bağcıklı Pantolon görseli').props.source).toEqual([
+      expect.objectContaining({ uri: medium.replace('/medium/', '/thumb/') }),
+    ]);
+    spy.mockRestore();
   });
 });

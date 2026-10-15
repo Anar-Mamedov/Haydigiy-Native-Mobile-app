@@ -1,3 +1,4 @@
+import { StyleSheet } from 'react-native';
 import { fireEvent, renderHook, screen, within } from '@testing-library/react-native';
 import { BottomNavigationBar } from '@/components/navigation/bottom-navigation-bar';
 import { useTabReselect } from '@/components/navigation/tab-reselect';
@@ -140,5 +141,31 @@ describe('BottomNavigationBar', () => {
     for (const label of ['Favorilerim', 'Whatsapp', 'Hesabım']) {
       expect(screen.getByText(label).props.adjustsFontSizeToFit).toBe(true);
     }
+  });
+
+  it('lets every item fill the bar height so its touch target stays above 48dp', () => {
+    // Regresyon: üst/alt boşluk çubuktayken sekme yalnızca ikon + etiket kadar (40dp) kalıyor ve
+    // Play "Dokunma hedefi boyutu" uyarısı veriyordu. Boşluk artık sekmenin kendi içinde.
+    renderWithTamagui(<BottomNavigationBar />);
+
+    for (const label of ['Anasayfa', 'Kategoriler', 'Favorilerim', 'Sepetim', 'Whatsapp', 'Hesabım']) {
+      expect(StyleSheet.flatten(screen.getByLabelText(label).props.style)).toMatchObject({
+        flex: 1,
+        paddingBottom: 4,
+        paddingTop: 6,
+      });
+    }
+  });
+
+  it('announces WhatsApp as a button and the others as selectable tabs', () => {
+    renderWithTamagui(<BottomNavigationBar />);
+
+    const whatsapp = screen.getByLabelText('Whatsapp');
+    expect(whatsapp.props.accessibilityRole).toBe('button');
+    expect(whatsapp.props.accessibilityState?.selected).toBeUndefined();
+
+    expect(screen.getByLabelText('Anasayfa').props.accessibilityRole).toBe('tab');
+    expect(screen.getByLabelText('Anasayfa').props.accessibilityState).toEqual({ selected: true });
+    expect(screen.getByLabelText('Hesabım').props.accessibilityState).toEqual({ selected: false });
   });
 });

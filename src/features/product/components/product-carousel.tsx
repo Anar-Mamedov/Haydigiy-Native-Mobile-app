@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, NativeSyntheticEvent, NativeScrollEvent, Pressable, Share, useWindowDimensions } from 'react-native';
-import { Heart, Share2, Play, ChevronLeft, ChevronRight } from '@/components/ui/icons';
+import { FlatList, NativeSyntheticEvent, NativeScrollEvent, Share, useWindowDimensions } from 'react-native';
 import { XStack, YStack, useThemeName } from 'tamagui';
-import { Paragraph } from '@/components/ui/app-paragraph';
-import { BRAND_COLOR } from '@/lib/theme/colors';
 import { FeatureIcon } from '@/types/product.types';
+import {
+  ProductCarouselArrowButton,
+  ProductCarouselFloatingActions,
+  ProductCarouselVideoButton,
+} from './product-carousel-controls';
 import { ProductCarouselImageSlide } from './product-carousel-image-slide';
 import { ProductCarouselVideoSlide } from './product-carousel-video-slide';
 import { ProductFeatureDescriptionTicker } from './product-feature-tags';
@@ -250,131 +252,18 @@ export function ProductCarousel({
         />
 
         {/* Floating actions: Favorite (heart) and Share */}
-        <YStack position="absolute" top={60} right={12} gap="$3" zIndex={10}>
-          <Pressable
-            onPress={onToggleFavorite}
-            style={({ pressed }) => ({
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: isDark ? '#1F2937' : 'white',
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.15,
-              shadowRadius: 3.84,
-              elevation: 5,
-              opacity: pressed ? 0.8 : 1,
-            })}
-          >
-            <Heart
-              size={20}
-              fill={isFavorite ? BRAND_COLOR : 'transparent'}
-              color={isFavorite ? '$brand' : '#6B7280'}
-            />
-          </Pressable>
+        <ProductCarouselFloatingActions
+          isFavorite={isFavorite}
+          onShare={handleShare}
+          onToggleFavorite={onToggleFavorite}
+        />
 
-          <Pressable
-            onPress={handleShare}
-            style={({ pressed }) => ({
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: isDark ? '#1F2937' : 'white',
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.15,
-              shadowRadius: 3.84,
-              elevation: 5,
-              opacity: pressed ? 0.8 : 1,
-            })}
-          >
-            <Share2 size={20} color="#6B7280" />
-          </Pressable>
-        </YStack>
-
-        {/* Left Chevron Overlay (Placed in padding area) */}
-        {hasLoop && (
-          <Pressable
-            onPress={scrollPrev}
-            accessibilityRole="button"
-            accessibilityLabel="Önceki görsel"
-            style={({ pressed }) => ({
-              position: 'absolute',
-              left: 4,
-              top: '50%',
-              marginTop: -20,
-              width: 24,
-              height: 40,
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 10,
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <ChevronLeft size={24} color="#1F2937" strokeWidth={2.5} />
-          </Pressable>
-        )}
-
-        {/* Right Chevron Overlay (Placed in padding area) */}
-        {hasLoop && (
-          <Pressable
-            onPress={scrollNext}
-            accessibilityRole="button"
-            accessibilityLabel="Sonraki görsel"
-            style={({ pressed }) => ({
-              position: 'absolute',
-              right: 4,
-              top: '50%',
-              marginTop: -20,
-              width: 24,
-              height: 40,
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 10,
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <ChevronRight size={24} color="#1F2937" strokeWidth={2.5} />
-          </Pressable>
-        )}
+        {/* Önceki/sonraki okları görselin iki yanında */}
+        {hasLoop && <ProductCarouselArrowButton direction="previous" onPress={scrollPrev} />}
+        {hasLoop && <ProductCarouselArrowButton direction="next" onPress={scrollNext} />}
 
         {/* Video button (bottom left) */}
-        {hasVideoSlide && activeIndex !== videoSlideIndex && (
-          <Pressable
-            onPress={scrollToVideoSlide}
-            accessibilityRole="button"
-            accessibilityLabel="Ürün videosunu oynat"
-            style={({ pressed }) => ({
-              position: 'absolute',
-              bottom: 20,
-              left: 16,
-              backgroundColor: BRAND_COLOR,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              paddingLeft: 10,
-              paddingRight: 14,
-              paddingVertical: 6,
-              borderRadius: 20,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              elevation: 5,
-              zIndex: 10,
-              opacity: pressed ? 0.85 : 1,
-            })}
-          >
-            <Play size={12} fill="white" color="white" />
-            <Paragraph color="white" fontSize={11} fontWeight="700">
-              VİDEO
-            </Paragraph>
-          </Pressable>
-        )}
+        {hasVideoSlide && activeIndex !== videoSlideIndex && <ProductCarouselVideoButton onPress={scrollToVideoSlide} />}
 
         {/* Active Dot Indicators */}
         {hasLoop && (

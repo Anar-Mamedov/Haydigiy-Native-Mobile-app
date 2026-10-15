@@ -1,6 +1,7 @@
 import { ChevronUp } from '@/components/ui/icons';
 import { Pressable } from 'react-native';
 import { YStack } from 'tamagui';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 
 type ScrollToTopButtonProps = {
   /** Butonun görünür olup olmadığı; listenin scroll offset'inden hesaplanır. */
@@ -12,7 +13,7 @@ type ScrollToTopButtonProps = {
   testID?: string;
 };
 
-const BUTTON_SIZE = 44;
+const BUTTON_SIZE = MIN_TOUCH_TARGET;
 
 /**
  * Uzun listelerde sağ alt köşede beliren "en başa dön" butonu.

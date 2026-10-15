@@ -1,8 +1,6 @@
 import { Redirect } from 'expo-router';
-import { Spinner, YStack, XStack } from 'tamagui';
+import { Spinner, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { Pressable } from 'react-native';
-import { ThumbsUp } from '@/components/ui/icons';
 import { AppScreen, DeferredMount, EmptyState, PullToDismissScrollView } from '@/components/ui';
 import { formatCurrency } from '@/utils/format-currency';
 import { SizeSelectionSheet } from '../components/size-selection-sheet';
@@ -29,6 +27,7 @@ import { ProductReviewsSection } from '../components/product-reviews-section';
 import { ProductQuestionsSection } from '../components/product-questions-section';
 import { ProductStickyFooter } from '../components/product-sticky-footer';
 import { MobileProductInformation } from '../components/mobile-product-information';
+import { ProductFeedbackButton } from '../components/product-feedback-button';
 import { ProductVideoModal } from '../components/product-video-modal';
 import { ProductImageGalleryModal } from '../components/product-image-gallery-modal';
 import { NotifyStockDialog } from '../components/notify-stock-dialog';
@@ -243,31 +242,7 @@ export function ProductDetailScreen() {
               />
 
               {/* Feedback Button */}
-              <Pressable
-                onPress={() => controller.setShowFeedback(true)}
-                style={({ pressed }) => ({
-                  opacity: pressed ? 0.7 : 1,
-                  marginHorizontal: 16,
-                  marginVertical: 12,
-                })}
-              >
-                <XStack
-                  alignItems="center"
-                  justifyContent="center"
-                  borderColor="$borderColor"
-                  borderWidth={2}
-                  backgroundColor="$background"
-                  borderRadius={8}
-                  paddingHorizontal={12}
-                  paddingVertical={10}
-                  gap={8}
-                >
-                  <ThumbsUp size={16} color="$brand" />
-                  <Paragraph fontSize={13} fontWeight="700" color="$color">
-                    Geri Bildirim Ver
-                  </Paragraph>
-                </XStack>
-              </Pressable>
+              <ProductFeedbackButton onPress={() => controller.setShowFeedback(true)} />
             </DeferredMount>
           )}
         </YStack>

@@ -357,4 +357,70 @@ describe('ProductCard', () => {
     expect(content.flexGrow ?? content.flex).toBe(1);
     expect(textBlock.marginTop).toBe('auto');
   });
+
+  // Play lansman öncesi raporu (v51): renk çipi 43×26dp, fiyat satırı ve sıralama şeridi 24/27dp
+  // yüksekliğinde ayrı dokunma hedefleri olarak işaretleniyordu.
+  describe('touch targets', () => {
+    function styleOf(label: string) {
+      return StyleSheet.flatten(screen.getByLabelText(label).props.style);
+    }
+
+    it('gives the VİDEO and color chips 48dp touch areas without moving the chips', () => {
+      renderWithTamagui(
+        <ProductCard
+          onColorPress={jest.fn()}
+          onOpen={jest.fn()}
+          product={{
+            ...product,
+            otherColors: [{ id: 'p-2', name: 'Mavi', slug: 'mavi', imageUrl: '', price: 150, isStock: true }],
+            videoPath: 'https://example.com/product-video.mp4',
+          }}
+        />,
+      );
+
+      expect(styleOf('Test Product videosunu aç')).toMatchObject({
+        alignItems: 'flex-start',
+        justifyContent: 'flex-end',
+        minHeight: 48,
+        minWidth: 48,
+      });
+      expect(styleOf('Test Product renk seçeneklerini aç')).toMatchObject({
+        alignItems: 'flex-end',
+        justifyContent: 'flex-end',
+        minHeight: 48,
+        minWidth: 48,
+      });
+    });
+
+    it('opens the color options from the color chip', () => {
+      const onColorPress = jest.fn();
+      const colorful: Product = {
+        ...product,
+        otherColors: [{ id: 'p-2', name: 'Mavi', slug: 'mavi', imageUrl: '', price: 150, isStock: true }],
+      };
+      renderWithTamagui(<ProductCard onColorPress={onColorPress} onOpen={jest.fn()} product={colorful} />);
+
+      fireEvent.press(screen.getByLabelText('Test Product renk seçeneklerini aç'));
+
+      expect(onColorPress).toHaveBeenCalledWith(colorful);
+    });
+
+    it('keeps the price row and ranking strip tappable but not separate accessibility targets', () => {
+      const onOpen = jest.fn();
+      renderWithTamagui(
+        <ProductCard onOpen={onOpen} product={{ ...product, rankingText: 'En Çok Satan 2. Ürün' }} />,
+      );
+
+      for (const node of [screen.getByText('150,00 TL'), screen.getByTestId('product-feature-description')]) {
+        let area = node.parent;
+        while (area && area.props?.accessible !== false) {
+          area = area.parent;
+        }
+        expect(area?.props.focusable).toBe(false);
+        fireEvent.press(node);
+      }
+
+      expect(onOpen).toHaveBeenCalledTimes(2);
+    });
+  });
 });

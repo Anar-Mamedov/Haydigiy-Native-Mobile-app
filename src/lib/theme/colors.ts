@@ -28,6 +28,15 @@ export const BRAND_GRADIENT = ['#ff6c15', '#fe4c7f'] as const;
 export const RANKING_BADGE_GRADIENT = ['#f27a1a', '#f79a0f', '#ffbf00'] as const;
 
 /**
+ * Açık turuncu marka zeminli kutulardaki (#fff7ed; ürün detayında "Tüm … modellerini gör",
+ * öne çıkan özellik kartları) turuncu yazı. Bu zeminde #c45a08 4.11:1, #ea580c 3.35:1 kalıyordu;
+ * aynı tonun koyusu 4.60:1 ile WCAG AA'yı geçer. Koyu temada zemin koyu olduğundan açık şeftali
+ * tonu kullanılır. Marka turuncusunun (`BRAND_COLOR`) kendisi bu sabitle değişmez.
+ */
+export const BRAND_TINT_TEXT_COLOR = '#b5560a';
+export const BRAND_TINT_TEXT_COLOR_DARK = '#fed7aa';
+
+/**
  * Checkout payment description badge color, used for texts such as
  * "Peşin fiyatına 3 taksit" under the secure payment badge.
  */

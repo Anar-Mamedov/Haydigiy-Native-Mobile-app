@@ -2,8 +2,8 @@ import React from 'react';
 import { TrendingDown } from '@/components/ui/icons';
 import { XStack, useTheme } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { IconButton, MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { WhatsappIcon } from '@/components/ui/whatsapp-icon';
-import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
 import { BundleSummary } from '@/types/bundle.types';
@@ -14,7 +14,7 @@ import { formatProductPriceAmount, resolveProductDiscount } from '../utils/produ
 
 const FOOTER_TOP_PADDING = 14;
 const FOOTER_BOTTOM_PADDING = 14;
-const FOOTER_ACTION_HEIGHT = 46;
+const FOOTER_ACTION_HEIGHT = MIN_TOUCH_TARGET;
 const FOOTER_SCROLL_GAP = 18;
 
 export const PRODUCT_STICKY_FOOTER_SCROLL_PADDING =
@@ -152,7 +152,8 @@ export function ProductStickyFooter({
       )}
 
       {/* Buttons: WhatsApp & primary action */}
-      <XStack flex={1} gap="$2.5" justifyContent="flex-end" alignItems="center">
+      {/* WhatsApp'ın 48dp dokunma alanı ikonun iki yanına şeffaf pay ekler; görünen boşluk aynı kalsın diye gap dar. */}
+      <XStack flex={1} gap="$1" justifyContent="flex-end" alignItems="center">
         <ProductPrimaryAction
           height={actionHeight}
           isApprovedForSale={isApprovedForSale}
@@ -165,18 +166,9 @@ export function ProductStickyFooter({
         />
 
         {/* WhatsApp Support Button */}
-        <Pressable
-          onPress={onWhatsappPress}
-          style={({ pressed }) => ({
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: pressed ? 0.75 : 1,
-          })}
-          accessibilityLabel="WhatsApp ile sipariş ve destek"
-          accessibilityRole="button"
-        >
+        <IconButton accessibilityLabel="WhatsApp ile sipariş ve destek" onPress={onWhatsappPress}>
           <WhatsappIcon size={34} />
-        </Pressable>
+        </IconButton>
       </XStack>
     </XStack>
   );

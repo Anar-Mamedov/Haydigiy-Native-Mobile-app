@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from '@/components/ui/icons';
 import { XStack, YStack, useThemeName } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { Pressable, Dimensions } from 'react-native';
+import { Pressable } from 'react-native';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
+import { TextActionButton } from '@/components/ui/text-action-button';
+import { BRAND_TINT_TEXT_COLOR, BRAND_TINT_TEXT_COLOR_DARK } from '@/lib/theme/colors';
 import { ProductModel, ProductVariantOnModel } from '@/types/product.types';
-
-const { width: screenWidth } = Dimensions.get('window');
-const cardWidth = (screenWidth - 32 - 10) / 2;
 
 interface Property {
   name: string;
@@ -84,24 +84,24 @@ export function ProductSpecifications({
 
   return (
     <YStack gap="$2.5" padding="$4" backgroundColor="$background" borderTopWidth={8} borderTopColor="$color3">
-      {/* Title & Expand/Collapse Row */}
-      <XStack alignItems="center" justifyContent="space-between">
+      {/* Title & Expand/Collapse Row. Bağlantının dokunma alanı 48dp; satır yine başlık kadar yer
+          kaplasın diye kutunun şeffaf payı üstteki/alttaki boşluğa taşar (negatif dikey marj). */}
+      <XStack
+        alignItems="center"
+        justifyContent="space-between"
+        marginVertical={hasHiddenFeatures ? '$-3' : undefined}
+      >
         <Paragraph fontSize={15} fontWeight="700" color="$color">
           Öne Çıkan Özellikler:
         </Paragraph>
         {hasHiddenFeatures && (
-          <Pressable onPress={() => setExpanded(!expanded)}>
-            <XStack alignItems="center" gap="$1">
-              <Paragraph color="$brand" fontSize={12} fontWeight="700">
-                {expanded ? 'Daha Az Göster' : 'Devamını Gör'}
-              </Paragraph>
-              {expanded ? (
-                <ChevronUp size={14} color="$brand" />
-              ) : (
-                <ChevronDown size={14} color="$brand" />
-              )}
-            </XStack>
-          </Pressable>
+          <TextActionButton
+            accessibilityState={{ expanded }}
+            color="$brand"
+            iconAfter={expanded ? <ChevronUp size={14} color="$brand" /> : <ChevronDown size={14} color="$brand" />}
+            label={expanded ? 'Daha Az Göster' : 'Devamını Gör'}
+            onPress={() => setExpanded(!expanded)}
+          />
         )}
       </XStack>
 
@@ -126,7 +126,12 @@ export function ProductSpecifications({
                 minHeight={84}
                 justifyContent="center"
               >
-                <Paragraph fontSize={11} color="#ea580c" fontWeight="600" numberOfLines={2}>
+                <Paragraph
+                  fontSize={11}
+                  color={isDark ? BRAND_TINT_TEXT_COLOR_DARK : BRAND_TINT_TEXT_COLOR}
+                  fontWeight="600"
+                  numberOfLines={2}
+                >
                   {item.name}
                 </Paragraph>
                 <Paragraph fontSize={14} fontWeight="700" color="$color" numberOfLines={2}>
@@ -144,6 +149,8 @@ export function ProductSpecifications({
         {/* Tüm özellikleri göster Button below the rows */}
         {hasHiddenFeatures && !expanded && (
           <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: false }}
             onPress={() => setExpanded(true)}
             style={({ pressed }) => ({
               width: '100%',
@@ -159,6 +166,7 @@ export function ProductSpecifications({
               borderWidth={1}
               borderColor={isDark ? 'rgba(242, 122, 26, 0.25)' : '#fed7aa'}
               backgroundColor={isDark ? '#1F2937' : 'white'}
+              minHeight={MIN_TOUCH_TARGET}
               paddingVertical={12}
             >
               <Paragraph fontSize={14} fontWeight="500" color="$brand">

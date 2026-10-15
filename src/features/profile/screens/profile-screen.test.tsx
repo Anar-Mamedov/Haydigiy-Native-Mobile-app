@@ -219,7 +219,7 @@ describe('ProfileScreen', () => {
     renderWithTamagui(<ProfileScreen />);
     
     // Find back button by accessibility label
-    const backBtn = screen.getByLabelText('Geri Dön');
+    const backBtn = screen.getByLabelText('Geri dön');
     fireEvent.press(backBtn);
 
     expect(mockBack).toHaveBeenCalled();

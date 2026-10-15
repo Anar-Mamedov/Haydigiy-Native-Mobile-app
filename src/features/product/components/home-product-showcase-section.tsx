@@ -1,5 +1,7 @@
+import { useCallback } from 'react';
 import { Pressable } from 'react-native';
-import { ScrollView, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
+import { HorizontalRail } from '@/components/ui/horizontal-rail';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { ChevronRight } from '@/components/ui/icons';
 import { getShowcaseProductKey, ProductShowcase, ShowcaseProduct } from '../api/product-showcase.mapper';
@@ -15,6 +17,11 @@ type HomeProductShowcaseSectionProps = {
 
 const SECTION_SHADOW = '0 1px 2px rgba(0, 0, 0, 0.05)';
 const SECTION_PADDING = 16;
+const CARD_GAP = 12;
+const RAIL_PADDING_BOTTOM = 4;
+
+/** Aynı ürün vitrinde iki kez yer alabilir; sıra eklenerek anahtar tekilleştirilir. */
+const getRailKey = (product: ShowcaseProduct, index: number) => `${getShowcaseProductKey(product)}-${index}`;
 
 /**
  * Kart rafı dokunuşu kendisi sahiplenir (web `data-product-showcase-controls`): kartların arasındaki
@@ -83,6 +90,13 @@ export function HomeProductShowcaseSection({
   onShowcasePress,
 }: HomeProductShowcaseSectionProps) {
   const { title, subtitle, ctaLabel, ctaLink, products } = showcase;
+  const renderProduct = useCallback(
+    (product: ShowcaseProduct) => (
+      <ShowcaseProductCard onAddToCartPress={onAddToCartPress} onPress={onProductPress} product={product} />
+    ),
+    [onAddToCartPress, onProductPress],
+  );
+
   if (products.length === 0) return null;
 
   const hasLink = Boolean(ctaLink);
@@ -105,20 +119,14 @@ export function HomeProductShowcaseSection({
         {hasHeader ? <ShowcaseHeader ctaLabel={ctaLabel} onLinkPress={onLinkPress} subtitle={subtitle} title={title} /> : null}
 
         <YStack onStartShouldSetResponder={claimProductRailTouch} testID="home-product-showcase-rail">
-          <ScrollView
-            contentContainerStyle={{ gap: 12, paddingBottom: 4, paddingHorizontal: SECTION_PADDING }}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          >
-            {products.map((product, index) => (
-              <ShowcaseProductCard
-                key={`${getShowcaseProductKey(product)}-${index}`}
-                onAddToCartPress={onAddToCartPress}
-                onPress={onProductPress}
-                product={product}
-              />
-            ))}
-          </ScrollView>
+          <HorizontalRail
+            data={products}
+            gap={CARD_GAP}
+            keyExtractor={getRailKey}
+            paddingBottom={RAIL_PADDING_BOTTOM}
+            paddingHorizontal={SECTION_PADDING}
+            renderItem={renderProduct}
+          />
         </YStack>
       </YStack>
     </Pressable>

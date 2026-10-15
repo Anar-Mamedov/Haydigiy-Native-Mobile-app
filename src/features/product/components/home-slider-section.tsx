@@ -1,22 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
-import { NativeScrollEvent, NativeSyntheticEvent, ScrollView as RNScrollView } from 'react-native';
+import { NativeScrollEvent, NativeSyntheticEvent, PixelRatio, ScrollView as RNScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { ScrollView, XStack, YStack } from 'tamagui';
+import { useImageAspectRatio } from '@/components/ui/use-image-aspect-ratio';
 import { StoryContent } from '@/types/page-design.types';
+import { buildResizedCdnImageUrl } from '@/utils/cdn';
 import { handleLinkPress } from '@/utils/link-handler';
+import { isSlideInWindow } from '../utils/slide-window';
 
 type HomeSliderSectionProps = {
   content: StoryContent;
 };
 
+/** Web ile aynı varsayılan oran; ilk slaydın görseli yüklenince gerçeğiyle değişir. */
+const FALLBACK_SLIDER_ASPECT_RATIO = 1920 / 605;
+
 export function HomeSliderSection({ content }: HomeSliderSectionProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [containerWidth, setContainerWidth] = useState(300);
-  const [aspectRatio, setAspectRatio] = useState<number>(1920 / 605); // default fallback aspect ratio matching web
   const scrollViewRef = useRef<RNScrollView>(null);
   const timerRef = useRef<any>(null);
 
   const items = content.items || [];
+  // Slider'ın yüksekliğini ilk slaydın görseli belirler (web ile aynı).
+  const { aspectRatio, onLoad: onFirstSlideLoad } = useImageAspectRatio(
+    items[0]?.image ?? '',
+    FALLBACK_SLIDER_ASPECT_RATIO,
+  );
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
@@ -59,6 +69,7 @@ export function HomeSliderSection({ content }: HomeSliderSectionProps) {
   }
 
   const height = containerWidth / aspectRatio;
+  const imagePixelWidth = PixelRatio.getPixelSizeForLayoutSize(containerWidth);
 
   return (
     <YStack
@@ -81,6 +92,8 @@ export function HomeSliderSection({ content }: HomeSliderSectionProps) {
           {items.map((item, index) => {
             const imageUri = item.image;
             const targetLink = item.extra_link || item.link;
+            // Etkin slayt ve komşuları dışındaki slaytlar çerçeve olarak kalır, bitmap tutmaz.
+            const shouldMountImage = Boolean(imageUri) && isSlideInWindow(index, activeIndex, items.length);
 
             const handlePress = () => {
               handleLinkPress(targetLink);
@@ -98,6 +111,7 @@ export function HomeSliderSection({ content }: HomeSliderSectionProps) {
                 width={containerWidth}
               >
                 <YStack
+                  backgroundColor="$color2"
                   borderColor="rgb(150,152,156)"
                   borderRadius={15}
                   borderWidth={1}
@@ -105,22 +119,18 @@ export function HomeSliderSection({ content }: HomeSliderSectionProps) {
                   overflow="hidden"
                   width="100%"
                 >
-                  <Image
-                    contentFit="cover"
-                    onLoad={(event) => {
-                      if (index === 0) {
-                        const { width: imgWidth, height: imgHeight } = event.source;
-                        if (imgWidth && imgHeight) {
-                          setAspectRatio(imgWidth / imgHeight);
-                        }
-                      }
-                    }}
-                    source={{ uri: imageUri }}
-                    style={{
-                      height: '100%',
-                      width: '100%',
-                    }}
-                  />
+                  {shouldMountImage ? (
+                    <Image
+                      contentFit="cover"
+                      onLoad={index === 0 ? onFirstSlideLoad : undefined}
+                      source={{ uri: buildResizedCdnImageUrl(imageUri, imagePixelWidth) ?? imageUri }}
+                      style={{
+                        height: '100%',
+                        width: '100%',
+                      }}
+                      testID="home-slider-image"
+                    />
+                  ) : null}
                 </YStack>
               </YStack>
             );

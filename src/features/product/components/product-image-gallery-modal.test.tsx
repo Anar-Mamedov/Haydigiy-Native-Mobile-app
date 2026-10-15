@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
+import { StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { ProductImageGalleryModal } from './product-image-gallery-modal';
@@ -94,5 +95,13 @@ describe('ProductImageGalleryModal', () => {
     );
 
     expect(screen.queryByTestId('product-image-gallery-modal')).toBeNull();
+  });
+
+  it('gives the close button a 48dp touch target without relying on hitSlop', () => {
+    renderWithTamagui(<ProductImageGalleryModal images={images} initialIndex={0} onClose={jest.fn()} open />);
+
+    const close = screen.getByLabelText('Kapat');
+    expect(StyleSheet.flatten(close.props.style)).toMatchObject({ height: 48, width: 48 });
+    expect(close.props.hitSlop).toBeUndefined();
   });
 });

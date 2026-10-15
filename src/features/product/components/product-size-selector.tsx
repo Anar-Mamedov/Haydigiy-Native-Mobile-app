@@ -4,12 +4,26 @@ import { XStack, YStack, useThemeName } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { Pressable } from 'react-native';
 import { DiscountRateBadge } from '@/components/ui/discount-rate-badge';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
+import { TextActionButton } from '@/components/ui/text-action-button';
 import { FeatureIcon, ProductVariant } from '@/types/product.types';
 import { COMPACT_MAX_FONT_SCALE, useFontScale } from '@/lib/theme/font-scale';
 import { type ProductBasePricing, resolveVariantDiscountRate } from '../utils/variant-price';
 import { ProductFeatureDescriptionList } from './product-feature-tags';
 import { ProductSizeSelectorSkeleton } from './product-size-skeleton';
 import { ProductSaleNotice } from './product-sale-notice';
+
+/** İndirim rozetinin beden çipinin sağ üst köşesinden taşma payı (webdeki beden butonuyla aynı). */
+const DISCOUNT_BADGE_OFFSET_TOP = -8;
+const DISCOUNT_BADGE_OFFSET_RIGHT = -6;
+
+/**
+ * Tükenmiş bedenin yazı ve zil rengi. Beden yine basılabilir (gelince haber ver), bu yüzden soluk
+ * görünse de okunur kalmalı: eski #9CA3AF/#4B5563 beyaz/koyu zeminde 2.5:1 / 2.4:1 kalıyordu;
+ * bunlar 4.8:1 / 7:1. Tükendiği üstü çizili yazı ve çapraz çizgiyle zaten anlaşılıyor.
+ */
+const UNAVAILABLE_SIZE_TEXT_COLOR = '#6B7280';
+const UNAVAILABLE_SIZE_TEXT_COLOR_DARK = '#9CA3AF';
 
 interface ProductSizeSelectorProps {
   variants?: ProductVariant[];
@@ -46,6 +60,9 @@ export function ProductSizeSelector({
   const chipHeight = Math.round(40 * scale);
   const chipMinWidth = Math.round(52 * scale);
   const bellBadgeSize = Math.round(18 * scale);
+  // Çip 40dp görünür; basılabilir kutu 48dp'ye tamamlanır ve çip kutunun ortasında durur.
+  const chipTouchInset = Math.max(0, (MIN_TOUCH_TARGET - chipHeight) / 2);
+  const unavailableSizeColor = isDark ? UNAVAILABLE_SIZE_TEXT_COLOR_DARK : UNAVAILABLE_SIZE_TEXT_COLOR;
 
   if (isLoading) return <ProductSizeSelectorSkeleton />;
 
@@ -53,39 +70,42 @@ export function ProductSizeSelector({
 
   return (
     <YStack gap="$3" paddingHorizontal="$4" paddingVertical="$3" backgroundColor="$background">
-      {/* Header with Title & Sizing helpers */}
-      <XStack alignItems="center" justifyContent="space-between" flexWrap="wrap" gap="$2">
+      {/* Header with Title & Sizing helpers. Bağlantıların dokunma alanı 48dp; başlık satırı yine yazı
+          kadar yer kaplasın diye kutunun şeffaf payı üstteki/alttaki boşluğa taşar (negatif dikey marj). */}
+      <XStack alignItems="center" justifyContent="space-between" flexWrap="wrap" gap="$2" marginVertical="$-3">
         <Paragraph fontSize={14} fontWeight="700" color="$color">
           Beden
         </Paragraph>
 
         <XStack gap="$3" alignItems="center">
           {onSizeChartPress && (
-            <Pressable onPress={onSizeChartPress}>
-              <XStack alignItems="center" gap="$1">
-                <Table size={14} color="$color10" />
-                <Paragraph color="$color10" fontSize={11} fontWeight="600">
-                  Beden Tablosu
-                </Paragraph>
-              </XStack>
-            </Pressable>
+            <TextActionButton
+              color="$color10"
+              fontSize={11}
+              fontWeight="600"
+              icon={<Table size={14} color="$color10" />}
+              label="Beden Tablosu"
+              onPress={onSizeChartPress}
+            />
           )}
 
           {onSizeCalculatorPress && (
-            <Pressable onPress={onSizeCalculatorPress}>
-              <XStack alignItems="center" gap="$1">
-                <Calculator size={14} color="$brand" />
-                <Paragraph color="$brand" fontSize={11} fontWeight="600">
-                  Bedenimi hesapla
-                </Paragraph>
-              </XStack>
-            </Pressable>
+            <TextActionButton
+              color="$brand"
+              fontSize={11}
+              fontWeight="600"
+              icon={<Calculator size={14} color="$brand" />}
+              label="Bedenimi hesapla"
+              onPress={onSizeCalculatorPress}
+            />
           )}
         </XStack>
       </XStack>
 
       {/* Wrapped Sizes Grid Row */}
-      <XStack flexWrap="wrap" gap="$2" paddingVertical="$1" width="100%">
+      {/* Basılabilir kutular 48dp ve çipler içlerinde ortalı: satırlar arası boşluğu kutuların şeffaf
+          payı verir, bu yüzden dikey boşluk (rowGap) sıfır. */}
+      <XStack columnGap="$2" flexWrap="wrap" rowGap={0} width="100%">
         {variants.map((variant) => {
           const isSelected = isApprovedForSale && selectedVariant?.id === variant.id;
           const isAvailable = isApprovedForSale && variant.hasStock && variant.quantity > 0;
@@ -103,6 +123,8 @@ export function ProductSizeSelector({
               accessibilityState={{ disabled: !isApprovedForSale, selected: isSelected }}
               accessibilityLabel={`Beden ${variant.name}${discountLabel} ${!isApprovedForSale ? 'satışa kapalı' : isAvailable ? 'seçilebilir' : 'stokta yok, gelince haber ver'}`}
               style={({ pressed }) => ({
+                justifyContent: 'center',
+                minHeight: MIN_TOUCH_TARGET,
                 opacity: pressed ? 0.8 : 1,
               })}
             >
@@ -147,7 +169,7 @@ export function ProductSizeSelector({
                           : (isDark ? '#E5E7EB' : '#1F2937')
                         : isSelected
                           ? '$brand'
-                          : (isDark ? '#4B5563' : '#9CA3AF')
+                          : unavailableSizeColor
                   }
                   style={{
                     textDecorationLine: isAvailable ? 'none' : 'line-through',
@@ -184,7 +206,7 @@ export function ProductSizeSelector({
                       alignItems="center"
                       justifyContent="center"
                     >
-                      <Bell color={isDark ? '#6B7280' : '#9CA3AF'} maxFontScale={COMPACT_MAX_FONT_SCALE} size={10} />
+                      <Bell color={unavailableSizeColor} maxFontScale={COMPACT_MAX_FONT_SCALE} size={10} />
                     </XStack>
                   </>
                 )}
@@ -197,10 +219,10 @@ export function ProductSizeSelector({
                 pointerEvents="none"
                 position="absolute"
                 rate={discountRate}
-                right={-6}
+                right={DISCOUNT_BADGE_OFFSET_RIGHT}
                 size="xs"
                 testID={`size-discount-badge-${variant.id}`}
-                top={-8}
+                top={chipTouchInset + DISCOUNT_BADGE_OFFSET_TOP}
               />
             </Pressable>
           );

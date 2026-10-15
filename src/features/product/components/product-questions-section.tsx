@@ -2,7 +2,7 @@ import React from 'react';
 import { Heart, ChevronDown } from '@/components/ui/icons';
 import { XStack, YStack, Button } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { Pressable } from 'react-native';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { ProductQuestion } from '@/types/product.types';
 
 interface ProductQuestionsSectionProps {
@@ -56,7 +56,7 @@ export function ProductQuestionsSection({
               borderColor="transparent"
               borderWidth={0}
               borderRadius={8}
-              height={40}
+              height={MIN_TOUCH_TARGET}
               onPress={onQuestionsPress}
               pressStyle={{ backgroundColor: '#e5e7eb' }}
               paddingHorizontal="$6"
@@ -109,12 +109,14 @@ export function ProductQuestionsSection({
                       </Paragraph>
                     </XStack>
 
-                    <Pressable style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {/* Beğeni sayısı gösterimi; burada bir eylem yok (beğenme soru listesi ekranında), bu
+                        yüzden basılabilir değil: işlevsiz bir buton ekran okuyucuda düğme gibi duyuluyordu. */}
+                    <XStack alignItems="center">
                       <Heart size={12} color="$color10" style={{ marginRight: 4 }} />
                       <Paragraph fontSize={11} color="$color10" fontWeight="500">
                         Soruyu Beğen (0)
                       </Paragraph>
-                    </Pressable>
+                    </XStack>
                   </XStack>
                 </YStack>
               );
@@ -128,7 +130,7 @@ export function ProductQuestionsSection({
               borderColor="transparent"
               borderWidth={0}
               borderRadius={22}
-              height={44}
+              height={MIN_TOUCH_TARGET}
               onPress={onQuestionsPress}
               pressStyle={{ backgroundColor: '#e5e7eb' }}
               marginTop="$2"

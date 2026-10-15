@@ -85,4 +85,14 @@ describe('InsiderRecommendationSlider', () => {
 
     expect(screen.getAllByText(/199,90/)).toHaveLength(1);
   });
+
+  // Insider kataloğu 1200×1800 `large` görsel gönderir; 132 dp kart için bu boşa decode demektir.
+  it('requests the card-sized catalog variant instead of the large image', () => {
+    const large = 'https://cdn.haydigiy.com/uploads/2026/09/26/m1-52712/large/bluz_0.webp';
+    renderSlider({ products: [makeProduct({ imageUrl: large })] });
+
+    expect(screen.getByLabelText('Kadın Bluz görseli').props.source).toEqual([
+      expect.objectContaining({ uri: large.replace('/large/', '/medium/') }),
+    ]);
+  });
 });

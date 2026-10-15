@@ -3,8 +3,9 @@ import { WashingMachine } from '@/components/ui/icons';
 import { XStack, YStack, Button, useThemeName } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { Image } from 'expo-image';
-import { Pressable } from 'react-native';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { MarkdownContent } from '@/components/ui/markdown-content';
+import { TextActionButton } from '@/components/ui/text-action-button';
 import { SizeMeasurementsTable } from './size-measurements-table';
 import { SizeMeasurement } from '@/types/product.types';
 
@@ -27,6 +28,29 @@ const DESCRIPTION_PREVIEW_HEIGHT = 72;
 
 function getPropertyKey(property: Property) {
   return `${property.name}:${property.value}`;
+}
+
+/**
+ * Açıklama ve özellik listesini açıp kapatan "DAHA FAZLA / DAHA AZ GÖSTER" bağlantısı. Dokunma alanı
+ * 48dp; bölüm yine yazı kadar uzasın diye kutunun şeffaf payı komşu boşluklara taşar (negatif marj).
+ */
+function ShowMoreToggle({ expanded, onPress }: { expanded: boolean; onPress: () => void }) {
+  return (
+    <YStack marginVertical="$-3" testID="product-information-show-more">
+      <TextActionButton
+        accessibilityState={{ expanded }}
+        alignSelf="flex-start"
+        color="$brand"
+        iconAfter={
+          <Paragraph color="$brand" fontSize={11} style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}>
+            ↓
+          </Paragraph>
+        }
+        label={expanded ? 'DAHA AZ GÖSTER' : 'DAHA FAZLA GÖSTER'}
+        onPress={onPress}
+      />
+    </YStack>
+  );
 }
 
 export function MobileProductInformation({
@@ -70,16 +94,7 @@ export function MobileProductInformation({
             ) : null}
 
             {/* Expand / Collapse Button for Description */}
-            <Pressable onPress={() => setShowMore(!showMore)}>
-              <XStack alignItems="center" gap="$1">
-                <Paragraph color="$brand" fontSize={12} fontWeight="700">
-                  {showMore ? 'DAHA AZ GÖSTER' : 'DAHA FAZLA GÖSTER'}
-                </Paragraph>
-                <Paragraph color="$brand" fontSize={11} style={{ transform: [{ rotate: showMore ? '180deg' : '0deg' }] }}>
-                  ↓
-                </Paragraph>
-              </XStack>
-            </Pressable>
+            <ShowMoreToggle expanded={showMore} onPress={() => setShowMore(!showMore)} />
           </YStack>
 
           {/* Description Text */}
@@ -120,16 +135,7 @@ export function MobileProductInformation({
           </YStack>
 
           {properties.length > 6 && (
-            <Pressable onPress={() => setShowMore(!showMore)} style={{ marginTop: 4 }}>
-              <XStack alignItems="center" gap="$1">
-                <Paragraph color="$brand" fontSize={12} fontWeight="700">
-                  {showMore ? 'DAHA AZ GÖSTER' : 'DAHA FAZLA GÖSTER'}
-                </Paragraph>
-                <Paragraph color="$brand" fontSize={11} style={{ transform: [{ rotate: showMore ? '180deg' : '0deg' }] }}>
-                  ↓
-                </Paragraph>
-              </XStack>
-            </Pressable>
+            <ShowMoreToggle expanded={showMore} onPress={() => setShowMore(!showMore)} />
           )}
         </YStack>
       )}
@@ -144,7 +150,7 @@ export function MobileProductInformation({
           borderColor="$borderColor"
           borderWidth={2}
           borderRadius={8}
-          height={44}
+          height={MIN_TOUCH_TARGET}
           onPress={onWashingInstructionsPress}
           icon={<WashingMachine size={18} color="$brand" />}
           pressStyle={{ backgroundColor: '$backgroundPress' }}

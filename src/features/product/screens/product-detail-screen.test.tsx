@@ -99,7 +99,7 @@ describe('ProductDetailScreen', () => {
       mockCanGoBack = false;
       renderLoadError();
 
-      fireEvent.press(screen.getByLabelText('Go back'));
+      fireEvent.press(screen.getByLabelText('Geri dön'));
 
       expect(mockReplace).toHaveBeenCalledWith('/');
       expect(mockBack).not.toHaveBeenCalled();
@@ -108,7 +108,7 @@ describe('ProductDetailScreen', () => {
     it('goes back when there is history', () => {
       renderLoadError();
 
-      fireEvent.press(screen.getByLabelText('Go back'));
+      fireEvent.press(screen.getByLabelText('Geri dön'));
 
       expect(mockBack).toHaveBeenCalledTimes(1);
       expect(mockReplace).not.toHaveBeenCalled();

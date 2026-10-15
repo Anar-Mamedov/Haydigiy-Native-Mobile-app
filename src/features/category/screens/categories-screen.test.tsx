@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, screen, within } from '@testing-library/react-native';
 import { CategoriesScreen } from './categories-screen';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
@@ -228,5 +228,46 @@ describe('CategoriesScreen', () => {
     expect(screen.getByPlaceholderText('Ürün veya kategori ara').props.maxFontSizeMultiplier).toBe(
       MAX_FONT_SCALE,
     );
+  });
+
+  describe('accessibility', () => {
+    it('labels the back button and gives it a 48dp target', () => {
+      // Regresyon: etiketsiz 32dp geri butonu Play "İçerik etiketleme" ve "Dokunma hedefi" uyarısı veriyordu.
+      renderWithTamagui(<CategoriesScreen />);
+
+      const back = screen.getByLabelText('Geri dön');
+      expect(StyleSheet.flatten(back.props.style)).toMatchObject({ minHeight: 48, minWidth: 48 });
+
+      fireEvent.press(back);
+      expect(mockBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('labels the search field and uses a theme placeholder color', () => {
+      // Regresyon: sabit #9ca3af yer tutucu beyaz zeminde 2,54:1 kontrastla kalıyordu.
+      renderWithTamagui(<CategoriesScreen />);
+
+      const input = screen.getByLabelText('Ürün veya kategori ara');
+      expect(input.props.placeholderTextColor).not.toBe('#9ca3af');
+    });
+
+    it('announces the main tabs and the sidebar rows with their selected state', () => {
+      renderWithTamagui(<CategoriesScreen />);
+
+      const tabFor = (title: string) => screen.getAllByRole('tab').find((tab) => within(tab).queryByText(title));
+
+      expect(tabFor('Kadın')?.props.accessibilityState).toMatchObject({ selected: true });
+      expect(tabFor('Erkek')?.props.accessibilityState).toMatchObject({ selected: false });
+      expect(tabFor('Giyim')?.props.accessibilityState).toMatchObject({ selected: true });
+      expect(tabFor('Ayakkabı')?.props.accessibilityState).toMatchObject({ selected: false });
+    });
+
+    it('keeps the sidebar rows at least 48dp tall', () => {
+      // Regresyon: 46dp yan menü satırları Play "Dokunma hedefi boyutu" uyarısı veriyordu.
+      renderWithTamagui(<CategoriesScreen />);
+
+      const sidebarRow = screen.getAllByRole('tab').find((tab) => within(tab).queryByText('Ayakkabı'));
+      expect(sidebarRow).toBeTruthy();
+      expect(StyleSheet.flatten(sidebarRow!.props.style)).toMatchObject({ minHeight: 48 });
+    });
   });
 });

@@ -1,6 +1,7 @@
 import { forwardRef, ReactNode } from 'react';
 import { Button, GetProps, useTheme, XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 
 export type AppButtonProps = GetProps<typeof Button> & {
   children?: ReactNode;
@@ -46,8 +47,10 @@ export const AppButton = forwardRef<any, AppButtonProps>(function AppButton(
         borderColor: '$borderColorPress',
       }}
       ref={ref}
-      size="$4"
+      size="$4.5"
       {...buttonProps}
+      // Ekran daha küçük bir boy (`size`/`height`) istese de dokunma alanı 48dp'nin altına inmez.
+      minHeight={MIN_TOUCH_TARGET}
     >
       <XStack alignItems="center" gap="$2" justifyContent="center">
         {renderIcon(icon)}

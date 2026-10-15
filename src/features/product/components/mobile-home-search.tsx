@@ -12,7 +12,7 @@ export function MobileHomeSearch() {
 
   return (
     <Button
-      accessibilityLabel="Search products or categories"
+      accessibilityLabel="Ürün veya kategori ara"
       backgroundColor="$backgroundHover"
       borderColor="$borderColor"
       borderRadius="$4"

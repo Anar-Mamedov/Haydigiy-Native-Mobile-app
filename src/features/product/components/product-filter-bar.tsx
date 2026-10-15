@@ -3,7 +3,7 @@ import { XStack, YStack } from 'tamagui';
 import { ArrowUpDown, SlidersHorizontal } from '@/components/ui/icons';
 import { QuickFilterGroup } from '@/types/product.types';
 import type { SizeShortcutFilter } from '../hooks/use-size-shortcut-filter';
-import { FILTER_PILL_HEIGHT, FilterPill } from './filter-pill';
+import { FILTER_PILL_TOUCH_HEIGHT, FilterPill } from './filter-pill';
 import { FilterShortcutSection } from './filter-sheet';
 
 interface ProductFilterBarProps {
@@ -25,10 +25,11 @@ interface ProductFilterBarProps {
   onToggleQuickFilter: (section: FilterShortcutSection) => void;
 }
 
-const BAR_VERTICAL_PADDING = 9;
+/** Çipin 48dp dokunma alanı dikey boşluğun çoğunu kendisi taşır; çubuk yüksekliği (53) değişmez. */
+const BAR_VERTICAL_PADDING = 2;
 
 /** Çubuğun toplam yüksekliği; açılan dropdown'ı hizalamak için dışarıya verilir. */
-export const PRODUCT_FILTER_BAR_HEIGHT = FILTER_PILL_HEIGHT + BAR_VERTICAL_PADDING * 2 + 1;
+export const PRODUCT_FILTER_BAR_HEIGHT = FILTER_PILL_TOUCH_HEIGHT + BAR_VERTICAL_PADDING * 2 + 1;
 
 function parsePropertyIds(value: string | undefined): number[] {
   return value

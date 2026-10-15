@@ -71,7 +71,8 @@ export function ProductImageCarousel({
               return (
                 <Pressable
                   key={imageIdentity}
-                  accessibilityLabel={`${title} ürün görseli`}
+                  // Sıra numarası etiketi tekil yapar; aynı etiketli birden çok buton ekran okuyucuda ayırt edilemiyordu.
+                  accessibilityLabel={`${title} ürün görseli, ${idx + 1} / ${images.length}`}
                   accessibilityRole="button"
                   onPress={onOpen}
                   style={{ width: containerWidth, height: '100%' }}

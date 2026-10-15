@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, AlertCircle, Star, Camera } from '@/components/ui/icons';
 import { XStack, YStack, H3 } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { Pressable } from 'react-native';
+import { TextActionButton } from '@/components/ui/text-action-button';
 import { BRAND_COLOR, DANGER_COLOR, WARNING_COLOR } from '@/lib/theme/colors';
+
+/** Değerlendirme ve soru bağlantılarını ayıran dikey çizginin yüksekliği. */
+const RATING_ROW_DIVIDER_HEIGHT = 14;
 
 interface ProductInfoProps {
   brand: string;
@@ -71,8 +74,10 @@ export function ProductInfo({
         </H3>
       </YStack>
 
-      {/* Ratings & Question shortcut row */}
-      <XStack alignItems="center" flexWrap="wrap" gap="$2.5">
+      {/* Ratings & Question shortcut row. Bağlantıların dokunma alanı 48dp; satır yine yıldızlar kadar
+          yer kaplasın diye 48dp kutunun yazı dışındaki şeffaf payı üstteki/alttaki boşluğa taşar
+          (negatif dikey marj). */}
+      <XStack alignItems="center" flexWrap="wrap" gap="$2.5" marginVertical="$-3">
         <XStack gap="$0.5">
           {Array.from({ length: 5 }).map((_, index) => {
             const starIndex = index + 1;
@@ -89,36 +94,29 @@ export function ProductInfo({
           })}
         </XStack>
 
-        <Pressable
+        <TextActionButton
           accessibilityLabel={`${reviewCount} değerlendirme`}
-          accessibilityRole="button"
-          hitSlop={6}
-          onPress={onReviewsPress}
-          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-        >
-          <XStack alignItems="center" gap="$1">
-            <Paragraph color="$color10" fontSize={13} style={{ textDecorationLine: 'underline' }}>
-              {reviewCount} Değerlendirme
-            </Paragraph>
-            <Camera size={14} color="$color10" />
-          </XStack>
-        </Pressable>
+          color="$color10"
+          fontSize={13}
+          fontWeight="400"
+          iconAfter={<Camera size={14} color="$color10" />}
+          label={`${reviewCount} Değerlendirme`}
+          onPress={() => onReviewsPress?.()}
+          underline
+        />
 
-        <Paragraph color="$color5" fontSize={13}>
-          |
-        </Paragraph>
+        {/* Ayırıcı yazı değil çizgi: "|" karakteri metin kontrastı taramasına takılıyordu (1.3:1). */}
+        <YStack backgroundColor="$color5" height={RATING_ROW_DIVIDER_HEIGHT} testID="product-info-rating-divider" width={1} />
 
-        <Pressable
+        <TextActionButton
           accessibilityLabel={`${questionsCount} soru ve cevap`}
-          accessibilityRole="button"
-          hitSlop={6}
-          onPress={onQuestionsPress}
-          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-        >
-          <Paragraph color="$color10" fontSize={13} style={{ textDecorationLine: 'underline' }}>
-            {questionsCount} Soru & Cevap
-          </Paragraph>
-        </Pressable>
+          color="$color10"
+          fontSize={13}
+          fontWeight="400"
+          label={`${questionsCount} Soru & Cevap`}
+          onPress={() => onQuestionsPress?.()}
+          underline
+        />
       </XStack>
 
       {/* Social Proof Ticker */}

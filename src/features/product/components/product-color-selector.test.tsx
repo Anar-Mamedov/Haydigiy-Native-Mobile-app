@@ -1,4 +1,6 @@
+import { StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
+import { BRAND_TINT_TEXT_COLOR, BRAND_TINT_TEXT_COLOR_DARK } from '@/lib/theme/colors';
 import { ProductColorSelector } from './product-color-selector';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
@@ -55,5 +57,47 @@ describe('ProductColorSelector', () => {
     fireEvent.press(screen.getByText('Tüm Elbise modellerini gör'));
 
     expect(onCategoryPress).toHaveBeenCalledWith('elbise', 7);
+  });
+});
+
+describe('ProductColorSelector category redirect accessibility', () => {
+  function renderRedirect(theme: 'light' | 'dark' = 'light') {
+    return renderWithTamagui(
+      <ProductColorSelector
+        {...baseProps}
+        categoryName="Elbise"
+        categorySlug="elbise"
+        onCategoryPress={jest.fn()}
+        onColorSelect={jest.fn()}
+        otherColors={[]}
+      />,
+      theme,
+    );
+  }
+
+  it('is a labelled button at least 48dp tall', () => {
+    // Regresyon: Play raporunda 44dp yükseklik ve etiketsiz tıklanabilir öğe olarak görünüyordu.
+    renderRedirect();
+
+    const button = screen.getByLabelText('Tüm Elbise modellerini gör');
+    expect(button.props.accessibilityRole).toBe('button');
+
+    let box = screen.getByText('Tüm Elbise modellerini gör').parent;
+    while (box && StyleSheet.flatten(box.props?.style)?.minHeight === undefined) {
+      box = box.parent;
+    }
+    expect(StyleSheet.flatten(box?.props.style)).toMatchObject({ minHeight: 48 });
+  });
+
+  it.each([
+    ['light', BRAND_TINT_TEXT_COLOR],
+    ['dark', BRAND_TINT_TEXT_COLOR_DARK],
+  ] as const)('writes the label in a color that passes 4.5:1 on the tinted box (%s)', (theme, expectedColor) => {
+    // Regresyon: #c45a08, #fff7ed zeminde 4.11:1 kalıyordu.
+    renderRedirect(theme);
+
+    expect(StyleSheet.flatten(screen.getByText('Tüm Elbise modellerini gör').props.style)).toMatchObject({
+      color: expectedColor,
+    });
   });
 });

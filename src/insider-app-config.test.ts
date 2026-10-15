@@ -46,6 +46,10 @@ describe('Insider Expo configuration', () => {
     // kaynaklarını release paketinden siliyordu. Koruma listesini yazan plugin
     // kayıtlı kalmalı (regresyon koruması).
     expect(config.plugins).toContain('./plugins/with-insider-resource-keep');
+
+    // Play Console'daki en sık kilitlenmeyi (findShadowNodeByTagRecursively)
+    // kapatan RN bayrağını açan plugin kayıtlı kalmalı (regresyon koruması).
+    expect(config.plugins).toContain('./plugins/with-find-shadow-node-race-fix');
     expect(insiderPlugin?.[1]).toEqual(
       expect.objectContaining({
         appGroup: 'group.com.faprika.haydigiy.app',

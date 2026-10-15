@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Pressable, TextInput } from 'react-native';
 import { Spinner, XStack, YStack, ScrollView, Button, useTheme } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { ArrowLeft, Search } from '@/components/ui/icons';
-import { AppScreen, EmptyState } from '@/components/ui';
+import { Search } from '@/components/ui/icons';
+import { AppScreen, EmptyState, HeaderBackButton, MIN_TOUCH_TARGET } from '@/components/ui';
 import { useRouter } from 'expo-router';
 import { useMenuGroupsQuery, useMenuItemsQuery } from '../api/category.queries';
 import { CategoryCard } from '../components/category-card';
@@ -32,11 +32,12 @@ export function CategoriesScreen() {
     if (isErrorItems) refetchItems();
   };
 
-  // Reset subcategory selection when switching main tab
-  useEffect(() => {
+  // Ana sekme değişince alt kategori seçimi ve arama sıfırlanır (effect yerine olayın kendisinde).
+  const selectMainCategory = (index: number) => {
+    setSelectedMainIndex(index);
     setSelectedSubIndex(0);
     setSearchTerm('');
-  }, [selectedMainIndex]);
+  };
 
   const isPending = isPendingGroups || isPendingItems;
   const isError = isErrorGroups || isErrorItems;
@@ -95,32 +96,31 @@ export function CategoriesScreen() {
       backgroundColor="$background"
       borderBottomWidth={1}
       borderBottomColor="$borderColor"
-      paddingHorizontal="$3"
-      paddingVertical="$2"
-      gap="$2"
+      paddingLeft="$1.5"
+      paddingRight="$3"
+      gap="$1.5"
       height={56}
       width="100%"
     >
-      <Pressable onPress={handleBackPress} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}>
-        <ArrowLeft color="#6b7280" size={24} />
-      </Pressable>
+      <HeaderBackButton onPress={handleBackPress} />
+      {/* Kutu 48dp: arama alanı (EditText) da en az dokunma hedefi kadar yüksek olmalı. */}
       <XStack
         flex={1}
         alignItems="center"
         backgroundColor="$backgroundHover"
         borderRadius={100}
         paddingHorizontal="$4"
-        paddingVertical="$1.5"
         gap="$2"
-        height={40}
+        height={MIN_TOUCH_TARGET}
         minWidth={0}
       >
         <Search color="$brand" size={18} />
         <TextInput
           // Tamagui dışı input olduğu için config'teki yazı boyutu tavanı buraya ulaşmıyor.
           maxFontSizeMultiplier={MAX_FONT_SCALE}
+          accessibilityLabel="Ürün veya kategori ara"
           placeholder="Ürün veya kategori ara"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={theme.color9.val}
           value={searchTerm}
           onChangeText={setSearchTerm}
           style={{
@@ -179,8 +179,10 @@ export function CategoriesScreen() {
                 const isActive = selectedMainIndex === index;
                 return (
                   <Pressable
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: isActive }}
                     key={cat.id}
-                    onPress={() => setSelectedMainIndex(index)}
+                    onPress={() => selectMainCategory(index)}
                     style={{
                       paddingHorizontal: 16,
                       height: 48,
@@ -232,8 +234,12 @@ export function CategoriesScreen() {
                     <Pressable
                       key={item.id}
                       onPress={() => setSelectedSubIndex(index)}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: isActive }}
                       style={{
                         width: '100%',
+                        minHeight: MIN_TOUCH_TARGET,
+                        justifyContent: 'center',
                         paddingVertical: 12,
                         paddingHorizontal: 12,
                         backgroundColor: isActive ? theme.background.val : 'transparent',
@@ -263,7 +269,7 @@ export function CategoriesScreen() {
                     alignItems="center"
                     backgroundColor="$brand"
                     borderRadius={8}
-                    height={40}
+                    height={MIN_TOUCH_TARGET}
                     justifyContent="center"
                     onPress={() => {
                       const target = selectedSub || selectedMain;

@@ -6,7 +6,7 @@ import { ChevronLeft, Search, X } from '@/components/ui/icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 
-import { AppScreen } from '@/components/ui';
+import { AppScreen, HeaderBackButton, IconButton, MIN_TOUCH_TARGET } from '@/components/ui';
 import { usePopularProductsQuery, useSearchSuggestionsQuery } from '@/features/product/api/product.queries';
 import { PopularProductsSection } from '@/features/product/components/popular-products-section';
 import { formatCurrency } from '@/utils/format-currency';
@@ -116,15 +116,14 @@ export function SearchSuggestionsScreen() {
       backgroundColor="$background"
       borderBottomWidth={1}
       borderBottomColor="$borderColor"
-      paddingHorizontal="$3"
-      paddingVertical="$2"
-      gap="$2"
+      paddingLeft="$1.5"
+      paddingRight="$3"
+      gap="$1.5"
       height={56}
       width="100%"
     >
-      <Pressable onPress={handleBackPress} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}>
-        <ChevronLeft color="$color" size={24} />
-      </Pressable>
+      <HeaderBackButton Icon={ChevronLeft} onPress={handleBackPress} />
+      {/* Kutu 48dp: arama alanı ve içindeki ikon butonları en az dokunma hedefi kadar yüksek. */}
       <XStack
         flex={1}
         alignItems="center"
@@ -132,10 +131,11 @@ export function SearchSuggestionsScreen() {
         borderRadius={8}
         borderWidth={1}
         borderColor="$borderColor"
-        paddingHorizontal="$3"
-        height={42}
+        paddingLeft="$3"
+        height={MIN_TOUCH_TARGET}
       >
         <Input
+          accessibilityLabel="Ürün veya kategori ara"
           flex={1}
           height="100%"
           backgroundColor="transparent"
@@ -152,13 +152,13 @@ export function SearchSuggestionsScreen() {
           autoFocus
         />
         {query ? (
-          <Pressable onPress={handleClear} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}>
-            <X color="#9ca3af" size={16} />
-          </Pressable>
+          <IconButton accessibilityLabel="Aramayı temizle" onPress={handleClear}>
+            <X color="$color9" size={16} />
+          </IconButton>
         ) : null}
-        <Pressable onPress={handleSearchSubmit} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4, marginLeft: 4 })}>
-          <Search color="#9ca3af" size={18} />
-        </Pressable>
+        <IconButton accessibilityLabel="Ara" onPress={handleSearchSubmit}>
+          <Search color="$color9" size={18} />
+        </IconButton>
       </XStack>
     </XStack>
   );

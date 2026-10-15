@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Animated, Linking, Pressable } from 'react-native';
-import { Button, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { IconButton, MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { X } from '@/components/ui/icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
@@ -14,7 +15,7 @@ import { TimeLeft } from '../types/top-banner.types';
 const IMAGE_BANNER_ASPECT_RATIO = 12;
 const IMAGE_BANNER_DISMISS_SIZE = 20;
 const IMAGE_BANNER_DISMISS_ICON_SIZE = 10;
-const IMAGE_BANNER_DISMISS_HIT_SLOP = 10;
+const IMAGE_BANNER_DISMISS_INSET = 6;
 
 function CountdownUnit({ value, label, color }: { value: number; label: string; color: string }) {
   return (
@@ -131,35 +132,41 @@ export function TopBanner() {
             <XStack height="100%" backgroundColor="rgba(255,255,255,0.7)" width={`${progress}%`} />
           </XStack>
         )}
-        <Pressable onPress={handlePress} disabled={!currentBanner.link} style={{ width: '100%' }}>
+        <Pressable
+          accessibilityLabel={currentBanner.title}
+          accessibilityRole={currentBanner.link ? 'link' : 'image'}
+          onPress={handlePress}
+          disabled={!currentBanner.link}
+          style={{ width: '100%' }}
+        >
           <Image
             source={{ uri: imageUrl }}
             style={{ width: '100%', aspectRatio: IMAGE_BANNER_ASPECT_RATIO }}
             contentFit="cover"
           />
         </Pressable>
+        {/* Şerit 34dp; 48dp kapatma alanı şeridin dışına taşar, küçük daire ise şeridin içinde aynı yerde kalır. */}
         {currentBanner.dismissible && (
-          <Pressable
-            accessibilityLabel="Kampanyayı kapat"
-            accessibilityRole="button"
-            onPress={handleDismiss}
-            hitSlop={IMAGE_BANNER_DISMISS_HIT_SLOP}
-            style={{
-              position: 'absolute',
-              right: 6,
-              top: '50%',
-              width: IMAGE_BANNER_DISMISS_SIZE,
-              height: IMAGE_BANNER_DISMISS_SIZE,
-              borderRadius: IMAGE_BANNER_DISMISS_SIZE / 2,
-              backgroundColor: 'rgba(0,0,0,0.38)',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transform: [{ translateY: -IMAGE_BANNER_DISMISS_SIZE / 2 }],
-              zIndex: 20,
-            }}
-          >
-            <X color="white" size={IMAGE_BANNER_DISMISS_ICON_SIZE} />
-          </Pressable>
+          <YStack position="absolute" right={0} top="50%" y={-MIN_TOUCH_TARGET / 2} zIndex={20}>
+            <IconButton
+              accessibilityLabel="Kampanyayı kapat"
+              alignItems="flex-end"
+              onPress={handleDismiss}
+              padding={IMAGE_BANNER_DISMISS_INSET}
+              testID="top-banner-dismiss"
+            >
+              <YStack
+                alignItems="center"
+                backgroundColor="rgba(0,0,0,0.38)"
+                borderRadius={IMAGE_BANNER_DISMISS_SIZE / 2}
+                height={IMAGE_BANNER_DISMISS_SIZE}
+                justifyContent="center"
+                width={IMAGE_BANNER_DISMISS_SIZE}
+              >
+                <X color="white" size={IMAGE_BANNER_DISMISS_ICON_SIZE} />
+              </YStack>
+            </IconButton>
+          </YStack>
         )}
       </YStack>
     );
@@ -174,7 +181,12 @@ export function TopBanner() {
         </XStack>
       )}
 
-      <Pressable onPress={handlePress} disabled={!currentBanner.link} style={{ width: '100%' }}>
+      <Pressable
+        accessibilityRole={currentBanner.link ? 'link' : 'text'}
+        onPress={handlePress}
+        disabled={!currentBanner.link}
+        style={{ width: '100%' }}
+      >
         <LinearGradient
           colors={[currentBanner.bg_color_from, currentBanner.bg_color_to]}
           start={{ x: 0, y: 0 }}
@@ -182,7 +194,7 @@ export function TopBanner() {
           style={{
             paddingVertical: 8,
             paddingLeft: 16,
-            paddingRight: 44,
+            paddingRight: MIN_TOUCH_TARGET + 2,
             width: '100%',
             minHeight: 50,
             justifyContent: 'center',
@@ -227,24 +239,11 @@ export function TopBanner() {
       </Pressable>
 
       {currentBanner.dismissible && (
-        <Button
-          accessibilityLabel="Kampanyayı kapat"
-          accessibilityRole="button"
-          position="absolute"
-          right={8}
-          top="50%"
-          y="-50%"
-          backgroundColor="transparent"
-          chromeless
-          circular
-          padding={0}
-          width={36}
-          height={36}
-          alignItems="center"
-          justifyContent="center"
-          onPress={handleDismiss}
-          icon={<X color={currentBanner.text_color as any} size={16} />}
-        />
+        <YStack position="absolute" right={2} top="50%" y={-MIN_TOUCH_TARGET / 2}>
+          <IconButton accessibilityLabel="Kampanyayı kapat" onPress={handleDismiss} testID="top-banner-dismiss">
+            <X color={currentBanner.text_color as any} size={16} />
+          </IconButton>
+        </YStack>
       )}
     </YStack>
   );

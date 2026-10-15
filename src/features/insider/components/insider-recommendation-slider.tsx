@@ -1,7 +1,10 @@
-import { Pressable } from 'react-native';
+import { useCallback } from 'react';
+import { PixelRatio, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { ScrollView, XStack, YStack } from 'tamagui';
+import { HorizontalRail } from '@/components/ui/horizontal-rail';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { selectProductImageVariant } from '@/utils/cdn';
 import { formatCurrency } from '@/utils/format-currency';
 import { InsiderRecommendedProduct } from '../utils/insider-recommendation.mapper';
 
@@ -20,8 +23,16 @@ type RecommendationCardProps = {
 };
 
 const CARD_WIDTH = 132;
+const CARD_GAP = 10;
+const RAIL_PADDING_HORIZONTAL = 16;
+const RAIL_PADDING_TOP = 10;
+
+const getRecommendationKey = (product: InsiderRecommendedProduct) => product.id;
 
 function RecommendationCard({ onPress, product }: RecommendationCardProps) {
+  // Insider kataloğu `large` (1200×1800) görsel gönderir; 132 dp kart için hazır küçük varyant yeter.
+  const imageUri = selectProductImageVariant(product.imageUrl, PixelRatio.getPixelSizeForLayoutSize(CARD_WIDTH));
+
   return (
     <Pressable
       accessibilityLabel={`Önerilen ürünü aç: ${product.name}`}
@@ -38,11 +49,12 @@ function RecommendationCard({ onPress, product }: RecommendationCardProps) {
         width={CARD_WIDTH}
       >
         <YStack aspectRatio={3 / 4} backgroundColor="$backgroundHover">
-          {product.imageUrl ? (
+          {imageUri ? (
             <Image
               accessibilityLabel={`${product.name} görseli`}
               contentFit="contain"
-              source={{ uri: product.imageUrl }}
+              recyclingKey={imageUri}
+              source={{ uri: imageUri }}
               style={{ height: '100%', width: '100%' }}
             />
           ) : (
@@ -87,7 +99,7 @@ function RecommendationCard({ onPress, product }: RecommendationCardProps) {
 function RecommendationSkeleton() {
   return (
     <ScrollView
-      contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingTop: 10 }}
+      contentContainerStyle={{ gap: CARD_GAP, paddingHorizontal: RAIL_PADDING_HORIZONTAL, paddingTop: RAIL_PADDING_TOP }}
       horizontal
       showsHorizontalScrollIndicator={false}
     >
@@ -128,6 +140,11 @@ export function InsiderRecommendationSlider({
   onProductPress,
   onRetry,
 }: InsiderRecommendationSliderProps) {
+  const renderProduct = useCallback(
+    (product: InsiderRecommendedProduct) => <RecommendationCard onPress={onProductPress} product={product} />,
+    [onProductPress],
+  );
+
   const isEmpty = !isLoading && !isError && products.length === 0;
   if (isEmpty) return null;
 
@@ -161,15 +178,14 @@ export function InsiderRecommendationSlider({
           Öneriler yüklenemedi.
         </Paragraph>
       ) : (
-        <ScrollView
-          contentContainerStyle={{ gap: 10, paddingHorizontal: 16, paddingTop: 10 }}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
-          {products.map((product) => (
-            <RecommendationCard key={product.id} onPress={onProductPress} product={product} />
-          ))}
-        </ScrollView>
+        <HorizontalRail
+          data={products}
+          gap={CARD_GAP}
+          keyExtractor={getRecommendationKey}
+          paddingHorizontal={RAIL_PADDING_HORIZONTAL}
+          paddingTop={RAIL_PADDING_TOP}
+          renderItem={renderProduct}
+        />
       )}
     </YStack>
   );

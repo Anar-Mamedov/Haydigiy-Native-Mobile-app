@@ -1,5 +1,6 @@
+import { StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
-import { ProductFilterBar } from './product-filter-bar';
+import { PRODUCT_FILTER_BAR_HEIGHT, ProductFilterBar } from './product-filter-bar';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { QuickFilterGroup } from '@/types/product.types';
 
@@ -156,5 +157,16 @@ describe('ProductFilterBar', () => {
     renderBar();
 
     expect(screen.queryByLabelText('S Beden filtresi')).toBeNull();
+  });
+
+  it('gives every pill a 48dp touch area without making the bar taller', () => {
+    // Regresyon: 34dp çipler Play "Dokunma hedefi boyutu" uyarısı veriyordu. Görünen çip aynı,
+    // dokunma alanı çubuğun dikey boşluğunu kullanıyor; açılan dropdown'ın hizası (53) değişmiyor.
+    renderBar();
+
+    for (const label of ['Sıralama seçenekleri', 'Tüm filtreler', 'Beden filtresi', 'Model filtresi']) {
+      expect(StyleSheet.flatten(screen.getByLabelText(label).props.style)).toMatchObject({ minHeight: 48 });
+    }
+    expect(PRODUCT_FILTER_BAR_HEIGHT).toBe(53);
   });
 });

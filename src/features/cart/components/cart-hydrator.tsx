@@ -1,9 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCartQuery } from '@/features/cart/api/cart.queries';
 import { cartKeys } from '@/features/cart/api/cart.keys';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { mergeCartDto } from '@/services/cart.service';
+import { guestCartMergeGate, SessionOnceGate } from '../utils/session-once-gate';
+
+type CartHydratorProps = {
+  mergeGate?: SessionOnceGate;
+};
 
 /**
  * Headless component mounted once at the app root (inside the providers).
@@ -13,21 +18,21 @@ import { mergeCartDto } from '@/services/cart.service';
  * 2. Merges the guest (device_id) cart into the account cart whenever the user
  *    becomes authenticated — on login or on launch while already signed in —
  *    exactly like the web `Providers`. Runs once per authenticated session so
- *    items added before login are not lost, then refreshes the cart.
+ *    items added before login are not lost, then refreshes the cart. The
+ *    session gate outlives this component, so an Android activity recreation
+ *    (warm start) that remounts the tree does not merge again.
  */
-export function CartHydrator() {
+export function CartHydrator({ mergeGate = guestCartMergeGate }: CartHydratorProps = {}) {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
-  const hasMergedForSession = useRef(false);
 
   useEffect(() => {
     if (!user) {
       // Reset so the next login merges that session's guest cart again.
-      hasMergedForSession.current = false;
+      mergeGate.reset();
       return;
     }
-    if (hasMergedForSession.current) return;
-    hasMergedForSession.current = true;
+    if (!mergeGate.tryEnter()) return;
 
     let cancelled = false;
     const mergeGuestCart = async () => {
@@ -48,7 +53,7 @@ export function CartHydrator() {
     return () => {
       cancelled = true;
     };
-  }, [user, queryClient]);
+  }, [user, queryClient, mergeGate]);
 
   useCartQuery();
   return null;

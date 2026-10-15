@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { GestureResponderEvent, Pressable } from 'react-native';
-import { Heart, Play } from '@/components/ui/icons';
-import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { SecondaryPressArea } from '@/components/ui/secondary-press-area';
 import { SectionCard } from '@/components/ui/section-card';
-import { BRAND_COLOR } from '@/lib/theme/colors';
 import { Product } from '@/types/product.types';
 import { resolveBundleListingSavings } from '@/features/bundle/bundle.savings';
 import { BundleSeparatePriceNote } from './bundle-separate-price-note';
+import { CardFavoriteButton } from './card-favorite-button';
+import { ProductCardColorButton, ProductCardVideoButton } from './product-card-media-buttons';
 import { ProductFeatureAssetTicker, ProductFeatureDescriptionTicker } from './product-feature-tags';
 import { ProductImageCarousel } from './product-image-carousel';
 import { ProductCardPrice } from './product-price';
@@ -25,44 +26,16 @@ type ProductCardProps = {
 };
 
 const PRODUCT_CARD_COLORS = {
-  accent: BRAND_COLOR,
   danger: '#ef4444',
   emptyStar: '#d1d5db',
-  favoriteInactive: '#9ca3af',
-  textStrong: '#1f2937',
   white: '#ffffff',
 } as const;
 
 const CARD_SHADOW = '0 1px 2px rgba(0, 0, 0, 0.05)';
-const FLOATING_SHADOW = '0 1px 4px rgba(0, 0, 0, 0.18)';
 const FEATURE_ICON_SIZE = 60;
 
 function stopPressPropagation(event?: GestureResponderEvent) {
   event?.stopPropagation?.();
-}
-
-function ColorChromaIcon() {
-  return (
-    <Svg width={16} height={10} viewBox="0 0 16 10" fill="none">
-      <Path
-        d="M8.91577 9.54621C9.55022 9.83756 10.2561 10 11 10C13.7614 10 16 7.76142 16 5C16 2.23858 13.7614 0 11 0C10.2561 0 9.55022 0.162441 8.91577 0.453786C10.1921 1.55408 11 3.18269 11 5C11 6.81731 10.1921 8.44592 8.91577 9.54621Z"
-        fill="url(#colorChromaOuter)"
-      />
-      <Rect width={10} height={10} rx={5} fill="url(#colorChromaInner)" />
-      <Defs>
-        <LinearGradient id="colorChromaOuter" x1={8.91577} y1={10} x2={16} y2={10} gradientUnits="userSpaceOnUse">
-          <Stop stopColor="#6BCEB4" />
-          <Stop offset={0.519142} stopColor="#F98CC2" />
-          <Stop offset={1} stopColor="#FFF781" />
-        </LinearGradient>
-        <LinearGradient id="colorChromaInner" x1={0} y1={10} x2={10} y2={10} gradientUnits="userSpaceOnUse">
-          <Stop stopColor="#3023AE" />
-          <Stop offset={0.519142} stopColor="#53A0FD" />
-          <Stop offset={1} stopColor="#B4EC51" />
-        </LinearGradient>
-      </Defs>
-    </Svg>
-  );
 }
 
 function RatingStar({ fillLevel }: { fillLevel: 'full' | 'half' | 'empty' }) {
@@ -204,102 +177,39 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
 
           {/* Video Play Button Overlay */}
           {product.videoPath ? (
-            <Pressable
-              accessibilityLabel={`${product.title} videosunu aç`}
-              accessibilityRole="button"
-              onPress={handleVideoPress}
-              style={({ pressed }) => ({
-                position: 'absolute',
-                bottom: hasCarousel ? 32 : 8,
-                left: 8,
-                backgroundColor: PRODUCT_CARD_COLORS.accent,
-                paddingLeft: 6,
-                paddingRight: 10,
-                paddingVertical: 4,
-                borderRadius: 12,
-                zIndex: 30,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 4,
-                opacity: pressed ? 0.8 : 1,
-                boxShadow: FLOATING_SHADOW,
-              })}
-            >
-              <Play size={14} fill={PRODUCT_CARD_COLORS.white} color={PRODUCT_CARD_COLORS.white} />
-              <Paragraph color={PRODUCT_CARD_COLORS.white} fontSize={11} fontWeight="600" letterSpacing={0}>
-                VİDEO
-              </Paragraph>
-            </Pressable>
+            <ProductCardVideoButton hasPager={hasCarousel} onPress={handleVideoPress} productTitle={product.title} />
           ) : null}
 
           {colorOptionsCount > 0 && (
-            <Pressable
-              accessibilityLabel={`${product.title} renk seçeneklerini aç`}
-              accessibilityRole="button"
+            <ProductCardColorButton
+              colorCount={colorOptionsCount}
               onPress={(e) => {
                 stopPressPropagation(e);
                 if (onColorPress) onColorPress(product);
               }}
-              style={({ pressed }) => ({
-                position: 'absolute',
-                bottom: 24,
-                right: 8,
-                ...(colorOptionsCount > 1
-                  ? { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12 }
-                  : { height: 26, minWidth: 42, paddingHorizontal: 8, borderRadius: 13 }),
-                backgroundColor: PRODUCT_CARD_COLORS.white,
-                boxShadow: FLOATING_SHADOW,
-                opacity: pressed ? 0.8 : 1,
-                zIndex: 25,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-              })}
-            >
-              <ColorChromaIcon />
-              {colorOptionsCount > 1 && (
-                <Paragraph color={PRODUCT_CARD_COLORS.textStrong} fontSize={12} fontWeight="500" marginLeft={4}>
-                  {colorOptionsCount}
-                </Paragraph>
-              )}
-            </Pressable>
+              productTitle={product.title}
+            />
           )}
 
           {/* Favorite Heart Button Overlay */}
-          <Pressable
-            accessibilityLabel={isFavorite ? `${product.title} favorilerden çıkar` : `${product.title} favorilere ekle`}
-            accessibilityRole="button"
+          <CardFavoriteButton
+            iconSize={16}
+            isFavorite={isFavorite}
             onPress={(e) => {
               stopPressPropagation(e);
               handleToggleFavorite();
             }}
-            style={({ pressed }) => ({
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              padding: 6,
-              backgroundColor: PRODUCT_CARD_COLORS.white,
-              borderRadius: 100,
-              boxShadow: FLOATING_SHADOW,
-              opacity: pressed ? 0.8 : 1,
-              zIndex: 25,
-            })}
-          >
-            <Heart
-              size={16}
-              fill={isFavorite ? PRODUCT_CARD_COLORS.accent : 'transparent'}
-              color={isFavorite ? PRODUCT_CARD_COLORS.accent : PRODUCT_CARD_COLORS.favoriteInactive}
-            />
-          </Pressable>
+            productTitle={product.title}
+          />
         </YStack>
 
         {/* Özellik/sıralama şeridi bilerek padding'li metin bloğunun DIŞINDA: şerit
             kartı kenardan kenara kaplamalı. İçeride negatif marjla taşırmak işe
             yaramıyor, çünkü `width="100%"` zaten padding'i dışlıyor ve şeridin
             `alignSelf="center"`i negatif marjı geri ortalayarak boşluğu geri getiriyor.
-            `accessible={false}`: kartta ikinci bir "Ürün detayını aç" düğmesi
-            duyurulmasın, ama şeride basınca yine detay açılsın. */}
-        <Pressable accessible={false} onPress={() => onOpen(imageIndex)}>
+            `SecondaryPressArea`: kartta ikinci bir "Ürün detayını aç" düğmesi duyurulmasın ve
+            27dp'lik şerit ayrı bir dokunma hedefi sayılmasın, ama şeride basınca yine detay açılsın. */}
+        <SecondaryPressArea onPress={() => onOpen(imageIndex)}>
           <ProductFeatureDescriptionTicker
             featureIcons={product.featureIcons}
             fontSize={11}
@@ -309,7 +219,7 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
             paddingVertical={6}
             rankingText={product.rankingText}
           />
-        </Pressable>
+        </SecondaryPressArea>
 
         {/* Metin bloğu kartın altına yaslanır (`marginTop="auto"`). Sıralama şeridi
             yalnızca bazı ürünlerde çıktığı için kartların metin blokları farklı
@@ -349,7 +259,7 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
 
           {/* Fiyat satırı: indirim varsa oran rozeti + üstü çizili eski fiyat; paketse altında ayrı alım
               toplamı; ucuz beden varsa altında duyurusu */}
-          <Pressable accessible={false} onPress={() => onOpen(imageIndex)}>
+          <SecondaryPressArea onPress={() => onOpen(imageIndex)}>
             <YStack gap={4} marginTop={6} width="100%">
               <ProductCardPrice
                 discountRate={priceDiscount.discountRate}
@@ -361,7 +271,7 @@ export function ProductCard({ onOpen, onVideoPress, product, onColorPress }: Pro
               {bundleSavings ? <BundleSeparatePriceNote itemsTotal={bundleSavings.itemsTotal} /> : null}
               <ProductSizeSpecialPrice productPrice={product.price} sizes={product.sizes} />
             </YStack>
-          </Pressable>
+          </SecondaryPressArea>
         </YStack>
       </YStack>
     </SectionCard>

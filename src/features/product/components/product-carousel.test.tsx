@@ -1,5 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native';
-import { Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import { ProductCarousel } from './product-carousel';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
@@ -223,5 +223,72 @@ describe('ProductCarousel', () => {
 
     // 3 images + 1 video = 4 slides; index clamps to the last image, not the video.
     expect(screen.getByLabelText('Slayt 3 / 4')).toBeTruthy();
+  });
+});
+
+// Play lansman öncesi raporu (v51): oklar 24×40dp, favori/paylaş 40×40dp ve etiketsizdi.
+describe('ProductCarousel touch targets', () => {
+  function styleOf(label: string) {
+    return StyleSheet.flatten(screen.getByLabelText(label).props.style);
+  }
+
+  it('labels the favorite and share actions and gives them 48dp touch areas', () => {
+    const onToggleFavorite = jest.fn();
+    renderWithTamagui(
+      <ProductCarousel images={images} isFavorite={false} onToggleFavorite={onToggleFavorite} productTitle="Elbise" />,
+    );
+
+    expect(styleOf('Favorilere ekle')).toMatchObject({ minHeight: 48, minWidth: 48 });
+    expect(styleOf('Ürünü paylaş')).toMatchObject({ minHeight: 48, minWidth: 48 });
+
+    fireEvent.press(screen.getByLabelText('Favorilere ekle'));
+    expect(onToggleFavorite).toHaveBeenCalledTimes(1);
+  });
+
+  it('announces the favorite state', () => {
+    renderWithTamagui(<ProductCarousel images={images} isFavorite onToggleFavorite={jest.fn()} />);
+
+    const favorite = screen.getByLabelText('Favorilerden çıkar');
+    expect(favorite.props.accessibilityState).toMatchObject({ selected: true });
+  });
+
+  it('keeps the arrows at the image edges inside 48dp touch areas', () => {
+    renderCarousel();
+
+    expect(styleOf('Önceki görsel')).toMatchObject({
+      alignItems: 'flex-start',
+      minHeight: 48,
+      minWidth: 48,
+      paddingLeft: 4,
+    });
+    expect(styleOf('Sonraki görsel')).toMatchObject({
+      alignItems: 'flex-end',
+      minHeight: 48,
+      minWidth: 48,
+      paddingRight: 4,
+    });
+  });
+
+  it('gives the video chip a 48dp touch area', () => {
+    renderCarousel(images, 'https://example.com/product-video.mp4');
+
+    expect(styleOf('Ürün videosunu oynat')).toMatchObject({ minHeight: 48, minWidth: 48 });
+    expect(screen.getByText('VİDEO')).toBeTruthy();
+  });
+
+  it('keeps every control labelled in the dark theme', () => {
+    renderWithTamagui(
+      <ProductCarousel
+        images={images}
+        isFavorite={false}
+        onToggleFavorite={jest.fn()}
+        videoPath="https://example.com/product-video.mp4"
+      />,
+      'dark',
+    );
+
+    for (const label of ['Favorilere ekle', 'Ürünü paylaş', 'Önceki görsel', 'Sonraki görsel', 'Ürün videosunu oynat']) {
+      expect(screen.getByLabelText(label)).toBeTruthy();
+    }
   });
 });

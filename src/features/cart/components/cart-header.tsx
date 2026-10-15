@@ -1,7 +1,7 @@
-import { Pressable } from 'react-native';
-import { ArrowLeft } from '@/components/ui/icons';
 import { XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { HeaderBackButton } from '@/components/ui/header-back-button';
+import { HeaderTextButton } from '@/components/ui/header-text-button';
 
 type CartHeaderProps = {
   itemCount: number;
@@ -12,7 +12,7 @@ type CartHeaderProps = {
 
 /**
  * Cart screen top bar: back navigation, centered "Sepetim (n)" title and a
- * destructive "Sepeti Temizle" action that disables itself on an empty cart.
+ * destructive "Sepeti Temizle" action that is only offered when the cart has items.
  */
 export function CartHeader({ itemCount, canClear, onBack, onClear }: CartHeaderProps) {
   return (
@@ -27,39 +27,19 @@ export function CartHeader({ itemCount, canClear, onBack, onClear }: CartHeaderP
       position="relative"
       width="100%"
     >
-      <XStack left={8} position="absolute" zIndex={10}>
-        <Pressable
-          accessibilityLabel="Geri dön"
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={onBack}
-          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
-        >
-          <ArrowLeft color="$color" size={24} />
-        </Pressable>
+      <XStack left={0} position="absolute" zIndex={10}>
+        <HeaderBackButton onPress={onBack} />
       </XStack>
 
       <Paragraph color="$color" fontSize={16} fontWeight="700">
         Sepetim ({itemCount})
       </Paragraph>
 
-      <XStack position="absolute" right={12} zIndex={10}>
-        <Pressable
-          accessibilityLabel="Sepeti temizle"
-          accessibilityRole="button"
-          disabled={!canClear}
-          hitSlop={8}
-          onPress={onClear}
-          style={({ pressed }) => ({
-            opacity: !canClear ? 0.4 : pressed ? 0.6 : 1,
-            padding: 4,
-          })}
-        >
-          <Paragraph color="$red10" fontSize={12} fontWeight="700">
-            Sepeti Temizle
-          </Paragraph>
-        </Pressable>
-      </XStack>
+      {canClear ? (
+        <XStack position="absolute" right={12} zIndex={10}>
+          <HeaderTextButton accessibilityLabel="Sepeti temizle" color="$red11" label="Sepeti Temizle" onPress={onClear} />
+        </XStack>
+      ) : null}
     </XStack>
   );
 }

@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Pressable } from 'react-native';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { HeaderBackButton } from '@/components/ui/header-back-button';
+import { HeaderTextButton } from '@/components/ui/header-text-button';
 import { ChevronLeft } from '@/components/ui/icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
@@ -69,27 +70,21 @@ export default function GezdiklerimRoute() {
       backgroundColor="$background"
       borderBottomWidth={1}
       borderBottomColor="$borderColor"
-      paddingHorizontal="$3"
-      paddingVertical="$2"
+      paddingLeft="$1.5"
+      paddingRight="$3"
       gap="$2"
       height={56}
       width="100%"
       justifyContent="space-between"
     >
-      <XStack alignItems="center" gap="$2" flex={1}>
-        <Pressable onPress={handleBackPress} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}>
-          <ChevronLeft color="$color" size={24} />
-        </Pressable>
+      <XStack alignItems="center" gap="$1.5" flex={1}>
+        <HeaderBackButton Icon={ChevronLeft} onPress={handleBackPress} />
         <Paragraph fontSize={16} fontWeight="700" color="$color" numberOfLines={1} flex={1}>
           Önceden Gezdiklerim
         </Paragraph>
       </XStack>
       {viewedProducts.length > 0 ? (
-        <Pressable onPress={handleClearAll} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 6 })}>
-          <Paragraph fontSize={13} fontWeight="600" color="$brand">
-            Temizle
-          </Paragraph>
-        </Pressable>
+        <HeaderTextButton accessibilityLabel="Gezdiklerimi temizle" color="$brand" label="Temizle" onPress={handleClearAll} />
       ) : null}
     </XStack>
   );

@@ -1,4 +1,6 @@
+import { Dimensions, StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
+import { COMPACT_MAX_FONT_SCALE, clampFontScale } from '@/lib/theme/font-scale';
 import { ProductSizeSelector } from './product-size-selector';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { ProductVariant } from '@/types/product.types';
@@ -185,5 +187,72 @@ describe('ProductSizeSelector — bedene özel indirim rozeti', () => {
 
     expect(screen.getByTestId('size-discount-badge-v-2xl')).toBeTruthy();
     expect(screen.getByText('%21')).toBeTruthy();
+  });
+});
+
+// Play lansman öncesi raporu (v51): beden çipleri 40dp, "Beden Tablosu"/"Bedenimi hesapla" 22dp idi.
+describe('ProductSizeSelector — dokunma hedefleri ve kontrast', () => {
+  function styleOf(label: string) {
+    return StyleSheet.flatten(screen.getByLabelText(label).props.style);
+  }
+
+  it('puts every 40dp size chip inside a 48dp touch area', () => {
+    renderWithTamagui(<ProductSizeSelector onSelectVariant={jest.fn()} selectedVariant={null} variants={variants} />);
+
+    expect(styleOf('Beden S seçilebilir')).toMatchObject({ justifyContent: 'center', minHeight: 48 });
+    expect(styleOf('Beden M stokta yok, gelince haber ver')).toMatchObject({ minHeight: 48 });
+  });
+
+  it('opens the size chart and calculator from 48dp text actions', () => {
+    const onSizeChartPress = jest.fn();
+    const onSizeCalculatorPress = jest.fn();
+    renderWithTamagui(
+      <ProductSizeSelector
+        onSelectVariant={jest.fn()}
+        onSizeCalculatorPress={onSizeCalculatorPress}
+        onSizeChartPress={onSizeChartPress}
+        selectedVariant={null}
+        variants={variants}
+      />,
+    );
+
+    expect(styleOf('Beden Tablosu')).toMatchObject({ minHeight: 48 });
+    expect(styleOf('Bedenimi hesapla')).toMatchObject({ minHeight: 48 });
+
+    fireEvent.press(screen.getByLabelText('Beden Tablosu'));
+    fireEvent.press(screen.getByLabelText('Bedenimi hesapla'));
+    expect(onSizeChartPress).toHaveBeenCalledTimes(1);
+    expect(onSizeCalculatorPress).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['light', '#6B7280'],
+    ['dark', '#9CA3AF'],
+  ] as const)('keeps a sold-out size readable (%s)', (theme, expectedColor) => {
+    // Regresyon: tükenmiş beden yazısı #9CA3AF/#4B5563 ile 2.5:1 / 2.4:1 kalıyordu; beden yine basılabilir.
+    renderWithTamagui(
+      <ProductSizeSelector onSelectVariant={jest.fn()} selectedVariant={null} variants={variants} />,
+      theme,
+    );
+
+    expect(StyleSheet.flatten(screen.getByText('M').props.style)).toMatchObject({ color: expectedColor });
+  });
+
+  it('keeps the discount badge on the chip corner inside the taller touch area', () => {
+    renderWithTamagui(
+      <ProductSizeSelector
+        onSelectVariant={jest.fn()}
+        productPricing={{ price: 339.99 }}
+        selectedVariant={null}
+        variants={[{ id: 'v-2xl', name: '2XL', quantity: 9, price: 269.99, hasStock: true }]}
+      />,
+    );
+
+    // Çip (40dp × yazı ölçeği) 48dp kutunun ortasında; rozet çipin üst kenarından yine 8dp taşar.
+    const chipHeight = Math.round(40 * clampFontScale(Dimensions.get('window').fontScale, COMPACT_MAX_FONT_SCALE));
+    const chipTop = (48 - chipHeight) / 2;
+    expect(StyleSheet.flatten(screen.getByTestId('size-discount-badge-v-2xl').props.style)).toMatchObject({
+      top: chipTop - 8,
+    });
   });
 });

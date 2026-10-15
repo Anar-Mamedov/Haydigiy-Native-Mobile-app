@@ -1,14 +1,19 @@
-import { useState } from 'react';
+import { PixelRatio } from 'react-native';
 import { Image } from 'expo-image';
 import { YStack } from 'tamagui';
+import { useImageAspectRatio } from '@/components/ui/use-image-aspect-ratio';
 import { HOME_SECTION_GAP } from '@/features/product/utils/home-layout';
 import { BannerContent } from '@/types/page-design.types';
+import { buildResizedCdnImageUrl } from '@/utils/cdn';
 import { handleLinkPress } from '@/utils/link-handler';
 
 type HomeBannerSectionProps = {
   content: BannerContent;
   width: number;
 };
+
+/** Görsel yüklenip gerçek oranı ölçülene kadar kullanılan oran. */
+const FALLBACK_BANNER_ASPECT_RATIO = 2;
 
 export function HomeBannerSection({ content, width }: HomeBannerSectionProps) {
   const items =
@@ -57,8 +62,9 @@ type BannerImageItemProps = {
 };
 
 function BannerImageItem({ imageUri, itemText, onPress, width }: BannerImageItemProps) {
-  // Use a default aspect ratio of 2:1 before the image loads
-  const [aspectRatio, setAspectRatio] = useState<number>(2);
+  const { aspectRatio, onLoad } = useImageAspectRatio(imageUri, FALLBACK_BANNER_ASPECT_RATIO);
+  // 1080 px kaynak yerine bannerın ekranda kapladığı fiziksel genişlik istenir.
+  const sizedUri = buildResizedCdnImageUrl(imageUri, PixelRatio.getPixelSizeForLayoutSize(width)) ?? imageUri;
 
   return (
     <YStack
@@ -73,17 +79,14 @@ function BannerImageItem({ imageUri, itemText, onPress, width }: BannerImageItem
     >
       <Image
         contentFit="cover"
-        onLoad={(event) => {
-          const { width: imgWidth, height: imgHeight } = event.source;
-          if (imgWidth && imgHeight) {
-            setAspectRatio(imgWidth / imgHeight);
-          }
-        }}
-        source={{ uri: imageUri }}
+        onLoad={onLoad}
+        recyclingKey={imageUri}
+        source={{ uri: sizedUri }}
         style={{
           height: '100%',
           width: '100%',
         }}
+        testID="home-banner-image"
       />
     </YStack>
   );

@@ -4,6 +4,8 @@ import { XStack, YStack, ScrollView, useThemeName } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { Image } from 'expo-image';
 import { Pressable } from 'react-native';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
+import { BRAND_TINT_TEXT_COLOR, BRAND_TINT_TEXT_COLOR_DARK } from '@/lib/theme/colors';
 import { ProductColorOption } from '@/types/product.types';
 
 interface ProductColorSelectorProps {
@@ -39,6 +41,7 @@ export function ProductColorSelector({
 
   const hasColors = otherColors && otherColors.length > 0;
   const headerTitle = hasColors ? 'Renk' : 'Tüm Modeller';
+  const categoryLinkLabel = `Tüm ${categoryName || 'Kategori'} modellerini gör`;
 
   // Ensure current color option is included in selection list
   const hasCurrentColorInList = otherColors.some(
@@ -123,6 +126,8 @@ export function ProductColorSelector({
       {/* Integrated Category Redirection Button */}
       {categorySlug && (
         <Pressable
+          accessibilityLabel={categoryLinkLabel}
+          accessibilityRole="button"
           onPress={() => onCategoryPress?.(categorySlug, categoryId)}
           style={({ pressed }) => ({
             opacity: pressed ? 0.7 : 1,
@@ -136,12 +141,18 @@ export function ProductColorSelector({
             borderWidth={1}
             backgroundColor={isDark ? 'rgba(242, 122, 26, 0.08)' : '#fff7ed'}
             borderRadius={8}
+            minHeight={MIN_TOUCH_TARGET}
             paddingHorizontal={12}
             paddingVertical={10}
             gap={8}
           >
-            <Paragraph fontSize={13} fontWeight="800" color={isDark ? '#fed7aa' : '#c45a08'}>
-              Tüm {categoryName || 'Kategori'} modellerini gör
+            <Paragraph
+              flexShrink={1}
+              fontSize={13}
+              fontWeight="800"
+              color={isDark ? BRAND_TINT_TEXT_COLOR_DARK : BRAND_TINT_TEXT_COLOR}
+            >
+              {categoryLinkLabel}
             </Paragraph>
             <ChevronRight size={16} color="$brand" />
           </XStack>

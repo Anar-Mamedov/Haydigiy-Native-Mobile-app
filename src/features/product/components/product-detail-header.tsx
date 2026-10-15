@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Home, Grid, Search, ShoppingCart, UserRound } from '@/components/ui/icons';
-import { Button, Theme, XStack, YStack, useTheme } from 'tamagui';
+import { XStack, useTheme } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { IconWithCountBadge } from '@/components/ui/count-badge';
+import { IconButton, MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { Pressable } from 'react-native';
 
@@ -9,6 +11,9 @@ type ProductDetailHeaderProps = {
   /** Geri gidecek ekran yoksa ana sayfaya dönen geri işlemi (controller'dan gelir). */
   onBack: () => void;
 };
+
+/** Görünen arama kutusunun yüksekliği; dokunma alanı bunun etrafında 48dp'dir. */
+const SEARCH_PILL_HEIGHT = 36;
 
 export function ProductDetailHeader({ onBack }: ProductDetailHeaderProps) {
   const router = useRouter();
@@ -21,6 +26,7 @@ export function ProductDetailHeader({ onBack }: ProductDetailHeaderProps) {
   const iconColor = theme.color.val;
   const searchBg = theme.backgroundHover.val;
 
+  // Beş ikon 48dp dokunma alanıyla yan yana durduğu için kenar ve grup boşlukları dar tutulur.
   return (
     <XStack
       alignItems="center"
@@ -29,124 +35,59 @@ export function ProductDetailHeader({ onBack }: ProductDetailHeaderProps) {
       borderBottomWidth={1}
       height={56}
       justifyContent="space-between"
-      paddingHorizontal="$3"
-      gap="$2"
+      paddingHorizontal="$1.5"
+      gap="$1"
       width="100%"
     >
-      {/* Back Button */}
-      <Button
-        accessibilityLabel="Go back"
-        backgroundColor="transparent"
-        chromeless
-        circular
-        icon={<ArrowLeft color={iconColor as any} size={22} />}
-        onPress={onBack}
-        pressStyle={{ backgroundColor: '$backgroundPress' }}
-        size="$3"
-        padding={0}
-      />
+      <IconButton accessibilityLabel="Geri dön" onPress={onBack}>
+        <ArrowLeft color={iconColor as any} size={22} />
+      </IconButton>
 
       {/* Shortcuts: Home & Categories */}
-      <XStack alignItems="center" gap="$1.5">
-        <Button
-          accessibilityLabel="Go to home"
-          backgroundColor="transparent"
-          chromeless
-          circular
-          icon={<Home color={iconColor as any} size={20} />}
-          onPress={() => router.push('/')}
-          pressStyle={{ backgroundColor: '$backgroundPress' }}
-          size="$3"
-          padding={0}
-        />
-        <Button
-          accessibilityLabel="Go to categories"
-          backgroundColor="transparent"
-          chromeless
-          circular
-          icon={<Grid color={iconColor as any} size={20} />}
-          onPress={() => router.push('/categories')}
-          pressStyle={{ backgroundColor: '$backgroundPress' }}
-          size="$3"
-          padding={0}
-        />
+      <XStack alignItems="center">
+        <IconButton accessibilityLabel="Ana sayfa" onPress={() => router.push('/')}>
+          <Home color={iconColor as any} size={20} />
+        </IconButton>
+        <IconButton accessibilityLabel="Kategoriler" onPress={() => router.push('/categories')}>
+          <Grid color={iconColor as any} size={20} />
+        </IconButton>
       </XStack>
 
       {/* Fake Search Input (Tapping navigates to suggestions) */}
       <Pressable
+        accessibilityLabel="Ürün ve kategori ara"
+        accessibilityRole="search"
         onPress={() => router.push('/search-suggestions')}
-        style={{
-          flex: 1,
-          height: 36,
-          backgroundColor: searchBg,
-          borderRadius: 8,
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 12,
-          gap: 6,
-        }}
+        style={{ flex: 1, justifyContent: 'center', minHeight: MIN_TOUCH_TARGET, minWidth: 0 }}
       >
-        <Search color="$color10" size={16} />
-        <Paragraph color="$color10" fontSize={13} numberOfLines={1}>
-          Ürün ve kategori ara
-        </Paragraph>
+        <XStack
+          alignItems="center"
+          backgroundColor={searchBg as any}
+          borderRadius={8}
+          gap={6}
+          height={SEARCH_PILL_HEIGHT}
+          paddingHorizontal={10}
+        >
+          <Search color="$color10" size={16} />
+          <Paragraph color="$color10" flexShrink={1} fontSize={13} numberOfLines={1}>
+            Ürün ve kategori ara
+          </Paragraph>
+        </XStack>
       </Pressable>
 
       {/* Right side: Cart and Profile */}
-      <XStack alignItems="center" gap="$1">
-        <Button
-          accessibilityLabel="Shopping Cart"
-          backgroundColor="transparent"
-          chromeless
-          circular
-          icon={
-            <YStack position="relative">
-              <ShoppingCart color={iconColor as any} size={22} />
-              {cartCount > 0 ? (
-                <XStack
-                  alignItems="center"
-                  backgroundColor="$brand"
-                  borderRadius={9}
-                  height={18}
-                  justifyContent="center"
-                  minWidth={18}
-                  paddingHorizontal={4}
-                  position="absolute"
-                  right={-6}
-                  top={-6}
-                >
-                  <Theme name="dark">
-                    <Paragraph
-                      color="white"
-                      fontSize={10}
-                      fontWeight="900"
-                      includeFontPadding={false}
-                      lineHeight={18}
-                      textAlign="center"
-                      textAlignVertical="center"
-                    >
-                      {cartCount > 9 ? '9+' : cartCount}
-                    </Paragraph>
-                  </Theme>
-                </XStack>
-              ) : null}
-            </YStack>
-          }
-          onPress={() => router.push('/cart')}
-          pressStyle={{ backgroundColor: '$backgroundPress' }}
-          size="$3"
-        />
+      <XStack alignItems="center">
+        <IconButton accessibilityLabel="Sepetim" onPress={() => router.push('/cart')}>
+          <IconWithCountBadge
+            badgeTestID="product-header-cart-badge"
+            count={cartCount}
+            icon={<ShoppingCart color={iconColor as any} size={22} />}
+          />
+        </IconButton>
 
-        <Button
-          accessibilityLabel="My Account"
-          backgroundColor="transparent"
-          chromeless
-          circular
-          icon={<UserRound color={iconColor as any} size={22} />}
-          onPress={() => router.push('/profile')}
-          pressStyle={{ backgroundColor: '$backgroundPress' }}
-          size="$3"
-        />
+        <IconButton accessibilityLabel="Hesabım" onPress={() => router.push('/profile')}>
+          <UserRound color={iconColor as any} size={22} />
+        </IconButton>
       </XStack>
     </XStack>
   );

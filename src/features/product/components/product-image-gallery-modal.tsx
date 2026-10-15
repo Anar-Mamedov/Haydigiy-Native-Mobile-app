@@ -20,6 +20,7 @@ import { Image } from 'expo-image';
 import { X } from '@/components/ui/icons';
 import { Button, useTheme, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import {
   clampGalleryZoomValue,
   getFocusedZoomTranslate,
@@ -30,7 +31,7 @@ const MAX_ZOOM_SCALE = 4;
 const DOUBLE_TAP_SCALE = 2.4;
 const ZOOMED_THRESHOLD = 1.05;
 const CLOSE_DRAG_THRESHOLD = 110;
-const HEADER_BUTTON_SIZE = 44;
+const HEADER_BUTTON_SIZE = MIN_TOUCH_TARGET;
 const HEADER_TOP_PADDING = 8;
 const HEADER_BOTTOM_PADDING = 8;
 const THUMBNAIL_SIZE = 60;
@@ -381,7 +382,6 @@ function ProductImageGalleryContent({
             borderWidth={1}
             chromeless
             circular
-            hitSlop={10}
             icon={<X color={iconColor as any} size={22} />}
             onPress={onClose}
             pressStyle={{ backgroundColor: '$backgroundPress' }}

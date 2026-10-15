@@ -3,6 +3,7 @@ import { Pressable } from 'react-native';
 import { XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { CountBadge } from '@/components/ui/count-badge';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { ChevronDown } from '@/components/ui/icons';
 import { COMPACT_MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
@@ -22,6 +23,8 @@ interface FilterPillProps {
 }
 
 export const FILTER_PILL_HEIGHT = 34;
+/** Görünen çip 34dp kalır; dokunma alanı çipin üstüne/altına taşan şeffaf 48dp'lik kutudur. */
+export const FILTER_PILL_TOUCH_HEIGHT = MIN_TOUCH_TARGET;
 
 /**
  * Ürün listesi filtre çubuğundaki tek çip. Hem bir dropdown açan filtreler hem
@@ -46,6 +49,7 @@ export function FilterPill({
       accessibilityRole="button"
       accessibilityState={{ expanded: isOpen, selected: isActive }}
       onPress={onPress}
+      style={{ justifyContent: 'center', minHeight: FILTER_PILL_TOUCH_HEIGHT }}
     >
       {({ pressed }) => (
         <XStack opacity={pressed ? 0.8 : 1} position="relative">

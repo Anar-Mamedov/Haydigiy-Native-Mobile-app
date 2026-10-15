@@ -1,14 +1,15 @@
 import { useCallback } from 'react';
-import { Pressable } from 'react-native';
+import { PixelRatio, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { Button, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { Heart, ShoppingBag } from '@/components/ui/icons';
+import { ShoppingBag } from '@/components/ui/icons';
 import { useFavoriteToggle } from '@/features/favorite/api/favorite.queries';
 import { buildInsiderInput } from '@/features/insider/utils/insider-product.mapper';
-import { BRAND_COLOR } from '@/lib/theme/colors';
 import { COMPACT_MAX_FONT_SCALE } from '@/lib/theme/font-scale';
+import { selectProductImageVariant } from '@/utils/cdn';
 import { ShowcaseProduct } from '../api/product-showcase.mapper';
+import { CardFavoriteButton } from './card-favorite-button';
 import { ProductCardPrice } from './product-price';
 
 type ShowcaseProductCardProps = {
@@ -20,9 +21,6 @@ type ShowcaseProductCardProps = {
 export const SHOWCASE_CARD_WIDTH = 148;
 
 const CARD_SHADOW = '0 1px 2px rgba(0, 0, 0, 0.05)';
-const FLOATING_SHADOW = '0 1px 4px rgba(0, 0, 0, 0.18)';
-const FAVORITE_INACTIVE_COLOR = '#9ca3af';
-const FAVORITE_BUTTON_BACKGROUND = '#ffffff';
 
 type ShowcaseFavoriteButtonProps = {
   product: ShowcaseProduct;
@@ -44,35 +42,26 @@ function ShowcaseFavoriteButton({ product }: ShowcaseFavoriteButtonProps) {
   const { isFavorite, toggleFavorite } = useFavoriteToggle(product.id, buildTracking);
 
   return (
-    <Pressable
-      accessibilityLabel={isFavorite ? `${product.title} favorilerden çıkar` : `${product.title} favorilere ekle`}
-      accessibilityRole="button"
-      hitSlop={6}
+    <CardFavoriteButton
+      iconSize={14}
+      isFavorite={isFavorite}
       onPress={() => {
         void toggleFavorite();
       }}
-      style={({ pressed }) => ({
-        backgroundColor: FAVORITE_BUTTON_BACKGROUND,
-        borderRadius: 100,
-        boxShadow: FLOATING_SHADOW,
-        opacity: pressed ? 0.8 : 1,
-        padding: 6,
-        position: 'absolute',
-        right: 8,
-        top: 8,
-      })}
-    >
-      <Heart
-        color={isFavorite ? BRAND_COLOR : FAVORITE_INACTIVE_COLOR}
-        fill={isFavorite ? BRAND_COLOR : 'transparent'}
-        size={14}
-      />
-    </Pressable>
+      productTitle={product.title}
+      testID="showcase-favorite-button"
+    />
   );
 }
 
 /** Ana sayfa vitrin kartı: görsel, favori, ad, fiyat ve "Sepete Ekle" (web `MobileProductShowcase`). */
 export function ShowcaseProductCard({ product, onPress, onAddToCartPress }: ShowcaseProductCardProps) {
+  // Kart genişliğini karşılayan en küçük hazır varyant (çoğu cihazda `medium`, düşük yoğunlukta `thumb`).
+  const imageUri = selectProductImageVariant(
+    product.imageUrl,
+    PixelRatio.getPixelSizeForLayoutSize(SHOWCASE_CARD_WIDTH),
+  );
+
   return (
     <YStack
       backgroundColor="$background"
@@ -91,11 +80,12 @@ export function ShowcaseProductCard({ product, onPress, onAddToCartPress }: Show
           onPress={() => onPress(product)}
           style={{ flex: 1 }}
         >
-          {product.imageUrl ? (
+          {imageUri ? (
             <Image
               accessibilityLabel={`${product.title} görseli`}
               contentFit="contain"
-              source={{ uri: product.imageUrl }}
+              recyclingKey={imageUri}
+              source={{ uri: imageUri }}
               style={{ height: '100%', width: '100%' }}
             />
           ) : (
