@@ -69,6 +69,28 @@ export type OrderAddress = {
   zipCode: string | null;
 };
 
+/** A photo the warehouse attached when it rejected a returned line. */
+export type ReturnRejectionImage = {
+  /** Stable list key (evidence id, or url + position when the id is missing). */
+  key: string;
+  url: string;
+  description: string | null;
+  /** Capture time formatted for display, e.g. "03 Nis 2027 - 13:53". */
+  capturedAt: string | null;
+};
+
+/** Why a returned line was rejected and how it is being shipped back (web parity). */
+export type ReturnRejection = {
+  caseNo: string | null;
+  statusText: string | null;
+  description: string | null;
+  images: ReturnRejectionImage[];
+  cargoCompany: string | null;
+  trackingCode: string | null;
+  shipmentOrderNo: string | null;
+  shipmentStatusText: string | null;
+};
+
 export type OrderDetailItem = {
   id: number;
   productId?: number;
@@ -115,6 +137,8 @@ export type OrderDetailItem = {
   returnStatusCode?: number | null;
   /** Backend status label for the chip; empty → "İşlem Bekliyor". */
   returnStatusName?: string | null;
+  /** Set only when the warehouse rejected this returned line. */
+  returnRejection?: ReturnRejection | null;
   // ---- Cancellation metadata (kind === 'cancelled') ----
   cancelledAt?: string | null;
 };

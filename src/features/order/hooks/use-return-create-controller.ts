@@ -69,11 +69,11 @@ export function useReturnCreateController(orderId: string, options: Options) {
 
   const refundMethodsQuery = useRefundMethodsQuery(options.enabled && shouldShowIbanSelect);
   const refundMethods = useMemo(() => refundMethodsQuery.data ?? [], [refundMethodsQuery.data]);
-  const refund = useRefundMethod(shouldShowIbanSelect, refundMethods);
-  // Hediye çeki seçiliyken IBAN ne sorulur ne de gönderilir. `useReturnIban`
-  // yine kapıda ödeme bayrağıyla beslenir; aksi halde yönteme her geçişte
-  // kullanıcının girdiği IBAN temizlenirdi.
-  const shouldCollectIban = shouldShowIbanSelect && !refund.isGiftVoucher;
+  const refund = useRefundMethod(shouldShowIbanSelect, refundMethods, refundMethodsQuery.isPending);
+  // IBAN yalnızca kullanıcı IBAN yöntemini seçtiğinde sorulur ve gönderilir.
+  // `useReturnIban` yine kapıda ödeme bayrağıyla beslenir; aksi halde yönteme
+  // her geçişte kullanıcının girdiği IBAN temizlenirdi.
+  const shouldCollectIban = refund.requiresIban;
 
   const iban = useReturnIban(shouldShowIbanSelect, paymentMethods);
   const [returnMethod, setReturnMethod] = useState<ReturnMethod>('ptt');
@@ -241,6 +241,8 @@ export function useReturnCreateController(orderId: string, options: Options) {
     (!shouldShowIbanSelect || !paymentMethodsQuery.isPending) &&
     // Aynı gerekçe iade yöntemi sorgusu için de geçerli.
     (!shouldShowIbanSelect || !refundMethodsQuery.isPending) &&
+    // Geri ödeme yöntemi zorunlu bir tercih; varsayılan seçim yapılmaz.
+    refund.hasRequiredSelection &&
     (!shouldCollectIban || iban.hasValidForSubmit) &&
     isScheduleReady &&
     !scheduled.pickupSubmitting;

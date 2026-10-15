@@ -5,17 +5,15 @@ export const REFUND_METHOD_IBAN = 'iban';
 export const REFUND_METHOD_GIFT_VOUCHER = 'gift_voucher';
 
 /**
- * Resolves which method is active: the user's pick when it is still in the list,
- * otherwise IBAN — matching the backend default when `refund_method_id` is omitted.
+ * Resolves which method is active: the user's pick while it is still in the list.
+ * There is no default — the refund method is a required, explicit choice (web parity).
  */
 export function resolveRefundMethod(
   methods: RefundMethod[],
   pickedId: number | null,
 ): RefundMethod | null {
-  if (methods.length === 0) return null;
-  const picked = methods.find((method) => method.id === pickedId);
-  if (picked) return picked;
-  return methods.find((method) => method.code === REFUND_METHOD_IBAN) ?? methods[0];
+  if (pickedId === null) return null;
+  return methods.find((method) => method.id === pickedId) ?? null;
 }
 
 /** True when the completed return was settled as a store coupon instead of a transfer. */

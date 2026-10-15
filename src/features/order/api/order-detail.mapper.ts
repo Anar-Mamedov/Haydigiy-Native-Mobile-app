@@ -17,6 +17,7 @@ import { formatTurkeyDateTime } from '@/utils/format-turkey-date-time';
 import { formatOrderDate, formatOrderTimelineDate, formatReturnDeadline } from '../utils/order-status';
 import { normalizeReturnStatus } from '../utils/return-status';
 import { mapMissingCases } from './missing-items.mapper';
+import { mapReturnRejection } from './return-rejection.mapper';
 
 function toNumber(value: number | string | null | undefined): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -91,6 +92,7 @@ function mapReturnedItem(dto: ReturnedItemDetailDto): OrderDetailItem {
     returnRefundAmount: refundAmount > 0 ? refundAmount : null,
     returnStatusCode: normalizeReturnStatus(dto.status),
     returnStatusName: dto.status_name ?? null,
+    returnRejection: mapReturnRejection(dto.rejection),
   };
 }
 

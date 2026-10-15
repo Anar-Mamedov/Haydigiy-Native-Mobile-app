@@ -2,7 +2,7 @@ import { isGiftVoucherRefund, resolveRefundMethod } from './refund-method';
 import { RefundMethod, ReturnPaymentInfo } from '@/types/order.types';
 
 const IBAN: RefundMethod = { id: 1, name: 'IBAN', code: 'iban' };
-const GIFT_VOUCHER: RefundMethod = { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' };
+const GIFT_VOUCHER: RefundMethod = { id: 2, name: 'Kupon', code: 'gift_voucher' };
 
 function makeInfo(overrides: Partial<ReturnPaymentInfo> = {}): ReturnPaymentInfo {
   return {
@@ -21,22 +21,18 @@ describe('resolveRefundMethod', () => {
     expect(resolveRefundMethod([], 2)).toBeNull();
   });
 
-  // Backend `refund_method_id` gelmediğinde IBAN varsayıyor; varsayılan seçim
-  // aynı olmazsa kullanıcı gördüğünden başka bir yöntemle iade alırdı.
-  it('defaults to IBAN when nothing is picked yet', () => {
-    expect(resolveRefundMethod([GIFT_VOUCHER, IBAN], null)).toEqual(IBAN);
-  });
-
-  it('falls back to the first method when the list has no IBAN', () => {
-    expect(resolveRefundMethod([GIFT_VOUCHER], null)).toEqual(GIFT_VOUCHER);
+  // Web paritesi: geri ödeme yöntemi zorunlu bir tercih; hiçbir yöntem önceden seçilmez.
+  it('selects nothing until the user picks a method', () => {
+    expect(resolveRefundMethod([GIFT_VOUCHER, IBAN], null)).toBeNull();
+    expect(resolveRefundMethod([IBAN], null)).toBeNull();
   });
 
   it('honours the picked method while it is still in the list', () => {
     expect(resolveRefundMethod([IBAN, GIFT_VOUCHER], GIFT_VOUCHER.id)).toEqual(GIFT_VOUCHER);
   });
 
-  it('ignores a picked id that disappeared from the list', () => {
-    expect(resolveRefundMethod([IBAN], GIFT_VOUCHER.id)).toEqual(IBAN);
+  it('drops a picked id that disappeared from the list', () => {
+    expect(resolveRefundMethod([IBAN], GIFT_VOUCHER.id)).toBeNull();
   });
 });
 

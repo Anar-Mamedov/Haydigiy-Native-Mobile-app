@@ -27,6 +27,23 @@ jest.mock('../hooks/use-cancel-return-request', () => ({
   }),
 }));
 
+const mockRejectionSheet = jest.fn((_props: Record<string, unknown>) => null);
+
+jest.mock('./return-rejection-sheet', () => ({
+  ReturnRejectionSheet: (props: Record<string, unknown>) => mockRejectionSheet(props),
+}));
+
+const REJECTION = {
+  caseNo: 'RET-3',
+  statusText: 'Kargolanmayı Bekliyor',
+  description: 'Ürün kullanılmış.',
+  images: [],
+  cargoCompany: null,
+  trackingCode: null,
+  shipmentOrderNo: null,
+  shipmentStatusText: null,
+};
+
 function makeReturnedItem(overrides: Partial<OrderDetailItem> = {}): OrderDetailItem {
   return {
     id: 5,
@@ -69,6 +86,7 @@ function renderSection(returnedItems: OrderDetailItem[], theme: 'light' | 'dark'
 describe('OrderReturnSection', () => {
   beforeEach(() => {
     mockCancelReturn.mockClear();
+    mockRejectionSheet.mockClear();
     mockCancelingId = null;
   });
 
@@ -177,6 +195,26 @@ describe('OrderReturnSection', () => {
     expect(screen.getByText('İade Talebi Oluşturuldu')).toBeTruthy();
     expect(screen.getByText('İade kodu: HG130626803895')).toBeTruthy();
     expect(screen.getByLabelText('İade talebini iptal et')).toBeTruthy();
+  });
+
+  it('offers "Detaylar" only on rejected lines and opens their rejection details', () => {
+    const rejected = makeReturnedItem({ id: 5, returnStatusName: 'Reddedildi', returnRejection: REJECTION });
+    renderSection([rejected, makeReturnedItem({ id: 6, returnStatusName: 'Ürün Kabul Edildi' })]);
+
+    expect(screen.getAllByTestId('return-rejection-details-button')).toHaveLength(1);
+    expect(mockRejectionSheet).toHaveBeenLastCalledWith(expect.objectContaining({ open: false }));
+
+    fireEvent.press(screen.getByLabelText('İade ret detaylarını göster'));
+
+    expect(mockRejectionSheet).toHaveBeenLastCalledWith(
+      expect.objectContaining({ item: rejected, open: true }),
+    );
+  });
+
+  it('keeps the "Detaylar" button readable in dark mode', () => {
+    renderSection([makeReturnedItem({ returnRejection: REJECTION })], 'dark');
+
+    expect(screen.getByText('Detaylar')).toBeTruthy();
   });
 
   it('renders nothing when there are no returned items', () => {

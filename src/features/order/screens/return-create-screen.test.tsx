@@ -163,13 +163,13 @@ describe('ReturnCreateScreen', () => {
     expect(screen.queryByText('Bu sipariş için zaten iade talebi oluşturulmuştur.')).toBeNull();
   });
 
-  it('offers the refund-method choice and keeps the IBAN block for the IBAN option', () => {
+  it('offers the required refund-method select and keeps the IBAN block for the IBAN option', () => {
     mockController = makeController({
       refund: {
         isGiftVoucher: false,
         methods: [
           { id: 1, name: 'IBAN', code: 'iban' },
-          { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' },
+          { id: 2, name: 'Kupon', code: 'gift_voucher' },
         ],
         select: jest.fn(),
         selected: { id: 1, name: 'IBAN', code: 'iban' },
@@ -182,21 +182,25 @@ describe('ReturnCreateScreen', () => {
 
     renderWithTamagui(<ReturnCreateScreen />);
 
-    expect(screen.getByText('Geri Ödeme Yöntemi')).toBeTruthy();
-    expect(screen.getByLabelText('Hediye Çeki')).toBeTruthy();
+    expect(screen.getByText(/Geri Ödeme Yöntemi/)).toBeTruthy();
+    expect(screen.getByLabelText('Geri Ödeme Yöntemi').props.options).toEqual([
+      { label: 'İademin IBAN’ıma yapılmasını istiyorum', value: 1 },
+      { label: 'İademin Kupon olarak tanımlanmasını istiyorum', value: 2 },
+    ]);
     expect(screen.getByText("İade IBAN'ı")).toBeTruthy();
+    expect(screen.queryByTestId('refund-method-coupon-notice')).toBeNull();
   });
 
-  it('hides the IBAN block once the gift voucher is the selected refund method', () => {
+  it('hides the IBAN block and warns about the coupon once it is the selected refund method', () => {
     mockController = makeController({
       refund: {
         isGiftVoucher: true,
         methods: [
           { id: 1, name: 'IBAN', code: 'iban' },
-          { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' },
+          { id: 2, name: 'Kupon', code: 'gift_voucher' },
         ],
         select: jest.fn(),
-        selected: { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' },
+        selected: { id: 2, name: 'Kupon', code: 'gift_voucher' },
         selectedId: 2,
         showSelector: true,
       },
@@ -206,7 +210,8 @@ describe('ReturnCreateScreen', () => {
 
     renderWithTamagui(<ReturnCreateScreen />);
 
-    expect(screen.getByText('Geri Ödeme Yöntemi')).toBeTruthy();
+    expect(screen.getByLabelText('Geri Ödeme Yöntemi')).toBeTruthy();
+    expect(screen.getByTestId('refund-method-coupon-notice')).toBeTruthy();
     expect(screen.queryByText("İade IBAN'ı")).toBeNull();
   });
 

@@ -4,7 +4,8 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppAlertDialog } from '@/components/ui';
 import { useCancelReturnRequest } from '../hooks/use-cancel-return-request';
 import { buildReturnRequestGroups } from '../utils/return-groups';
-import { OrderDetail } from '@/types/order.types';
+import { OrderDetail, OrderDetailItem } from '@/types/order.types';
+import { ReturnRejectionSheet } from './return-rejection-sheet';
 import { ReturnRequestCard } from './return-request-card';
 
 type OrderReturnSectionProps = {
@@ -17,10 +18,14 @@ type OrderReturnSectionProps = {
  * talebi kendi kartında (durum başlığı, iade kodu, ilerleme çubuğu, ürünler),
  * ödemesi tamamlananlar tek kartta. Beklemedeki talep için "İade talebini iptal
  * et" akışı (onay + Hepsijet gönderi iptali + talep silme) talep bazında çalışır.
+ * Depo reddettiği satırlarda "Detaylar" ret detayları sheet'ini açar.
  */
 export function OrderReturnSection({ order, onPressProduct }: OrderReturnSectionProps) {
   const cancel = useCancelReturnRequest(order);
   const [confirmId, setConfirmId] = useState<number | null>(null);
+  // Sheet kapanırken içeriği animasyon boyunca kaybolmasın diye satır, açık bayrağından ayrı tutulur.
+  const [rejectionItem, setRejectionItem] = useState<OrderDetailItem | null>(null);
+  const [rejectionOpen, setRejectionOpen] = useState(false);
   const groups = useMemo(() => buildReturnRequestGroups(order.returnedItems), [order.returnedItems]);
 
   if (groups.length === 0) return null;
@@ -42,8 +47,14 @@ export function OrderReturnSection({ order, onPressProduct }: OrderReturnSection
           onRequestCancel={(returnRequestId) => {
             if (!cancel.isCanceling) setConfirmId(returnRequestId);
           }}
+          onShowRejection={(item) => {
+            setRejectionItem(item);
+            setRejectionOpen(true);
+          }}
         />
       ))}
+
+      <ReturnRejectionSheet item={rejectionItem} onOpenChange={setRejectionOpen} open={rejectionOpen} />
 
       <AppAlertDialog
         onOpenChange={(open) => {

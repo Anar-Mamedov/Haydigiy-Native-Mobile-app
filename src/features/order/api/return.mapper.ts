@@ -1,4 +1,5 @@
 import { RefundMethodDto, ReturnItemPayloadDto, ReturnReasonDto } from './return.dtos';
+import { REFUND_METHOD_GIFT_VOUCHER } from '../utils/refund-method';
 import { PaymentMethodDto } from '@/services/payment.service';
 import { AddressDto } from '@/services/address.service';
 import {
@@ -23,7 +24,9 @@ export function mapRefundMethods(dtos: RefundMethodDto[]): RefundMethod[] {
     const id = Number(dto?.id);
     const code = typeof dto?.code === 'string' ? dto.code.trim() : '';
     if (!Number.isFinite(id) || !code) return [];
-    const name = typeof dto?.name === 'string' && dto.name.trim() ? dto.name.trim() : code;
+    const apiName = typeof dto?.name === 'string' && dto.name.trim() ? dto.name.trim() : code;
+    // Web paritesi: hediye çeki yöntemi müşteriye her yerde "Kupon" olarak gösterilir.
+    const name = code === REFUND_METHOD_GIFT_VOUCHER ? 'Kupon' : apiName;
     return [{ id, name, code }];
   });
 }

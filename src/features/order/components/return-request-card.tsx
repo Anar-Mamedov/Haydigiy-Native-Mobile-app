@@ -19,13 +19,37 @@ function DetailLine({ children }: { children: string }) {
   );
 }
 
+/** Depo reddettiyse ret detaylarını (neden, görseller, kargo) açan buton. */
+function RejectionDetailsButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Button
+      accessibilityLabel="İade ret detaylarını göster"
+      backgroundColor="$red2"
+      borderColor="$red6"
+      borderRadius="$3"
+      borderWidth={1}
+      height={30}
+      onPress={onPress}
+      paddingHorizontal="$3"
+      pressStyle={{ backgroundColor: '$red3', borderColor: '$red6' }}
+      testID="return-rejection-details-button"
+    >
+      <Paragraph color="$red11" fontSize={12} fontWeight="700">
+        Detaylar
+      </Paragraph>
+    </Button>
+  );
+}
+
 /** Talep kartındaki tek iade satırı: ürün, tarihler, iade tutarı ve depo kontrolü çipi. */
 function ReturnedItemRow({
   item,
   onPressProduct,
+  onShowRejection,
 }: {
   item: OrderDetailItem;
   onPressProduct: (slug: string) => void;
+  onShowRejection: (item: OrderDetailItem) => void;
 }) {
   const openProduct = () => {
     if (item.slug) onPressProduct(item.slug);
@@ -106,12 +130,13 @@ function ReturnedItemRow({
           ) : null}
         </YStack>
 
-        <XStack marginTop="$1">
+        <XStack alignItems="center" gap="$3" justifyContent="space-between" marginTop="$1">
           <XStack backgroundColor="$orange3" borderRadius={100} paddingHorizontal="$3" paddingVertical="$1">
             <Paragraph color="$brand" fontSize={11} fontWeight="700">
               {getReturnStatusNameLabel(item.returnStatusName)}
             </Paragraph>
           </XStack>
+          {item.returnRejection ? <RejectionDetailsButton onPress={() => onShowRejection(item)} /> : null}
         </XStack>
       </YStack>
     </XStack>
@@ -125,6 +150,8 @@ type ReturnRequestCardProps = {
   onRequestCancel: (returnRequestId: number) => void;
   /** Bu kartın talebi şu an iptal ediliyor mu? */
   isCanceling: boolean;
+  /** Reddedilen satırın "Detaylar" butonu; ret detayları sheet'ini açar. */
+  onShowRejection: (item: OrderDetailItem) => void;
 };
 
 /**
@@ -137,6 +164,7 @@ export function ReturnRequestCard({
   onPressProduct,
   onRequestCancel,
   isCanceling,
+  onShowRejection,
 }: ReturnRequestCardProps) {
   const { title } = getReturnStatusDetails(group.statusCode);
   const cancellableId = group.cancellable ? group.returnRequestId : null;
@@ -202,6 +230,7 @@ export function ReturnRequestCard({
               item={item}
               key={`${group.key}-${item.id}-${index}`}
               onPressProduct={onPressProduct}
+              onShowRejection={onShowRejection}
             />
           ))}
         </YStack>

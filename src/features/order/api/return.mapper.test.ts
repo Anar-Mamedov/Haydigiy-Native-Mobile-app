@@ -2,7 +2,8 @@ import { mapRefundMethods } from './return.mapper';
 import { RefundMethodDto } from './return.dtos';
 
 describe('mapRefundMethods', () => {
-  it('maps the backend list to the domain shape', () => {
+  // Web paritesi: hediye çeki yöntemi müşteriye "Kupon" adıyla gösterilir.
+  it('maps the backend list to the domain shape and names the gift voucher "Kupon"', () => {
     const dtos: RefundMethodDto[] = [
       { id: 1, name: 'IBAN', code: 'iban' },
       { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' },
@@ -10,7 +11,7 @@ describe('mapRefundMethods', () => {
 
     expect(mapRefundMethods(dtos)).toEqual([
       { id: 1, name: 'IBAN', code: 'iban' },
-      { id: 2, name: 'Hediye Çeki', code: 'gift_voucher' },
+      { id: 2, name: 'Kupon', code: 'gift_voucher' },
     ]);
   });
 
@@ -30,10 +31,10 @@ describe('mapRefundMethods', () => {
   });
 
   it('falls back to the code when the name is missing', () => {
-    const dtos = [{ id: 3, code: 'gift_voucher' }] as RefundMethodDto[];
+    const dtos = [{ id: 3, code: 'store_credit' }] as RefundMethodDto[];
 
     expect(mapRefundMethods(dtos)).toEqual([
-      { id: 3, name: 'gift_voucher', code: 'gift_voucher' },
+      { id: 3, name: 'store_credit', code: 'store_credit' },
     ]);
   });
 });

@@ -8,6 +8,7 @@ import {
   Building2 as LucideBuilding2,
   Calculator as LucideCalculator,
   Calendar as LucideCalendar,
+  CalendarClock as LucideCalendarClock,
   CalendarDays as LucideCalendarDays,
   Camera as LucideCamera,
   Check as LucideCheck,
@@ -50,6 +51,7 @@ import {
   Monitor as LucideMonitor,
   Moon as LucideMoon,
   Package as LucidePackage,
+  PackageCheck as LucidePackageCheck,
   Palette as LucidePalette,
   Pencil as LucidePencil,
   Percent as LucidePercent,
@@ -120,6 +122,7 @@ export const Bell = withFontScale(LucideBell);
 export const Building2 = withFontScale(LucideBuilding2);
 export const Calculator = withFontScale(LucideCalculator);
 export const Calendar = withFontScale(LucideCalendar);
+export const CalendarClock = withFontScale(LucideCalendarClock);
 export const CalendarDays = withFontScale(LucideCalendarDays);
 export const Camera = withFontScale(LucideCamera);
 export const Check = withFontScale(LucideCheck);
@@ -162,6 +165,7 @@ export const Minus = withFontScale(LucideMinus);
 export const Monitor = withFontScale(LucideMonitor);
 export const Moon = withFontScale(LucideMoon);
 export const Package = withFontScale(LucidePackage);
+export const PackageCheck = withFontScale(LucidePackageCheck);
 export const Palette = withFontScale(LucidePalette);
 export const Pencil = withFontScale(LucidePencil);
 export const Percent = withFontScale(LucidePercent);

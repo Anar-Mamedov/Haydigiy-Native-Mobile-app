@@ -64,6 +64,34 @@ export interface ReturnPaymentInfoDto {
   refund_method?: { id?: number | null; name?: string | null; code?: string | null } | null;
 }
 
+/** A warehouse photo attached to a rejected return line. */
+export interface ReturnRejectionImageDto {
+  id?: number | null;
+  return_item_id?: number | null;
+  url?: string | null;
+  description?: string | null;
+  /** ISO 8601. */
+  captured_at?: string | null;
+  original_file_name?: string | null;
+  mime_type?: string | null;
+  file_size?: number | null;
+}
+
+/** Sent on a returned line only when the warehouse rejected it. */
+export interface ReturnRejectionDto {
+  case_id?: number | null;
+  case_no?: string | null;
+  status?: string | null;
+  status_text?: string | null;
+  description?: string | null;
+  images?: ReturnRejectionImageDto[] | null;
+  cargo_company?: string | null;
+  shipment_order_no?: string | null;
+  shipment_status_id?: number | string | null;
+  shipment_status_text?: string | null;
+  tracking_code?: string | null;
+}
+
 export interface ReturnedItemDetailDto {
   order_item_id?: number;
   name?: string;
@@ -85,6 +113,7 @@ export interface ReturnedItemDetailDto {
   refund_amount?: number | string | null;
   status?: number | string | null;
   is_hepsijet?: boolean;
+  rejection?: ReturnRejectionDto | null;
 }
 
 export interface CancelledItemDetailDto {

@@ -164,6 +164,34 @@ describe('mapOrderDetail', () => {
     expect(order.hasHepsijetReturn).toBe(false);
   });
 
+  it('maps the rejection block only onto rejected returned lines', () => {
+    const order = mapOrderDetail(
+      baseDetail({
+        returned_items: [
+          {
+            order_item_id: 5,
+            return_request_id: 42,
+            status_name: 'Reddedildi',
+            rejection: {
+              case_id: 3,
+              case_no: 'RET-3',
+              status: 'rejected',
+              status_text: 'Kargolanmayı Bekliyor',
+              description: 'Ürün kullanılmış.',
+              images: [],
+            },
+          },
+          { order_item_id: 6, return_request_id: 42, status_name: 'Ürün Kabul Edildi' },
+        ],
+      }),
+    );
+
+    expect(order.returnedItems[0]?.returnRejection).toEqual(
+      expect.objectContaining({ caseNo: 'RET-3', description: 'Ürün kullanılmış.' }),
+    );
+    expect(order.returnedItems[1]?.returnRejection).toBeNull();
+  });
+
   it('maps the cancellation date onto cancelled items', () => {
     const order = mapOrderDetail(
       baseDetail({
