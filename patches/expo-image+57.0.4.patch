@@ -1,0 +1,239 @@
+diff --git a/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageModule.kt b/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageModule.kt
+index 2adb8be..991702d 100644
+--- a/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageModule.kt
++++ b/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageModule.kt
+@@ -55,6 +55,8 @@ class ExpoImageModule : Module() {
+   @Volatile
+   private var hasImageLoadedListener = false
+ 
++  private var uiHiddenBitmapReleaser: UiHiddenBitmapReleaser? = null
++
+   override fun definition() = ModuleDefinition {
+     Name("ExpoImage")
+ 
+@@ -65,10 +67,21 @@ class ExpoImageModule : Module() {
+ 
+     OnCreate {
+       appContext.reactContext?.registerComponentCallbacks(ExpoImageComponentCallbacks)
++      appContext.reactContext?.let { context ->
++        uiHiddenBitmapReleaser = UiHiddenBitmapReleaser(context.applicationContext).also {
++          context.registerComponentCallbacks(it)
++        }
++      }
+     }
+ 
+     OnDestroy {
+       appContext.reactContext?.unregisterComponentCallbacks(ExpoImageComponentCallbacks)
++      uiHiddenBitmapReleaser?.let { appContext.reactContext?.unregisterComponentCallbacks(it) }
++      uiHiddenBitmapReleaser = null
++    }
++
++    OnActivityEntersForeground {
++      uiHiddenBitmapReleaser?.onUiVisible()
+     }
+ 
+     AsyncFunction("prefetch") { urls: List<String>, cachePolicy: CachePolicy, headersMap: Map<String, String>?, promise: Promise ->
+diff --git a/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageViewRegistry.kt b/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageViewRegistry.kt
+new file mode 100644
+index 0000000..89ad694
+--- /dev/null
++++ b/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageViewRegistry.kt
+@@ -0,0 +1,26 @@
++package expo.modules.image
++
++import java.util.Collections
++import java.util.WeakHashMap
++
++/**
++ * Keeps track of the image views that are alive, so app-wide memory events can reach them.
++ * Views are held weakly; a view that is never unregistered doesn't leak.
++ */
++internal object ExpoImageViewRegistry {
++  private val views: MutableSet<ExpoImageViewWrapper> = Collections.newSetFromMap(WeakHashMap())
++
++  fun register(view: ExpoImageViewWrapper) = synchronized(views) {
++    views.add(view)
++  }
++
++  fun unregister(view: ExpoImageViewWrapper) = synchronized(views) {
++    views.remove(view)
++  }
++
++  fun forEach(action: (ExpoImageViewWrapper) -> Unit) {
++    // Iterates over a copy, because the action may cause views to be registered or unregistered.
++    val snapshot = synchronized(views) { views.toList() }
++    snapshot.forEach(action)
++  }
++}
+diff --git a/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageViewWrapper.kt b/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageViewWrapper.kt
+index 7abe582..4ad50b0 100644
+--- a/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageViewWrapper.kt
++++ b/node_modules/expo-image/android/src/main/java/expo/modules/image/ExpoImageViewWrapper.kt
+@@ -3,6 +3,7 @@ package expo.modules.image
+ import android.annotation.SuppressLint
+ import android.app.Activity
+ import android.content.Context
++import android.graphics.Rect
+ import android.graphics.drawable.Animatable
+ import android.graphics.drawable.Drawable
+ import android.os.Build
+@@ -224,6 +225,11 @@ class ExpoImageViewWrapper(context: Context, appContext: AppContext) : ExpoView(
+    */
+   private var clearViewBeforeChangingSource = false
+ 
++  /**
++   * Whether the image was released while the app's UI was hidden and has to be loaded again.
++   */
++  private var isBitmapReleased = false
++
+   /**
+    * Copies saved props to the provided view.
+    * It ensures that the view state is up to date.
+@@ -449,6 +455,8 @@ class ExpoImageViewWrapper(context: Context, appContext: AppContext) : ExpoView(
+   }
+ 
+   fun onViewDestroys() {
++    ExpoImageViewRegistry.unregister(this)
++
+     firstView.setImageDrawable(null)
+     secondView.setImageDrawable(null)
+ 
+@@ -456,6 +464,37 @@ class ExpoImageViewWrapper(context: Context, appContext: AppContext) : ExpoView(
+     requestManager.clear(secondTarget)
+   }
+ 
++  /**
++   * Drops the image when the view isn't visible on screen, see [UiHiddenBitmapReleaser].
++   */
++  internal fun releaseBitmapIfOffScreen() {
++    val hasImage = loadedSource != null || loadedPlaceholder != null
++    if (isBitmapReleased || !hasImage || isOnScreen()) {
++      return
++    }
++    clearLoadedImage()
++    isBitmapReleased = true
++  }
++
++  /**
++   * Loads the image dropped by [releaseBitmapIfOffScreen] again, once the view is in a window.
++   */
++  internal fun restoreReleasedBitmap() {
++    if (!isBitmapReleased || !isAttachedToWindow) {
++      return
++    }
++    shouldRerender = true
++    rerenderIfNeeded(force = true)
++  }
++
++  private fun isOnScreen(): Boolean = isShown && getGlobalVisibleRect(Rect())
++
++  override fun onAttachedToWindow() {
++    super.onAttachedToWindow()
++    // Screens lower in the navigation stack are detached; their images come back when they're shown again.
++    restoreReleasedBitmap()
++  }
++
+   private fun cleanIfNeeded(
+     newBestSource: Source?,
+     newBestSourceModel: GlideModelProvider?,
+@@ -463,23 +502,27 @@ class ExpoImageViewWrapper(context: Context, appContext: AppContext) : ExpoView(
+   ): Boolean {
+     // We only clean the image when the source is set to null and we don't have a placeholder or the view is empty.
+     if (width == 0 || height == 0 || (newBestSource == null || newBestSourceModel == null) && newBestPlaceholderModel == null) {
+-      firstView.recycleView()
+-      secondView.recycleView()
+-
+-      requestManager.clear(firstTarget)
+-      requestManager.clear(secondTarget)
+-
+-      shouldRerender = false
+-      loadedSource = null
+-      loadedPlaceholder = null
+-      transformationMatrixChanged = false
+-      clearViewBeforeChangingSource = false
++      clearLoadedImage()
+       return true
+     }
+ 
+     return false
+   }
+ 
++  private fun clearLoadedImage() {
++    firstView.recycleView()
++    secondView.recycleView()
++
++    requestManager.clear(firstTarget)
++    requestManager.clear(secondTarget)
++
++    shouldRerender = false
++    loadedSource = null
++    loadedPlaceholder = null
++    transformationMatrixChanged = false
++    clearViewBeforeChangingSource = false
++  }
++
+   private fun createDownsampleStrategy(target: ImageViewWrapperTarget): DownsampleStrategy {
+     return if (!allowDownscaling) {
+       DownsampleStrategy.NONE
+@@ -515,6 +558,8 @@ class ExpoImageViewWrapper(context: Context, appContext: AppContext) : ExpoView(
+       if (lockResource && !force) {
+         return@trace
+       }
++      // Any render replaces the image released while the UI was hidden.
++      isBitmapReleased = false
+       val bestSource = bestSource
+       val bestPlaceholder = bestPlaceholder
+ 
+@@ -625,6 +670,8 @@ class ExpoImageViewWrapper(context: Context, appContext: AppContext) : ExpoView(
+     }
+ 
+     addView(layout, matchParent)
++
++    ExpoImageViewRegistry.register(this)
+   }
+ 
+   companion object {
+diff --git a/node_modules/expo-image/android/src/main/java/expo/modules/image/UiHiddenBitmapReleaser.kt b/node_modules/expo-image/android/src/main/java/expo/modules/image/UiHiddenBitmapReleaser.kt
+new file mode 100644
+index 0000000..435b2c7
+--- /dev/null
++++ b/node_modules/expo-image/android/src/main/java/expo/modules/image/UiHiddenBitmapReleaser.kt
+@@ -0,0 +1,38 @@
++package expo.modules.image
++
++import android.content.ComponentCallbacks2
++import android.content.Context
++import android.content.res.Configuration
++import com.bumptech.glide.Glide
++
++/**
++ * Releases image bitmaps while the app's UI is hidden and reloads them once it's visible again.
++ *
++ * Android vitals reports bitmap memory per process state and expects apps to release large
++ * bitmaps once the UI is no longer visible (TRIM_MEMORY_UI_HIDDEN):
++ * https://developer.android.com/topic/performance/issues/bitmap-memory-usage
++ * On its own, Glide only halves its memory cache at that level and never touches the bitmaps
++ * displayed by views, including the screens lower in the navigation stack.
++ *
++ * Views that are on screen keep their bitmaps, so the app looks the same when the user returns.
++ * Every other view drops its bitmap and reloads it from the disk cache when it's needed again.
++ */
++internal class UiHiddenBitmapReleaser(private val applicationContext: Context) : ComponentCallbacks2 {
++  override fun onTrimMemory(level: Int) {
++    if (level < ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
++      return
++    }
++    ExpoImageViewRegistry.forEach { it.releaseBitmapIfOffScreen() }
++    // Bitmaps released above land in Glide's memory cache and bitmap pool, clear them too.
++    Glide.get(applicationContext).clearMemory()
++  }
++
++  fun onUiVisible() {
++    ExpoImageViewRegistry.forEach { it.restoreReleasedBitmap() }
++  }
++
++  override fun onConfigurationChanged(newConfig: Configuration) = Unit
++
++  @Deprecated("Deprecated in Java")
++  override fun onLowMemory() = Unit
++}
