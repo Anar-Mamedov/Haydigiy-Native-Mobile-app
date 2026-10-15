@@ -1,11 +1,11 @@
 import { AgreementBlock } from '@/features/agreements/data/agreement.types';
 
 /**
- * Uygulamadaki bilgi sayfaları. Slug'lar web yollarıyla birebir aynıdır
- * (`haydigiy.com/hakkimizda` → app `/bilgi/hakkimizda`), böylece derin bağlantı
- * eşlemesi ve paylaşılan linkler tek bir sözleşmeye dayanır.
+ * Web'de kendi sayfası olan bilgi sayfaları. Slug'lar web yollarıyla birebir
+ * aynıdır (`haydigiy.com/hakkimizda` → app `/bilgi/hakkimizda`), böylece derin
+ * bağlantı eşlemesi ve paylaşılan linkler tek bir sözleşmeye dayanır.
  */
-export type InfoDocumentSlug =
+export type WebInfoDocumentSlug =
   | 'hakkimizda'
   | 'islem-rehberi'
   | 'iptal-iade-kosullari'
@@ -13,6 +13,14 @@ export type InfoDocumentSlug =
   | 'cerez-politikasi'
   | 'kisisel-verilerin-korunmasi'
   | 'kullanim-kosullari';
+
+/**
+ * Web'de ayrı bir yolu olmayan (web bunları pencerede gösterir), yalnızca
+ * uygulama içi bağlantılarla açılan belgeler. Derin bağlantı eşlemesinde yer almaz.
+ */
+export type AppOnlyInfoDocumentSlug = 'aydinlatma-metni';
+
+export type InfoDocumentSlug = WebInfoDocumentSlug | AppOnlyInfoDocumentSlug;
 
 /** "Şubeden Al / Mağazadan Al" tanıtım sayfası; metin belgesi değil, kendi ekranı var. */
 export const STORE_PICKUP_SLUG = 'subeden-al';

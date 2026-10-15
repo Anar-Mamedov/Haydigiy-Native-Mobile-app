@@ -7,6 +7,7 @@ import { AppInput, AppButton, PasswordVisibilityToggle } from '@/components/ui';
 import { loginSchema, LoginFormData } from '../schemas/auth.schema';
 import { useLoginMutation } from '../api/auth.mutations';
 import { useAuthStore } from '../store/use-auth-store';
+import { LoginLegalNotice } from './login-legal-notice';
 import { extractTurkishNationalNumber, formatTurkishPhoneDisplay } from '@/utils/turkish-phone';
 
 // Login accepts an email OR a phone in the same field, so it needs to tell them
@@ -192,9 +193,7 @@ export function LoginForm({ onSuccess, onFastLoginPress, onForgotPasswordPress }
         Telefonla Hızlı Giriş
       </AppButton>
 
-      <Paragraph size="$2" color="$color10" textAlign="center">
-        Kişisel verileriniz, Aydınlatma Metni kapsamında işlenmektedir. Giriş yaparak Üyelik Sözleşmesi ve Gizlilik Politikası şartlarını kabul etmiş olursunuz.
-      </Paragraph>
+      <LoginLegalNotice />
     </YStack>
   );
 }

@@ -1,10 +1,11 @@
 import { COOKIE_POLICY } from '@/features/agreements/data/cookie-policy';
+import { DISCLOSURE } from '@/features/agreements/data/disclosure';
 import { MEMBERSHIP_AGREEMENT } from '@/features/agreements/data/membership-agreement';
 import { PRIVACY_POLICY } from '@/features/agreements/data/privacy-policy';
 import { TERMS_OF_USE } from '@/features/agreements/data/terms-of-use';
 import { ABOUT_US } from './about-us';
 import { CANCELLATION_RETURN } from './cancellation-return';
-import { InfoDocument, InfoDocumentSlug } from './info-page.types';
+import { AppOnlyInfoDocumentSlug, InfoDocument, InfoDocumentSlug } from './info-page.types';
 import { TRANSACTION_GUIDE } from './transaction-guide';
 
 /**
@@ -36,9 +37,17 @@ const INFO_DOCUMENTS: Record<InfoDocumentSlug, InfoDocument> = {
     title: 'Kullanım Koşulları',
     blocks: TERMS_OF_USE,
   },
+  'aydinlatma-metni': {
+    slug: 'aydinlatma-metni',
+    title: 'Aydınlatma Metni',
+    blocks: DISCLOSURE,
+  },
 };
 
 export const INFO_DOCUMENT_SLUGS = Object.keys(INFO_DOCUMENTS) as InfoDocumentSlug[];
+
+/** Web'de karşılığı olmayan, derin bağlantıyla açılmayan belgeler. */
+export const APP_ONLY_INFO_DOCUMENT_SLUGS: readonly AppOnlyInfoDocumentSlug[] = ['aydinlatma-metni'];
 
 /** Rota parametresindeki slug'a ait belgeyi döndürür; tanınmıyorsa `null`. */
 export function findInfoDocument(slug: string | undefined): InfoDocument | null {

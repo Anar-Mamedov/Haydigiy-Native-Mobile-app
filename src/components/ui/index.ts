@@ -17,6 +17,7 @@ export * from '@/components/ui/discount-rate-badge';
 export * from '@/components/ui/disclosure-sheet';
 export * from '@/components/ui/empty-state';
 export * from '@/components/ui/filter-checkbox';
+export * from '@/components/ui/inline-text-link';
 export * from '@/components/ui/keyboard-aware-form-scroll-view';
 export * from '@/components/ui/keyboard-aware-sheet-scroll-view';
 export * from '@/components/ui/markdown-content';

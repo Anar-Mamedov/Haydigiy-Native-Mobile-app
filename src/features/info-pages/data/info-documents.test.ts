@@ -1,10 +1,13 @@
 import { resolveDeepLinkPath } from '@/utils/resolve-deep-link';
-import { findInfoDocument, INFO_DOCUMENT_SLUGS } from './info-documents';
+import { APP_ONLY_INFO_DOCUMENT_SLUGS, findInfoDocument, INFO_DOCUMENT_SLUGS } from './info-documents';
 import { FOOTER_INFO_LINKS, HELP_INFO_LINKS } from './info-page-links';
 import { InfoPageSlug, STORE_PICKUP_SLUG } from './info-page.types';
 import { infoPageRoute } from '../routes';
 
 const ALL_PAGE_SLUGS: InfoPageSlug[] = [...INFO_DOCUMENT_SLUGS, STORE_PICKUP_SLUG];
+const WEB_PAGE_SLUGS = ALL_PAGE_SLUGS.filter(
+  (slug) => !(APP_ONLY_INFO_DOCUMENT_SLUGS as readonly string[]).includes(slug),
+);
 
 describe('info documents registry', () => {
   it.each(INFO_DOCUMENT_SLUGS)('has a titled, non-empty document for %s', (slug) => {
@@ -27,7 +30,12 @@ describe('info documents registry', () => {
     expect(findInfoDocument('__proto__')).toBeNull();
   });
 
-  it.each(ALL_PAGE_SLUGS)(
+  it('serves the disclosure text as an app-only page', () => {
+    expect(findInfoDocument('aydinlatma-metni')?.title).toBe('Aydınlatma Metni');
+    expect(WEB_PAGE_SLUGS).not.toContain('aydinlatma-metni');
+  });
+
+  it.each(WEB_PAGE_SLUGS)(
     'opens the web /%s link on the same app route the in-app links use',
     (slug) => {
       // Derin bağlantı eşlemesi ile uygulama içi bağlantılar aynı rotaya gitmeli.
