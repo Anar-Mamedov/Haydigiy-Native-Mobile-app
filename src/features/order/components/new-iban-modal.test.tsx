@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react-native';
+import { fireEvent, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { NewIbanModal } from './new-iban-modal';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -26,11 +26,34 @@ jest.mock('tamagui', () => {
   return { ...jest.requireActual('tamagui'), Sheet: SheetRoot };
 });
 
+const mockAddPaymentMethod = jest.fn();
+
 jest.mock('../api/return.mutations', () => ({
-  useAddPaymentMethodMutation: () => ({ isPending: false, mutateAsync: jest.fn() }),
+  useAddPaymentMethodMutation: () => ({ isPending: false, mutateAsync: mockAddPaymentMethod }),
 }));
 
 describe('NewIbanModal', () => {
+  beforeEach(() => mockAddPaymentMethod.mockReset());
+
+  it('flags a 24-digit IBAN with a wrong checksum and does not submit it', () => {
+    renderWithTamagui(<NewIbanModal onClose={jest.fn()} onSuccess={jest.fn()} open />);
+
+    fireEvent.changeText(screen.getByLabelText('IBAN *'), '1'.repeat(24));
+    fireEvent.changeText(screen.getByLabelText('IBAN Sahibi Adı *'), 'Ayşe Yılmaz');
+
+    expect(screen.getByText('IBAN formatı geçersiz')).toBeTruthy();
+    fireEvent.press(screen.getByText('Kaydet'));
+    expect(mockAddPaymentMethod).not.toHaveBeenCalled();
+  });
+
+  it('accepts a valid Turkish IBAN without a format error', () => {
+    renderWithTamagui(<NewIbanModal onClose={jest.fn()} onSuccess={jest.fn()} open />);
+
+    fireEvent.changeText(screen.getByLabelText('IBAN *'), 'TR33 0006 1005 1978 6457 8413 26');
+
+    expect(screen.queryByText('IBAN formatı geçersiz')).toBeNull();
+  });
+
   it('keeps the IBAN form keyboard-aware inside the sheet', () => {
     renderWithTamagui(<NewIbanModal onClose={jest.fn()} onSuccess={jest.fn()} open />);
 

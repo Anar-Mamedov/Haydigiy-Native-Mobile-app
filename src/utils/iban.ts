@@ -1,6 +1,9 @@
 const IBAN_DIGIT_COUNT = 24;
 const IBAN_FULL_LENGTH = 26; // "TR" + 24 digits
 
+/** Inline message shown while an entered IBAN fails `isValidTurkishIban` (same text as the admin panel). */
+export const IBAN_FORMAT_ERROR = 'IBAN formatı geçersiz';
+
 /** Keeps only digits after the `TR` prefix, capped at the 24 IBAN digits. */
 export function getIbanDigits(value: string): string {
   return value.replace(/\D/g, '').slice(0, IBAN_DIGIT_COUNT);

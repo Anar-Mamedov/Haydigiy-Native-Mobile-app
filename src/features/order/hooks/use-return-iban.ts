@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { isValidIban, normalizeIban } from '@/utils/iban';
+import { IBAN_FORMAT_ERROR, isValidTurkishIban, normalizeIban } from '@/utils/iban';
 import { PaymentMethod } from '@/types/order.types';
 
 export type ResolvedIban = { iban: string; ibanName: string };
@@ -37,7 +37,9 @@ export function useReturnIban(shouldShow: boolean, paymentMethods: PaymentMethod
 
   const hasSavedSelected =
     selectedIbanId !== null && paymentMethods.some((method) => method.id === selectedIbanId);
-  const isNewIbanValid = isValidIban(newIban);
+  const isNewIbanValid = isValidTurkishIban(newIban);
+  // Same live feedback as the admin panel: flag the field as soon as it holds an invalid IBAN.
+  const newIbanFormatError = newIban !== '' && !isNewIbanValid ? IBAN_FORMAT_ERROR : null;
   const isNewNameValid = newIbanName.trim().length > 0;
 
   const hasValidForSubmit = useMemo(() => {
@@ -76,6 +78,7 @@ export function useReturnIban(shouldShow: boolean, paymentMethods: PaymentMethod
     setNewIban,
     newIbanName,
     setNewIbanName,
+    newIbanFormatError,
     ibanError,
     setIbanError,
     hasValidForSubmit,

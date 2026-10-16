@@ -9,7 +9,13 @@ import {
   SheetBottomCover,
 } from '@/components/ui';
 import { useAddPaymentMethodMutation } from '../api/return.mutations';
-import { formatIbanInput, getIbanDigits, isValidIban, normalizeIban } from '@/utils/iban';
+import {
+  formatIbanInput,
+  getIbanDigits,
+  IBAN_FORMAT_ERROR,
+  isValidTurkishIban,
+  normalizeIban,
+} from '@/utils/iban';
 import { getReturnErrorMessage } from '@/services/return.service';
 import { toPersonName } from '@/utils/normalize-text';
 
@@ -26,6 +32,8 @@ export function NewIbanModal({ open, onClose, onSuccess }: Props) {
   const [isDefault, setIsDefault] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const addMutation = useAddPaymentMethodMutation();
+  const isIbanValid = isValidTurkishIban(iban);
+  const ibanFormatError = iban !== '' && !isIbanValid ? IBAN_FORMAT_ERROR : undefined;
 
   const reset = () => {
     setIban('');
@@ -41,7 +49,7 @@ export function NewIbanModal({ open, onClose, onSuccess }: Props) {
   };
 
   const handleSubmit = async () => {
-    if (!isValidIban(iban)) {
+    if (!isIbanValid) {
       setError('Geçerli bir IBAN giriniz.');
       return;
     }
@@ -91,6 +99,7 @@ export function NewIbanModal({ open, onClose, onSuccess }: Props) {
             </Paragraph>
             <AppInput
               autoCapitalize="characters"
+              errorMessage={ibanFormatError}
               helperText="Boşluklar otomatik olarak eklenecektir."
               keyboardType="number-pad"
               label="IBAN *"

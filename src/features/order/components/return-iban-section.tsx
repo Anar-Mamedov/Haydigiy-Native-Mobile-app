@@ -72,6 +72,7 @@ export function ReturnIbanSection({
             </Paragraph>
             <AppInput
               autoCapitalize="characters"
+              errorMessage={iban.newIbanFormatError ?? undefined}
               helperText="Boşluklar otomatik olarak eklenecektir."
               keyboardType="number-pad"
               label="IBAN *"
