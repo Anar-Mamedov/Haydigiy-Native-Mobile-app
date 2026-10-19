@@ -1,0 +1,417 @@
+{
+    "flow": "dynamic-menu",
+    "description": "Menü Dash'ten değişir: pasife alınan kategori/konu ve (yapay zekâ kapalıyken) yapay zekâya bağlı konular menüde HİÇ görünmez; açılınca kendiliğinden döner. Eski ekrandaki düğme artık yoksa 409 stale_choice + güncel menü bloklarıyla cevap verilir — widget yalnız çizer, menüyü bilmez.",
+    "steps": [
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/session",
+                "headers": {
+                    "X-Assistant-Platform": "web"
+                },
+                "body": {
+                    "platform": "web"
+                }
+            },
+            "response": {
+                "status": 201,
+                "body": {
+                    "session_id": "0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10",
+                    "token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA",
+                    "expires_at": "2026-10-12T14:00:00+03:00",
+                    "auth_level": "guest",
+                    "customer": null,
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b1",
+                            "text": "Merhaba, ben Haydi Asistan 👋 Size nasıl yardımcı olabilirim? Aşağıdan bir konu seçebilirsiniz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b2",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p1",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p2",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p3",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p4",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000001",
+                    "input": {
+                        "type": "select",
+                        "id": "menu.product",
+                        "payload": "p2"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p5"
+                        },
+                        {
+                            "label": "👕 Ürün ve Beden",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b3",
+                            "text": "Ürün ve Beden konusunda ne yapmak istersiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b4",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "sub.size",
+                                    "label": "Beden nasıl seçilir?",
+                                    "payload": "p6",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p7",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/session",
+                "headers": {
+                    "X-Assistant-Platform": "web"
+                },
+                "body": {
+                    "platform": "web"
+                }
+            },
+            "response": {
+                "status": 201,
+                "body": {
+                    "session_id": "0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10",
+                    "token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA",
+                    "expires_at": "2026-10-12T14:00:00+03:00",
+                    "auth_level": "guest",
+                    "customer": null,
+                    "input": {
+                        "mode": "text",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b5",
+                            "text": "Merhaba, ben Haydi Asistan 👋 Size nasıl yardımcı olabilirim? Aşağıdan bir konu seçebilir ya da yazabilirsiniz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b6",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p8",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p9",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p10",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p11",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000002",
+                    "input": {
+                        "type": "select",
+                        "id": "menu.product",
+                        "payload": "p9"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "text",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p12"
+                        },
+                        {
+                            "label": "👕 Ürün ve Beden",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b7",
+                            "text": "Ürün ve Beden konusunda ne yapmak istersiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b8",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "sub.size",
+                                    "label": "Beden nasıl seçilir?",
+                                    "payload": "p13",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.askai",
+                                    "label": "Bir ürünü sormak istiyorum",
+                                    "payload": "p14",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p15",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000003",
+                    "input": {
+                        "type": "select",
+                        "id": "sub.askai",
+                        "payload": "p14"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "text",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p16"
+                        },
+                        {
+                            "label": "👕 Ürün ve Beden",
+                            "current": false,
+                            "id": "menu.product",
+                            "payload": "p17"
+                        },
+                        {
+                            "label": "Bir ürünü sormak istiyorum",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b9",
+                            "text": "👕 Ürünle ilgili sorunuzu aşağıya yazabilirsiniz. Ürün adını, rengini ya da bedenini yazarsanız size daha iyi yardımcı olabilirim 😊"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b10",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p18",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000004",
+                    "input": {
+                        "type": "select",
+                        "id": "sub.size",
+                        "payload": "p13"
+                    }
+                }
+            },
+            "response": {
+                "status": 409,
+                "body": {
+                    "code": "stale_choice",
+                    "message": "Bu seçenek artık geçerli değil. Güncel seçenekler aşağıda.",
+                    "request_id": "01ORNEKISTEK0000000000000A",
+                    "blocks": [
+                        {
+                            "type": "buttons",
+                            "id": "b11",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p19",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p20",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p21",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p22",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ],
+                    "breadcrumb": []
+                }
+            }
+        }
+    ]
+}

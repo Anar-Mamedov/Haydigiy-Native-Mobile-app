@@ -102,8 +102,10 @@ const TAB_ITEMS: readonly TabItem[] = [
 /**
  * Alt menünün gösterilmediği ekranlar. Ödeme ekranı kendi alt özet çubuğunu taşır;
  * web'de de ödeme sayfasında alt menü yoktur. Ödeme sonucu ekranlarında menü kalır.
+ * Haydi Asistan sohbeti tam ekrandır (web mobilde de panel tam ekran açılır); altta konum yolu
+ * ve giriş kutusu durur.
  */
-const HIDDEN_ON_PATHS: ReadonlySet<string> = new Set(['/checkout']);
+const HIDDEN_ON_PATHS: ReadonlySet<string> = new Set(['/checkout', '/assistant']);
 
 function normalizePathname(pathname: string) {
   return pathname.replace(/^\/\(tabs\)/, '') || '/';

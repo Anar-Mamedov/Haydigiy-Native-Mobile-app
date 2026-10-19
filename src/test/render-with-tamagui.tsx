@@ -4,7 +4,15 @@ import { defaultConfig } from '@tamagui/config/v5';
 import { createTamagui, TamaguiProvider, Theme } from 'tamagui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
+  ASSISTANT_LINK_BUTTON_COLOR,
+  ASSISTANT_LIVE_SUPPORT_COLOR,
+  ASSISTANT_USER_BUBBLE_BORDER_COLOR,
+  ASSISTANT_USER_BUBBLE_BORDER_COLOR_DARK,
+  ASSISTANT_USER_BUBBLE_COLOR,
+  ASSISTANT_USER_BUBBLE_COLOR_DARK,
   BRAND_COLOR,
+  BRAND_TINT_TEXT_COLOR,
+  BRAND_TINT_TEXT_COLOR_DARK,
   DISCOUNT_BACKGROUND_COLOR,
   DISCOUNT_BACKGROUND_COLOR_DARK,
   DISCOUNT_COLOR,
@@ -31,6 +39,11 @@ const testConfig = createTamagui({
       savingsBadge: SAVINGS_BADGE_COLOR,
       singlePrice: SINGLE_PRICE_COLOR,
       overlay: SHEET_OVERLAY_COLOR,
+      brandTintText: BRAND_TINT_TEXT_COLOR,
+      assistantUserBubble: ASSISTANT_USER_BUBBLE_COLOR,
+      assistantUserBubbleBorder: ASSISTANT_USER_BUBBLE_BORDER_COLOR,
+      assistantLinkButton: ASSISTANT_LINK_BUTTON_COLOR,
+      assistantLiveSupport: ASSISTANT_LIVE_SUPPORT_COLOR,
     },
     dark: {
       ...defaultConfig.themes.dark,
@@ -41,6 +54,11 @@ const testConfig = createTamagui({
       savingsBadge: SAVINGS_BADGE_COLOR,
       singlePrice: SINGLE_PRICE_COLOR_DARK,
       overlay: SHEET_OVERLAY_COLOR,
+      brandTintText: BRAND_TINT_TEXT_COLOR_DARK,
+      assistantUserBubble: ASSISTANT_USER_BUBBLE_COLOR_DARK,
+      assistantUserBubbleBorder: ASSISTANT_USER_BUBBLE_BORDER_COLOR_DARK,
+      assistantLinkButton: ASSISTANT_LINK_BUTTON_COLOR,
+      assistantLiveSupport: ASSISTANT_LIVE_SUPPORT_COLOR,
     },
   },
 });

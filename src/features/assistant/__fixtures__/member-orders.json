@@ -1,0 +1,857 @@
+{
+    "flow": "member-orders",
+    "description": "Giriş yapmış müşteri (session auth_level=site_login, customer.first_name dolu): aktif siparişler (order_list) → sipariş kartı (order_card + durum metni + 4 eylem düğmesi + Canlı Destek) → kargo (timeline) / ödeme / fatura cevabı.",
+    "steps": [
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/session",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "Authorization": "Bearer <sitenin auth_token değeri>"
+                },
+                "body": {
+                    "platform": "web"
+                }
+            },
+            "response": {
+                "status": 201,
+                "body": {
+                    "session_id": "0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10",
+                    "token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA",
+                    "expires_at": "2026-10-12T14:00:00+03:00",
+                    "auth_level": "site_login",
+                    "customer": {
+                        "first_name": "Ayşe"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b1",
+                            "text": "Merhaba Ayşe 👋 Ben Haydi Asistan. Aşağıdan bir konu seçebilirsiniz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b2",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p1",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p2",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p3",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p4",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000001",
+                    "input": {
+                        "type": "select",
+                        "id": "menu.orders",
+                        "payload": "p1"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p5"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b3",
+                            "text": "Siparişlerim konusunda ne yapmak istersiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b4",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "sub.active",
+                                    "label": "Aktif siparişlerim",
+                                    "payload": "p6",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.returns",
+                                    "label": "İade ve iptallerim",
+                                    "payload": "p7",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.address",
+                                    "label": "Adres değişikliği",
+                                    "payload": "p8",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.invoice",
+                                    "label": "Faturam",
+                                    "payload": "p9",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p10",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000002",
+                    "input": {
+                        "type": "select",
+                        "id": "sub.active",
+                        "payload": "p6"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p11"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": false,
+                            "id": "menu.orders",
+                            "payload": "p12"
+                        },
+                        {
+                            "label": "Aktif siparişlerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b5",
+                            "text": "📦 Aktif siparişleriniz aşağıda. Ayrıntı için birini seçin 👇"
+                        },
+                        {
+                            "type": "order_list",
+                            "id": "b6",
+                            "items": [
+                                {
+                                    "select_id": "order.2",
+                                    "payload": "p13",
+                                    "order_no": "HG261011000002",
+                                    "date_label": "11 Eki 2026",
+                                    "total_label": "899,00 ₺",
+                                    "status_text": "📦 Hazırlanıyor",
+                                    "tone": "info",
+                                    "summary": "2 ürün"
+                                },
+                                {
+                                    "select_id": "order.3",
+                                    "payload": "p14",
+                                    "order_no": "HG261010000003",
+                                    "date_label": "10 Eki 2026",
+                                    "total_label": "549,50 ₺",
+                                    "status_text": "🚚 Yolda",
+                                    "tone": "info",
+                                    "summary": "1 ürün"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b7",
+                            "label": "Tüm siparişlerim",
+                            "kind": "liste",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b8",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p15",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000003",
+                    "input": {
+                        "type": "select",
+                        "id": "order.3",
+                        "payload": "p14"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p16"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": false,
+                            "id": "menu.orders",
+                            "payload": "p17"
+                        },
+                        {
+                            "label": "Aktif siparişlerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "order_card",
+                            "id": "b9",
+                            "order_no": "HG261010000003",
+                            "date_label": "10 Eki 2026",
+                            "total_label": "549,50 ₺",
+                            "status_text": "🚚 Yolda",
+                            "tone": "info",
+                            "lines": [
+                                {
+                                    "label": "Ödeme",
+                                    "value": "Kredi kartı"
+                                },
+                                {
+                                    "label": "Takip no",
+                                    "value": "9876543210987"
+                                }
+                            ],
+                            "items": [
+                                {
+                                    "name": "Kahverengi Kazak",
+                                    "qty": 1,
+                                    "variant": "M"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "id": "b10",
+                            "text": "🚚 Siparişiniz yolda!"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b11",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "ship.3",
+                                    "label": "🚚 Kargom nerede?",
+                                    "payload": "p18",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "pay.3",
+                                    "label": "💳 Ödeme durumum",
+                                    "payload": "p19",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "ret.3",
+                                    "label": "↩️ İade durumum",
+                                    "payload": "p20",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "inv.3",
+                                    "label": "🧾 Faturam",
+                                    "payload": "p21",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p22",
+                                    "style": "secondary"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b12",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20Aktif%20sipari%C5%9Flerim%20Sipari%C5%9F%20no%3A%20HG261010000003%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: Aktif siparişlerim Sipariş no: HG261010000003 Yardımcı olabilir misiniz?"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000004",
+                    "input": {
+                        "type": "select",
+                        "id": "ship.3",
+                        "payload": "p18"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p23"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": false,
+                            "id": "menu.orders",
+                            "payload": "p24"
+                        },
+                        {
+                            "label": "Aktif siparişlerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "timeline",
+                            "id": "b13",
+                            "carrier": "PTT Kargo",
+                            "tracking_no": "9876543210987",
+                            "events": [
+                                {
+                                    "at_label": "11 Eki 2026 09:10",
+                                    "text": "Gönderi kabul edildi — İstanbul",
+                                    "state": "done"
+                                },
+                                {
+                                    "at_label": "12 Eki 2026 08:05",
+                                    "text": "Transfer merkezine ulaştı — Ankara",
+                                    "state": "current"
+                                }
+                            ],
+                            "note": "Bilgiler kargo firmasının bildirdiğidir."
+                        },
+                        {
+                            "type": "text",
+                            "id": "b14",
+                            "text": "🚚 Siparişiniz yolda!"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b15",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "pay.3",
+                                    "label": "💳 Ödeme durumum",
+                                    "payload": "p25",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "ret.3",
+                                    "label": "↩️ İade durumum",
+                                    "payload": "p26",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "inv.3",
+                                    "label": "🧾 Faturam",
+                                    "payload": "p27",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p28",
+                                    "style": "secondary"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b16",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20Aktif%20sipari%C5%9Flerim%20Sipari%C5%9F%20no%3A%20HG261010000003%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: Aktif siparişlerim Sipariş no: HG261010000003 Yardımcı olabilir misiniz?"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000005",
+                    "input": {
+                        "type": "select",
+                        "id": "pay.3",
+                        "payload": "p19"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p29"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": false,
+                            "id": "menu.orders",
+                            "payload": "p30"
+                        },
+                        {
+                            "label": "Aktif siparişlerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b17",
+                            "text": "💳 Ödemeniz başarıyla alındı ✅"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b18",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "ship.3",
+                                    "label": "🚚 Kargom nerede?",
+                                    "payload": "p31",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "ret.3",
+                                    "label": "↩️ İade durumum",
+                                    "payload": "p32",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "inv.3",
+                                    "label": "🧾 Faturam",
+                                    "payload": "p33",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p34",
+                                    "style": "secondary"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b19",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20Aktif%20sipari%C5%9Flerim%20Sipari%C5%9F%20no%3A%20HG261010000003%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: Aktif siparişlerim Sipariş no: HG261010000003 Yardımcı olabilir misiniz?"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000006",
+                    "input": {
+                        "type": "select",
+                        "id": "order.2",
+                        "payload": "p13"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p35"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": false,
+                            "id": "menu.orders",
+                            "payload": "p36"
+                        },
+                        {
+                            "label": "Aktif siparişlerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "order_card",
+                            "id": "b20",
+                            "order_no": "HG261011000002",
+                            "date_label": "11 Eki 2026",
+                            "total_label": "899,00 ₺",
+                            "status_text": "📦 Hazırlanıyor",
+                            "tone": "info",
+                            "lines": [
+                                {
+                                    "label": "Ödeme",
+                                    "value": "Kredi kartı"
+                                }
+                            ],
+                            "items": [
+                                {
+                                    "name": "Mavi Tunik",
+                                    "qty": 2,
+                                    "variant": "M"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "id": "b21",
+                            "text": "📦 Siparişiniz hazırlanıyor. Kargoya verilince size haber vereceğiz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b22",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "ship.2",
+                                    "label": "🚚 Kargom nerede?",
+                                    "payload": "p37",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "pay.2",
+                                    "label": "💳 Ödeme durumum",
+                                    "payload": "p38",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "ret.2",
+                                    "label": "↩️ İade durumum",
+                                    "payload": "p39",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "inv.2",
+                                    "label": "🧾 Faturam",
+                                    "payload": "p40",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p41",
+                                    "style": "secondary"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b23",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20Aktif%20sipari%C5%9Flerim%20Sipari%C5%9F%20no%3A%20HG261011000002%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: Aktif siparişlerim Sipariş no: HG261011000002 Yardımcı olabilir misiniz?"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000007",
+                    "input": {
+                        "type": "select",
+                        "id": "inv.2",
+                        "payload": "p40"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p42"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": false,
+                            "id": "menu.orders",
+                            "payload": "p43"
+                        },
+                        {
+                            "label": "Aktif siparişlerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b24",
+                            "text": "🧾 Faturanız siparişiniz kargoya verildiğinde oluşur."
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b25",
+                            "label": "Sipariş sayfasını aç",
+                            "kind": "siparis",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%2F2%3Fsrc%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fm%2Fhesabim%2Fsiparislerim%2F2%3Fsrc%3Dhaydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b26",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "ship.2",
+                                    "label": "🚚 Kargom nerede?",
+                                    "payload": "p44",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "pay.2",
+                                    "label": "💳 Ödeme durumum",
+                                    "payload": "p45",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "ret.2",
+                                    "label": "↩️ İade durumum",
+                                    "payload": "p46",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p47",
+                                    "style": "secondary"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b27",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20Aktif%20sipari%C5%9Flerim%20Sipari%C5%9F%20no%3A%20HG261011000002%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: Aktif siparişlerim Sipariş no: HG261011000002 Yardımcı olabilir misiniz?"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,283 @@
+{
+    "flow": "typed-ai",
+    "description": "Yapay zekâ cevabı (kurallar anlamayınca): düz metin + (varsa) güvenli düğme + Canlı Destek + Ana menü. Günlük hak dolunca nazik bilgi + menü + Canlı Destek. Widget için AI ile kural cevabı arasında fark YOKTUR: hepsi aynı bloklar.",
+    "steps": [
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/session",
+                "headers": {
+                    "X-Assistant-Platform": "web"
+                },
+                "body": {
+                    "platform": "web"
+                }
+            },
+            "response": {
+                "status": 201,
+                "body": {
+                    "session_id": "0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10",
+                    "token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA",
+                    "expires_at": "2026-10-12T14:00:00+03:00",
+                    "auth_level": "guest",
+                    "customer": null,
+                    "input": {
+                        "mode": "text",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b1",
+                            "text": "Merhaba, ben Haydi Asistan 👋 Size nasıl yardımcı olabilirim? Aşağıdan bir konu seçebilir ya da yazabilirsiniz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b2",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p1",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p2",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p3",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p4",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000001",
+                    "input": {
+                        "type": "text",
+                        "text": "bu elbisenin kumaşı nasıl"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "text",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b3",
+                            "text": "Bu modelin kumaşı pamuklu karışımlı, yumuşak dokulu 😊"
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b4",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20bu%20elbisenin%20kuma%C5%9F%C4%B1%20nas%C4%B1l%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: bu elbisenin kumaşı nasıl Yardımcı olabilir misiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b5",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p5",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000002",
+                    "input": {
+                        "type": "text",
+                        "text": "adres defterimde bir sorun var galiba"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "text",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b6",
+                            "text": "🏠 Adreslerinizi sitedeki “Adreslerim” sayfasından ekleyebilir veya düzenleyebilirsiniz."
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b7",
+                            "label": "Adreslerim",
+                            "kind": "adres",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fadreslerim%3Fsrc%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fhesabim%2Fadreslerim%3Fsrc%3Dhaydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b8",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20adres%20defterimde%20bir%20sorun%20var%20galiba%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: adres defterimde bir sorun var galiba Yardımcı olabilir misiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b9",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p6",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000003",
+                    "input": {
+                        "type": "text",
+                        "text": "bir şey daha soracağım nasıl yapılır"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "text",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b10",
+                            "text": "Adresinizi sayfadan güncelleyebilirsiniz."
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b11",
+                            "label": "Adreslerim",
+                            "kind": "adres",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fadreslerim%3Fsrc%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fhesabim%2Fadreslerim%3Fsrc%3Dhaydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b12",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20bir%20%C5%9Fey%20daha%20soraca%C4%9F%C4%B1m%20nas%C4%B1l%20yap%C4%B1l%C4%B1r%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: bir şey daha soracağım nasıl yapılır Yardımcı olabilir misiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b13",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p7",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

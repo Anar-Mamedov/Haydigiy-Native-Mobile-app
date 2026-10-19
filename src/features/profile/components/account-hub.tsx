@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/icons';
 import { YStack } from 'tamagui';
 import { AppButton } from '@/components/ui';
+import { ASSISTANT_ROUTE } from '@/features/assistant/components/assistant-launcher';
+import { useAssistantAvailability } from '@/features/assistant/hooks/use-assistant-availability';
 // Temporarily disabled with the appearance card below.
 // import { Paragraph, XStack } from 'tamagui';
 // (Palette, Blog satırı için yukarıda zaten import ediliyor.)
@@ -44,6 +46,7 @@ const MENU_ICON_SIZE = 26;
  */
 export function AccountHub({ onLogout }: AccountHubProps) {
   const router = useRouter();
+  const assistant = useAssistantAvailability();
   // Temporarily disabled with the appearance card below.
   // const { setThemePreference, themePreference } = useAppTheme();
 
@@ -135,7 +138,20 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     },
   ];
 
+  // Haydi Asistan yalnız `/config` açıkken listelenir; adı sunucudan gelir (Dash "Sabit Metinler").
+  const assistantItems =
+    assistant.available && assistant.config
+      ? [
+          {
+            icon: <MessageCircle color="$brand" size={MENU_ICON_SIZE} />,
+            label: assistant.config.texts.launcher_label,
+            onPress: () => router.push(ASSISTANT_ROUTE),
+          },
+        ]
+      : [];
+
   const helpItems = [
+    ...assistantItems,
     {
       icon: <CircleHelp color="$purple10" size={MENU_ICON_SIZE} />,
       label: 'Yardım & Sıkça Sorulan Sorular',

@@ -1,0 +1,683 @@
+{
+    "flow": "typed-rules",
+    "description": "ÖNEMLİ: yapay zekâ KAPALIYKEN `input.mode` = `none` olur ve widget giriş kutusunu GÖSTERMEZ; bu akış, eski/üçüncü taraf bir istemci yine de metin gönderirse sunucunun nasıl cevap vereceğini belgeler (widget bu yolu kullanmaz). Yazılan metin: selamlaşma · \"kargom nerede\" (sipariş seçtirme) · belirsiz konuda netleştirme sorusu + seçenekler · sipariş numarası yazınca kart · anlaşılamayan (menü + Canlı Destek) · temsilci isteği (WhatsApp). YAZILAN HER cevabın altında live_support vardır.",
+    "steps": [
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/session",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "Authorization": "Bearer <sitenin auth_token değeri>"
+                },
+                "body": {
+                    "platform": "web"
+                }
+            },
+            "response": {
+                "status": 201,
+                "body": {
+                    "session_id": "0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10",
+                    "token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA",
+                    "expires_at": "2026-10-12T14:00:00+03:00",
+                    "auth_level": "site_login",
+                    "customer": {
+                        "first_name": "Ayşe"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b1",
+                            "text": "Merhaba Ayşe 👋 Ben Haydi Asistan. Aşağıdan bir konu seçebilirsiniz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b2",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p1",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p2",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p3",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p4",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000001",
+                    "input": {
+                        "type": "text",
+                        "text": "merhaba"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b3",
+                            "text": "Merhaba, ben Haydi Asistan 👋 Size nasıl yardımcı olabilirim? Aşağıdan bir konu seçebilir ya da yazabilirsiniz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b4",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p5",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p6",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p7",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p8",
+                                    "style": "secondary"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b5",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20merhaba%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: merhaba Yardımcı olabilir misiniz?"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000002",
+                    "input": {
+                        "type": "text",
+                        "text": "kargom nerede"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b6",
+                            "text": "Hangi siparişiniz için? Birini seçin 👇"
+                        },
+                        {
+                            "type": "order_list",
+                            "id": "b7",
+                            "items": [
+                                {
+                                    "select_id": "ship.2",
+                                    "payload": "p9",
+                                    "order_no": "HG261011000002",
+                                    "date_label": "11 Eki 2026",
+                                    "total_label": "899,00 ₺",
+                                    "status_text": "📦 Hazırlanıyor",
+                                    "tone": "info",
+                                    "summary": "2 ürün"
+                                },
+                                {
+                                    "select_id": "ship.3",
+                                    "payload": "p10",
+                                    "order_no": "HG261010000003",
+                                    "date_label": "10 Eki 2026",
+                                    "total_label": "549,50 ₺",
+                                    "status_text": "🚚 Yolda",
+                                    "tone": "info",
+                                    "summary": "1 ürün"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b8",
+                            "label": "Tüm siparişlerim",
+                            "kind": "liste",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b9",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20kargom%20nerede%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: kargom nerede Yardımcı olabilir misiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b10",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p11",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000003",
+                    "input": {
+                        "type": "text",
+                        "text": "iade"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b11",
+                            "text": "↩️ İade konusunda hangisini öğrenmek istersiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b12",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "intent.return_new",
+                                    "label": "↩️ İade etmek istiyorum",
+                                    "payload": "p12",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "intent.return_status",
+                                    "label": "🔎 İade durumum",
+                                    "payload": "p13",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "intent.return_policy",
+                                    "label": "📋 İade koşulları",
+                                    "payload": "p14",
+                                    "style": "secondary"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b13",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20iade%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: iade Yardımcı olabilir misiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b14",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p15",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000004",
+                    "input": {
+                        "type": "select",
+                        "id": "intent.return_policy",
+                        "payload": "p14"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b15",
+                            "text": "↩️ Hesabım > Siparişlerim bölümünden ürünü seçip iade nedenini belirtmeniz yeterli. Oluşan iade koduyla ürünü PTT Kargo ile ücretsiz gönderebilir ya da HepsiJet ile kurye randevusu oluşturabilirsiniz.\n❗ İç giyim ve hijyen gerektiren ürünlerde yasal mevzuat gereği iade yoktur. Sipariş kargo ücreti iade edilmez.\n💸 İade ürününüz bize ulaştıktan sonra ücret iadesi yapılır; hesabınıza yansıma süresi bankanıza bağlıdır.\n✖️ Siparişiniz henüz kargoya verilmediyse Hesabım > Siparişlerim'den iptal edebilirsiniz."
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b16",
+                            "label": "İade ve iptal ayrıntıları",
+                            "kind": "yardim",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/yardim?kategori=iptal-iade&src=haydi-asistan",
+                                "mobile": "/yardim?kategori=iptal-iade&src=haydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b17",
+                            "label": "Tüm siparişlerim",
+                            "kind": "liste",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b18",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20%C4%B0ade%20ko%C5%9Fullar%C4%B1%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: İade koşulları Yardımcı olabilir misiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b19",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p16",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000005",
+                    "input": {
+                        "type": "text",
+                        "text": "HG261011000002"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "order_card",
+                            "id": "b20",
+                            "order_no": "HG261011000002",
+                            "date_label": "11 Eki 2026",
+                            "total_label": "899,00 ₺",
+                            "status_text": "📦 Hazırlanıyor",
+                            "tone": "info",
+                            "lines": [
+                                {
+                                    "label": "Ödeme",
+                                    "value": "Kredi kartı"
+                                }
+                            ],
+                            "items": [
+                                {
+                                    "name": "Mavi Tunik",
+                                    "qty": 2,
+                                    "variant": "M"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "id": "b21",
+                            "text": "📦 Siparişiniz hazırlanıyor. Kargoya verilince size haber vereceğiz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b22",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "ship.2",
+                                    "label": "🚚 Kargom nerede?",
+                                    "payload": "p17",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "pay.2",
+                                    "label": "💳 Ödeme durumum",
+                                    "payload": "p18",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "ret.2",
+                                    "label": "↩️ İade durumum",
+                                    "payload": "p19",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "inv.2",
+                                    "label": "🧾 Faturam",
+                                    "payload": "p20",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p21",
+                                    "style": "secondary"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b23",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20HG261011000002%20Sipari%C5%9F%20no%3A%20HG261011000002%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: HG261011000002 Sipariş no: HG261011000002 Yardımcı olabilir misiniz?"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000006",
+                    "input": {
+                        "type": "text",
+                        "text": "bu ürünün kumaşı nasıl"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b24",
+                            "text": "🤔 Tam anlayamadım. Şunlardan biri mi demek istediniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b25",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p22",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p23",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p24",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p25",
+                                    "style": "secondary"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b26",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20bu%20%C3%BCr%C3%BCn%C3%BCn%20kuma%C5%9F%C4%B1%20nas%C4%B1l%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: bu ürünün kumaşı nasıl Yardımcı olabilir misiniz?"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000007",
+                    "input": {
+                        "type": "text",
+                        "text": "temsilci ile görüşmek istiyorum"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b27",
+                            "text": "👩‍💼 Elbette. WhatsApp'ta temsilcimize yazabilirsiniz; talebinizi mesaja ben yazdım, isterseniz göndermeden önce düzenleyebilirsiniz."
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b28",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20temsilci%20ile%20g%C3%B6r%C3%BC%C5%9Fmek%20istiyorum%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: temsilci ile görüşmek istiyorum Yardımcı olabilir misiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b29",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p26",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

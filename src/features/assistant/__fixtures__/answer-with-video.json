@@ -1,0 +1,363 @@
+{
+    "flow": "answer-with-video",
+    "description": "Dash'ten bir cevaba video ve kısayol eklenince: metin bloğunun HEMEN ARDINDAN type=video bloğu gelir (url = CDN'deki .mp4/.webm; poster yok). Widget kontrol çubuklu, kendiliğinden BAŞLAMAYAN bir <video> çizer; ardından varsa sayfa butonları, \"👉 kısayol\" düğmesi (normal menü düğmesi: id sub.*; basınca o konu açılır, ör. iade/iptal akışı) ve Canlı Destek gelir.",
+    "steps": [
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/session",
+                "headers": {
+                    "X-Assistant-Platform": "web"
+                },
+                "body": {
+                    "platform": "web"
+                }
+            },
+            "response": {
+                "status": 201,
+                "body": {
+                    "session_id": "0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10",
+                    "token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA",
+                    "expires_at": "2026-10-12T14:00:00+03:00",
+                    "auth_level": "guest",
+                    "customer": null,
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b1",
+                            "text": "Merhaba, ben Haydi Asistan 👋 Size nasıl yardımcı olabilirim? Aşağıdan bir konu seçebilirsiniz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b2",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p1",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p2",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p3",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p4",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000001",
+                    "input": {
+                        "type": "select",
+                        "id": "menu.product",
+                        "payload": "p2"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p5"
+                        },
+                        {
+                            "label": "👕 Ürün ve Beden",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b3",
+                            "text": "Ürün ve Beden konusunda ne yapmak istersiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b4",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "sub.size",
+                                    "label": "Beden nasıl seçilir?",
+                                    "payload": "p6",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p7",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000002",
+                    "input": {
+                        "type": "select",
+                        "id": "sub.size",
+                        "payload": "p6"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p8"
+                        },
+                        {
+                            "label": "👕 Ürün ve Beden",
+                            "current": false,
+                            "id": "menu.product",
+                            "payload": "p9"
+                        },
+                        {
+                            "label": "Beden nasıl seçilir?",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b5",
+                            "text": "Beden seçerken ölçü tablosuna bakmanızı öneririz 📏\nÖlçülerinizi aşağıdaki videoda adım adım gösterdik 👇"
+                        },
+                        {
+                            "type": "image",
+                            "id": "b6",
+                            "url": "https://cdn.haydigiy.com/haydi-asistan/images/2026-10/beden-tablosu.png",
+                            "alt": "Beden ölçü tablosu"
+                        },
+                        {
+                            "type": "video",
+                            "id": "b7",
+                            "url": "https://cdn.haydigiy.com/haydi-asistan/videos/2026-10/beden-rehberi.mp4"
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b8",
+                            "label": "🔥 Siyah Crop Eşofman için tıkla",
+                            "kind": "liste",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/siyah-crop-esofman?src=haydi-asistan",
+                                "mobile": "/siyah-crop-esofman?src=haydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b9",
+                            "label": "Sayfayı aç",
+                            "kind": "liste",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/kampanya/sonbahar?src=haydi-asistan",
+                                "mobile": "/kampanya/sonbahar?src=haydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b10",
+                            "label": "Yeni sezonu keşfet",
+                            "kind": "liste",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/yeni-sezon?c=12&src=haydi-asistan",
+                                "mobile": "/yeni-sezon?c=12&src=haydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b11",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "sub.returns",
+                                    "label": "👉 İade ve iptallerim",
+                                    "payload": "p10",
+                                    "style": "secondary"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b12",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20Beden%20nas%C4%B1l%20se%C3%A7ilir%3F%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: Beden nasıl seçilir? Yardımcı olabilir misiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b13",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p11",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000003",
+                    "input": {
+                        "type": "select",
+                        "id": "sub.returns",
+                        "payload": "p10"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p12"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": false,
+                            "id": "menu.orders",
+                            "payload": "p13"
+                        },
+                        {
+                            "label": "İade ve iptallerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b14",
+                            "text": "🔐 Siparişlerinizi görmek için önce hesabınıza giriş yapmanız gerekiyor. Giriş yaptıktan sonra buradan devam edebilirsiniz."
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b15",
+                            "label": "Giriş yap",
+                            "kind": "giris",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/hizli-giris?returnUrl=%2F%3Fsrc%3Dhaydi-asistan",
+                                "mobile": "/hizli-giris?returnUrl=%2F%3Fsrc%3Dhaydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b16",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p14",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

@@ -1,9 +1,12 @@
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
 const registerToken = process.env.EXPO_PUBLIC_REGISTER_TOKEN?.trim();
+/** Yalnız yerelde Haydi Asistan mock sunucusuna yönlendirmek için (yoksa `apiBaseUrl` kullanılır). */
+const assistantApiBaseUrl = process.env.EXPO_PUBLIC_ASSISTANT_API_BASE_URL?.trim();
 
 export const appEnv = {
   apiBaseUrl: apiBaseUrl && apiBaseUrl.length > 0 ? apiBaseUrl : undefined,
   registerToken: registerToken && registerToken.length > 0 ? registerToken : undefined,
+  assistantApiBaseUrl: assistantApiBaseUrl && assistantApiBaseUrl.length > 0 ? assistantApiBaseUrl : undefined,
 };
 
 export function getRequiredApiBaseUrl() {

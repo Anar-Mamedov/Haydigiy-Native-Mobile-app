@@ -2,6 +2,8 @@ import { Stack } from 'expo-router';
 import { YStack, useTheme } from 'tamagui';
 import { BottomNavigationBar } from '@/components/navigation/bottom-navigation-bar';
 import { HomeAppUpdateBanner } from '@/features/app-update/components/home-app-update-banner';
+import { AssistantSilentBoundary } from '@/features/assistant/components/assistant-error-boundary';
+import { AssistantLauncher } from '@/features/assistant/components/assistant-launcher';
 
 export const unstable_settings = {
   anchor: '(home)',
@@ -24,6 +26,9 @@ export default function TabsLayout() {
             headerShown: false,
           }}
         />
+        <AssistantSilentBoundary>
+          <AssistantLauncher />
+        </AssistantSilentBoundary>
       </YStack>
       <HomeAppUpdateBanner />
       <BottomNavigationBar />

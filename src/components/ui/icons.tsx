@@ -3,6 +3,7 @@ import {
   AlertCircle as LucideAlertCircle,
   ArrowLeft as LucideArrowLeft,
   ArrowUpDown as LucideArrowUpDown,
+  ArrowUpRight as LucideArrowUpRight,
   BadgeCheck as LucideBadgeCheck,
   Bell as LucideBell,
   Building2 as LucideBuilding2,
@@ -40,7 +41,10 @@ import {
   ImageOff as LucideImageOff,
   ImagePlus as LucideImagePlus,
   Info as LucideInfo,
+  KeyRound as LucideKeyRound,
   Landmark as LucideLandmark,
+  Link2 as LucideLink2,
+  LogIn as LucideLogIn,
   LogOut as LucideLogOut,
   Mail as LucideMail,
   MapPin as LucideMapPin,
@@ -61,6 +65,7 @@ import {
   RefreshCw as LucideRefreshCw,
   RotateCcw as LucideRotateCcw,
   Search as LucideSearch,
+  SendHorizontal as LucideSendHorizontal,
   Share2 as LucideShare2,
   ShieldCheck as LucideShieldCheck,
   ShoppingBag as LucideShoppingBag,
@@ -117,6 +122,7 @@ function withFontScale(Icon: LucideIcon) {
 export const AlertCircle = withFontScale(LucideAlertCircle);
 export const ArrowLeft = withFontScale(LucideArrowLeft);
 export const ArrowUpDown = withFontScale(LucideArrowUpDown);
+export const ArrowUpRight = withFontScale(LucideArrowUpRight);
 export const BadgeCheck = withFontScale(LucideBadgeCheck);
 export const Bell = withFontScale(LucideBell);
 export const Building2 = withFontScale(LucideBuilding2);
@@ -154,7 +160,10 @@ export const Image = withFontScale(LucideImage);
 export const ImageOff = withFontScale(LucideImageOff);
 export const ImagePlus = withFontScale(LucideImagePlus);
 export const Info = withFontScale(LucideInfo);
+export const KeyRound = withFontScale(LucideKeyRound);
 export const Landmark = withFontScale(LucideLandmark);
+export const Link2 = withFontScale(LucideLink2);
+export const LogIn = withFontScale(LucideLogIn);
 export const LogOut = withFontScale(LucideLogOut);
 export const Mail = withFontScale(LucideMail);
 export const MapPin = withFontScale(LucideMapPin);
@@ -175,6 +184,7 @@ export const Plus = withFontScale(LucidePlus);
 export const RefreshCw = withFontScale(LucideRefreshCw);
 export const RotateCcw = withFontScale(LucideRotateCcw);
 export const Search = withFontScale(LucideSearch);
+export const SendHorizontal = withFontScale(LucideSendHorizontal);
 export const Share2 = withFontScale(LucideShare2);
 export const ShieldCheck = withFontScale(LucideShieldCheck);
 export const ShoppingBag = withFontScale(LucideShoppingBag);

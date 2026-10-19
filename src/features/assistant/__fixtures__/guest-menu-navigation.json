@@ -1,0 +1,448 @@
+{
+    "flow": "guest-menu-navigation",
+    "description": "Misafir: oturum aç → ana menüden kategori → sayfa butonu konusu (şifre) → sabit cevap konusu (kargo; cevap + sayfa butonları + Canlı Destek + Ana menü) → Ana menü. Her cevapta `breadcrumb` (Ana menü › Kategori › Konu) gelir: öncekiler tıklanabilir seçim (`id`+`payload`), bulunulan yer `current:true`; son adımda Ana menü seçimi (`nav.home`) konumu boşaltır. Yapay zekâ KAPALI olduğu için `input.mode` = `none` (giriş kutusu YOK) ve karşılama \"yazabilirsiniz\" demez.",
+    "steps": [
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/session",
+                "headers": {
+                    "X-Assistant-Platform": "web"
+                },
+                "body": {
+                    "platform": "web"
+                }
+            },
+            "response": {
+                "status": 201,
+                "body": {
+                    "session_id": "0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10",
+                    "token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA",
+                    "expires_at": "2026-10-12T14:00:00+03:00",
+                    "auth_level": "guest",
+                    "customer": null,
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b1",
+                            "text": "Merhaba, ben Haydi Asistan 👋 Size nasıl yardımcı olabilirim? Aşağıdan bir konu seçebilirsiniz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b2",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p1",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p2",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p3",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p4",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000001",
+                    "input": {
+                        "type": "select",
+                        "id": "menu.help",
+                        "payload": "p4"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p5"
+                        },
+                        {
+                            "label": "👤 Hesabım ve Yardım",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b3",
+                            "text": "Hesabım ve Yardım konusunda ne yapmak istersiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b4",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "sub.pass",
+                                    "label": "Şifremi unuttum",
+                                    "payload": "p6",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.acct_user",
+                                    "label": "Üyelik bilgilerim",
+                                    "payload": "p7",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.acct_addr",
+                                    "label": "Adreslerim",
+                                    "payload": "p8",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.acct_pay",
+                                    "label": "Ödeme bilgilerim",
+                                    "payload": "p9",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.acct_help",
+                                    "label": "Yardım merkezi",
+                                    "payload": "p10",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.acct_coupon",
+                                    "label": "Kuponlarım",
+                                    "payload": "p11",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.ship",
+                                    "label": "Kargo ve teslimat süreleri",
+                                    "payload": "p12",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.ship_fees",
+                                    "label": "Kargo ücretleri",
+                                    "payload": "p13",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "sub.policy",
+                                    "label": "İade ve iptal koşulları",
+                                    "payload": "p14",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p15",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000002",
+                    "input": {
+                        "type": "select",
+                        "id": "sub.pass",
+                        "payload": "p6"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p16"
+                        },
+                        {
+                            "label": "👤 Hesabım ve Yardım",
+                            "current": false,
+                            "id": "menu.help",
+                            "payload": "p17"
+                        },
+                        {
+                            "label": "Şifremi unuttum",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b5",
+                            "text": "🔑 Şifrenizi sitedeki şifre yenileme sayfasından SMS koduyla yenileyebilirsiniz."
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b6",
+                            "label": "Şifre yenileme sayfası",
+                            "kind": "sifre",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/sifremi-unuttum?src=haydi-asistan",
+                                "mobile": "/sifremi-unuttum?src=haydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b7",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p18",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000003",
+                    "input": {
+                        "type": "select",
+                        "id": "sub.ship",
+                        "payload": "p12"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p19"
+                        },
+                        {
+                            "label": "👤 Hesabım ve Yardım",
+                            "current": false,
+                            "id": "menu.help",
+                            "payload": "p20"
+                        },
+                        {
+                            "label": "Kargo ve teslimat süreleri",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b8",
+                            "text": "🚚 Siparişiniz 48 saat içinde hazırlanıp kargoya verilir; kargoya verilince SMS ile bilgi veririz.\n📦 Kargoya verildikten sonra 1-5 iş günü içinde teslim edilir.\n🔎 Sipariş ve kargo durumunuzu Hesabım > Siparişlerim bölümünden takip edebilirsiniz.\n💳 Kargo ücreti seçtiğiniz kargo firmasına göre değişir; güncel ücretleri ödeme adımında görebilirsiniz."
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b9",
+                            "label": "Siparişlerimi aç",
+                            "kind": "liste",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dactive%26src%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dactive%26src%3Dhaydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b10",
+                            "label": "Kargo ve teslimat yardımı",
+                            "kind": "yardim",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/yardim?kategori=kargo-teslimat&src=haydi-asistan",
+                                "mobile": "/yardim?kategori=kargo-teslimat&src=haydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b11",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20Kargo%20ve%20teslimat%20s%C3%BCreleri%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: Kargo ve teslimat süreleri Yardımcı olabilir misiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b12",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p21",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000004",
+                    "input": {
+                        "type": "select",
+                        "id": "nav.home",
+                        "payload": "p21"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "guest",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b13",
+                            "text": "Size nasıl yardımcı olabilirim? Aşağıdan bir konu seçebilirsiniz."
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b14",
+                            "layout": "list",
+                            "items": [
+                                {
+                                    "id": "menu.orders",
+                                    "label": "📦 Siparişlerim",
+                                    "payload": "p22",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.product",
+                                    "label": "👕 Ürün ve Beden",
+                                    "payload": "p23",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.campaign",
+                                    "label": "🎟️ Kampanya ve Kupon",
+                                    "payload": "p24",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "menu.help",
+                                    "label": "👤 Hesabım ve Yardım",
+                                    "payload": "p25",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

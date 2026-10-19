@@ -1,0 +1,130 @@
+{
+    "flow": "config",
+    "description": "GET /config: açık hali ve asistan kapalıyken (enabled:false → launcher hiç çizilmez).",
+    "steps": [
+        {
+            "request": {
+                "method": "GET",
+                "path": "/api/assistant/config",
+                "headers": {
+                    "X-Assistant-Platform": "web"
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "schema_version": 1,
+                    "widget_min_version": "1.0.0",
+                    "enabled": true,
+                    "features": {
+                        "login": true,
+                        "ai": false,
+                        "live_support": true
+                    },
+                    "limits": {
+                        "max_text": 500
+                    },
+                    "image_hosts": [
+                        "cdn.haydigiy.com",
+                        "cdn.haydigiytr.com"
+                    ],
+                    "video_hosts": [
+                        "cdn.haydigiy.com",
+                        "cdn.haydigiytr.com"
+                    ],
+                    "turnstile_site_key": null,
+                    "fallback": {
+                        "error_text": "Şu an bir sorun yaşıyorum 😔 Lütfen biraz sonra tekrar deneyin ya da Canlı Destek'ten yazın.",
+                        "live_support": {
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00"
+                        }
+                    },
+                    "texts": {
+                        "launcher_label": "Haydi Asistan",
+                        "title": "Haydi Asistan",
+                        "subtitle": "Sanal asistan",
+                        "input_placeholder": "Mesajınızı yazın…",
+                        "send_label": "Gönder",
+                        "close_label": "Kapat",
+                        "open_label": "Haydi Asistan'ı aç",
+                        "typing": "Yazıyor…",
+                        "send_failed": "Gönderilemedi",
+                        "retry": "Tekrar dene",
+                        "copy_number": "Kopyala",
+                        "copied": "Kopyalandı ✓",
+                        "live_copy_hint": "WhatsApp açılmadıysa:",
+                        "live_copy_button": "Mesajı kopyala",
+                        "live_number_label": "Numara:",
+                        "video_label": "Mesajla gelen video",
+                        "breadcrumb_label": "Konum"
+                    }
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "GET",
+                "path": "/api/assistant/config",
+                "headers": {
+                    "X-Assistant-Platform": "web"
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "schema_version": 1,
+                    "widget_min_version": "1.0.0",
+                    "enabled": false,
+                    "features": {
+                        "login": true,
+                        "ai": false,
+                        "live_support": true
+                    },
+                    "limits": {
+                        "max_text": 500
+                    },
+                    "image_hosts": [
+                        "cdn.haydigiy.com",
+                        "cdn.haydigiytr.com"
+                    ],
+                    "video_hosts": [
+                        "cdn.haydigiy.com",
+                        "cdn.haydigiytr.com"
+                    ],
+                    "turnstile_site_key": null,
+                    "fallback": {
+                        "error_text": "Şu an bir sorun yaşıyorum 😔 Lütfen biraz sonra tekrar deneyin ya da Canlı Destek'ten yazın.",
+                        "live_support": {
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00"
+                        }
+                    },
+                    "texts": {
+                        "launcher_label": "Haydi Asistan",
+                        "title": "Haydi Asistan",
+                        "subtitle": "Sanal asistan",
+                        "input_placeholder": "Mesajınızı yazın…",
+                        "send_label": "Gönder",
+                        "close_label": "Kapat",
+                        "open_label": "Haydi Asistan'ı aç",
+                        "typing": "Yazıyor…",
+                        "send_failed": "Gönderilemedi",
+                        "retry": "Tekrar dene",
+                        "copy_number": "Kopyala",
+                        "copied": "Kopyalandı ✓",
+                        "live_copy_hint": "WhatsApp açılmadıysa:",
+                        "live_copy_button": "Mesajı kopyala",
+                        "live_number_label": "Numara:",
+                        "video_label": "Mesajla gelen video",
+                        "breadcrumb_label": "Konum"
+                    }
+                }
+            }
+        }
+    ]
+}
