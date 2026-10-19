@@ -56,6 +56,13 @@ export type FilterCategory = {
   parentId?: number | null;
 };
 
+/** Kategori listesinin üstündeki şeritte gösterilen, dokununca listesi açılan alt kategori. */
+export type ProductSubcategory = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
 export type ProductAvailableFilters = {
   colors: FilterColor[];
   variants: FilterVariant[];

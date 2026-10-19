@@ -4,6 +4,7 @@ import {
   mapProductDetailDto,
   mapSizeMeasurements,
   mapSearchProductDto,
+  mapSubcategories,
   mergeProductDetailReviewPage,
 } from './product.mapper';
 import { SearchProductDto } from './product.dtos';
@@ -433,6 +434,32 @@ describe('mapAvailableFilters', () => {
       categoryChildren: [],
       useProductCategoryFilters: false,
     });
+  });
+});
+
+describe('mapSubcategories', () => {
+  it('keeps id, name and slug of each child category in API order', () => {
+    expect(
+      mapSubcategories([
+        { id: 11, parent_id: 201, name: 'Kadın Üst Giyim', slug: 'kadin-ust-giyim' },
+        { id: 170, parent_id: 201, name: 'Kadın Alt Giyim', slug: 'kadin-alt-giyim' },
+      ]),
+    ).toEqual([
+      { id: 11, name: 'Kadın Üst Giyim', slug: 'kadin-ust-giyim' },
+      { id: 170, name: 'Kadın Alt Giyim', slug: 'kadin-alt-giyim' },
+    ]);
+  });
+
+  it('skips children that cannot be linked and tolerates a missing list', () => {
+    expect(
+      mapSubcategories([
+        { id: 1, parent_id: 201, name: 'Slugsuz', slug: '' },
+        { id: 2, parent_id: 201, name: '', slug: 'adsiz' },
+        { id: 3, parent_id: 201, name: 'Geçerli', slug: 'gecerli' },
+      ]),
+    ).toEqual([{ id: 3, name: 'Geçerli', slug: 'gecerli' }]);
+    expect(mapSubcategories(undefined)).toEqual([]);
+    expect(mapSubcategories(null)).toEqual([]);
   });
 });
 

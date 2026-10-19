@@ -1,0 +1,43 @@
+diff --git a/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh b/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh
+index 56bcb4c..d2b253c 100755
+--- a/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh
++++ b/node_modules/expo-modules-jsi/apple/scripts/build-xcframework.sh
+@@ -107,6 +107,12 @@ compute_hash() {
+     # source problems. swiftc --version reports the swiftlang/clang tags and the
+     # target triple, so any toolchain change forces a clean rebuild.
+     echo "TOOLCHAIN_VERSION=$(xcrun swiftc --version 2>/dev/null || true)"
++    # Xcode releases can share a Swift compiler but ship different SDKs (Xcode
++    # 27.0 and 27.1 print the same swiftc --version). A binary module records the
++    # SDK it was built against and Swift won't load it with another SDK, so every
++    # importer would compile ExpoModulesJSI again from its stripped
++    # .swiftinterface. Key the cache on the Xcode build, which pins its SDKs.
++    echo "XCODE_VERSION=$(xcodebuild -version 2>/dev/null || true)"
+     echo "$all_files" | LC_ALL=C sort | while IFS= read -r file; do
+       echo "$file"
+       cat "$file"
+@@ -286,11 +292,15 @@ build_slice() {
+ 
+   # Strip declarations from public .swiftinterface that external consumers can't resolve:
+   # - C++ type extensions (__ObjC) — entire blocks including their closing braces
+-  #   e.g. "extension __ObjC.expo.CppError : Swift.Error { ... }"
++  #   e.g. "extension __ObjC.expo.CppError : Swift.Error { ... }", or with the module
++  #   selectors Swift 6.4 prints: "extension __ObjC::expo.__ObjC::CppError : Swift::Error { ... }"
+   # - Package-internal conformances (_ConstraintThatIsNotPartOfTheAPIOfThisLibrary)
+   #   e.g. "extension Swift.Optional : where Wrapped : _Constraint... {}"
+   # - @usableFromInline attributes preceding the _Constraint protocol definition
+   #   e.g. "@usableFromInline\ninternal protocol _ConstraintThatIsNotPartOfTheAPIOfThisLibrary {}"
++  # - @available(*, unavailable) attributes that Swift 6.4 prints on their own line before
++  #   those conformances, which would otherwise attach to the next declaration
++  #   e.g. "@available(*, unavailable)\nextension Swift::Optional : P where Wrapped : _Constraint... {}"
+   # NOTE: If these patterns change in a future Swift version, the build will fail with
+   # "expected declaration" or "expected type" errors in the .swiftinterface file.
+   # Run plain `sed` to a temp file and move it back instead of `sed -i ''`:
+@@ -299,7 +309,7 @@ build_slice() {
+   # filename, failing with "can't read …: No such file or directory".
+   while IFS= read -r swiftinterface; do
+     local stripped_swiftinterface="${swiftinterface}.stripped"
+-    sed '/^extension __ObjC\./,/^}/d;/^@usableFromInline$/{N;/_ConstraintThatIsNotPartOfTheAPIOfThisLibrary/d;};/_ConstraintThatIsNotPartOfTheAPIOfThisLibrary/d' "$swiftinterface" > "$stripped_swiftinterface"
++    sed -E '/^extension __ObjC(\.|::)/,/^}/d;/^@usableFromInline$/{N;/_ConstraintThatIsNotPartOfTheAPIOfThisLibrary/d;};/^@available\(\*, unavailable\)$/{N;/_ConstraintThatIsNotPartOfTheAPIOfThisLibrary/d;};/_ConstraintThatIsNotPartOfTheAPIOfThisLibrary/d' "$swiftinterface" > "$stripped_swiftinterface"
+     mv "$stripped_swiftinterface" "$swiftinterface"
+   done < <(find "${modules_dir}/${PACKAGE_NAME}.swiftmodule" -name '*.swiftinterface')
+ 

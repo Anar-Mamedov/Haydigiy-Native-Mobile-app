@@ -10,6 +10,7 @@ import {
   mapPopularProductDto,
   mapProductDto,
   mapSearchProductDto,
+  mapSubcategories,
   mergeProductDetailReviewPage,
 } from '@/features/product/api/product.mapper';
 import {
@@ -57,6 +58,7 @@ export function useInfiniteSearchProductsQuery(filters: Omit<SearchProductsParam
       return {
         products: (response.data || []).map(mapSearchProductDto),
         category: response.category,
+        subcategories: mapSubcategories(response.category?.children),
         menuItemName: response.menu_item?.name || undefined,
         availableFilters: mapAvailableFilters(response.available_filters),
         pagination: {

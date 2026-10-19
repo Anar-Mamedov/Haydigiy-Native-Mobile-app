@@ -20,7 +20,7 @@ import {
   useTrackAnalyticsSearch,
 } from '@/features/analytics/hooks/use-analytics-commerce-tracking';
 import { BRAND_COLOR } from '@/lib/theme/colors';
-import { Product } from '@/types/product.types';
+import { Product, ProductSubcategory } from '@/types/product.types';
 import { SortSheet } from '../components/sort-sheet';
 import { FilterSheet, FilterShortcutSection } from '../components/filter-sheet';
 import { ColorVariantsSheet } from '../components/color-variants-sheet';
@@ -28,6 +28,7 @@ import { QuickFilterDropdown } from '../components/quick-filter-dropdown';
 import { PRODUCT_FILTER_BAR_HEIGHT, ProductFilterBar } from '../components/product-filter-bar';
 import { ProductVideoModal } from '../components/product-video-modal';
 import { ProductListHeader } from '../components/product-list-header';
+import { SUBCATEGORY_STRIP_HEIGHT, SubcategoryStrip } from '../components/subcategory-strip';
 import { resolveColorVariantTarget } from '../utils/color-variant-route';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
 import { ProductListingFilters } from '../utils/listing-deep-link-params';
@@ -137,6 +138,7 @@ export function ProductListScreen({
   const products = data ? data.pages.flatMap((page) => page.products) : [];
   const firstPage = data?.pages[0];
   const categoryDetails = firstPage?.category;
+  const subcategories = firstPage?.subcategories ?? [];
   // Web ile aynı öncelik: kategori adı > menü adı > Türkçe başlık biçimli arama
   // sorgusu > "Ürünler" (tedarikçi listesi de bu son başlığı kullanır).
   const listTitle =
@@ -191,6 +193,11 @@ export function ProductListScreen({
 
   const handleCartPress = () => {
     router.push('/cart');
+  };
+
+  // Web'deki alt kategori bağlantısıyla aynı hedef: /{slug}?c={id} → /kategori/{slug}?c={id}
+  const handleSubcategoryPress = (subcategory: ProductSubcategory) => {
+    router.push(`/kategori/${subcategory.slug}?c=${subcategory.id}` as any);
   };
 
   const handleApplyFilters = (newFilters: {
@@ -286,6 +293,9 @@ export function ProductListScreen({
 
   return (
     <AppScreen scrollable={false} header={customHeader} padding={0} gap={0}>
+      {/* Alt kategoriler web mobildeki gibi başlığın hemen altında; yoksa çizilmez. */}
+      <SubcategoryStrip onSelect={handleSubcategoryPress} subcategories={subcategories} />
+
       {/* Sıralama + filtreler tek çubukta ve listeden bağımsız: liste kaysa da
           çubuk ekranda sabit kalır. */}
       <ProductFilterBar
@@ -326,7 +336,7 @@ export function ProductListScreen({
         onClose={() => setQuickFilterSection(null)}
         quickFilterGroups={quickFilterGroups}
         section={quickFilterSection}
-        topOffset={PRODUCT_FILTER_BAR_HEIGHT}
+        topOffset={PRODUCT_FILTER_BAR_HEIGHT + (subcategories.length > 0 ? SUBCATEGORY_STRIP_HEIGHT : 0)}
       />
 
       {/* Initial Page Loading state */}

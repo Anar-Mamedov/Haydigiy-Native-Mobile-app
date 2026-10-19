@@ -144,6 +144,10 @@ describe('ProductListScreen', () => {
           {
             products: mockProducts,
             category: mockCategory,
+            subcategories: [
+              { id: 41, name: 'Mini Elbise', slug: 'mini-elbise' },
+              { id: 42, name: 'Midi Elbise', slug: 'midi-elbise' },
+            ],
             availableFilters: mockAvailableFilters,
             pagination: { current_page: 1, last_page: 2, total: 4, per_page: 2 },
           },
@@ -156,6 +160,16 @@ describe('ProductListScreen', () => {
       hasNextPage: true,
       isFetchingNextPage: false,
     });
+  });
+
+  it('shows the subcategories under the header and opens the tapped one', () => {
+    // Web mobilde başlığın altındaki alt kategoriler uygulamada da görünmeli.
+    renderWithTamagui(<ProductListScreen slug="elbise" categoryId={40} />);
+
+    expect(screen.getByTestId('subcategory-strip')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText('Midi Elbise kategorisine git'));
+
+    expect(mockPush).toHaveBeenCalledWith('/kategori/midi-elbise?c=42');
   });
 
   it('applies the sorting and filters that arrived with the deep link', () => {

@@ -16,6 +16,7 @@ import {
   ProductSize,
   FeatureIcon,
   PopularProduct,
+  ProductSubcategory,
   SizeMeasurement,
   SizeMeasurementEntry,
 } from '@/types/product.types';
@@ -189,6 +190,17 @@ export function mapAvailableFilters(dto: SearchProductsResponseDto['available_fi
     categoryChildren: (filters.category_children ?? []).map(mapFilterCategory),
     useProductCategoryFilters: Boolean(filters.use_product_category_filters),
   };
+}
+
+type SearchCategoryChildDto = NonNullable<NonNullable<SearchProductsResponseDto['category']>['children']>[number];
+
+/** Kategori yanıtındaki alt kategorileri şerit modeline çevirir; adı, slug'ı ya da id'si olmayan kayıtlar atlanır. */
+export function mapSubcategories(children: SearchCategoryChildDto[] | null | undefined): ProductSubcategory[] {
+  if (!Array.isArray(children)) return [];
+
+  return children
+    .filter((child) => Boolean(child?.id && child.slug && child.name))
+    .map((child) => ({ id: child.id, name: child.name, slug: child.slug }));
 }
 
 function mapFilterCategory(category: {
