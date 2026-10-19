@@ -2,7 +2,7 @@ import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { IconButton } from '@/components/ui/icon-button';
-import { MessageCircle, X } from '@/components/ui/icons';
+import { MessageCircleMore, X } from '@/components/ui/icons';
 import type { AssistantTexts } from '@/types/assistant.types';
 
 type AssistantHeaderProps = {
@@ -36,7 +36,7 @@ export function AssistantHeader({ texts, onBack, onClose }: AssistantHeaderProps
         justifyContent="center"
         width={AVATAR_SIZE}
       >
-        <MessageCircle color="white" size={20} />
+        <MessageCircleMore color="white" size={20} strokeWidth={2.2} />
       </YStack>
       <YStack flex={1}>
         <Paragraph accessibilityRole="header" color="$color" fontSize={16} fontWeight="700" numberOfLines={1}>

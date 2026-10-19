@@ -50,6 +50,7 @@ import {
   MapPin as LucideMapPin,
   Menu as LucideMenu,
   MessageCircle as LucideMessageCircle,
+  MessageCircleMore as LucideMessageCircleMore,
   MessageSquare as LucideMessageSquare,
   Minus as LucideMinus,
   Monitor as LucideMonitor,
@@ -169,6 +170,7 @@ export const Mail = withFontScale(LucideMail);
 export const MapPin = withFontScale(LucideMapPin);
 export const Menu = withFontScale(LucideMenu);
 export const MessageCircle = withFontScale(LucideMessageCircle);
+export const MessageCircleMore = withFontScale(LucideMessageCircleMore);
 export const MessageSquare = withFontScale(LucideMessageSquare);
 export const Minus = withFontScale(LucideMinus);
 export const Monitor = withFontScale(LucideMonitor);

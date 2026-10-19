@@ -1,8 +1,6 @@
 import { usePathname, useRouter, type Href } from 'expo-router';
-import { XStack, YStack } from 'tamagui';
-import { Paragraph } from '@/components/ui/app-paragraph';
-import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
-import { MessageCircle } from '@/components/ui/icons';
+import { YStack } from 'tamagui';
+import { MessageCircleMore } from '@/components/ui/icons';
 import { useAssistantAvailability } from '../hooks/use-assistant-availability';
 
 /**
@@ -14,7 +12,12 @@ const VISIBLE_ON_PATHS: ReadonlySet<string> = new Set(['/', '/categories', '/hel
 /** Yazılı rota tipleri `expo start`'ta yeniden üretilir; yeni rota o zamana kadar `Href` olarak verilir. */
 export const ASSISTANT_ROUTE = '/assistant' as Href;
 
-const AVATAR_SIZE = 40;
+/**
+ * Mobil web düğmesiyle aynı görünüm (frontend `AssistantLauncher.tsx`, <768 px): yazısız, 56 px koyu daire
+ * içinde 44 px turuncu daire ve 24 px simge. Ekran okuyucu `open_label`'ı okur.
+ */
+const BUTTON_SIZE = 56;
+const AVATAR_SIZE = 44;
 
 const normalizePathname = (pathname: string) => pathname.replace(/^\/\(tabs\)/, '') || '/';
 
@@ -26,25 +29,24 @@ export function AssistantLauncher() {
   if (!available || !config || !VISIBLE_ON_PATHS.has(pathname)) return null;
 
   return (
-    <XStack bottom="$4" position="absolute" right="$4" zIndex={30}>
-      <XStack
+    <YStack bottom="$4" position="absolute" right="$4" zIndex={30}>
+      <YStack
         accessibilityLabel={config.texts.open_label}
         accessibilityRole="button"
         alignItems="center"
         backgroundColor="$color12"
-        borderRadius="$10"
+        borderRadius={BUTTON_SIZE / 2}
         elevation={6}
-        gap="$2"
-        minHeight={MIN_TOUCH_TARGET}
+        height={BUTTON_SIZE}
+        justifyContent="center"
         onPress={() => router.push(ASSISTANT_ROUTE)}
-        padding="$1.5"
-        paddingRight="$3.5"
-        pressStyle={{ opacity: 0.9, scale: 0.98 }}
+        pressStyle={{ opacity: 0.9, scale: 0.97 }}
         shadowColor="$shadowColor"
         shadowOffset={{ height: 4, width: 0 }}
         shadowOpacity={0.25}
         shadowRadius={10}
         testID="assistant-launcher"
+        width={BUTTON_SIZE}
       >
         <YStack
           alignItems="center"
@@ -54,12 +56,9 @@ export function AssistantLauncher() {
           justifyContent="center"
           width={AVATAR_SIZE}
         >
-          <MessageCircle color="white" size={22} />
+          <MessageCircleMore color="white" size={24} strokeWidth={2.2} />
         </YStack>
-        <Paragraph color="$color1" fontSize={14} fontWeight="700">
-          {config.texts.launcher_label}
-        </Paragraph>
-      </XStack>
-    </XStack>
+      </YStack>
+    </YStack>
   );
 }

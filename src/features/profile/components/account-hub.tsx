@@ -11,6 +11,7 @@ import {
   Mail,
   MapPin,
   MessageCircle,
+  MessageCircleMore,
   MessageSquare,
   Package,
   Palette,
@@ -143,7 +144,7 @@ export function AccountHub({ onLogout }: AccountHubProps) {
     assistant.available && assistant.config
       ? [
           {
-            icon: <MessageCircle color="$brand" size={MENU_ICON_SIZE} />,
+            icon: <MessageCircleMore color="$brand" size={MENU_ICON_SIZE} />,
             label: assistant.config.texts.launcher_label,
             onPress: () => router.push(ASSISTANT_ROUTE),
           },
