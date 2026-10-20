@@ -9,6 +9,7 @@ import type {
   AssistantBreadcrumbItem,
   AssistantButtonItem,
   AssistantInputState,
+  AssistantOrderDetailLink,
   AssistantOrderListItem,
   AssistantTone,
 } from '@/types/assistant.types';
@@ -72,7 +73,23 @@ const toOrderItem = (value: unknown): AssistantOrderListItem | null => {
   };
 };
 
-const toOrderCard = (raw: Raw, id: string): AssistantBlock => ({
+/** order_card.detail: link_button'la aynı kural; uymazsa yalnız bağlantı düşer, kart çizilir. */
+const toOrderDetail = (
+  value: unknown,
+  blockId: string,
+  issues: BlockIssue[],
+): AssistantOrderDetailLink | undefined => {
+  const raw = asRecord(value);
+  if (!raw) return undefined;
+  const href = asRecord(raw.href);
+  if (!str(raw.label) || !href || !isSafeRelativeHref(href.desktop) || !isSafeRelativeHref(href.mobile)) {
+    issues.push({ code: 'bad_href', blockId });
+    return undefined;
+  }
+  return { label: str(raw.label), href: { desktop: href.desktop, mobile: href.mobile } };
+};
+
+const toOrderCard = (raw: Raw, id: string, issues: BlockIssue[]): AssistantBlock => ({
   type: 'order_card',
   id,
   order_no: str(raw.order_no),
@@ -94,6 +111,7 @@ const toOrderCard = (raw: Raw, id: string): AssistantBlock => ({
       variant: optStr(item.variant),
     })),
   more_count: typeof raw.more_count === 'number' && raw.more_count > 0 ? raw.more_count : undefined,
+  detail: toOrderDetail(raw.detail, id, issues),
 });
 
 const toTimeline = (raw: Raw, id: string): AssistantBlock => ({
@@ -139,7 +157,7 @@ const CONVERTERS: Record<string, Converter> = {
       .slice(0, 10),
     empty_text: optStr(raw.empty_text),
   }),
-  order_card: (raw, id) => toOrderCard(raw, id),
+  order_card: (raw, id, _ctx, issues) => toOrderCard(raw, id, issues),
   timeline: (raw, id) => toTimeline(raw, id),
   link_button: (raw, id, _ctx, issues) => {
     const href = asRecord(raw.href);

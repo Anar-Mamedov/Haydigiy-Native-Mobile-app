@@ -90,6 +90,47 @@ describe('Haydi Asistan sözleşmesi', () => {
     expect(isSafeVideoUrl('https://cdn.haydigiy.com/x/a.webm', CTX.videoHosts)).toBe(true);
   });
 
+  it('order_card.detail: geçerliyse aynen taşınır, yoksa çizilmez, bozuksa yalnız bağlantı düşer', () => {
+    const card = {
+      type: 'order_card',
+      id: 'c1',
+      order_no: '#2',
+      date_label: '',
+      total_label: '',
+      status_text: '',
+      tone: 'info',
+      lines: [],
+      items: [],
+    };
+    const detail = {
+      label: 'Sipariş sayfasını aç',
+      open: 'same',
+      href: {
+        desktop: '/giris?returnUrl=%2Fhesabim%2Fsiparislerim%2F2%3Fsrc%3Dhaydi-asistan',
+        mobile: '/giris?returnUrl=%2Fm%2Fhesabim%2Fsiparislerim%2F2%3Fsrc%3Dhaydi-asistan',
+      },
+    };
+
+    const valid = normalizeBlocks([{ ...card, detail }], CTX);
+    expect(valid.blocks[0]).toMatchObject({ detail: { label: detail.label, href: detail.href } });
+    expect(valid.issues).toEqual([]);
+
+    const [plain] = normalizeBlocks([card], CTX).blocks;
+    expect(plain.type === 'order_card' && plain.detail).toBeUndefined();
+    expect(normalizeBlocks([{ ...card, detail: null }], CTX).issues).toEqual([]);
+
+    [
+      { ...detail, label: '' },
+      { ...detail, href: { ...detail.href, mobile: '//evil.com' } },
+      { label: 'Aç' },
+    ].forEach((broken) => {
+      const result = normalizeBlocks([{ ...card, detail: broken }], CTX);
+      expect(result.blocks).toHaveLength(1);
+      expect(result.blocks[0].type === 'order_card' && result.blocks[0].detail).toBeUndefined();
+      expect(result.issues).toEqual([{ code: 'bad_href', blockId: 'c1' }]);
+    });
+  });
+
   it('wa.me deseni bozuksa yedek Canlı Destek adresi kullanılır', () => {
     const [block] = normalizeBlocks(
       [

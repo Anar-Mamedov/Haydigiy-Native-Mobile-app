@@ -56,6 +56,13 @@ export interface AssistantOrderCardBlock {
   lines: { label: string; value: string }[];
   items: { name: string; qty: number; variant?: string }[];
   more_count?: number;
+  /** Kart içi sipariş sayfası bağlantısı; gelmezse ya da adresi desen dışıysa hiçbir şey çizilmez. */
+  detail?: AssistantOrderDetailLink;
+}
+
+export interface AssistantOrderDetailLink {
+  label: string;
+  href: { desktop: string; mobile: string };
 }
 
 export interface AssistantTimelineBlock {

@@ -17,6 +17,7 @@ import {
   AssistantMutedText,
   AssistantToneBadge,
 } from '../assistant-surfaces';
+import { AssistantOrderDetailLink } from './assistant-order-detail-link';
 
 type OrderSummaryFields = Pick<
   AssistantOrderListItem,
@@ -122,6 +123,7 @@ export function AssistantOrderCard({
       {block.more_count ? (
         <AssistantMutedText>{fillCount(texts.more_items, block.more_count)}</AssistantMutedText>
       ) : null}
+      {block.detail ? <AssistantOrderDetailLink blockId={block.id} detail={block.detail} /> : null}
     </AssistantCard>
   );
 }
