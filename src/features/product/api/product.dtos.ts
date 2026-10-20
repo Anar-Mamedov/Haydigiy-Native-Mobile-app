@@ -141,6 +141,8 @@ export interface SearchProductDto {
   feature_icons?: ProductFeatureIconDto[];
   /** Sıralama rozeti metni; özellik açıklamalarıyla aynı ticker'da gösterilir. */
   ranking_text?: string | null;
+  /** Sıralama rozetinin bağlandığı web listesi (`/kategori-slug?c=40&best=sales`). */
+  ranking_url?: string | null;
 }
 
 export interface SearchProductsResponseDto {
@@ -200,6 +202,9 @@ export interface SearchProductsResponseDto {
     }[];
     category_children?: { id: number; name: string; slug: string; parent_id?: number | null }[];
     use_product_category_filters?: boolean;
+    /** Listede kombin / fırsat paketi ürünü varsa ilgili filtre gösterilir. */
+    has_combination_product?: boolean;
+    has_opportunity_package?: boolean;
   };
   total?: number;
   per_page?: number;

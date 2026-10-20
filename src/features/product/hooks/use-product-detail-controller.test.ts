@@ -159,6 +159,38 @@ beforeEach(() => {
   jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
 });
 
+describe('useProductDetailController — popülerlik listesi', () => {
+  it('asks the detail for the popularity list the product was opened from', () => {
+    setup({}, { id: 'deneme-urun', best: 'favorites' });
+
+    expect(useProductDetailsQueryMock).toHaveBeenCalledWith('deneme-urun', 'favorites');
+  });
+
+  it('ignores an unsupported list value', () => {
+    setup({}, { id: 'deneme-urun', best: 'reviews' });
+
+    expect(useProductDetailsQueryMock).toHaveBeenCalledWith('deneme-urun', undefined);
+  });
+
+  it('keeps the popularity list when switching to a similar product', () => {
+    const { result } = setup({}, { id: 'deneme-urun', best: 'sales' });
+
+    act(() =>
+      result.current.handleSimilarProductPress({
+        id: '2',
+        slug: 'benzer-urun',
+        name: 'Benzer Ürün',
+        price: 199.99,
+        imageUrl: 'https://example.com/b.png',
+      } as never),
+    );
+
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.objectContaining({ params: expect.objectContaining({ id: 'benzer-urun', best: 'sales' }) }),
+    );
+  });
+});
+
 describe('useProductDetailController — sepete ekleme', () => {
   it('adds the selected size and takes the shopper to the cart', () => {
     const { result } = setup();

@@ -88,6 +88,8 @@ describe('mapOrderDetail', () => {
             status: 'pending',
             status_name: '',
             is_hepsijet: true,
+            iban: ' TR120006200000000123456789 ',
+            iban_name: 'Ayşe Yılmaz',
           },
           {
             order_item_id: 6,
@@ -122,6 +124,9 @@ describe('mapOrderDetail', () => {
     expect(pending?.returnStatusCode).toBe(1);
     expect(pending?.returnApprovedAt).toBeNull();
     expect(pending?.returnRefundAmount).toBeNull();
+    expect(pending?.returnIban).toBe('TR120006200000000123456789');
+    expect(pending?.returnIbanName).toBe('Ayşe Yılmaz');
+    expect(shipped?.returnIban).toBeNull();
     expect(shipped?.returnStatusCode).toBe(4);
     // "0.00" henüz belirlenmemiş tutardır; kartta gösterilmez.
     expect(shipped?.returnRefundAmount).toBeNull();

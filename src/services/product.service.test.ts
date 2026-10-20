@@ -41,6 +41,28 @@ describe('searchProductDtos', () => {
     );
   });
 
+  it('sends the popularity list and the Kombin / Fırsat filters like the web', async () => {
+    await searchProductDtos({
+      c: 40,
+      page: 1,
+      best: 'sales',
+      has_combination_product: '1',
+      has_opportunity_package: '1',
+    });
+
+    expect(mockedGet).toHaveBeenCalledWith(
+      '/search-products',
+      expect.objectContaining({
+        params: expect.objectContaining({
+          c: 40,
+          best: 'sales',
+          has_combination_product: '1',
+          has_opportunity_package: '1',
+        }),
+      }),
+    );
+  });
+
   it('sends the menu page key as `menu_url`', async () => {
     await searchProductDtos({ menu_url: 'cok-satanlar', page: 1 });
 

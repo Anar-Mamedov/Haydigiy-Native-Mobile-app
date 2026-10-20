@@ -114,6 +114,9 @@ export interface ReturnedItemDetailDto {
   status?: number | string | null;
   is_hepsijet?: boolean;
   rejection?: ReturnRejectionDto | null;
+  /** Talepte seçilen geri ödeme IBAN'ı ve sahibi (IBAN'a iade seçildiyse). */
+  iban?: string | null;
+  iban_name?: string | null;
 }
 
 export interface CancelledItemDetailDto {

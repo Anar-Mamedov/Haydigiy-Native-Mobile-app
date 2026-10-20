@@ -100,7 +100,18 @@ describe('useProductDetailsQuery', () => {
 
     await waitFor(() => expect(result.current.data).toBeTruthy());
     expect(mockedGetSlug).toHaveBeenCalledWith('12345');
-    expect(mockedGetDetail).toHaveBeenCalledWith('elbise');
+    expect(mockedGetDetail).toHaveBeenCalledWith('elbise', undefined);
+  });
+
+  it('asks the detail for the popularity list the product was opened from', async () => {
+    mockedGetDetail.mockResolvedValue({ slug: 'elbise', reviewCount: 0, reviews: [] } as never);
+
+    const { result } = renderHook(() => useProductDetailsQuery('elbise', 'sales'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.data).toBeTruthy());
+    expect(mockedGetDetail).toHaveBeenCalledWith('elbise', 'sales');
   });
 
   it('exposes a missing-product error so the screen can open the 404 route', async () => {

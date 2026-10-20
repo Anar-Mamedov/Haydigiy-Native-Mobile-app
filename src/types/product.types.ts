@@ -71,6 +71,10 @@ export type ProductAvailableFilters = {
   productCategories: FilterCategory[];
   categoryChildren: FilterCategory[];
   useProductCategoryFilters: boolean;
+  /** "Kombin Ürünleri" filtresi bu listede sunulur mu? */
+  hasCombinationProduct: boolean;
+  /** "Fırsat Ürünleri" filtresi bu listede sunulur mu? */
+  hasOpportunityPackage: boolean;
 };
 
 export type QuickFilterValue = {
@@ -221,6 +225,8 @@ export type Product = {
    * Özellik açıklamalarıyla aynı ticker'da, en son sırada döner.
    */
   rankingText?: string | null;
+  /** Rozetin bağlandığı web listesi (`ranking_url`); rozet yalnızca ikisi de varken tıklanır. */
+  rankingUrl?: string | null;
   variants?: ProductVariant[];
   reviews?: ProductReview[];
   questions?: ProductQuestion[];

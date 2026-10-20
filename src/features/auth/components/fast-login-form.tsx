@@ -68,6 +68,12 @@ export function FastLoginForm({ onSuccess, onBackToLogin }: FastLoginFormProps) 
     }
   };
 
+  const submit = handleSubmit(onSubmit);
+  // Klavyedeki Tamam/Git tuşu "Devam Et" ile aynı gönderimdir; buton pasifken o da çalışmaz.
+  const submitFromKeyboard = () => {
+    if (!isSubmitting && !isRateLimited) void submit();
+  };
+
   return (
     <YStack gap="$4" width="100%">
       <YStack gap="$1">
@@ -94,6 +100,8 @@ export function FastLoginForm({ onSuccess, onBackToLogin }: FastLoginFormProps) 
             keyboardType="phone-pad"
             textContentType="telephoneNumber"
             maxLength={PHONE_DISPLAY_MAX_LENGTH}
+            returnKeyType="done"
+            onSubmitEditing={submitFromKeyboard}
           />
         )}
       />
@@ -109,7 +117,7 @@ export function FastLoginForm({ onSuccess, onBackToLogin }: FastLoginFormProps) 
         backgroundColor="$brand"
         color="white"
         borderColor="transparent"
-        onPress={handleSubmit(onSubmit)}
+        onPress={submit}
         disabled={isSubmitting || isRateLimited}
         opacity={isRateLimited ? 0.6 : 1}
         pressStyle={{ opacity: 0.8 }}

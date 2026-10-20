@@ -76,8 +76,32 @@ describe('buildReturnRequestGroups', () => {
       statusCode: 7,
       isCompleted: true,
       cancellable: false,
+      refundIban: null,
     });
     expect(completed?.items.map((item) => item.id)).toEqual([1, 3]);
+  });
+
+  it('shows the refund IBAN only while the request is pending', () => {
+    const iban = { returnIban: 'TR120006200000000123456789', returnIbanName: 'Ayşe Yılmaz' };
+    const [pending, approved, completed] = buildReturnRequestGroups([
+      returned({ id: 1, returnRequestId: 1, returnStatusCode: 1, ...iban }),
+      returned({ id: 2, returnRequestId: 2, returnStatusCode: 2, ...iban }),
+      returned({ id: 3, returnRequestId: 3, returnStatusCode: 7, ...iban }),
+    ]);
+
+    expect(pending?.refundIban).toEqual({ iban: 'TR120006200000000123456789', ibanName: 'Ayşe Yılmaz' });
+    expect(approved?.refundIban).toBeNull();
+    expect(completed?.refundIban).toBeNull();
+  });
+
+  it('keeps a pending refund IBAN when only one of its fields is sent', () => {
+    const [nameOnly, none] = buildReturnRequestGroups([
+      returned({ id: 1, returnRequestId: 1, returnIban: '  ', returnIbanName: 'Ayşe Yılmaz' }),
+      returned({ id: 2, returnRequestId: 2, returnIban: null, returnIbanName: null }),
+    ]);
+
+    expect(nameOnly?.refundIban).toEqual({ iban: null, ibanName: 'Ayşe Yılmaz' });
+    expect(none?.refundIban).toBeNull();
   });
 
   it('marks a request cancellable only while a line is pending and not yet received', () => {

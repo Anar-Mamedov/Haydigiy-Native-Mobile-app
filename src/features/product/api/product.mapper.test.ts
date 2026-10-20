@@ -342,6 +342,16 @@ describe('mapProductDetailDto', () => {
     expect(mapProductDetailDto(baseDetailDto).rankingText).toBeNull();
   });
 
+  it('maps the list the ranking badge links to', () => {
+    const baseDetailDto = { id: 97964, name: 'Viskon Elbise', slug: 'viskon-elbise-97964', price: 499.99 };
+
+    expect(
+      mapProductDetailDto({ ...baseDetailDto, ranking_url: ' /kadin-buyuk-beden-elbise?c=40&best=sales ' }).rankingUrl,
+    ).toBe('/kadin-buyuk-beden-elbise?c=40&best=sales');
+    expect(mapProductDetailDto({ ...baseDetailDto, ranking_url: '  ' }).rankingUrl).toBeNull();
+    expect(mapProductDetailDto(baseDetailDto).rankingUrl).toBeNull();
+  });
+
   it('replaces embedded detail reviews with photo-capable review page data', () => {
     const product = mapProductDetailDto({
       id: 80872,
@@ -398,6 +408,8 @@ describe('mapAvailableFilters', () => {
       ],
       category_children: [{ id: 3, name: 'Çanta', slug: 'canta', parent_id: 1 }],
       use_product_category_filters: true,
+      has_combination_product: true,
+      has_opportunity_package: false,
     });
 
     expect(result).toEqual({
@@ -408,6 +420,8 @@ describe('mapAvailableFilters', () => {
       productCategories: [{ id: 70, name: 'İndirim', slug: 'indirim', productCount: 9, parentId: null }],
       categoryChildren: [{ id: 3, name: 'Çanta', slug: 'canta', productCount: undefined, parentId: 1 }],
       useProductCategoryFilters: true,
+      hasCombinationProduct: true,
+      hasOpportunityPackage: false,
     });
   });
 
@@ -433,6 +447,8 @@ describe('mapAvailableFilters', () => {
       productCategories: [],
       categoryChildren: [],
       useProductCategoryFilters: false,
+      hasCombinationProduct: false,
+      hasOpportunityPackage: false,
     });
   });
 });

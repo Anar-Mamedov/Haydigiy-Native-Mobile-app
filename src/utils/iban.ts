@@ -15,6 +15,14 @@ export function formatIbanInput(digits: string): string {
   return full.match(/.{1,4}/g)?.join(' ') ?? 'TR';
 }
 
+/**
+ * Backend'den gelen IBAN'ı gösterim için 4'lü gruplar (web `ReturnIbanInfo`):
+ * boşluklar atılır, ülke kodu korunur. Kullanıcı girdisi için `formatIbanInput`.
+ */
+export function formatIbanForDisplay(value: string): string {
+  return value.replace(/\s+/g, '').toUpperCase().replace(/(.{4})/g, '$1 ').trim();
+}
+
 /** Normalizes any user input to the canonical `TR` + 24-digit IBAN. */
 export function normalizeIban(value: string): string {
   return `TR${getIbanDigits(value)}`;

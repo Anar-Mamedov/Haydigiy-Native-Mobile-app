@@ -494,6 +494,96 @@ describe('ProductListScreen', () => {
     expect(screen.queryByPlaceholderText('Renk Ara')).toBeNull();
   });
 
+  describe('popularity lists (best)', () => {
+    it('lists by the chosen popularity and swaps the shortcut chips for the three lists', () => {
+      renderWithTamagui(<ProductListScreen best="sales" categoryId={40} slug="elbise" />);
+
+      expect(useInfiniteSearchProductsQuery).toHaveBeenCalledWith(expect.objectContaining({ c: 40, best: 'sales' }));
+      expect(screen.getByTestId('best-listing-tabs')).toBeTruthy();
+      expect(screen.queryByLabelText('Beden filtresi')).toBeNull();
+      expect(screen.getByLabelText('Sıralama seçenekleri')).toBeTruthy();
+    });
+
+    it('switches to another list with only the category and the list', () => {
+      renderWithTamagui(<ProductListScreen best="sales" categoryId={40} slug="elbise" />);
+
+      fireEvent.press(screen.getByRole('button', { name: 'En Çok Ziyaret Edilenler' }));
+
+      expect(mockReplace).toHaveBeenCalledWith('/kategori/elbise?c=40&best=views');
+    });
+
+    it('opens a product with the list so its ranking badge matches', () => {
+      renderWithTamagui(<ProductListScreen best="favorites" categoryId={40} slug="elbise" />);
+
+      fireEvent.press(screen.getByText('Test Product 1'));
+
+      expect(mockPush).toHaveBeenCalledWith(
+        expect.objectContaining({ params: expect.objectContaining({ id: 'test-product-1', best: 'favorites' }) }),
+      );
+    });
+
+    it('keeps the shortcut chips and no list row on a normal listing', () => {
+      renderWithTamagui(<ProductListScreen categoryId={40} slug="elbise" />);
+
+      expect(screen.queryByTestId('best-listing-tabs')).toBeNull();
+      expect(screen.getByLabelText('Beden filtresi')).toBeTruthy();
+    });
+  });
+
+  describe('Kombin and Fırsat product filters', () => {
+    /** beforeEach'teki başarılı yanıtı, listenin sunduğu özel filtre bayraklarıyla yeniden kurar. */
+    function mockSpecialFilterOffer(offer: { hasCombinationProduct: boolean; hasOpportunityPackage: boolean }) {
+      const mocked = useInfiniteSearchProductsQuery as jest.Mock;
+      const current = mocked();
+      mocked.mockClear();
+      mocked.mockReturnValue({
+        ...current,
+        data: {
+          pages: [{ ...current.data.pages[0], availableFilters: { ...mockAvailableFilters, ...offer } }],
+        },
+      });
+    }
+
+    function lastQueryFilters() {
+      const calls = (useInfiniteSearchProductsQuery as jest.Mock).mock.calls;
+      return calls[calls.length - 1][0];
+    }
+
+    it('shows only the special filters the listing offers and toggles them from the bar', () => {
+      mockSpecialFilterOffer({ hasCombinationProduct: true, hasOpportunityPackage: false });
+      renderWithTamagui(<ProductListScreen slug="elbise" categoryId={40} />);
+
+      expect(screen.queryByLabelText('Fırsat Ürünleri filtresi')).toBeNull();
+      fireEvent.press(screen.getByLabelText('Kombin Ürünleri filtresi'));
+      expect(lastQueryFilters()).toEqual(expect.objectContaining({ c: 40, has_combination_product: '1' }));
+
+      fireEvent.press(screen.getByLabelText('Kombin Ürünleri filtresi'));
+      expect(lastQueryFilters().has_combination_product).toBeUndefined();
+    });
+
+    it('applies a special filter from the Ürün Tipi section of the filter sheet', () => {
+      mockSpecialFilterOffer({ hasCombinationProduct: true, hasOpportunityPackage: true });
+      renderWithTamagui(<ProductListScreen slug="elbise" categoryId={40} />);
+
+      fireEvent.press(screen.getAllByText('Filtrele')[0]);
+      fireEvent.press(screen.getByLabelText('Ürün Tipi filtresini aç'));
+      fireEvent.press(screen.getByRole('checkbox', { name: 'Fırsat Ürünleri' }));
+
+      expect(lastQueryFilters()).toEqual(expect.objectContaining({ has_opportunity_package: '1' }));
+    });
+
+    it('applies a special filter that arrived with the deep link and keeps its chip', () => {
+      mockSpecialFilterOffer({ hasCombinationProduct: false, hasOpportunityPackage: false });
+      renderWithTamagui(
+        <ProductListScreen categoryId={40} initialFilters={{ hasOpportunityPackage: true }} slug="elbise" />,
+      );
+
+      expect(lastQueryFilters()).toEqual(expect.objectContaining({ has_opportunity_package: '1' }));
+      // Seçili filtre, liste bayrağı düşse de kaldırılabilsin diye çubukta kalır.
+      expect(screen.getByLabelText('Fırsat Ürünleri filtresi')).toBeTruthy();
+    });
+  });
+
   it('renders price options from API-provided price ranges', () => {
     renderWithTamagui(<ProductListScreen slug="elbise" categoryId={40} />);
 

@@ -1,16 +1,77 @@
 import { useMemo, useState } from 'react';
-import { Keyboard, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Keyboard, LayoutChangeEvent } from 'react-native';
 import { Check, ChevronDown, Search, X } from '@/components/ui/icons';
-import { Button, ColorTokens, Input, Sheet, Spinner, XStack, YStack } from 'tamagui';
+import { Button, ColorTokens, Sheet, Spinner, XStack, YStack } from 'tamagui';
+import { AppInput } from '@/components/ui/app-input';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { KeyboardAwareSheetScrollView } from '@/components/ui/keyboard-aware-sheet-scroll-view';
+import { SheetBottomCover } from '@/components/ui/sheet-bottom-cover';
+import { SheetSwipeCloseArea } from '@/components/ui/sheet-swipe-close-area';
+import { useFitSheetMaxHeight } from '@/components/ui/use-fit-sheet-max-height';
 import { matchesSearch } from '@/utils/search';
-import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 /** `AppInput` ile aynı kalıp (Tamagui `$4` boyutu = 44, `$6` köşe); formda ikisi tek aile görünsün. */
 const FIELD_HEIGHT = 44;
+
+/** Arama alanı: görünür etiket yok (placeholder + ikon yeterli), `AppInput` erişilebilir etiketi taşır. */
+function SearchField({
+  label,
+  onChangeText,
+  value,
+}: {
+  label: string;
+  onChangeText: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <YStack>
+      <AppInput
+        autoCapitalize="none"
+        autoCorrect={false}
+        backgroundColor="$backgroundHover"
+        borderRadius="$4"
+        fontSize={14}
+        height={42}
+        hideVisibleLabel
+        label={label}
+        onChangeText={onChangeText}
+        paddingLeft={36}
+        placeholder="Ara..."
+        value={value}
+      />
+      <XStack
+        alignItems="center"
+        bottom={0}
+        left={12}
+        pointerEvents="none"
+        position="absolute"
+        top={0}
+      >
+        <Search color="$color9" size={18} />
+      </XStack>
+    </YStack>
+  );
+}
+
+/**
+ * Fit modundaki sheet içeriğe göre boylanır; arama sonuçları azaldıkça sheet (ve yazılan arama
+ * alanı) aşağı zıplamasın diye liste, aramasız açıldığı yükseklikte tutulur. Kapanınca sıfırlanır
+ * ki sonraki açılış (ör. il değişince yeni ilçe listesi) kendi yüksekliğini ölçsün.
+ */
+function useSearchStableListHeight(enabled: boolean, query: string) {
+  const [minHeight, setMinHeight] = useState<number>();
+
+  const onLayout = (event: LayoutChangeEvent) => {
+    if (enabled && !query) setMinHeight(event.nativeEvent.layout.height);
+  };
+
+  return {
+    minHeight: enabled ? minHeight : undefined,
+    onLayout,
+    reset: () => setMinHeight(undefined),
+  };
+}
 
 export type AppSelectOption = {
   label: string;
@@ -64,6 +125,9 @@ export function AppSelect({
 }: AppSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const maxHeight = useFitSheetMaxHeight();
+  const listHeight = useSearchStableListHeight(Boolean(searchable), query);
+  const title = label ?? placeholder;
   const selected = options.find((option) => option.value === value);
   const selectedDisplayLabel = selected
     ? selected.description
@@ -85,35 +149,18 @@ export function AppSelect({
   const changeOpen = (next: boolean) => {
     if (next) Keyboard.dismiss();
     setOpen(next);
-    if (!next) setQuery('');
+    if (!next) {
+      setQuery('');
+      listHeight.reset();
+    }
   };
-
-  // Size the options sheet to its content (so a 2-item list isn't a tall sheet),
-  // capped at 85% of the screen for long/searchable lists, which then scroll.
-  const { height: windowHeight } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  // The sheet reaches the physical bottom of the screen (edge-to-edge), so the
-  // list needs the safe-area inset to keep the last option above the system
-  // navigation bar / home indicator.
-  const listBottomPadding = Math.max(insets.bottom, 16) + 16;
-  const sheetHeaderHeight = 64 + (searchable ? 56 : 0);
-  // Row heights are deterministic on every device: each text line is a single
-  // ellipsized line, so a row is 50pt — or 68pt when it has a description
-  // line — with no text-wrap guessing.
-  const describedOptionCount = options.filter((option) => option.description).length;
-  const estimatedHeight =
-    sheetHeaderHeight +
-    (options.length - describedOptionCount) * 50 +
-    describedOptionCount * 68 +
-    8 +
-    listBottomPadding;
-  const sheetHeight = Math.min(Math.round(windowHeight * 0.85), Math.max(estimatedHeight, 140));
+  const close = () => changeOpen(false);
 
   return (
     <>
       <YStack position="relative">
         <XStack
-          accessibilityLabel={label ?? placeholder}
+          accessibilityLabel={title}
           accessibilityRole="button"
           accessibilityState={{ disabled: Boolean(isDisabled), expanded: open }}
           alignItems="center"
@@ -154,7 +201,7 @@ export function AppSelect({
         {canClear ? (
           <XStack alignItems="center" bottom={0} position="absolute" right={6} top={0}>
             <Button
-              accessibilityLabel={`${label ?? placeholder} seçimini kaldır`}
+              accessibilityLabel={`${title} seçimini kaldır`}
               accessibilityRole="button"
               chromeless
               circular
@@ -174,62 +221,66 @@ export function AppSelect({
         </Paragraph>
       ) : null}
 
+      {/* Aranabilir listede arama alanı klavye açtığı için bu bir form sheet: içeriğe göre boy (fit)
+          + klavyeyle yukarı kayma. Alt snap noktası (dismissOnSnapToBottom) klavye açılıp kapanırken
+          sheet'i kapatabildiği için aşağı kaydırarak kapatma başlıktaki SheetSwipeCloseArea'dan gelir. */}
       <Sheet
         dismissOnOverlayPress
-        dismissOnSnapToBottom
         modal
         moveOnKeyboardChange
         onOpenChange={changeOpen}
         open={open}
-        snapPoints={[sheetHeight]}
-        snapPointsMode="constant"
+        snapPointsMode="fit"
       >
         <AppSheetOverlay />
         <Sheet.Frame
+          adjustPaddingForOffscreenContent
           backgroundColor="$background"
+          borderBottomLeftRadius={0}
+          borderBottomRightRadius={0}
           borderTopLeftRadius="$6"
           borderTopRightRadius="$6"
+          maxHeight={maxHeight}
+          overflow="visible"
+          testID="app-select-sheet-frame"
         >
-          <YStack
-            borderBottomColor="$borderColor"
-            borderBottomWidth={1}
-            gap="$3"
-            padding="$4"
-          >
-            <Paragraph color="$color" fontSize={16} fontWeight="700">
-              {label ?? placeholder}
-            </Paragraph>
-            {searchable ? (
-              <XStack
-                alignItems="center"
-                backgroundColor="$backgroundHover"
-                borderColor="$borderColor"
-                borderRadius="$4"
-                borderWidth={1}
-                gap="$2"
-                paddingHorizontal="$3"
-              >
-                <Search color="$color9" size={18} />
-                <Input
-                  accessibilityLabel="Ara"
-                  autoCapitalize="none"
-                  backgroundColor="transparent"
-                  borderWidth={0}
-                  flex={1}
-                  fontSize={14}
-                  height={42}
-                  maxFontSizeMultiplier={MAX_FONT_SCALE}
-                  onChangeText={setQuery}
-                  paddingHorizontal={0}
-                  placeholder="Ara..."
-                  value={query}
+          <SheetBottomCover testID="app-select-sheet-bottom-cover" />
+
+          <SheetSwipeCloseArea onClose={close} testID="app-select-sheet-swipe-close">
+            <YStack
+              borderBottomColor="$borderColor"
+              borderBottomWidth={1}
+              gap="$3"
+              padding="$4"
+              paddingTop="$2"
+            >
+              <XStack alignItems="center" gap="$2" justifyContent="space-between">
+                <Paragraph color="$color" flex={1} fontSize={16} fontWeight="700" numberOfLines={1}>
+                  {title}
+                </Paragraph>
+                <Button
+                  accessibilityLabel={`${title} seçeneklerini kapat`}
+                  accessibilityRole="button"
+                  chromeless
+                  circular
+                  hitSlop={8}
+                  icon={<X color="$color11" size={22} />}
+                  onPress={close}
+                  padding={0}
+                  size="$3"
                 />
               </XStack>
-            ) : null}
-          </YStack>
+              {searchable ? (
+                <SearchField label={`${title} ara`} onChangeText={setQuery} value={query} />
+              ) : null}
+            </YStack>
+          </SheetSwipeCloseArea>
+
           <KeyboardAwareSheetScrollView
-            contentContainerStyle={{ padding: 8, paddingBottom: listBottomPadding }}
-            testID="app-select-options-scroll"
+            contentContainerStyle={{ paddingHorizontal: 8, paddingTop: 8 }}
+            onLayout={listHeight.onLayout}
+            style={listHeight.minHeight ? { minHeight: listHeight.minHeight } : undefined}
+            testID="app-select-keyboard-aware-scroll"
           >
             {filteredOptions.length === 0 ? (
               <Paragraph color="$color9" fontSize={14} padding="$4" textAlign="center">
@@ -253,7 +304,7 @@ export function AppSelect({
                   key={String(option.value)}
                   onPress={() => {
                     onValueChange(option.value);
-                    changeOpen(false);
+                    close();
                   }}
                   padding="$3"
                   pressStyle={{ backgroundColor: '$backgroundHover' }}

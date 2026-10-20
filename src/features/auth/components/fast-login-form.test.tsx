@@ -38,6 +38,37 @@ describe('FastLoginForm', () => {
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith('5321234567', false, 'phone', 60));
   });
 
+  it('requests the code from the keyboard submit key like the Devam Et button', async () => {
+    mockFastLoginInit.mockResolvedValueOnce({ is_new_user: true, remaining_seconds: 90 });
+    const { onSuccess } = renderForm();
+
+    const input = screen.getByLabelText('Telefon Numarası');
+    fireEvent.changeText(input, '0532 123 45 67');
+    fireEvent(input, 'submitEditing');
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledWith('5321234567', true, 'phone', 90));
+    expect(input.props.returnKeyType).toBe('done');
+  });
+
+  it('does not resend from the keyboard while the number is locked', async () => {
+    mockFastLoginInit.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        data: { message: LOCK_MESSAGE, remaining_attempts: 0, remaining_seconds: 235 },
+        status: 429,
+      },
+    });
+    renderForm();
+
+    const input = screen.getByLabelText('Telefon Numarası');
+    fireEvent.changeText(input, '0532 123 45 67');
+    fireEvent(input, 'submitEditing');
+    expect(await screen.findByText(LOCK_MESSAGE)).toBeTruthy();
+
+    fireEvent(input, 'submitEditing');
+    expect(mockFastLoginInit).toHaveBeenCalledTimes(1);
+  });
+
   it('shows a 429 lock message as-is and blocks that number until the window ends', async () => {
     mockFastLoginInit.mockRejectedValueOnce({
       isAxiosError: true,

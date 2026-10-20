@@ -16,9 +16,15 @@
  * `/s/[supplierCode]` rotasıdır; kod yol parametresi olarak gelir.
  */
 
+import { parseBestListingValue, type BestListingValue } from './best-listing';
+
 /** Ekranın durumunu başlatan sıralama/filtre seçimleri. */
 export type ProductListingFilters = {
   colors?: string;
+  /** Web `has_combination_product=1`: yalnız kombin ürünleri. */
+  hasCombinationProduct?: boolean;
+  /** Web `has_opportunity_package=1`: yalnız fırsat paketi ürünleri. */
+  hasOpportunityPackage?: boolean;
   maxPrice?: string;
   minPrice?: string;
   priceRange?: string;
@@ -30,6 +36,8 @@ export type ProductListingFilters = {
 
 /** Hangi listenin, hangi filtrelerle açılacağı. */
 export type ProductListingTarget = {
+  /** Popülerlik listesi (web `best`): En Çok Satılanlar / Ziyaret Edilenler / Favorilenenler. */
+  best?: BestListingValue;
   categoryId?: number;
   filters: ProductListingFilters;
   /** Web menü tabanlı liste sayfasının anahtarı (`menu_url`). */
@@ -57,6 +65,11 @@ function readCategoryId(value: string | string[] | undefined): number | undefine
   return Number.isSafeInteger(parsed) ? parsed : undefined;
 }
 
+/** Web özel ürün filtreleri yalnız `1` değeriyle açılır (`has_combination_product=1`). */
+function readFlag(value: string | string[] | undefined): boolean | undefined {
+  return readParam(value) === '1' ? true : undefined;
+}
+
 /**
  * Tedarikçi kodu web'deki gibi yalnızca rakamlardan oluşmalıdır
  * (`frontend/src/app/s/[supplierCode]/page.tsx`); aksi halde liste açılmaz.
@@ -68,12 +81,15 @@ export function parseSupplierCode(value: string | string[] | undefined): string 
 
 export function parseProductListingTarget(params: RawParams): ProductListingTarget {
   return {
+    best: parseBestListingValue(params.best),
     categoryId: readCategoryId(params.c),
     menuUrl: readParam(params.menu_url),
     searchQuery: readParam(params.q),
     supplierCode: parseSupplierCode(params.s),
     filters: {
       colors: readParam(params.colors),
+      hasCombinationProduct: readFlag(params.has_combination_product),
+      hasOpportunityPackage: readFlag(params.has_opportunity_package),
       maxPrice: readParam(params.max_price),
       minPrice: readParam(params.min_price),
       priceRange: readParam(params.price_range),
@@ -98,6 +114,7 @@ export function buildProductListingKey(
   return [
     slug ?? '',
     target.categoryId ?? '',
+    target.best ?? '',
     target.menuUrl ?? '',
     target.supplierCode ?? '',
     target.searchQuery ?? '',
@@ -109,5 +126,7 @@ export function buildProductListingKey(
     target.filters.maxPrice ?? '',
     target.filters.propertyIds ?? '',
     target.filters.productCategories ?? '',
+    target.filters.hasCombinationProduct ? 'kombin' : '',
+    target.filters.hasOpportunityPackage ? 'firsat' : '',
   ].join('|');
 }

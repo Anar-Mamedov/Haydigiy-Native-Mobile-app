@@ -18,6 +18,7 @@ import { PRODUCT_STICKY_FOOTER_SCROLL_PADDING } from '../components/product-stic
 import { extractProductCode } from '../utils/extract-product-code';
 import { getCarouselImageHeight } from '../utils/product-carousel-geometry';
 import { isProductCodeBadgeVisible } from '../utils/product-code-badge';
+import { parseBestListingValue } from '../utils/best-listing';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
 import { resolveVariantPricing } from '../utils/variant-price';
 import { useBundleController } from './use-bundle-controller';
@@ -49,14 +50,17 @@ export function useProductDetailController() {
     sellerName?: string;
     shippingLabel?: string;
     imageIndex?: string;
+    best?: string;
   }>();
 
   const idOrSlug = params.id ?? '';
+  // Popülerlik listesinden açıldıysa (web `best`), detay ve renk/benzer ürün geçişleri o listeyi taşır.
+  const best = parseBestListingValue(params.best);
   // Image index the list card was showing, so the carousel opens on the same one.
   const initialImageIndex = params.imageIndex ? Math.max(0, parseInt(params.imageIndex, 10) || 0) : 0;
 
   // Queries
-  const { data: product, error, isError, isPending, refetch } = useProductDetailsQuery(idOrSlug);
+  const { data: product, error, isError, isPending, refetch } = useProductDetailsQuery(idOrSlug, best);
   const addToCart = useAddToCartMutation();
   const goToCartAfterAdd = useGoToCartAfterAdd();
   const shippingQuery = useShippingEstimateQuery();
@@ -192,7 +196,7 @@ export function useProductDetailController() {
   // returns to the origin list) with preview params, so the target renders
   // instantly instead of showing a spinner until its detail request lands.
   const replaceWithPreview = (target: Pick<Product, 'id' | 'slug' | 'title' | 'price' | 'imageUrl'>) => {
-    router.replace(buildProductDetailRoute(target));
+    router.replace(buildProductDetailRoute(target, 0, { best }));
   };
 
   const handleColorSelect = (color: ProductColorOption) => {

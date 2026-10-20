@@ -24,6 +24,7 @@ import {
 } from '@/services/product.service';
 import { listPopularProductDtos } from '@/services/popular-products.service';
 import { Product } from '@/types/product.types';
+import type { BestListingValue } from '@/features/product/utils/best-listing';
 
 export function useFeaturedProductsQuery() {
   return useQuery({
@@ -109,9 +110,9 @@ export function usePopularProductsQuery(enabled = true) {
  * delayed the entire detail — including the variant selectors — by a full
  * round-trip even though reviews render far below the fold.)
  */
-export function useProductDetailsQuery(idOrSlug: string) {
+export function useProductDetailsQuery(idOrSlug: string, best?: BestListingValue) {
   const detailQuery = useQuery({
-    ...productDetailQueryOptions(idOrSlug),
+    ...productDetailQueryOptions(idOrSlug, best),
     enabled: Boolean(idOrSlug),
   });
 

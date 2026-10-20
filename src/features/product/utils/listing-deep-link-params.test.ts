@@ -51,6 +51,22 @@ describe('parseProductListingTarget', () => {
     });
   });
 
+  it('reads a supported popularity list and ignores unknown values', () => {
+    // https://haydigiy.com/kadin-buyuk-beden-elbise?c=40&best=sales
+    expect(parseProductListingTarget({ c: '40', best: 'sales' }).best).toBe('sales');
+    expect(parseProductListingTarget({ best: 'favorites' }).best).toBe('favorites');
+    expect(parseProductListingTarget({ best: 'reviews' }).best).toBeUndefined();
+  });
+
+  it('reads the Kombin and Fırsat product filters only when they are set to 1', () => {
+    expect(
+      parseProductListingTarget({ has_combination_product: '1', has_opportunity_package: '1' }).filters,
+    ).toEqual(expect.objectContaining({ hasCombinationProduct: true, hasOpportunityPackage: true }));
+    expect(
+      parseProductListingTarget({ has_combination_product: '0', has_opportunity_package: 'true' }).filters,
+    ).toEqual(expect.objectContaining({ hasCombinationProduct: undefined, hasOpportunityPackage: undefined }));
+  });
+
   it('accepts the API name for the product-category filter as a fallback', () => {
     expect(parseProductListingTarget({ product_categories: '11' }).filters.productCategories).toBe(
       '11',
@@ -125,6 +141,23 @@ describe('buildProductListingKey', () => {
     );
 
     expect(sorted).not.toBe(unsorted);
+  });
+
+  it('changes between two popularity lists of the same category', () => {
+    expect(buildProductListingKey('elbise', parseProductListingTarget({ c: '40', best: 'sales' }))).not.toBe(
+      buildProductListingKey('elbise', parseProductListingTarget({ c: '40', best: 'views' })),
+    );
+  });
+
+  it('changes when a Kombin or Fırsat filter link opens the same category', () => {
+    const plain = buildProductListingKey('elbise', parseProductListingTarget({ c: '40' }));
+
+    expect(
+      buildProductListingKey('elbise', parseProductListingTarget({ c: '40', has_combination_product: '1' })),
+    ).not.toBe(plain);
+    expect(
+      buildProductListingKey('elbise', parseProductListingTarget({ c: '40', has_opportunity_package: '1' })),
+    ).not.toBe(plain);
   });
 
   it('changes between two searches on the same route', () => {

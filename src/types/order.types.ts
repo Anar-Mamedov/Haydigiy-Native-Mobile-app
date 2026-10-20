@@ -139,6 +139,9 @@ export type OrderDetailItem = {
   returnStatusName?: string | null;
   /** Set only when the warehouse rejected this returned line. */
   returnRejection?: ReturnRejection | null;
+  /** Refund IBAN chosen for this return request and its holder; null when none. */
+  returnIban?: string | null;
+  returnIbanName?: string | null;
   // ---- Cancellation metadata (kind === 'cancelled') ----
   cancelledAt?: string | null;
 };

@@ -7,6 +7,7 @@ import { OrderDetailItem } from '@/types/order.types';
 import { describeReturnGroup, ReturnRequestGroup } from '../utils/return-groups';
 import { getReturnStatusDetails, getReturnStatusNameLabel } from '../utils/return-status';
 import { formatOrderPrice } from '../utils/order-status';
+import { ReturnIbanInfo } from './return-iban-info';
 import { ReturnStatusBar } from './return-status-bar';
 
 const THUMB_SIZE = 70;
@@ -224,6 +225,7 @@ export function ReturnRequestCard({
 
       <YStack gap="$3" padding="$3">
         <ReturnStatusBar status={group.statusCode} />
+        {group.refundIban ? <ReturnIbanInfo refundIban={group.refundIban} /> : null}
         <YStack gap="$3">
           {group.items.map((item, index) => (
             <ReturnedItemRow

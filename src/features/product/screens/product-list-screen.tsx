@@ -14,6 +14,7 @@ import { useInfiniteSearchProductsQuery } from '@/features/product/api/product.q
 import { useQuickFiltersQuery } from '@/features/product/api/quick-filter.queries';
 import { useStableCategoryOptions } from '@/features/product/hooks/use-stable-category-options';
 import { useSizeShortcutFilter } from '@/features/product/hooks/use-size-shortcut-filter';
+import { useProductListingFilters } from '@/features/product/hooks/use-product-listing-filters';
 import { useTrackListingPageView } from '@/features/insider/hooks/use-insider-page-tracking';
 import {
   useTrackAnalyticsCategoryView,
@@ -29,16 +30,24 @@ import { PRODUCT_FILTER_BAR_HEIGHT, ProductFilterBar } from '../components/produ
 import { ProductVideoModal } from '../components/product-video-modal';
 import { ProductListHeader } from '../components/product-list-header';
 import { SUBCATEGORY_STRIP_HEIGHT, SubcategoryStrip } from '../components/subcategory-strip';
+import { BEST_LISTING_TABS_HEIGHT, BestListingTabs } from '../components/best-listing-tabs';
+import { buildBestListingRoute, type BestListingValue } from '../utils/best-listing';
 import { resolveColorVariantTarget } from '../utils/color-variant-route';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
 import { ProductListingFilters } from '../utils/listing-deep-link-params';
 import { buildListingWebLocation } from '../utils/listing-web-location';
+import { getSpecialProductFilters } from '../utils/special-product-filters';
 import { MissingResourceRedirect } from '@/features/seo-redirect/components/missing-resource-redirect';
 import { isMissingResourceApiError } from '@/utils/api-error';
 import { formatSearchResultsHeading } from '@/utils/format-search-heading';
 
 interface ProductListScreenProps {
   slug: string;
+  /**
+   * Popülerlik listesi (web `best`): kısayol çiplerinin yerine üç liste çipi
+   * çıkar, ürünler o sıralamayla gelir ve detaya aynı liste taşınır.
+   */
+  best?: BestListingValue;
   categoryId?: number;
   searchQuery?: string;
   /** Tedarikçi listesi (web `/s/{kod}`); API'ye `s` olarak gider. */
@@ -57,6 +66,7 @@ const SCROLL_TO_TOP_THRESHOLD = 400;
 
 export function ProductListScreen({
   slug,
+  best,
   categoryId,
   searchQuery,
   supplierCode,
@@ -71,16 +81,8 @@ export function ProductListScreen({
   const cartCount = useCartCount();
 
   // Filters & Sorting state — derin bağlantı seçimleriyle başlar, sonra ekran yönetir.
-  const [sorting, setSorting] = useState(initialFilters?.sorting ?? '');
-  const [colors, setColors] = useState<string | undefined>(initialFilters?.colors);
-  const [variants, setVariants] = useState<string | undefined>(initialFilters?.variants);
-  const [priceRange, setPriceRange] = useState<string | undefined>(initialFilters?.priceRange);
-  const [minPrice, setMinPrice] = useState<string | undefined>(initialFilters?.minPrice);
-  const [maxPrice, setMaxPrice] = useState<string | undefined>(initialFilters?.maxPrice);
-  const [propertyIds, setPropertyIds] = useState<string | undefined>(initialFilters?.propertyIds);
-  const [productCategories, setProductCategories] = useState<string | undefined>(
-    initialFilters?.productCategories,
-  );
+  const listingFilters = useProductListingFilters(initialFilters);
+  const { sorting, setSorting, values: filterValues, activeFiltersCount } = listingFilters;
 
   // Overlay sheets open/close state
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -113,14 +115,9 @@ export function ProductListScreen({
     s: supplierCode,
     menu_url: menuUrl,
     q: searchQuery,
-    colors,
-    variants,
-    price_range: priceRange,
-    min_price: minPrice,
-    max_price: maxPrice,
+    best,
+    ...filterValues,
     sorting,
-    property_ids: propertyIds,
-    product_categories: productCategories,
   };
 
   const {
@@ -161,7 +158,11 @@ export function ProductListScreen({
     categoryDetails?.name,
   );
   useTrackAnalyticsSearch(searchQuery, firstPage?.pagination.total, !isPending);
-  const availableFilters = useStableCategoryOptions(firstPage?.availableFilters, Boolean(productCategories));
+  const availableFilters = useStableCategoryOptions(
+    firstPage?.availableFilters,
+    Boolean(filterValues.product_categories),
+  );
+  const specialFilters = getSpecialProductFilters(availableFilters, filterValues);
   const categoryFilterOptions =
     (availableFilters?.productCategories.length ?? 0) + (availableFilters?.categoryChildren.length ?? 0);
 
@@ -170,7 +171,11 @@ export function ProductListScreen({
   // enhancement: while loading or on error it simply stays hidden.
   const quickFiltersQuery = useQuickFiltersQuery(categoryId ?? categoryDetails?.id);
   const quickFilterGroups = quickFiltersQuery.data ?? [];
-  const sizeShortcuts = useSizeShortcutFilter(categoryId ?? categoryDetails?.id, variants, setVariants);
+  const sizeShortcuts = useSizeShortcutFilter(
+    categoryId ?? categoryDetails?.id,
+    filterValues.variants,
+    listingFilters.setVariants,
+  );
 
   // Kaldırılan ya da panelden yönlendirilen kategori: SEO kuralı varsa yeni
   // listeye, yoksa 404 ekranına gidilir.
@@ -178,14 +183,6 @@ export function ProductListScreen({
     const webLocation = buildListingWebLocation({ slug, categoryId, menuUrl, searchQuery });
     return <MissingResourceRedirect queryString={webLocation.queryString} webPath={webLocation.path} />;
   }
-
-  // Active filters count
-  const activeFiltersCount =
-    (colors ? colors.split(',').length : 0) +
-    (variants ? variants.split(',').length : 0) +
-    (propertyIds ? propertyIds.split(',').length : 0) +
-    (productCategories ? productCategories.split(',').length : 0) +
-    (priceRange ? 1 : 0);
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -204,63 +201,19 @@ export function ProductListScreen({
     router.push(`/kategori/${subcategory.slug}?c=${subcategory.id}` as any);
   };
 
-  const handleApplyFilters = (newFilters: {
-    colors?: string;
-    variants?: string;
-    price_range?: string;
-    min_price?: string;
-    max_price?: string;
-    property_ids?: string;
-    product_categories?: string;
-  }) => {
-    setColors(newFilters.colors);
-    setVariants(newFilters.variants);
-    setPriceRange(newFilters.price_range);
-    setMinPrice(newFilters.min_price);
-    setMaxPrice(newFilters.max_price);
-    setPropertyIds(newFilters.property_ids);
-    setProductCategories(newFilters.product_categories);
-  };
-
-  const handleApplyPartialFilters = (partialFilters: {
-    colors?: string;
-    variants?: string;
-    price_range?: string;
-    min_price?: string;
-    max_price?: string;
-    property_ids?: string;
-    product_categories?: string;
-  }) => {
-    handleApplyFilters({
-      colors,
-      variants,
-      price_range: priceRange,
-      min_price: minPrice,
-      max_price: maxPrice,
-      property_ids: propertyIds,
-      product_categories: productCategories,
-      ...partialFilters,
-    });
-  };
-
   const handleToggleQuickFilter = (section: FilterShortcutSection) => {
     setIsFilterOpen(false);
     setIsSortOpen(false);
     setQuickFilterSection((currentSection) => (currentSection === section ? null : section));
   };
 
-  const handleResetFilters = () => {
-    setColors(undefined);
-    setVariants(undefined);
-    setPriceRange(undefined);
-    setMinPrice(undefined);
-    setMaxPrice(undefined);
-    setPropertyIds(undefined);
-    setProductCategories(undefined);
+  const handleProductPress = (product: Product, imageIndex = 0) => {
+    router.push(buildProductDetailRoute(product, imageIndex, { best }));
   };
 
-  const handleProductPress = (product: Product, imageIndex = 0) => {
-    router.push(buildProductDetailRoute(product, imageIndex));
+  // Web gibi listeler arası geçiş yalnız kategori + best taşır; seçimler sıfırlanır.
+  const handleBestListingSelect = (value: BestListingValue) => {
+    router.replace(buildBestListingRoute(slug, categoryId ?? categoryDetails?.id, value) as any);
   };
 
   const handleVideoModalOpenChange = (open: boolean) => {
@@ -305,15 +258,17 @@ export function ProductListScreen({
       <ProductFilterBar
         activeFiltersCount={activeFiltersCount}
         categoryFilterOptions={categoryFilterOptions}
-        colors={colors}
+        colors={filterValues.colors}
+        hideShortcuts={Boolean(best)}
         isSortActive={Boolean(sorting)}
         openSection={quickFilterSection}
-        priceRange={priceRange}
-        productCategories={productCategories}
-        propertyIds={propertyIds}
+        priceRange={filterValues.price_range}
+        productCategories={filterValues.product_categories}
+        propertyIds={filterValues.property_ids}
         quickFilterGroups={quickFilterGroups}
         sizeShortcuts={sizeShortcuts}
-        variants={variants}
+        specialFilters={specialFilters}
+        variants={filterValues.variants}
         onFilterPress={() => {
           setQuickFilterSection(null);
           setIsFilterOpen(true);
@@ -323,24 +278,23 @@ export function ProductListScreen({
           setIsSortOpen(true);
         }}
         onToggleQuickFilter={handleToggleQuickFilter}
+        onToggleSpecialFilter={listingFilters.toggleSpecialFilter}
       />
 
+      {best ? <BestListingTabs onSelect={handleBestListingSelect} value={best} /> : null}
+
       <QuickFilterDropdown
-        activeFilters={{
-          colors,
-          max_price: maxPrice,
-          min_price: minPrice,
-          variants,
-          price_range: priceRange,
-          property_ids: propertyIds,
-          product_categories: productCategories,
-        }}
+        activeFilters={filterValues}
         availableFilters={availableFilters}
-        onChange={handleApplyPartialFilters}
+        onChange={listingFilters.applyPartialFilters}
         onClose={() => setQuickFilterSection(null)}
         quickFilterGroups={quickFilterGroups}
         section={quickFilterSection}
-        topOffset={PRODUCT_FILTER_BAR_HEIGHT + (subcategories.length > 0 ? SUBCATEGORY_STRIP_HEIGHT : 0)}
+        topOffset={
+          PRODUCT_FILTER_BAR_HEIGHT +
+          (subcategories.length > 0 ? SUBCATEGORY_STRIP_HEIGHT : 0) +
+          (best ? BEST_LISTING_TABS_HEIGHT : 0)
+        }
       />
 
       {/* Initial Page Loading state */}
@@ -408,7 +362,7 @@ export function ProductListScreen({
                     ? 'Seçtiğiniz filtre değerlerine uygun ürün bulunamadı. Filtreleri sıfırlayarak tekrar deneyebilirsiniz.'
                     : 'Bu kategoride henüz sergilenecek ürün bulunmamaktadır.'
                 }
-                onActionPress={activeFiltersCount > 0 ? handleResetFilters : undefined}
+                onActionPress={activeFiltersCount > 0 ? listingFilters.resetFilters : undefined}
                 title="Ürün Bulunamadı"
               />
             }
@@ -451,8 +405,8 @@ export function ProductListScreen({
         open={isFilterOpen}
         onOpenChange={setIsFilterOpen}
         availableFilters={availableFilters}
-        activeFilters={filters}
-        onApply={handleApplyFilters}
+        activeFilters={filterValues}
+        onApply={listingFilters.applyFilters}
       />
 
       {/* Color Variants Sheet */}

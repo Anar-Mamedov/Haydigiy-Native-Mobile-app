@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ScrollView, Spinner, YStack } from 'tamagui';
 import { AppScreen, ConfirmDialog, EmptyState } from '@/components/ui';
-import { CartBanner } from '@/features/cart/components/cart-banner';
 import { CartHeader } from '@/features/cart/components/cart-header';
 import { CartItemCard } from '@/features/cart/components/cart-item-card';
 import { CartRemoveItemDialog } from '@/features/cart/components/cart-remove-item-dialog';
@@ -82,7 +81,6 @@ export function CartScreen() {
     return (
       <AppScreen gap={0} header={header} padding={0} scrollable={false}>
         <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 16 }}>
-          <CartBanner />
           <YStack flex={1} justifyContent="center">
             <EmptyState
               actionLabel="Alışverişe Başla"
@@ -105,7 +103,6 @@ export function CartScreen() {
           contentContainerStyle={{ padding: 12, gap: 12 }}
           showsVerticalScrollIndicator={false}
         >
-          <CartBanner />
           <ShippingEstimateInfo estimate={controller.shippingEstimate} />
           <FreeShippingCampaignCard campaigns={controller.campaigns} subtotal={controller.subtotal} />
 

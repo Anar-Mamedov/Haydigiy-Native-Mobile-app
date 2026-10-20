@@ -1,13 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable } from 'react-native';
-import { Sheet, XStack, YStack, ScrollView, Button, Input } from 'tamagui';
+import { Sheet, XStack, YStack, Button } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { AppInput } from '@/components/ui/app-input';
 import { ChevronDown, ChevronRight, Search, X } from '@/components/ui/icons';
 import { FilterProperty, ProductAvailableFilters } from '@/types/product.types';
 import { CategoryFilterTree } from './category-filter-tree';
 import { FilterCheckbox } from '@/components/ui/filter-checkbox';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
-import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
+import { KeyboardAwareSheetScrollView } from '@/components/ui/keyboard-aware-sheet-scroll-view';
+import { SheetBottomCover } from '@/components/ui/sheet-bottom-cover';
+import { SheetSwipeCloseArea } from '@/components/ui/sheet-swipe-close-area';
+import { useFitSheetMaxHeight } from '@/components/ui/use-fit-sheet-max-height';
+import { getSpecialProductFilters, type SpecialFilterValues } from '../utils/special-product-filters';
 
 export type FilterShortcutSection =
   | 'categories'
@@ -17,7 +22,7 @@ export type FilterShortcutSection =
   | `property:${string}`
   | `quick:${string}`;
 
-type ActiveFilters = {
+type ActiveFilters = SpecialFilterValues & {
   colors?: string;
   variants?: string;
   price_range?: string;
@@ -26,6 +31,9 @@ type ActiveFilters = {
   property_ids?: string;
   product_categories?: string;
 };
+
+/** Sheet'teki satırlar: çubuktaki kısayollar + yalnız sheet'te duran "Ürün Tipi". */
+type FilterSheetSection = FilterShortcutSection | 'product-type';
 
 interface FilterSheetProps {
   open: boolean;
@@ -36,7 +44,7 @@ interface FilterSheetProps {
 }
 
 type FilterRow = {
-  key: FilterShortcutSection;
+  key: FilterSheetSection;
   label: string;
 };
 
@@ -65,10 +73,14 @@ function getPropertyGroups(availableFilters: ProductAvailableFilters | undefined
   return Array.from(groups, ([key, label]) => ({ key, label }));
 }
 
-function buildFilterRows(availableFilters: ProductAvailableFilters | undefined): FilterRow[] {
+function buildFilterRows(availableFilters: ProductAvailableFilters | undefined, activeFilters: ActiveFilters): FilterRow[] {
   const rows: FilterRow[] = [];
   if (availableFilters?.productCategories.length || availableFilters?.categoryChildren.length) {
     rows.push({ key: 'categories', label: 'Kategoriler' });
+  }
+  // Web paritesi: Kombin/Fırsat ürünleri "Ürün Tipi" başlığında, bedenden önce.
+  if (getSpecialProductFilters(availableFilters, activeFilters).length > 0) {
+    rows.push({ key: 'product-type', label: 'Ürün Tipi' });
   }
   if (availableFilters?.variants.length) rows.push({ key: 'variants', label: 'Beden' });
   if (availableFilters?.colors.length) rows.push({ key: 'colors', label: 'Renk' });
@@ -85,28 +97,34 @@ function hasActiveFilters(activeFilters: ActiveFilters) {
       activeFilters.min_price ||
       activeFilters.max_price ||
       activeFilters.property_ids ||
-      activeFilters.product_categories,
+      activeFilters.product_categories ||
+      activeFilters.has_combination_product ||
+      activeFilters.has_opportunity_package,
   );
 }
 
-function SearchField({ onChangeText, placeholder, value }: { onChangeText: (value: string) => void; placeholder: string; value: string }) {
+/** Bölüm araması: görünür etiket yok (placeholder + ikon yeterli), `AppInput` erişilebilir etiketi taşır. */
+function SearchField({ label, onChangeText, value }: { label: string; onChangeText: (value: string) => void; value: string }) {
   return (
-    <XStack alignItems="center" backgroundColor="$backgroundHover" borderColor="$borderColor" borderRadius={5} borderWidth={1} height={40} paddingHorizontal={10}>
-      <Search color="$color9" size={16} />
-      <Input
-        flex={1}
-        backgroundColor="transparent"
-        borderWidth={0}
-        maxFontSizeMultiplier={MAX_FONT_SCALE}
-        paddingLeft={10}
-        fontSize={14}
+    <YStack>
+      <AppInput
+        backgroundColor="$backgroundHover"
+        borderRadius={5}
         color="$color"
-        placeholderTextColor="$color9"
+        fontSize={14}
+        height={40}
+        hideVisibleLabel
+        label={label}
         onChangeText={onChangeText}
-        placeholder={placeholder}
+        paddingLeft={36}
+        placeholder={label}
+        placeholderTextColor="$color9"
         value={value}
       />
-    </XStack>
+      <XStack alignItems="center" bottom={0} left={11} pointerEvents="none" position="absolute" top={0}>
+        <Search color="$color9" size={16} />
+      </XStack>
+    </YStack>
   );
 }
 
@@ -132,9 +150,10 @@ function SectionFooter({ onClear, onClose }: { onClear: () => void; onClose: () 
 }
 
 export function FilterSheet({ open, onOpenChange, availableFilters, activeFilters, onApply }: FilterSheetProps) {
-  const rows = buildFilterRows(availableFilters);
+  const maxHeight = useFitSheetMaxHeight();
+  const rows = buildFilterRows(availableFilters, activeFilters);
   const canReset = hasActiveFilters(activeFilters);
-  const [expandedSections, setExpandedSections] = useState<FilterShortcutSection[]>([]);
+  const [expandedSections, setExpandedSections] = useState<FilterSheetSection[]>([]);
   const [searchBySection, setSearchBySection] = useState<Record<string, string>>({});
 
   const colorIds = useMemo(() => parseIdList(activeFilters.colors), [activeFilters.colors]);
@@ -142,21 +161,35 @@ export function FilterSheet({ open, onOpenChange, availableFilters, activeFilter
   const categoryIds = useMemo(() => parseIdList(activeFilters.product_categories), [activeFilters.product_categories]);
   const propertyIds = useMemo(() => parseIdList(activeFilters.property_ids), [activeFilters.property_ids]);
 
-  useEffect(() => {
+  // Her açılış kapalı bölümler ve boş aramalarla başlar; prop değişince state render sırasında
+  // sıfırlanır (React "You Might Not Need an Effect"), effect'teki setState ek render yaratıyordu.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setExpandedSections([]);
       setSearchBySection({});
     }
-  }, [open]);
+  }
 
   const applyPartial = (partialFilters: ActiveFilters) => onApply({ ...activeFilters, ...partialFilters });
-  const toggleSection = (section: FilterShortcutSection) => {
+  const toggleSection = (section: FilterSheetSection) => {
     setExpandedSections((current) => (current.includes(section) ? current.filter((item) => item !== section) : [...current, section]));
   };
   const setSearch = (section: string, value: string) => setSearchBySection((current) => ({ ...current, [section]: value }));
 
   const handleReset = () => {
-    onApply({ colors: undefined, variants: undefined, price_range: undefined, min_price: undefined, max_price: undefined, property_ids: undefined, product_categories: undefined });
+    onApply({
+      colors: undefined,
+      variants: undefined,
+      price_range: undefined,
+      min_price: undefined,
+      max_price: undefined,
+      property_ids: undefined,
+      product_categories: undefined,
+      has_combination_product: undefined,
+      has_opportunity_package: undefined,
+    });
     onOpenChange(false);
   };
 
@@ -183,11 +216,33 @@ export function FilterSheet({ open, onOpenChange, availableFilters, activeFilter
       );
     }
 
+    if (row.key === 'product-type') {
+      const specialFilters = getSpecialProductFilters(availableFilters, activeFilters);
+      return (
+        <YStack>
+          <YStack gap={6} paddingHorizontal={28} paddingVertical={12}>
+            {specialFilters.map((filter) => (
+              <Pressable
+                accessibilityLabel={filter.label}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: filter.isActive }}
+                key={filter.key}
+                onPress={() => applyPartial({ [filter.key]: filter.isActive ? undefined : '1' })}
+              >
+                <XStack alignItems="center" gap={12} height={38}><FilterCheckbox checked={filter.isActive} size={22} /><Paragraph color="$color10" fontSize={14}>{filter.label}</Paragraph></XStack>
+              </Pressable>
+            ))}
+          </YStack>
+          <SectionFooter onClear={() => applyPartial({ has_combination_product: undefined, has_opportunity_package: undefined })} onClose={() => onOpenChange(false)} />
+        </YStack>
+      );
+    }
+
     if (row.key === 'variants') {
       const variants = (availableFilters?.variants ?? []).filter((variant) => variant.name.toLowerCase().includes(search.toLowerCase()));
       return (
         <YStack>
-          <YStack padding={16}><SearchField onChangeText={(value) => setSearch(row.key, value)} placeholder="Beden Ara" value={search} /></YStack>
+          <YStack padding={16}><SearchField label="Beden Ara" onChangeText={(value) => setSearch(row.key, value)} value={search} /></YStack>
           <XStack flexWrap="wrap" paddingHorizontal={28} rowGap={18}>
             {variants.map((variant) => (
               <Pressable key={variant.id} onPress={() => applyPartial({ variants: stringifyIdList(toggleId(variantIds, variant.id)) })} style={{ width: '50%' }}>
@@ -204,7 +259,7 @@ export function FilterSheet({ open, onOpenChange, availableFilters, activeFilter
       const colors = (availableFilters?.colors ?? []).filter((color) => color.name.toLowerCase().includes(search.toLowerCase()));
       return (
         <YStack>
-          <YStack padding={16}><SearchField onChangeText={(value) => setSearch(row.key, value)} placeholder="Renk Ara" value={search} /></YStack>
+          <YStack padding={16}><SearchField label="Renk Ara" onChangeText={(value) => setSearch(row.key, value)} value={search} /></YStack>
           <XStack flexWrap="wrap" paddingHorizontal={28} rowGap={16}>
             {colors.map((color) => (
               <Pressable key={color.id} onPress={() => applyPartial({ colors: stringifyIdList(toggleId(colorIds, color.id)) })} style={{ width: '50%' }}>
@@ -225,7 +280,7 @@ export function FilterSheet({ open, onOpenChange, availableFilters, activeFilter
       const prices = (availableFilters?.priceRanges ?? []).map((price, index) => ({ ...price, value: String(index + 1) })).filter((price) => price.label.toLowerCase().includes(search.toLowerCase()));
       return (
         <YStack>
-          <YStack padding={16}><SearchField onChangeText={(value) => setSearch(row.key, value)} placeholder="Fiyat Ara" value={search} /></YStack>
+          <YStack padding={16}><SearchField label="Fiyat Ara" onChangeText={(value) => setSearch(row.key, value)} value={search} /></YStack>
           <YStack paddingHorizontal={18}>
             {prices.map((price) => {
               const checked = activeFilters.price_range === price.value;
@@ -245,7 +300,7 @@ export function FilterSheet({ open, onOpenChange, availableFilters, activeFilter
     const properties = (availableFilters?.properties ?? []).filter((property) => getPropertyGroupKey(property) === groupKey && property.name.toLowerCase().includes(search.toLowerCase()));
     return (
       <YStack>
-        <YStack padding={16}><SearchField onChangeText={(value) => setSearch(row.key, value)} placeholder={`${row.label} Ara`} value={search} /></YStack>
+        <YStack padding={16}><SearchField label={`${row.label} Ara`} onChangeText={(value) => setSearch(row.key, value)} value={search} /></YStack>
         <XStack flexWrap="wrap" paddingHorizontal={28} rowGap={16}>
           {properties.map((property) => (
             <Pressable key={property.id} onPress={() => applyPartial({ property_ids: stringifyIdList(toggleId(propertyIds, property.id)) })} style={{ width: '50%' }}>
@@ -259,17 +314,35 @@ export function FilterSheet({ open, onOpenChange, availableFilters, activeFilter
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} snapPoints={[70]} dismissOnSnapToBottom dismissOnOverlayPress modal>
+    // Arama alanları klavye açtığı için form sheet: içeriğe göre boy (fit) + klavyeyle yukarı kayma.
+    // Alt snap noktası (dismissOnSnapToBottom) klavye açılıp kapanırken sheet'i kapatabildiği için
+    // aşağı kaydırarak kapatma başlıktaki SheetSwipeCloseArea'dan gelir.
+    <Sheet dismissOnOverlayPress modal moveOnKeyboardChange onOpenChange={onOpenChange} open={open} snapPointsMode="fit">
       <AppSheetOverlay />
-      <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={12} borderTopRightRadius={12}>
-        <XStack alignItems="center" borderBottomColor="$borderColor" borderBottomWidth={1} justifyContent="space-between" paddingHorizontal={20} paddingVertical={18}>
-          <Paragraph fontSize={20} fontWeight="700" color="$color">Filtrele</Paragraph>
-          <Pressable accessibilityLabel="Filtreyi kapat" accessibilityRole="button" onPress={() => onOpenChange(false)} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}>
-            <X size={28} color="$color" />
-          </Pressable>
-        </XStack>
+      <Sheet.Frame
+        adjustPaddingForOffscreenContent
+        backgroundColor="$background"
+        borderBottomLeftRadius={0}
+        borderBottomRightRadius={0}
+        borderTopLeftRadius={12}
+        borderTopRightRadius={12}
+        maxHeight={maxHeight}
+        overflow="visible"
+        testID="filter-sheet-frame"
+      >
+        <SheetBottomCover testID="filter-sheet-bottom-cover" />
 
-        <ScrollView flex={1} showsVerticalScrollIndicator>
+        <SheetSwipeCloseArea onClose={() => onOpenChange(false)} testID="filter-sheet-swipe-close">
+          <XStack alignItems="center" borderBottomColor="$borderColor" borderBottomWidth={1} justifyContent="space-between" paddingBottom={18} paddingHorizontal={20} paddingTop={10}>
+            <Paragraph fontSize={20} fontWeight="700" color="$color">Filtrele</Paragraph>
+            <Pressable accessibilityLabel="Filtreyi kapat" accessibilityRole="button" onPress={() => onOpenChange(false)} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}>
+              <X size={28} color="$color" />
+            </Pressable>
+          </XStack>
+        </SheetSwipeCloseArea>
+
+        {/* Listenin altında sabit Temizle/Kapat şeridi var; sarmalayıcının alt güvenli alan boşluğu liste ile şerit arasında boş bant bırakmasın. */}
+        <KeyboardAwareSheetScrollView contentContainerStyle={{ paddingBottom: 0 }} showsVerticalScrollIndicator testID="filter-sheet-keyboard-aware-scroll">
           <YStack>
             {rows.map((row) => {
               const isExpanded = expandedSections.includes(row.key);
@@ -286,7 +359,7 @@ export function FilterSheet({ open, onOpenChange, availableFilters, activeFilter
               );
             })}
           </YStack>
-        </ScrollView>
+        </KeyboardAwareSheetScrollView>
 
         <XStack backgroundColor="$background" borderTopColor="$borderColor" borderTopWidth={1} gap={14} padding={20}>
           <Button accessibilityLabel="Filtreleri temizle" backgroundColor={canReset ? '$background' : '$backgroundHover'} borderColor="$borderColor" borderRadius={6} borderWidth={1} flex={1} height={56} onPress={handleReset}>

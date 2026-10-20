@@ -25,6 +25,11 @@ describe('buildProductDetailRoute', () => {
     expect(route.params.id).toBe('kimono-takim-bordo');
   });
 
+  it('carries the popularity list only when the product was opened from one', () => {
+    expect(buildProductDetailRoute(baseProduct, 0, { best: 'views' }).params).toMatchObject({ best: 'views' });
+    expect(buildProductDetailRoute(baseProduct).params).not.toHaveProperty('best');
+  });
+
   it('falls back to the id when the slug is missing', () => {
     const route = buildProductDetailRoute({ ...baseProduct, slug: '' });
 

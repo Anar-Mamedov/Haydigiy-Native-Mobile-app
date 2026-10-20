@@ -1,5 +1,6 @@
 import { ProductDto, SearchProductsResponseDto, SearchSuggestionsResponseDto } from '@/features/product/api/product.dtos';
 import { mockProductDtos } from '@/features/product/data/mock-product-dtos';
+import type { BestListingValue } from '@/features/product/utils/best-listing';
 import { apiClient } from '@/lib/axios';
 import { appEnv, getRequiredApiBaseUrl } from '@/lib/env';
 import { sleep } from '@/utils/sleep';
@@ -54,6 +55,12 @@ export interface SearchProductsParams {
   variants?: string;
   property_ids?: string;
   product_categories?: string;
+  /** Popülerlik listesi (web `best`): sales | views | favorites. */
+  best?: BestListingValue;
+  /** Yalnız kombin ürünleri (`1`); web `has_combination_product`. */
+  has_combination_product?: '1';
+  /** Yalnız fırsat paketi ürünleri (`1`); web `has_opportunity_package`. */
+  has_opportunity_package?: '1';
 }
 
 export async function searchProductDtos(params: SearchProductsParams): Promise<SearchProductsResponseDto> {
@@ -112,6 +119,9 @@ export async function searchProductDtos(params: SearchProductsParams): Promise<S
       variants: params.variants,
       property_ids: params.property_ids,
       product_categories: params.product_categories,
+      best: params.best,
+      has_combination_product: params.has_combination_product,
+      has_opportunity_package: params.has_opportunity_package,
     },
   });
 
@@ -192,7 +202,11 @@ export async function getCurrentSlugById(id: string): Promise<{ success: boolean
   return response.data;
 }
 
-export async function getProductDetailBySlug(slug: string): Promise<any> {
+/**
+ * Ürün detayı. Popülerlik listesinden açıldıysa `best` de gönderilir; API sıralama
+ * rozetini (`ranking_text` / `ranking_url`) o listeye göre döndürür (web paritesi).
+ */
+export async function getProductDetailBySlug(slug: string, best?: BestListingValue): Promise<any> {
   if (!appEnv.apiBaseUrl) {
     await sleep(150);
     const baseProduct = mockProductDtos.find((p) => p.slug === slug) || mockProductDtos[0];
@@ -324,7 +338,7 @@ export async function getProductDetailBySlug(slug: string): Promise<any> {
 
   getRequiredApiBaseUrl();
   const response = await apiClient.get<any>(`/product/${slug}`, {
-    params: { p: 1 }
+    params: { p: 1, best }
   });
   return response.data;
 }

@@ -10,11 +10,13 @@ import { ProductCodeBadge } from '../components/product-code-badge';
 import { PRODUCT_CODE_BADGE_OFFSET } from '../utils/product-code-badge';
 import { MissingResourceRedirect } from '@/features/seo-redirect/components/missing-resource-redirect';
 import { isMissingResourceApiError } from '@/utils/api-error';
+import { handleLinkPress } from '@/utils/link-handler';
 
 // Subcomponents
 import { ProductDetailHeader } from '../components/product-detail-header';
 import { ProductCarousel } from '../components/product-carousel';
 import { ProductInfo } from '../components/product-info';
+import { ProductRankingBadge } from '../components/product-ranking-badge';
 import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-estimate-info';
 import { ProductColorSelector } from '../components/product-color-selector';
 import { ProductSizeSelector } from '../components/product-size-selector';
@@ -130,6 +132,11 @@ export function ProductDetailScreen() {
             onReviewsPress={controller.openReviews}
             onQuestionsPress={controller.openQuestions}
           />
+
+          {/* Sıralama rozeti: ürünün sıralandığı popülerlik listesini açar (web kupa rozeti). */}
+          <YStack marginHorizontal="$4">
+            <ProductRankingBadge onPress={handleLinkPress} text={product?.rankingText} url={product?.rankingUrl} />
+          </YStack>
 
           {/* Delivery shipment box — driven by the /shipping-estimate API */}
           <YStack marginHorizontal="$4" marginVertical="$2">

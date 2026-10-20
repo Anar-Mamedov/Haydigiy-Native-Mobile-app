@@ -65,9 +65,9 @@ function parseSafely(value: any, fallback = 0): number {
 }
 
 /**
- * Backend'in `ranking_text` alanını normalize eder: boşluk kırpar, boş metni
- * "rozet yok" anlamına gelen `null` yapar. Böylece UI katmanı sadece dolu bir
- * metin ya da `null` görür.
+ * Backend'in `ranking_text` / `ranking_url` alanlarını normalize eder: boşluk
+ * kırpar, boş metni "rozet yok" anlamına gelen `null` yapar. Böylece UI katmanı
+ * sadece dolu bir metin ya da `null` görür.
  */
 function normalizeRankingText(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -189,6 +189,8 @@ export function mapAvailableFilters(dto: SearchProductsResponseDto['available_fi
     productCategories: (filters.product_categories ?? []).filter(hasVisibleMenuStatus).map(mapFilterCategory),
     categoryChildren: (filters.category_children ?? []).map(mapFilterCategory),
     useProductCategoryFilters: Boolean(filters.use_product_category_filters),
+    hasCombinationProduct: filters.has_combination_product === true,
+    hasOpportunityPackage: filters.has_opportunity_package === true,
   };
 }
 
@@ -339,6 +341,7 @@ export function mapSearchProductDto(dto: SearchProductDto): Product {
     videoPath: dto.video_path ? getImageUrl(dto.video_path) : null,
     featureIcons: featureIconsMapped,
     rankingText: normalizeRankingText(dto.ranking_text),
+    rankingUrl: normalizeRankingText(dto.ranking_url),
     // Paket ürün liste/favori kartında da tanınmalı: tek beden seçilerek sepete
     // eklenemez, kullanıcı beden seçimi için ürün detayına gider.
     isBundle: dto.is_bundle === true,
@@ -547,6 +550,7 @@ export function mapProductDetailDto(dto: any): Product {
     videoPath: dto.video_path ? getImageUrl(dto.video_path) : null,
     featureIcons: featureIconsMapped,
     rankingText: normalizeRankingText(dto.ranking_text),
+    rankingUrl: normalizeRankingText(dto.ranking_url),
     variants: variantsMapped,
     reviews: reviewsMapped,
     questions: questionsMapped,

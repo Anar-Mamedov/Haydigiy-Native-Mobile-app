@@ -7,6 +7,8 @@
  *   birleşir ve listenin sonuna eklenir; bu kartta iade kodu gösterilmez.
  * - Kalan ürünler `items` / `displayItems` üzerinden zaten listelenir; iade
  *   kayıtları o listeden hiçbir satırı düşürmez.
+ * - Talep henüz beklemedeyken (durum 1) geri ödeme IBAN'ı ve sahibi kartta
+ *   gösterilir (web `ReturnIbanInfo`).
  */
 
 import { OrderDetailItem } from '@/types/order.types';
@@ -17,6 +19,12 @@ import {
 } from './return-status';
 
 export const COMPLETED_RETURNS_GROUP_KEY = 'completed-returns';
+
+/** Beklemedeki talebin geri ödeme IBAN'ı; ikisinden biri dolu olabilir. */
+export type ReturnRefundIban = {
+  iban: string | null;
+  ibanName: string | null;
+};
 
 export type ReturnRequestGroup = {
   /** Liste anahtarı: talep id'si ya da birleştirilmiş tamamlananlar kartı. */
@@ -30,6 +38,8 @@ export type ReturnRequestGroup = {
   isCompleted: boolean;
   /** Beklemede ve henüz depoya ulaşmamış satır varsa talep iptal edilebilir. */
   cancellable: boolean;
+  /** Yalnızca beklemedeki talepte ve IBAN bilgisi geldiyse dolu. */
+  refundIban: ReturnRefundIban | null;
   items: OrderDetailItem[];
 };
 
@@ -53,6 +63,15 @@ function isCompletedRequest(items: OrderDetailItem[]): boolean {
   return items[0]?.returnStatusCode === RETURN_COMPLETED_STATUS;
 }
 
+/** Web paritesi: IBAN, talebin ilk satırından ve yalnızca durum 1 iken okunur. */
+function pendingRefundIban(first: OrderDetailItem): ReturnRefundIban | null {
+  if (!isPendingReturn(first.returnStatusCode)) return null;
+
+  const iban = first.returnIban?.trim() || null;
+  const ibanName = first.returnIbanName?.trim() || null;
+  return iban || ibanName ? { iban, ibanName } : null;
+}
+
 function toRequestGroup(items: OrderDetailItem[]): ReturnRequestGroup {
   const [first] = items;
   return {
@@ -65,6 +84,7 @@ function toRequestGroup(items: OrderDetailItem[]): ReturnRequestGroup {
     cancellable: items.some(
       (item) => isPendingReturn(item.returnStatusCode) && !item.returnReceivedAt,
     ),
+    refundIban: pendingRefundIban(first),
     items,
   };
 }
@@ -101,6 +121,7 @@ export function buildReturnRequestGroups(
       statusCode: RETURN_COMPLETED_STATUS,
       isCompleted: true,
       cancellable: false,
+      refundIban: null,
       items: completedItems,
     },
   ];

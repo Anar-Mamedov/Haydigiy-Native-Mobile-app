@@ -19,6 +19,7 @@ export default function CategoryRoute() {
   return (
     <ProductListScreen
       key={buildProductListingKey(slug, target)}
+      best={target.best}
       categoryId={target.categoryId}
       initialFilters={target.filters}
       menuUrl={target.menuUrl}

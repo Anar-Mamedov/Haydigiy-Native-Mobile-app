@@ -5,6 +5,7 @@ import {
   ArrowUpDown as LucideArrowUpDown,
   ArrowUpRight as LucideArrowUpRight,
   BadgeCheck as LucideBadgeCheck,
+  BadgePercent as LucideBadgePercent,
   Bell as LucideBell,
   Building2 as LucideBuilding2,
   Calculator as LucideCalculator,
@@ -72,6 +73,7 @@ import {
   ShoppingBag as LucideShoppingBag,
   ShoppingCart as LucideShoppingCart,
   SlidersHorizontal as LucideSlidersHorizontal,
+  Sparkles as LucideSparkles,
   Square as LucideSquare,
   SquareCheck as LucideSquareCheck,
   Star as LucideStar,
@@ -85,6 +87,7 @@ import {
   Trash2 as LucideTrash2,
   TrendingDown as LucideTrendingDown,
   TriangleAlert as LucideTriangleAlert,
+  Trophy as LucideTrophy,
   Truck as LucideTruck,
   Undo2 as LucideUndo2,
   User as LucideUser,
@@ -125,6 +128,7 @@ export const ArrowLeft = withFontScale(LucideArrowLeft);
 export const ArrowUpDown = withFontScale(LucideArrowUpDown);
 export const ArrowUpRight = withFontScale(LucideArrowUpRight);
 export const BadgeCheck = withFontScale(LucideBadgeCheck);
+export const BadgePercent = withFontScale(LucideBadgePercent);
 export const Bell = withFontScale(LucideBell);
 export const Building2 = withFontScale(LucideBuilding2);
 export const Calculator = withFontScale(LucideCalculator);
@@ -192,6 +196,7 @@ export const ShieldCheck = withFontScale(LucideShieldCheck);
 export const ShoppingBag = withFontScale(LucideShoppingBag);
 export const ShoppingCart = withFontScale(LucideShoppingCart);
 export const SlidersHorizontal = withFontScale(LucideSlidersHorizontal);
+export const Sparkles = withFontScale(LucideSparkles);
 export const Square = withFontScale(LucideSquare);
 export const SquareCheck = withFontScale(LucideSquareCheck);
 export const Star = withFontScale(LucideStar);
@@ -205,6 +210,7 @@ export const TicketPercent = withFontScale(LucideTicketPercent);
 export const Trash2 = withFontScale(LucideTrash2);
 export const TrendingDown = withFontScale(LucideTrendingDown);
 export const TriangleAlert = withFontScale(LucideTriangleAlert);
+export const Trophy = withFontScale(LucideTrophy);
 export const Truck = withFontScale(LucideTruck);
 export const Undo2 = withFontScale(LucideUndo2);
 export const User = withFontScale(LucideUser);

@@ -1,4 +1,5 @@
 import { Product } from '@/types/product.types';
+import type { BestListingValue } from './best-listing';
 
 /**
  * Fields required to open the product detail screen with an instant preview.
@@ -20,8 +21,15 @@ type ProductRouteSource = Pick<Product, 'id' | 'slug' | 'title' | 'price' | 'ima
  *
  * `imageIndex` is the image currently shown in the list card; it is forwarded so
  * the detail carousel opens on the same image (and the preview shows it too).
+ *
+ * `best` carries the popularity list the product was opened from (web
+ * `withBestListingValue`) so the detail's ranking badge matches that list.
  */
-export function buildProductDetailRoute(product: ProductRouteSource, imageIndex = 0) {
+export function buildProductDetailRoute(
+  product: ProductRouteSource,
+  imageIndex = 0,
+  context: { best?: BestListingValue } = {},
+) {
   const safeIndex = Number.isFinite(imageIndex) && imageIndex > 0 ? Math.floor(imageIndex) : 0;
   const previewImage = product.images?.[safeIndex] || product.imageUrl;
 
@@ -36,6 +44,7 @@ export function buildProductDetailRoute(product: ProductRouteSource, imageIndex 
       sellerName: product.sellerName,
       shippingLabel: product.shippingLabel ?? '',
       imageIndex: String(safeIndex),
+      ...(context.best ? { best: context.best } : {}),
     },
   };
 }

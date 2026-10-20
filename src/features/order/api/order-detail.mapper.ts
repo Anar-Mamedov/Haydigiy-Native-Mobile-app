@@ -93,6 +93,8 @@ function mapReturnedItem(dto: ReturnedItemDetailDto): OrderDetailItem {
     returnStatusCode: normalizeReturnStatus(dto.status),
     returnStatusName: dto.status_name ?? null,
     returnRejection: mapReturnRejection(dto.rejection),
+    returnIban: dto.iban?.trim() || null,
+    returnIbanName: dto.iban_name?.trim() || null,
   };
 }
 

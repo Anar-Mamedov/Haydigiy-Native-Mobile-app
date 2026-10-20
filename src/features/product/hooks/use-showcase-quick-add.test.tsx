@@ -77,7 +77,7 @@ describe('useShowcaseQuickAdd', () => {
     expect(result.current.pricing?.price).toBe(219.99);
 
     await waitFor(() => expect(result.current.isLoadingVariants).toBe(false));
-    expect(getProductDetailBySlugMock).toHaveBeenCalledWith('dabil-bagcikli-pantolon');
+    expect(getProductDetailBySlugMock).toHaveBeenCalledWith('dabil-bagcikli-pantolon', undefined);
     expect(result.current.detail?.variants).toEqual([SIZE_M]);
   });
 

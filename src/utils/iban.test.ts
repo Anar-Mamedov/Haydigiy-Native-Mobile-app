@@ -1,4 +1,5 @@
 import {
+  formatIbanForDisplay,
   formatIbanInput,
   getIbanDigits,
   isValidIban,
@@ -17,6 +18,13 @@ describe('formatIbanInput', () => {
   it('groups into blocks of four with the TR prefix', () => {
     expect(formatIbanInput('1234567890')).toBe('TR12 3456 7890');
     expect(formatIbanInput('')).toBe('TR');
+  });
+});
+
+describe('formatIbanForDisplay', () => {
+  it('groups a backend IBAN into blocks of four', () => {
+    expect(formatIbanForDisplay('TR120006200000000123456789')).toBe('TR12 0006 2000 0000 0123 4567 89');
+    expect(formatIbanForDisplay(' tr12 0006 2000 ')).toBe('TR12 0006 2000');
   });
 });
 

@@ -1,6 +1,7 @@
-import { Keyboard, StyleSheet } from 'react-native';
-import { fireEvent, screen } from '@testing-library/react-native';
+import { Dimensions, Keyboard, StyleSheet, TextInput } from 'react-native';
+import { fireEvent, screen, within } from '@testing-library/react-native';
 import { AppSelect } from './app-select';
+import { getFitSheetMaxHeight } from '@/components/ui/use-fit-sheet-max-height';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
 jest.mock('tamagui', () => {
@@ -69,38 +70,192 @@ describe('AppSelect', () => {
     expect(Keyboard.dismiss).not.toHaveBeenCalled();
   });
 
-  it('keeps the last option above the system navigation bar (safe-area padding + inset in height)', () => {
+  it('keeps the last option above the system navigation bar via the shared safe-area padding', () => {
     renderWithTamagui(
       <AppSelect label="İade IBAN'ı" onValueChange={jest.fn()} options={OPTIONS} placeholder="Seçiniz" />,
     );
 
     fireEvent.press(screen.getByLabelText('İade IBAN\'ı'));
 
-    // Mocked safe-area bottom inset is 20 → list padding 20 + 16 = 36.
-    const scroll = screen.getByTestId('app-select-options-scroll');
-    expect(StyleSheet.flatten(scroll.props.contentContainerStyle)?.paddingBottom).toBe(36);
-
-    // header 64 + 2 rows * 50 + 8 list top + 36 bottom = 208.
-    expect(screen.getByTestId('app-select-sheet').props.snapPoints).toEqual([208]);
+    // Mocked safe-area bottom inset is 20 → the keyboard-aware wrapper pads the list by 20.
+    const scroll = screen.getByTestId('app-select-keyboard-aware-scroll');
+    expect(StyleSheet.flatten(scroll.props.contentContainerStyle)?.paddingBottom).toBe(20);
   });
 
-  it('keeps the searchable options sheet keyboard-aware (bottom-sheet form standard)', () => {
+  describe('options sheet (keyboard-aware form sheet standard)', () => {
+    // Regression: the searchable sheet combined dismissOnSnapToBottom with moveOnKeyboardChange
+    // and an estimated constant snap point, so keyboard show/hide could dismiss it.
+    function openSearchableSelect() {
+      renderWithTamagui(
+        <AppSelect label="İl" onValueChange={jest.fn()} options={OPTIONS} placeholder="Seçiniz" searchable />,
+      );
+      fireEvent.press(screen.getByLabelText('İl'));
+    }
+
+    it('moves with the keyboard, fits its content and has no bottom snap point', () => {
+      openSearchableSelect();
+
+      const sheet = screen.getByTestId('app-select-sheet');
+      expect(sheet.props.moveOnKeyboardChange).toBe(true);
+      expect(sheet.props.snapPointsMode).toBe('fit');
+      expect(sheet.props.snapPoints).toBeUndefined();
+      expect(sheet.props.dismissOnSnapToBottom).toBeUndefined();
+      expect(sheet.props.dismissOnOverlayPress).toBe(true);
+    });
+
+    it('bounds the fitted frame and covers the strip below it', () => {
+      openSearchableSelect();
+
+      const frame = screen.getByTestId('app-select-sheet-frame');
+      expect(frame.props.maxHeight).toBe(getFitSheetMaxHeight(Dimensions.get('window').height, 40));
+      expect(frame.props.adjustPaddingForOffscreenContent).toBe(true);
+      expect(frame.props.overflow).toBe('visible');
+      expect(screen.getByTestId('app-select-sheet-bottom-cover')).toBeTruthy();
+    });
+
+    it('renders the options through the keyboard-aware scroller without bounce/overscroll', () => {
+      openSearchableSelect();
+
+      const scroll = screen.getByTestId('app-select-keyboard-aware-scroll');
+      expect(within(scroll).getByLabelText('Ay')).toBeTruthy();
+      expect(scroll.props.keyboardShouldPersistTaps).toBe('handled');
+      expect(scroll.props.bounces).toBe(false);
+      expect(scroll.props.alwaysBounceVertical).toBe(false);
+      expect(scroll.props.overScrollMode).toBe('never');
+    });
+
+    it('keeps the title, close control and search field pinned outside the scroller', () => {
+      openSearchableSelect();
+
+      const scroll = screen.getByTestId('app-select-keyboard-aware-scroll');
+      const header = screen.getByTestId('app-select-sheet-swipe-close');
+      expect(within(header).getByText('İl')).toBeTruthy();
+      expect(within(header).getByLabelText('İl seçeneklerini kapat')).toBeTruthy();
+      expect(within(header).getByLabelText('İl ara')).toBeTruthy();
+      expect(within(scroll).queryByLabelText('İl ara')).toBeNull();
+    });
+
+    it('gives every input an accessible label', () => {
+      openSearchableSelect();
+
+      const inputs = screen.UNSAFE_getAllByType(TextInput);
+      expect(inputs).toHaveLength(1);
+      expect(inputs[0].props.accessibilityLabel).toBe('İl ara');
+      expect(inputs[0].props.placeholder).toBe('Ara...');
+    });
+
+    it('closes through the explicit close control and resets the search', () => {
+      openSearchableSelect();
+
+      fireEvent.changeText(screen.getByLabelText('İl ara'), 'zzz');
+      fireEvent.press(screen.getByLabelText('İl seçeneklerini kapat'));
+      expect(screen.queryByTestId('app-select-sheet')).toBeNull();
+
+      fireEvent.press(screen.getByLabelText('İl'));
+      expect(screen.getByLabelText('İl ara').props.value).toBe('');
+      expect(screen.getByLabelText('Yil')).toBeTruthy();
+    });
+
+    it('keeps the header controls and options readable in dark mode', () => {
+      renderWithTamagui(
+        <AppSelect label="İl" onValueChange={jest.fn()} options={OPTIONS} placeholder="Seçiniz" searchable />,
+        'dark',
+      );
+      fireEvent.press(screen.getByLabelText('İl'));
+
+      expect(screen.getByLabelText('İl seçeneklerini kapat')).toBeTruthy();
+      expect(screen.getByLabelText('İl ara')).toBeTruthy();
+      expect(screen.getByLabelText('Ay')).toBeTruthy();
+      expect(screen.getByLabelText('Yil')).toBeTruthy();
+    });
+
+    it('closes when the header is swiped down', () => {
+      openSearchableSelect();
+
+      const header = screen.getByTestId('app-select-sheet-swipe-close');
+      fireEvent(header, 'touchStart', { nativeEvent: { pageY: 100, timestamp: 0 } });
+      fireEvent(header, 'touchEnd', { nativeEvent: { pageY: 300, timestamp: 400 } });
+
+      expect(screen.queryByTestId('app-select-sheet')).toBeNull();
+    });
+  });
+
+  describe('search', () => {
+    function openSearchableSelect(onValueChange = jest.fn()) {
+      renderWithTamagui(
+        <AppSelect label="İl" onValueChange={onValueChange} options={OPTIONS} placeholder="Seçiniz" searchable />,
+      );
+      fireEvent.press(screen.getByLabelText('İl'));
+    }
+
+    it('filters the options by the query', () => {
+      openSearchableSelect();
+
+      fireEvent.changeText(screen.getByLabelText('İl ara'), 'yi');
+
+      expect(screen.getByLabelText('Yil')).toBeTruthy();
+      expect(screen.queryByLabelText('Ay')).toBeNull();
+    });
+
+    it('shows "Sonuç bulunamadı" when nothing matches', () => {
+      openSearchableSelect();
+
+      fireEvent.changeText(screen.getByLabelText('İl ara'), 'zzz');
+
+      expect(screen.getByText('Sonuç bulunamadı')).toBeTruthy();
+    });
+
+    it('selects a filtered option and closes the sheet', () => {
+      const onValueChange = jest.fn();
+      openSearchableSelect(onValueChange);
+
+      fireEvent.changeText(screen.getByLabelText('İl ara'), 'yi');
+      fireEvent.press(screen.getByLabelText('Yil'));
+
+      expect(onValueChange).toHaveBeenCalledWith('26');
+      expect(screen.queryByTestId('app-select-sheet')).toBeNull();
+    });
+
+    it('keeps the list at its opening height while results shrink', () => {
+      openSearchableSelect();
+
+      const scroll = () => screen.getByTestId('app-select-keyboard-aware-scroll');
+      fireEvent(scroll(), 'layout', { nativeEvent: { layout: { height: 320 } } });
+      fireEvent.changeText(screen.getByLabelText('İl ara'), 'yi');
+      fireEvent(scroll(), 'layout', { nativeEvent: { layout: { height: 60 } } });
+
+      expect(StyleSheet.flatten(scroll().props.style)?.minHeight).toBe(320);
+    });
+
+    it('measures the list again on the next opening', () => {
+      openSearchableSelect();
+
+      fireEvent(screen.getByTestId('app-select-keyboard-aware-scroll'), 'layout', {
+        nativeEvent: { layout: { height: 320 } },
+      });
+      fireEvent.press(screen.getByLabelText('İl seçeneklerini kapat'));
+      fireEvent.press(screen.getByLabelText('İl'));
+
+      const style = StyleSheet.flatten(screen.getByTestId('app-select-keyboard-aware-scroll').props.style);
+      expect(style?.minHeight).toBeUndefined();
+    });
+  });
+
+  it('does not offer a search field or lock the list height for a plain select', () => {
     renderWithTamagui(
-      <AppSelect label="İl" onValueChange={jest.fn()} options={OPTIONS} placeholder="Seçiniz" searchable />,
+      <AppSelect label="Ay" onValueChange={jest.fn()} options={OPTIONS} placeholder="Ay" />,
     );
 
-    fireEvent.press(screen.getByLabelText('İl'));
+    fireEvent.press(screen.getByLabelText('Ay'));
+    const scroll = screen.getByTestId('app-select-keyboard-aware-scroll');
+    fireEvent(scroll, 'layout', { nativeEvent: { layout: { height: 320 } } });
 
-    expect(screen.getByTestId('app-select-sheet').props.moveOnKeyboardChange).toBe(true);
-
-    const scroll = screen.getByTestId('app-select-options-scroll');
-    expect(scroll.props.keyboardShouldPersistTaps).toBe('handled');
-    expect(scroll.props.bounces).toBe(false);
-    expect(scroll.props.alwaysBounceVertical).toBe(false);
-    expect(scroll.props.overScrollMode).toBe('never');
+    expect(screen.UNSAFE_queryAllByType(TextInput)).toHaveLength(0);
+    const style = StyleSheet.flatten(screen.getByTestId('app-select-keyboard-aware-scroll').props.style);
+    expect(style?.minHeight).toBeUndefined();
   });
 
-  it('renders description rows as two fixed single lines and sizes the sheet deterministically', () => {
+  it('renders description rows as two fixed single lines', () => {
     const ibanOptions = [
       { description: 'TR050006400000119006679431', label: 'bekir can akdemir', value: 'iban-1' },
       { label: 'Kısa Etiket', value: 'iban-2' },
@@ -116,9 +271,6 @@ describe('AppSelect', () => {
     // so the height never depends on the device's text wrapping.
     expect(screen.getByText('bekir can akdemir').props.numberOfLines).toBe(1);
     expect(screen.getByText('TR050006400000119006679431').props.numberOfLines).toBe(1);
-
-    // header 64 + one 68pt two-line row + one 50pt row + 8 top + 36 bottom = 226.
-    expect(screen.getByTestId('app-select-sheet').props.snapPoints).toEqual([226]);
   });
 
   it('shows "label - description" in the closed field for the selected option', () => {

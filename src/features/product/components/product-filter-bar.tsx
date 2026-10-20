@@ -1,8 +1,9 @@
 import { ScrollView } from 'react-native';
 import { XStack, YStack } from 'tamagui';
-import { ArrowUpDown, SlidersHorizontal } from '@/components/ui/icons';
+import { ArrowUpDown, BadgePercent, SlidersHorizontal, Sparkles } from '@/components/ui/icons';
 import { QuickFilterGroup } from '@/types/product.types';
 import type { SizeShortcutFilter } from '../hooks/use-size-shortcut-filter';
+import type { SpecialProductFilter, SpecialProductFilterKey } from '../utils/special-product-filters';
 import { FILTER_PILL_TOUCH_HEIGHT, FilterPill } from './filter-pill';
 import { FilterShortcutSection } from './filter-sheet';
 
@@ -10,6 +11,8 @@ interface ProductFilterBarProps {
   activeFiltersCount: number;
   categoryFilterOptions: number;
   colors: string | undefined;
+  /** "En Çok Satılanlar" gibi popülerlik listelerinde (web `best`) kısayol çipleri gizlenir. */
+  hideShortcuts?: boolean;
   /** Varsayılan sıralama dışında bir seçim yapıldıysa Sırala çipi vurgulanır. */
   isSortActive: boolean;
   openSection: FilterShortcutSection | null;
@@ -19,11 +22,19 @@ interface ProductFilterBarProps {
   quickFilterGroups: QuickFilterGroup[];
   /** Kategoriye tanımlı beden kısayolları (ör. Beden İndirimli Ürünler: S, M, L, XL); yoksa çizilmez. */
   sizeShortcuts?: SizeShortcutFilter;
+  /** Liste sunuyorsa Kombin / Fırsat Ürünleri çipleri; dokununca filtre açılır ya da kapanır. */
+  specialFilters?: SpecialProductFilter[];
   variants: string | undefined;
   onFilterPress: () => void;
   onSortPress: () => void;
   onToggleQuickFilter: (section: FilterShortcutSection) => void;
+  onToggleSpecialFilter?: (key: SpecialProductFilterKey) => void;
 }
+
+const SPECIAL_FILTER_ICONS: Record<SpecialProductFilterKey, typeof Sparkles> = {
+  has_combination_product: Sparkles,
+  has_opportunity_package: BadgePercent,
+};
 
 /** Çipin 48dp dokunma alanı dikey boşluğun çoğunu kendisi taşır; çubuk yüksekliği (53) değişmez. */
 const BAR_VERTICAL_PADDING = 2;
@@ -49,6 +60,7 @@ export function ProductFilterBar({
   activeFiltersCount,
   categoryFilterOptions,
   colors,
+  hideShortcuts = false,
   isSortActive,
   openSection,
   priceRange,
@@ -56,10 +68,12 @@ export function ProductFilterBar({
   propertyIds,
   quickFilterGroups,
   sizeShortcuts,
+  specialFilters = [],
   variants,
   onFilterPress,
   onSortPress,
   onToggleQuickFilter,
+  onToggleSpecialFilter,
 }: ProductFilterBarProps) {
   const selectedPropertyIds = parsePropertyIds(propertyIds);
 
@@ -104,62 +118,82 @@ export function ProductFilterBar({
           showChevron={false}
         />
 
-        {/* Ayırıcı: sheet açan iki çipi, satır içi açılan filtre çiplerinden ayırır. */}
-        <XStack backgroundColor="$borderColor" height={20} width={1} />
+        {hideShortcuts ? null : (
+          <>
+            {/* Ayırıcı: sheet açan iki çipi, satır içi açılan filtre çiplerinden ayırır. */}
+            <XStack backgroundColor="$borderColor" height={20} width={1} />
 
-        {categoryFilterOptions > 0 ? (
-          <FilterPill
-            isActive={Boolean(productCategories)}
-            isOpen={openSection === 'categories'}
-            label="Kategori"
-            onPress={() => onToggleQuickFilter('categories')}
-          />
-        ) : null}
+            {/* Web paritesi: özel ürün filtreleri kısayolların başında; liste açmaz, dokununca uygulanır. */}
+            {specialFilters.map((filter) => {
+              const Icon = SPECIAL_FILTER_ICONS[filter.key];
+              return (
+                <FilterPill
+                  icon={<Icon size={14} color={filter.isActive ? '$brand' : '$color10'} />}
+                  isActive={filter.isActive}
+                  isOpen={false}
+                  key={filter.key}
+                  label={filter.label}
+                  onPress={() => onToggleSpecialFilter?.(filter.key)}
+                  showChevron={false}
+                />
+              );
+            })}
 
-        <FilterPill
-          isActive={Boolean(variants)}
-          isOpen={openSection === 'variants'}
-          label="Beden"
-          onPress={() => onToggleQuickFilter('variants')}
-        />
+            {categoryFilterOptions > 0 ? (
+              <FilterPill
+                isActive={Boolean(productCategories)}
+                isOpen={openSection === 'categories'}
+                label="Kategori"
+                onPress={() => onToggleQuickFilter('categories')}
+              />
+            ) : null}
 
-        <FilterPill
-          isActive={Boolean(colors)}
-          isOpen={openSection === 'colors'}
-          label="Renk"
-          onPress={() => onToggleQuickFilter('colors')}
-        />
+            <FilterPill
+              isActive={Boolean(variants)}
+              isOpen={openSection === 'variants'}
+              label="Beden"
+              onPress={() => onToggleQuickFilter('variants')}
+            />
 
-        <FilterPill
-          isActive={Boolean(priceRange)}
-          isOpen={openSection === 'price'}
-          label="Fiyat"
-          onPress={() => onToggleQuickFilter('price')}
-        />
+            <FilterPill
+              isActive={Boolean(colors)}
+              isOpen={openSection === 'colors'}
+              label="Renk"
+              onPress={() => onToggleQuickFilter('colors')}
+            />
 
-        {/* Curated per-category shortcut groups (web parity), e.g. Model,
-            Yaka Tipi. Values share the property_ids filter. */}
-        {quickFilterGroups.map((group) => (
-          <FilterPill
-            isActive={group.values.some((value) => selectedPropertyIds.includes(value.id))}
-            isOpen={openSection === `quick:${group.id}`}
-            key={group.id}
-            label={group.name}
-            onPress={() => onToggleQuickFilter(`quick:${group.id}`)}
-          />
-        ))}
+            <FilterPill
+              isActive={Boolean(priceRange)}
+              isOpen={openSection === 'price'}
+              label="Fiyat"
+              onPress={() => onToggleQuickFilter('price')}
+            />
 
-        {/* Hızlı filtrelerin yanındaki beden kısayolları: liste açmaz, dokununca bedeni uygular ya da kaldırır. */}
-        {sizeShortcuts?.items.map((shortcut) => (
-          <FilterPill
-            isActive={shortcut.isActive}
-            isOpen={false}
-            key={shortcut.label}
-            label={`${shortcut.label} Beden`}
-            onPress={() => sizeShortcuts.toggle(shortcut)}
-            showChevron={false}
-          />
-        ))}
+            {/* Curated per-category shortcut groups (web parity), e.g. Model,
+                Yaka Tipi. Values share the property_ids filter. */}
+            {quickFilterGroups.map((group) => (
+              <FilterPill
+                isActive={group.values.some((value) => selectedPropertyIds.includes(value.id))}
+                isOpen={openSection === `quick:${group.id}`}
+                key={group.id}
+                label={group.name}
+                onPress={() => onToggleQuickFilter(`quick:${group.id}`)}
+              />
+            ))}
+
+            {/* Hızlı filtrelerin yanındaki beden kısayolları: liste açmaz, dokununca bedeni uygular ya da kaldırır. */}
+            {sizeShortcuts?.items.map((shortcut) => (
+              <FilterPill
+                isActive={shortcut.isActive}
+                isOpen={false}
+                key={shortcut.label}
+                label={`${shortcut.label} Beden`}
+                onPress={() => sizeShortcuts.toggle(shortcut)}
+                showChevron={false}
+              />
+            ))}
+          </>
+        )}
       </ScrollView>
     </YStack>
   );

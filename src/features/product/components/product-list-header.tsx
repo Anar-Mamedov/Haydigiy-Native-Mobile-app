@@ -5,6 +5,9 @@ import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { IconButton } from '@/components/ui/icon-button';
 import { ShoppingCart } from '@/components/ui/icons';
 
+/** Başlık en fazla bu kadar satıra sarar; sonrası üç noktayla kesilir. */
+const TITLE_MAX_LINES = 2;
+
 type ProductListHeaderProps = {
   title: string;
   cartCount: number;
@@ -32,7 +35,16 @@ export function ProductListHeader({ title, cartCount, onBack, onCartPress }: Pro
     >
       <XStack alignItems="center" gap="$1.5" flex={1} minWidth={0}>
         <HeaderBackButton onPress={onBack} />
-        <Paragraph accessibilityRole="header" fontSize={16} fontWeight="700" color="$color" numberOfLines={1} flex={1}>
+        {/* Uzun kategori adları (web gibi) kesilmez, iki satıra sarar; 56'lık çubuğa sığar. */}
+        <Paragraph
+          accessibilityRole="header"
+          color="$color"
+          flex={1}
+          fontSize={16}
+          fontWeight="700"
+          lineHeight={20}
+          numberOfLines={TITLE_MAX_LINES}
+        >
           {title}
         </Paragraph>
       </XStack>
