@@ -25,6 +25,14 @@ describe('resolveAssistantLinkTarget', () => {
     );
   });
 
+  it('"Faturamı aç": girişli müşteri sipariş ekranına fatura=1 ile gider, misafir Hesabım ekranına', () => {
+    const href = '/giris?returnUrl=%2Fm%2Fhesabim%2Fsiparislerim%2F100001%3Ffatura%3D1%26src%3Dhaydi-asistan';
+    expect(resolveAssistantLinkTarget(href, true)).toEqual(
+      route('/order/100001?fatura=1&src=haydi-asistan'),
+    );
+    expect(resolveAssistantLinkTarget(href, false)).toEqual(route('/profile'));
+  });
+
   it('hızlı giriş, üye ol ve şifremi unuttum Hesabım ekranındaki giriş akışına gider', () => {
     expect(resolveAssistantLinkTarget(contract.links.login.mobile, false)).toEqual(route('/profile'));
     expect(resolveAssistantLinkTarget(contract.links.login.mobile, true)).toEqual(route('/profile'));

@@ -4,6 +4,7 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import {
   ArrowUpRight,
   CircleHelp,
+  FileText,
   Grid,
   KeyRound,
   Link2,
@@ -28,6 +29,7 @@ const KIND_ICONS: Record<string, ComponentType<AppIconProps>> = {
   sifre: KeyRound,
   yardim: CircleHelp,
   siparis: Package,
+  fatura: FileText,
   iade: Undo2,
   iptal: XCircle,
 };

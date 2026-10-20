@@ -10,6 +10,7 @@ import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { buildInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { useOrderDetailQuery } from '../api/order.queries';
+import { useOpenInvoiceFromParam } from '../hooks/use-open-invoice-from-param';
 import { OrdersHeader } from '../components/orders-header';
 import { OrderDetailSummary } from '../components/order-detail-summary';
 import { OrderTimeline } from '../components/order-timeline';
@@ -32,12 +33,13 @@ const REVIEWABLE_STATUSES = ['Teslim Edildi', 'Sipariş tamamlandı'];
 
 export function OrderDetailScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string; fatura?: string }>();
   const id = params.id ?? '';
   const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
 
   const query = useOrderDetailQuery(id, isAuthenticated);
   const order = query.data;
+  useOpenInvoiceFromParam(params.fatura, order);
 
   const [reviewItem, setReviewItem] = useState<OrderDetailItem | null>(null);
   const [agreementTab, setAgreementTab] = useState<AgreementTab | null>(null);

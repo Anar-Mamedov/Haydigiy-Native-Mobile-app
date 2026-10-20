@@ -1,4 +1,3 @@
-import { Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { ChevronRight, FileText, Truck } from '@/components/ui/icons';
 import { Button, XStack, YStack } from 'tamagui';
@@ -7,6 +6,7 @@ import { SectionCard } from '@/components/ui';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { OrderDetail } from '@/types/order.types';
 import { CARGO_TRACKING_PENDING_MESSAGE, getCustomerTrackingCode } from '../utils/cargo-tracking';
+import { openInvoicePdf } from '../utils/open-invoice-pdf';
 
 type OrderDetailSummaryProps = {
   order: OrderDetail;
@@ -66,7 +66,7 @@ export function OrderDetailSummary({ order, onPressCargoTracking }: OrderDetailS
                 backgroundColor="$brand"
                 borderRadius="$3"
                 height={30}
-                onPress={() => Linking.openURL(order.invoicePdfUrl as string).catch(() => undefined)}
+                onPress={() => openInvoicePdf(order.invoicePdfUrl as string)}
                 paddingHorizontal="$3"
                 pressStyle={{ backgroundColor: '$brand', opacity: 0.85 }}
               >
