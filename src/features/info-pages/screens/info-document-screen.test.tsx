@@ -6,13 +6,8 @@ const mockPush = jest.fn();
 const mockBack = jest.fn();
 const mockReplace = jest.fn();
 const mockCanGoBack = jest.fn().mockReturnValue(true);
-const mockRedirect = jest.fn();
 
 jest.mock('expo-router', () => ({
-  Redirect: ({ href }: { href: string }) => {
-    mockRedirect(href);
-    return null;
-  },
   useRouter: () => ({
     back: mockBack,
     canGoBack: mockCanGoBack,
@@ -26,6 +21,14 @@ jest.mock('expo-router', () => ({
 
 jest.mock('@/features/promotions/components/top-banner', () => ({
   TopBanner: () => null,
+}));
+
+const mockMissingResourceRedirect = jest.fn();
+jest.mock('@/features/seo-redirect/components/missing-resource-redirect', () => ({
+  MissingResourceRedirect: (props: { webPath: string }) => {
+    mockMissingResourceRedirect(props);
+    return null;
+  },
 }));
 
 describe('InfoDocumentScreen', () => {
@@ -61,10 +64,10 @@ describe('InfoDocumentScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/bilgi/kisisel-verilerin-korunmasi');
   });
 
-  it('redirects an unknown page to the 404 screen', () => {
+  it('resolves the SEO redirect of an unknown page from its web address', () => {
     renderWithTamagui(<InfoDocumentScreen slug="kariyer" />);
 
-    expect(mockRedirect).toHaveBeenCalledWith('/not-found');
+    expect(mockMissingResourceRedirect).toHaveBeenCalledWith({ webPath: '/kariyer' });
   });
 
   it('goes back, or home when opened directly from a link', () => {

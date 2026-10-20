@@ -1,4 +1,3 @@
-import { Redirect } from 'expo-router';
 import { Spinner, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppScreen, DeferredMount, EmptyState, PullToDismissScrollView } from '@/components/ui';
@@ -9,7 +8,7 @@ import { BundleItemsPreview } from '../components/bundle-items-preview';
 import { useProductDetailController } from '../hooks/use-product-detail-controller';
 import { ProductCodeBadge } from '../components/product-code-badge';
 import { PRODUCT_CODE_BADGE_OFFSET } from '../utils/product-code-badge';
-import { NOT_FOUND_ROUTE } from '@/features/not-found/routes';
+import { MissingResourceRedirect } from '@/features/seo-redirect/components/missing-resource-redirect';
 import { isMissingResourceApiError } from '@/utils/api-error';
 
 // Subcomponents
@@ -59,8 +58,10 @@ export function ProductDetailScreen() {
     );
   }
 
+  // Web'de ürün kök seviyededir (`/{slug}`); panelde yönlendirmesi varsa yeni
+  // ürüne, yoksa 404 ekranına gidilir.
   if (isMissingResourceApiError(controller.error)) {
-    return <Redirect href={NOT_FOUND_ROUTE} />;
+    return <MissingResourceRedirect webPath={controller.idOrSlug ? `/${controller.idOrSlug}` : ''} />;
   }
 
   if (controller.isError) {

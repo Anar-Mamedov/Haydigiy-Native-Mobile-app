@@ -330,6 +330,7 @@ export function useProductDetailController() {
 
   return {
     // Data + durumlar
+    idOrSlug,
     product,
     displayData,
     displayPricing,

@@ -22,6 +22,7 @@ jest.mock('./product.mapper', () => ({
   mapPopularProductDto: jest.fn(),
   mapProductDto: jest.fn(),
   mapSearchProductDto: jest.fn((dto: unknown) => dto),
+  mapSubcategories: jest.fn(() => []),
   mergeProductDetailReviewPage: jest.fn(),
 }));
 

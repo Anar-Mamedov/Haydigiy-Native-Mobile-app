@@ -3,16 +3,11 @@ import { ProductDetailScreen } from './product-detail-screen';
 import { useProductDetailsQuery } from '@/features/product/api/product.queries';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 
-const mockRedirect = jest.fn();
 const mockBack = jest.fn();
 const mockReplace = jest.fn();
 let mockCanGoBack = true;
 
 jest.mock('expo-router', () => ({
-  Redirect: ({ href }: { href: string }) => {
-    mockRedirect(href);
-    return null;
-  },
   useFocusEffect: jest.fn(),
   useLocalSearchParams: () => ({ id: 'kaldirilan-urun' }),
   useRouter: () => ({
@@ -30,6 +25,14 @@ jest.mock('react-native-safe-area-context', () => ({
 
 jest.mock('@/features/promotions/components/top-banner', () => ({
   TopBanner: () => null,
+}));
+
+const mockMissingResourceRedirect = jest.fn();
+jest.mock('@/features/seo-redirect/components/missing-resource-redirect', () => ({
+  MissingResourceRedirect: (props: { webPath: string }) => {
+    mockMissingResourceRedirect(props);
+    return null;
+  },
 }));
 
 jest.mock('@/features/product/api/product.queries', () => ({
@@ -68,7 +71,7 @@ describe('ProductDetailScreen', () => {
     mockCanGoBack = true;
   });
 
-  it('redirects a removed product to the 404 screen', () => {
+  it('resolves the SEO redirect of a removed product from its web address', () => {
     jest.mocked(useProductDetailsQuery).mockReturnValue({
       data: undefined,
       error: { isAxiosError: true, response: { status: 404 } },
@@ -79,7 +82,7 @@ describe('ProductDetailScreen', () => {
 
     render(<ProductDetailScreen />);
 
-    expect(mockRedirect).toHaveBeenCalledWith('/not-found');
+    expect(mockMissingResourceRedirect).toHaveBeenCalledWith({ webPath: '/kaldirilan-urun' });
   });
 
   describe('header back button', () => {

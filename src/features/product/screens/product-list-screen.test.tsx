@@ -7,13 +7,8 @@ const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockBack = jest.fn();
 const mockCanGoBack = jest.fn().mockReturnValue(true);
-const mockRedirect = jest.fn();
 
 jest.mock('expo-router', () => ({
-  Redirect: ({ href }: { href: string }) => {
-    mockRedirect(href);
-    return null;
-  },
   useRouter: () => ({
     push: mockPush,
     replace: mockReplace,
@@ -30,6 +25,14 @@ jest.mock('expo-router', () => ({
 
 jest.mock('@/features/promotions/components/top-banner', () => ({
   TopBanner: () => null,
+}));
+
+const mockMissingResourceRedirect = jest.fn();
+jest.mock('@/features/seo-redirect/components/missing-resource-redirect', () => ({
+  MissingResourceRedirect: (props: { webPath: string; queryString?: string }) => {
+    mockMissingResourceRedirect(props);
+    return null;
+  },
 }));
 
 jest.mock('@/features/product/api/product.queries', () => ({
@@ -348,16 +351,19 @@ describe('ProductListScreen', () => {
     expect(mockRefetch).toHaveBeenCalled();
   });
 
-  it('redirects a removed category to the 404 screen', () => {
+  it('resolves the SEO redirect of a removed category from its web address', () => {
     (useInfiniteSearchProductsQuery as jest.Mock).mockReturnValue({
       error: { isAxiosError: true, response: { status: 404 } },
       isError: true,
       isPending: false,
     });
 
-    renderWithTamagui(<ProductListScreen slug="kaldirilan-kategori" categoryId={404} />);
+    renderWithTamagui(<ProductListScreen slug="kolye-kupe-bileklik" categoryId={216} />);
 
-    expect(mockRedirect).toHaveBeenCalledWith('/not-found');
+    expect(mockMissingResourceRedirect).toHaveBeenCalledWith({
+      queryString: 'c=216',
+      webPath: '/kolye-kupe-bileklik',
+    });
     expect(screen.queryByText('Ürünler Yüklenemedi')).toBeNull();
   });
 

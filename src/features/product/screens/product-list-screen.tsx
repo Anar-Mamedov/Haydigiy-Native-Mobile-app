@@ -3,7 +3,7 @@ import { RefreshControl } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { Spinner, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { Redirect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 
 import { AppScreen, EmptyState, ScrollToTopButton } from '@/components/ui';
@@ -32,7 +32,8 @@ import { SUBCATEGORY_STRIP_HEIGHT, SubcategoryStrip } from '../components/subcat
 import { resolveColorVariantTarget } from '../utils/color-variant-route';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
 import { ProductListingFilters } from '../utils/listing-deep-link-params';
-import { NOT_FOUND_ROUTE } from '@/features/not-found/routes';
+import { buildListingWebLocation } from '../utils/listing-web-location';
+import { MissingResourceRedirect } from '@/features/seo-redirect/components/missing-resource-redirect';
 import { isMissingResourceApiError } from '@/utils/api-error';
 import { formatSearchResultsHeading } from '@/utils/format-search-heading';
 
@@ -171,8 +172,11 @@ export function ProductListScreen({
   const quickFilterGroups = quickFiltersQuery.data ?? [];
   const sizeShortcuts = useSizeShortcutFilter(categoryId ?? categoryDetails?.id, variants, setVariants);
 
+  // Kaldırılan ya da panelden yönlendirilen kategori: SEO kuralı varsa yeni
+  // listeye, yoksa 404 ekranına gidilir.
   if (isMissingResourceApiError(error)) {
-    return <Redirect href={NOT_FOUND_ROUTE} />;
+    const webLocation = buildListingWebLocation({ slug, categoryId, menuUrl, searchQuery });
+    return <MissingResourceRedirect queryString={webLocation.queryString} webPath={webLocation.path} />;
   }
 
   // Active filters count
