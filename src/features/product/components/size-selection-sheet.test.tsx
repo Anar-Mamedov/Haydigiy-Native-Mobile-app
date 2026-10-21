@@ -82,6 +82,10 @@ describe('SizeSelectionSheet — price', () => {
     expect(screen.getByTestId('size-selection-sheet-discount-price')).toBeTruthy();
     expect(screen.getByText('%30')).toBeTruthy();
     expect(screen.getByText('499,99 TL')).toBeTruthy();
+    // Sheet'te yer dar değil; iki satırlı düzen yalnız alt bara özgü.
+    expect(screen.getByTestId('size-selection-sheet-discount-price-lines')).toHaveStyle({
+      flexDirection: 'row',
+    });
   });
 });
 

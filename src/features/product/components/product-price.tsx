@@ -1,7 +1,7 @@
 import { XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { DISCOUNT_RATE_BADGE_COLOR } from '@/lib/theme/colors';
-import { DiscountPriceBox } from './discount-price-box';
+import { DiscountPriceBox, type PriceBoxLayout } from './discount-price-box';
 import {
   formatDiscountRate,
   formatProductPrice,
@@ -10,6 +10,8 @@ import {
 } from '../utils/product-price';
 
 type ProductPriceProps = ProductDiscountInput & {
+  /** Detay kutusunda fiyatların dizilişi; sticky footer `stacked` ile iki satır çizer. */
+  layout?: PriceBoxLayout;
   /** Yüksekliği sabit yüzeylerde (sticky footer) yazı büyümesini sınırlar. */
   maxFontSizeMultiplier?: number;
   /** Satır yüksekliklerini kullanıcının yazı ölçeğiyle birlikte büyütür. */
@@ -115,6 +117,7 @@ export function ProductDetailDiscountPrice({
   discountRate,
   firstPrice,
   hasDiscount,
+  layout,
   maxFontSizeMultiplier,
   price,
   scale = 1,
@@ -130,6 +133,7 @@ export function ProductDetailDiscountPrice({
     <DiscountPriceBox
       accessibilityLabel={buildAccessibilityLabel(priceLabel, firstPriceLabel, discount.discountRate)}
       discountRate={discount.discountRate}
+      layout={layout}
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       priceLabel={priceLabel}
       previousPriceLabel={firstPriceLabel}

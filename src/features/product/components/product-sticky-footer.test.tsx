@@ -50,6 +50,38 @@ describe('ProductStickyFooter', () => {
     expect(StyleSheet.flatten(firstPrice.props.style)?.textDecorationLine).toBe('line-through');
   });
 
+  // HMA-29: yan yana iki fiyat kutuyu genişletip "Gelince Haber Ver" yazısını kesiyordu.
+  it('stacks the struck-through first price above the discounted price to leave room for the action', () => {
+    renderWithTamagui(
+      <ProductStickyFooter
+        {...baseProps}
+        discountRate={42}
+        firstPrice={2574.99}
+        hasDiscount
+        isOutOfStock
+        price={1499.99}
+      />,
+    );
+
+    expect(screen.getByTestId('product-sticky-footer-discount-price-lines')).toHaveStyle({
+      flexDirection: 'column',
+    });
+    const prices = screen
+      .getByTestId('product-sticky-footer-discount-price-lines')
+      .findAll((node) => typeof node.props.children === 'string')
+      .map((node) => node.props.children);
+    expect(prices.indexOf('2.574,99 TL')).toBeLessThan(prices.indexOf('1.499,99 TL'));
+    expect(screen.getByText('Gelince Haber Ver')).toBeTruthy();
+  });
+
+  it('stacks the package prices in the footer as well', () => {
+    renderWithTamagui(<ProductStickyFooter {...baseProps} bundleSummary={bundleSummary} />);
+
+    expect(screen.getByTestId('product-sticky-footer-bundle-price-lines')).toHaveStyle({
+      flexDirection: 'column',
+    });
+  });
+
   it('falls back to the regular box when the discount flag has no usable data', () => {
     renderWithTamagui(<ProductStickyFooter {...baseProps} hasDiscount />);
 

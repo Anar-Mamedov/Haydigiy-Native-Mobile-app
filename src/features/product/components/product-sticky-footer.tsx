@@ -91,7 +91,8 @@ export function ProductStickyFooter({
       shadowOpacity={0.08}
       shadowRadius={6}
     >
-      {/* Paket gerçek paket toplamını; normal ürün indirimli ya da standart fiyatını gösterir. */}
+      {/* Paket gerçek paket toplamını; normal ürün indirimli ya da standart fiyatını gösterir.
+          İki fiyatlı kutular iki satır (stacked) çizilir ki aksiyon butonunun yazısı kesilmesin. */}
       {bundleSummary ? (
         <BundleStickyPrice
           maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}
@@ -103,6 +104,7 @@ export function ProductStickyFooter({
           discountRate={discountRate}
           firstPrice={firstPrice}
           hasDiscount={hasDiscount}
+          layout="stacked"
           maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}
           price={price}
           scale={scale}

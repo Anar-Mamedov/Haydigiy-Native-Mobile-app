@@ -25,7 +25,7 @@ function buildAccessibilityLabel(
 
 /**
  * Ürün detayının sabit alt barında gerçek paket toplamını gösterir. Kutunun
- * görsel düzeni indirimli tekil ürünle ortaktır (`DiscountPriceBox`); burada
+ * görsel düzeni indirimli tekil ürünle ortaktır (`DiscountPriceBox`, iki satır); burada
  * yalnızca paket özeti o düzenin beklediği metinlere çevrilir. Kazanç indirim
  * sayılmıyorsa (%3 ve altı) kutu web'deki gibi turuncu normal fiyat tonuna döner.
  */
@@ -42,6 +42,7 @@ export function BundleStickyPrice({
     <DiscountPriceBox
       accessibilityLabel={buildAccessibilityLabel(bundlePriceLabel, itemsTotalLabel, discountRate)}
       discountRate={discountRate}
+      layout="stacked"
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       priceLabel={bundlePriceLabel}
       previousPriceLabel={itemsTotalLabel}
