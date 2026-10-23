@@ -61,7 +61,8 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       await registerMutation.mutateAsync(payload);
       onSuccess(data.phone);
     } catch (error: any) {
-      console.error('Register error:', error);
+      // Axios hatası istek gövdesini (şifre, OTP) taşır; release build'de cihaz loguna düşmesin.
+      if (__DEV__) console.error('Register error:', error);
       const apiMessage = error?.response?.data?.message || error?.message;
       setServerError(apiMessage || 'Kayıt işlemi sırasında bir hata oluştu.');
     }

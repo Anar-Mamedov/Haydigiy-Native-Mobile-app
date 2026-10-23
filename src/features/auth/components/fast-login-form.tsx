@@ -55,7 +55,8 @@ export function FastLoginForm({ onSuccess, onBackToLogin }: FastLoginFormProps) 
 
       onSuccess(nationalNumber, isNewUser, 'phone', remainingSeconds);
     } catch (error: any) {
-      console.error('Fast login init error:', error);
+      // Axios hatası istek gövdesini (şifre, OTP) taşır; release build'de cihaz loguna düşmesin.
+      if (__DEV__) console.error('Fast login init error:', error);
       const rateLimit = getOtpRateLimit(error);
       if (rateLimit) {
         setRateLimitedNumber(nationalNumber);

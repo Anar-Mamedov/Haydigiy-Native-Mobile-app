@@ -73,7 +73,8 @@ export function LoginForm({ onSuccess, onFastLoginPress, onForgotPasswordPress }
         setServerError('Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
       }
     } catch (error: any) {
-      console.error('Login error:', error);
+      // Axios hatası istek gövdesini (şifre, OTP) taşır; release build'de cihaz loguna düşmesin.
+      if (__DEV__) console.error('Login error:', error);
       const apiMessage = error?.response?.data?.message || error?.message;
       setServerError(apiMessage || 'Bir hata oluştu. Lütfen tekrar deneyin.');
     }

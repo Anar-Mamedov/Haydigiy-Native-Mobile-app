@@ -64,6 +64,20 @@ describe('resolveDeepLinkPath', () => {
     expect(resolveDeepLinkPath('/order/42')).toBe('/order/42');
   });
 
+  it.each([
+    'haydigiywebviewapp://checkout/payment-success?url=https%3A%2F%2Fhaydigiy.com%2Fodeme-basarili%3Fmdstatus%3D1%26procreturncode%3D00%26orderid%3D1',
+    'https://haydigiy.com/checkout/payment-success?url=x',
+    'haydigiywebviewapp://checkout/payment-failed?message=Sahte%20mesaj',
+    '/checkout/Payment-Failed',
+    'haydigiywebviewapp://(tabs)/(cart)/checkout/payment-success?url=x',
+  ])('never opens a payment result screen from an outside link: %s', (link) => {
+    expect(resolveDeepLinkPath(link)).toBe('/');
+  });
+
+  it('still opens the checkout screen itself from a link', () => {
+    expect(resolveDeepLinkPath('haydigiywebviewapp://checkout')).toBe('/checkout');
+  });
+
   it.each(['cart', 'favorites', 'orders', 'categories'])(
     'opens native %s notification links instead of treating them as product slugs',
     (path) => {

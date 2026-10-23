@@ -42,6 +42,13 @@ const APP_ROUTE_ROOTS = new Set([
   'bilgi',
 ]);
 
+/**
+ * Yalnızca uygulama içinden (ödeme WebView'ı / sipariş akışı) açılan ödeme sonuç ekranları.
+ * Dışarıdan bir bağlantıyla açılırlarsa bağlantıdaki banka parametreleri kullanıcının oturumuyla
+ * `/garanti/callback`'e gönderilir ve ekranda bağlantıdaki mesaj gösterilir; bu yüzden ana ekrana düşerler.
+ */
+const IN_APP_ONLY_CHECKOUT_SEGMENTS = new Set(['payment-success', 'payment-failed']);
+
 /** Expo'nun development build'i başlatmak için kullandığı, app rotası olmayan yollar. */
 const RESERVED_NATIVE_ROOTS = new Set(['expo-development-client']);
 
@@ -262,6 +269,8 @@ export function resolveDeepLinkPath(input: string): string {
 
     // Development client'ın manifest URL'ini ürün slug'ı gibi yorumlama.
     if (RESERVED_NATIVE_ROOTS.has(first)) return '/';
+
+    if (first === 'checkout' && IN_APP_ONLY_CHECKOUT_SEGMENTS.has((segments[1] ?? '').toLowerCase())) return '/';
 
     // Zaten app rotası olan üst-seviye yollar → alt yol + query ile geçir.
     if (APP_ROUTE_ROOTS.has(first)) {

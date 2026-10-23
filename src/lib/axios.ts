@@ -75,8 +75,10 @@ apiClient.interceptors.response.use(
       });
     }
 
-    // Sunucudan dönen hata yanıtlarını (400 vb.) istek + yanıt birlikte TEK log'da göster
-    if (error.response && error.response.status !== 401) {
+    // Sunucudan dönen hata yanıtlarını (400 vb.) istek + yanıt birlikte TEK log'da göster.
+    // Yalnız geliştirmede: istek gövdesi şifre, OTP ve kart bilgisi (kart no, CVV) taşıyabilir;
+    // release build'de console çıktısı cihaz loguna (logcat / os_log) düşer.
+    if (__DEV__ && error.response && error.response.status !== 401) {
       console.error(`🔴 API ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
         status: error.response.status,
         params: error.config?.params,

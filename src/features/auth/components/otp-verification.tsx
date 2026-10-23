@@ -147,7 +147,8 @@ export function OtpVerification({
         setError('Doğrulama başarısız. Lütfen tekrar deneyin.');
       }
     } catch (err: any) {
-      console.error('OTP verify error:', err);
+      // Axios hatası istek gövdesini (şifre, OTP) taşır; release build'de cihaz loguna düşmesin.
+      if (__DEV__) console.error('OTP verify error:', err);
       // Too many wrong codes: no new code is accepted until the lock ends, so the
       // resend countdown restarts from the backend's remaining time.
       const rateLimit = getOtpRateLimit(err);
@@ -184,7 +185,7 @@ export function OtpVerification({
       setInfo(response.message || 'Yeni doğrulama kodu gönderildi.');
       setCode('');
     } catch (err: unknown) {
-      console.error('OTP resend error:', err);
+      if (__DEV__) console.error('OTP resend error:', err);
       const feedback = getOtpSendErrorFeedback(err);
       startCooldown(feedback.cooldownSeconds);
       setError(feedback.message);
