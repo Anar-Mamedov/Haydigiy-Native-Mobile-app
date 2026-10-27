@@ -12,6 +12,12 @@
  * 3.0.0'a girdi (software-mansion/react-native-gesture-handler#4177); 2.x'e geri
  * taşındı. gesture-handler güncellenince yama yeni sürüme taşınmazsa kilitlenme
  * sessizce geri döner.
+ *
+ * Aynı kilitlenme Xiaomi (MIUI) ve TECNO cihazlarda normal dokunma iletiminden de
+ * geliyor: Android'in ScrollView'u etkin pointer kaybolduktan sonra gelen olayda
+ * olmayan pointer'ı okuyor. React Native aynı SDK hatasını `onInterceptTouchEvent`'te
+ * yok sayıyor ama `onTouchEvent`'te saymıyor; RN Android önceden derlenmiş geldiği
+ * için koruma, tüm dokunmaların geçtiği gesture-handler kök görünümünde.
  */
 
 // Projede @types/node yok; testin kullandığı Node API'leri kadar tip tanımı yeterli.
@@ -28,6 +34,10 @@ const ORCHESTRATOR = path.join(
   GESTURE_HANDLER_ROOT,
   'android/src/main/java/com/swmansion/gesturehandler/core/GestureHandlerOrchestrator.kt',
 );
+const ROOT_VIEW = path.join(
+  GESTURE_HANDLER_ROOT,
+  'android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerRootView.kt',
+);
 
 describe('react-native-gesture-handler disappearing view patch', () => {
   it('is named after the installed react-native-gesture-handler version', () => {
@@ -42,5 +52,15 @@ describe('react-native-gesture-handler disappearing view patch', () => {
     const orchestrator = fs.readFileSync(ORCHESTRATOR, 'utf8');
 
     expect(orchestrator).toContain('parent.indexOfChild(current) < 0 -> return false');
+  });
+
+  it('drops touch events with an invalid pointer instead of crashing', () => {
+    const rootView = fs.readFileSync(ROOT_VIEW, 'utf8');
+
+    expect(rootView).toContain('    dispatchTouchEventIgnoringInvalidPointer(event)');
+    // Yalnızca MotionEvent'in fırlattığı hata yutulmalı; diğer IllegalArgumentException'lar
+    // gerçek hatalardır ve görünmeye devam etmeli.
+    expect(rootView).toContain('if (e.stackTrace.firstOrNull()?.className != MotionEvent::class.java.name) {');
+    expect(rootView).toContain('      throw e');
   });
 });

@@ -26,3 +26,29 @@ index 8d78aea..5ed89dd 100644
    }
  
    fun isAnyHandlerActive() = gestureHandlers.any { it.state == GestureHandler.STATE_ACTIVE }
+diff --git a/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerRootView.kt b/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerRootView.kt
+index 2801b8a..c6abf59 100644
+--- a/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerRootView.kt
++++ b/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerRootView.kt
+@@ -37,7 +37,21 @@ class RNGestureHandlerRootView(context: Context?) : ReactViewGroup(context) {
+   override fun dispatchTouchEvent(event: MotionEvent) = if (rootViewEnabled && rootHelper!!.dispatchTouchEvent(event)) {
+     true
+   } else {
++    dispatchTouchEventIgnoringInvalidPointer(event)
++  }
++
++  // Android's ScrollView.onTouchEvent reads a pointer that is no longer in the event (e.g. on
++  // ACTION_POINTER_UP after the active pointer was lost) and MotionEvent throws
++  // IllegalArgumentException("pointerIndex out of range"). ReactScrollView already ignores the
++  // same SDK bug in onInterceptTouchEvent; drop the broken event here instead of crashing.
++  private fun dispatchTouchEventIgnoringInvalidPointer(event: MotionEvent): Boolean = try {
+     super.dispatchTouchEvent(event)
++  } catch (e: IllegalArgumentException) {
++    if (e.stackTrace.firstOrNull()?.className != MotionEvent::class.java.name) {
++      throw e
++    }
++    Log.w(ReactConstants.TAG, "[GESTURE HANDLER] Ignored touch event with an invalid pointer index", e)
++    false
+   }
+ 
+   override fun dispatchGenericMotionEvent(ev: MotionEvent) =
