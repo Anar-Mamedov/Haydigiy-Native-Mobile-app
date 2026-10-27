@@ -59,6 +59,9 @@ module.exports = ({ config }) => ({
     // çalışma anında yalnızca telefonlarda (en kısa kenar < 600dp) uygular. iOS
     // `orientation` ayarını kullanmaya devam eder.
     './plugins/with-phone-only-portrait-lock',
+    // Play Console SurfaceControl NullPointerException (Android 13, açılışta): Android
+    // 12-13'te açılış ekranının uygulamaya devrini kapatır; sistem ekranı kendisi kaldırır.
+    './plugins/with-splash-exit-crash-fix',
     // iOS framework modu STATIC olmalı, başka bir değer değil:
     // - Insider push extension'ları (InsiderNotificationService/Content) Podfile'da
     //   `use_frameworks!` ile geliyor. CocoaPods, host ve embedded target'ın aynı

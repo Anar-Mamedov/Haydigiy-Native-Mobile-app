@@ -58,6 +58,10 @@ describe('Insider Expo configuration', () => {
     // Manifest'teki dikey kilit kaldırıldı; kilidi telefonlarda geri koyan plugin
     // silinirse telefonlar da yatay döner (regresyon koruması).
     expect(config.plugins).toContain('./plugins/with-phone-only-portrait-lock');
+
+    // Android 13 açılış ekranı devrindeki SurfaceControl kilitlenmesini önleyen plugin
+    // kayıtlı kalmalı (regresyon koruması).
+    expect(config.plugins).toContain('./plugins/with-splash-exit-crash-fix');
     expect(insiderPlugin?.[1]).toEqual(
       expect.objectContaining({
         appGroup: 'group.com.faprika.haydigiy.app',
