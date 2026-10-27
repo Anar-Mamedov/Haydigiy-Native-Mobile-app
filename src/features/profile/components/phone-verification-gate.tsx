@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { useSendCodeMutation } from '@/features/auth/api/auth.mutations';
-import { OtpVerification } from '@/features/auth/components/otp-verification';
 import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import {
   getOtpSendErrorFeedback,
@@ -13,6 +12,18 @@ import { profileKeys } from '../api/profile.keys';
 import type { UserProfile } from '../api/profile.mapper';
 import { useUserProfileQuery } from '../api/profile.queries';
 import { PhoneVerificationSheet } from './phone-verification-sheet';
+
+/**
+ * OTP formu, zod şemalarıyla birlikte (~85 modül) yalnızca kapı açıldığında yüklenir.
+ * Kapı kök layout'ta durduğu için doğrudan içe aktarıldığında form, telefonu doğrulanmış
+ * kullanıcılarda bile her açılışta ilk kareden önce çalışıyordu (Android vitals: yavaş
+ * sıcak başlatma).
+ */
+const OtpVerification = lazy(async () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const otpModule = require('@/features/auth/components/otp-verification') as typeof import('@/features/auth/components/otp-verification');
+  return { default: otpModule.OtpVerification };
+});
 
 type DeliveryState = {
   cooldownSeconds: number;
@@ -133,15 +144,17 @@ export function PhoneVerificationGate() {
           {delivery.message}
         </Paragraph>
       ) : null}
-      <OtpVerification
-        cancelLabel="Çıkış Yap"
-        flowType="profile"
-        identifier={phone}
-        initialCooldown={delivery.cooldownSeconds}
-        isCodeDeliveryPending={delivery.status === 'pending'}
-        onCancel={handleLogout}
-        onSuccess={handleVerified}
-      />
+      <Suspense fallback={null}>
+        <OtpVerification
+          cancelLabel="Çıkış Yap"
+          flowType="profile"
+          identifier={phone}
+          initialCooldown={delivery.cooldownSeconds}
+          isCodeDeliveryPending={delivery.status === 'pending'}
+          onCancel={handleLogout}
+          onSuccess={handleVerified}
+        />
+      </Suspense>
     </PhoneVerificationSheet>
   );
 }

@@ -108,7 +108,7 @@ describe('PhoneVerificationGate', () => {
     renderWithTamagui(<PhoneVerificationGate />);
     await waitFor(() => expect(mockSendCode).toHaveBeenCalledTimes(1));
 
-    fireEvent.press(screen.getByTestId('complete-phone-verification'));
+    fireEvent.press(await screen.findByTestId('complete-phone-verification'));
     await waitFor(() => expect(mockRefetch).toHaveBeenCalledTimes(1));
   });
 
@@ -116,8 +116,9 @@ describe('PhoneVerificationGate', () => {
     renderWithTamagui(<PhoneVerificationGate />);
     await waitFor(() => expect(mockSendCode).toHaveBeenCalledTimes(1));
 
+    const exitButton = await screen.findByTestId('exit-phone-verification');
     await act(async () => {
-      fireEvent.press(screen.getByTestId('exit-phone-verification'));
+      fireEvent.press(exitButton);
     });
 
     await waitFor(() => expect(useAuthStore.getState().user).toBeNull());
