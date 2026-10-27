@@ -55,6 +55,10 @@ module.exports = ({ config }) => ({
     // Play Console TransactionTooLargeException (activityStopped): MainActivity hiç
     // kullanmadığı kaydedilen durum paketini boşaltır, Binder sınırı aşılmaz.
     './plugins/with-clear-activity-saved-state',
+    // Play Console büyük ekran uyarısı: manifest'teki dikey kilidi kaldırır, kilidi
+    // çalışma anında yalnızca telefonlarda (en kısa kenar < 600dp) uygular. iOS
+    // `orientation` ayarını kullanmaya devam eder.
+    './plugins/with-phone-only-portrait-lock',
     // iOS framework modu STATIC olmalı, başka bir değer değil:
     // - Insider push extension'ları (InsiderNotificationService/Content) Podfile'da
     //   `use_frameworks!` ile geliyor. CocoaPods, host ve embedded target'ın aynı

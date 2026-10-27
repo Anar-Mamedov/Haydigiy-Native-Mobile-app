@@ -54,6 +54,10 @@ describe('Insider Expo configuration', () => {
     // Arka plana geçerken TransactionTooLargeException ile kilitlenmeyi önleyen,
     // kaydedilen durumu boşaltan plugin kayıtlı kalmalı (regresyon koruması).
     expect(config.plugins).toContain('./plugins/with-clear-activity-saved-state');
+
+    // Manifest'teki dikey kilit kaldırıldı; kilidi telefonlarda geri koyan plugin
+    // silinirse telefonlar da yatay döner (regresyon koruması).
+    expect(config.plugins).toContain('./plugins/with-phone-only-portrait-lock');
     expect(insiderPlugin?.[1]).toEqual(
       expect.objectContaining({
         appGroup: 'group.com.faprika.haydigiy.app',
