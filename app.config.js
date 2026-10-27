@@ -52,6 +52,9 @@ module.exports = ({ config }) => ({
     // Play Console'daki en sık kilitlenme (findShadowNodeByTagRecursively SIGSEGV):
     // RN 0.88'de varsayılan olan yarış durumu düzeltmesini MainApplication'da açar.
     './plugins/with-find-shadow-node-race-fix',
+    // Play Console TransactionTooLargeException (activityStopped): MainActivity hiç
+    // kullanmadığı kaydedilen durum paketini boşaltır, Binder sınırı aşılmaz.
+    './plugins/with-clear-activity-saved-state',
     // iOS framework modu STATIC olmalı, başka bir değer değil:
     // - Insider push extension'ları (InsiderNotificationService/Content) Podfile'da
     //   `use_frameworks!` ile geliyor. CocoaPods, host ve embedded target'ın aynı

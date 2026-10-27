@@ -50,6 +50,10 @@ describe('Insider Expo configuration', () => {
     // Play Console'daki en sık kilitlenmeyi (findShadowNodeByTagRecursively)
     // kapatan RN bayrağını açan plugin kayıtlı kalmalı (regresyon koruması).
     expect(config.plugins).toContain('./plugins/with-find-shadow-node-race-fix');
+
+    // Arka plana geçerken TransactionTooLargeException ile kilitlenmeyi önleyen,
+    // kaydedilen durumu boşaltan plugin kayıtlı kalmalı (regresyon koruması).
+    expect(config.plugins).toContain('./plugins/with-clear-activity-saved-state');
     expect(insiderPlugin?.[1]).toEqual(
       expect.objectContaining({
         appGroup: 'group.com.faprika.haydigiy.app',
