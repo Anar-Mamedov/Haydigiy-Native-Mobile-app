@@ -9,5 +9,14 @@ module.exports = function (api) {
     // (babel-preset-expo still provides the react-native-worklets/reanimated
     // plugin that React Navigation and gesture-handler rely on.)
     presets: ['babel-preset-expo'],
+    plugins: [
+      // Importing one icon from the package root ran all ~1,760 icon modules before
+      // the first frame; load each icon from its own file instead. See
+      // babel/direct-member-imports.js.
+      [
+        './babel/direct-member-imports',
+        { source: '@tamagui/lucide-icons-2', target: '@tamagui/lucide-icons-2/icons/[name]' },
+      ],
+    ],
   };
 };
