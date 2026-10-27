@@ -78,7 +78,14 @@
         }
       ],
       "expo-web-browser",
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": ["./assets/fonts/Inter.otf", "./assets/fonts/InterBold.otf"]
+          }
+        }
+      ],
       "expo-status-bar"
     ],
     "experiments": {
