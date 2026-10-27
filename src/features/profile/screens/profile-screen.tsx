@@ -3,7 +3,7 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useRouter } from 'expo-router';
 import { YStack, XStack, Button, Separator, ScrollView } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { AppScreen, HeaderBackButton } from '@/components/ui';
+import { AppScreen, HeaderBackButton, MIN_TOUCH_TARGET } from '@/components/ui';
 import { useAuthStore } from '../../auth/store/use-auth-store';
 import { useAuthStatus } from '../../auth/hooks/use-auth-status';
 import { LoginForm } from '../../auth/components/login-form';
@@ -234,6 +234,7 @@ function PressableTab({ active, label, onPress }: PressableTabProps) {
       borderRadius={0}
       borderBottomWidth={active ? 2 : 0}
       borderBottomColor="$brand"
+      minHeight={MIN_TOUCH_TARGET}
       onPress={onPress}
       pressStyle={{ opacity: 0.7 }}
     >

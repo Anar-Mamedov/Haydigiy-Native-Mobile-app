@@ -3,6 +3,7 @@ import { Pressable, TextInput } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { getTextFieldLabelProps } from '@/components/ui/text-field-label';
 
 const DEFAULT_CODE_LENGTH = 6;
 
@@ -96,14 +97,16 @@ export function OtpCodeInput({
         </XStack>
       </Pressable>
 
-      {/* Hidden field: the boxes above are purely presentational. */}
+      {/* Hidden field: the boxes above are purely presentational. The field is invisible, so its
+          placeholder only serves as the Android hint that names it for TalkBack. */}
       <TextInput
-        accessibilityLabel={accessibilityLabel}
+        {...getTextFieldLabelProps({ label: accessibilityLabel, placeholder: accessibilityLabel })}
         autoFocus={autoFocus}
         editable={!disabled}
         keyboardType="numeric"
         maxLength={length}
         onChangeText={handleChangeText}
+        placeholder={accessibilityLabel}
         ref={inputRef}
         style={{ height: 1, opacity: 0, position: 'absolute', width: 1 }}
         testID={testID}

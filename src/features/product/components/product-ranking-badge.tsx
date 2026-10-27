@@ -2,6 +2,7 @@ import { Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { ChevronRight, Trophy } from '@/components/ui/icons';
 import { RANKING_BADGE_GRADIENT } from '@/lib/theme/colors';
 import { COMPACT_MAX_FONT_SCALE } from '@/lib/theme/font-scale';
@@ -31,7 +32,7 @@ export function ProductRankingBadge({ text, url, onPress }: ProductRankingBadgeP
       accessibilityLabel={`${label} listesini görüntüle`}
       accessibilityRole="link"
       onPress={() => onPress(target)}
-      style={{ alignSelf: 'flex-start', justifyContent: 'center', minHeight: 44 }}
+      style={{ alignSelf: 'flex-start', justifyContent: 'center', minHeight: MIN_TOUCH_TARGET }}
       testID="product-ranking-badge"
     >
       {({ pressed }) => (

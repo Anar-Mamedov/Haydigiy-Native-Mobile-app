@@ -5,6 +5,7 @@ import { X, Table, WashingMachine, MessageSquare, Check } from '@/components/ui/
 import { Pressable, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
+import { IconButton } from '@/components/ui/icon-button';
 import { BRAND_COLOR } from '@/lib/theme/colors';
 import { submitProductFeedback } from '@/services/product.service';
 import {
@@ -85,7 +86,9 @@ export function SizeChartModal({ open, onOpenChange }: { open: boolean; onOpenCh
             <Table size={18} color="$brand" />
             <Paragraph fontSize={16} fontWeight="700">Beden Tablosu</Paragraph>
           </XStack>
-          <Button backgroundColor="transparent" chromeless circular icon={<X size={18} />} onPress={() => onOpenChange(false)} size="$3" />
+          <IconButton accessibilityLabel="Kapat" onPress={() => onOpenChange(false)}>
+            <X color="$color" size={18} />
+          </IconButton>
         </XStack>
 
         {/* Gender Tabs */}
@@ -158,7 +161,9 @@ export function WashingInstructionsModal({ open, onOpenChange }: { open: boolean
             <WashingMachine size={18} color="$brand" />
             <Paragraph fontSize={16} fontWeight="700">Yıkama Talimatları</Paragraph>
           </XStack>
-          <Button backgroundColor="transparent" chromeless circular icon={<X size={18} />} onPress={() => onOpenChange(false)} size="$3" />
+          <IconButton accessibilityLabel="Kapat" onPress={() => onOpenChange(false)}>
+            <X color="$color" size={18} />
+          </IconButton>
         </XStack>
 
         <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
@@ -229,7 +234,9 @@ export function FeedbackModal({
             <MessageSquare size={18} color="$brand" />
             <Paragraph fontSize={16} fontWeight="700">Geri Bildirim Bildir</Paragraph>
           </XStack>
-          <Button backgroundColor="transparent" chromeless circular icon={<X size={18} />} onPress={() => onOpenChange(false)} size="$3" />
+          <IconButton accessibilityLabel="Kapat" onPress={() => onOpenChange(false)}>
+            <X color="$color" size={18} />
+          </IconButton>
         </XStack>
 
         <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>

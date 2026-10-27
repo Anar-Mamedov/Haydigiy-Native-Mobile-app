@@ -3,7 +3,7 @@ import { Pressable, TextInput } from 'react-native';
 import { Spinner, XStack, YStack, ScrollView, Button, useTheme } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { Search } from '@/components/ui/icons';
-import { AppScreen, EmptyState, HeaderBackButton, MIN_TOUCH_TARGET } from '@/components/ui';
+import { AppScreen, EmptyState, HeaderBackButton, MIN_TOUCH_TARGET, getTextFieldLabelProps } from '@/components/ui';
 import { useRouter } from 'expo-router';
 import { useMenuGroupsQuery, useMenuItemsQuery } from '../api/category.queries';
 import { CategoryCard } from '../components/category-card';
@@ -118,7 +118,7 @@ export function CategoriesScreen() {
         <TextInput
           // Tamagui dışı input olduğu için config'teki yazı boyutu tavanı buraya ulaşmıyor.
           maxFontSizeMultiplier={MAX_FONT_SCALE}
-          accessibilityLabel="Ürün veya kategori ara"
+          {...getTextFieldLabelProps({ label: 'Ürün veya kategori ara', placeholder: 'Ürün veya kategori ara' })}
           placeholder="Ürün veya kategori ara"
           placeholderTextColor={theme.color9.val}
           value={searchTerm}

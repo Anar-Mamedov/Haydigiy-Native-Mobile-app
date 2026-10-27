@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import { PixelRatio, Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { Button, XStack, YStack } from 'tamagui';
+import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { IconButton, MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { ShoppingBag } from '@/components/ui/icons';
 import { useFavoriteToggle } from '@/features/favorite/api/favorite.queries';
 import { buildInsiderInput } from '@/features/insider/utils/insider-product.mapper';
@@ -19,6 +20,10 @@ type ShowcaseProductCardProps = {
 };
 
 export const SHOWCASE_CARD_WIDTH = 148;
+
+const ADD_TO_CART_HEIGHT = 30;
+/** Görünen 30dp butonun çevresindeki 48dp dokunma alanı, kart yüksekliğini değiştirmesin diye taşar. */
+const ADD_TO_CART_TOUCH_OUTSET = (MIN_TOUCH_TARGET - ADD_TO_CART_HEIGHT) / 2;
 
 const CARD_SHADOW = '0 1px 2px rgba(0, 0, 0, 0.05)';
 
@@ -115,31 +120,36 @@ export function ShowcaseProductCard({ product, onPress, onAddToCartPress }: Show
           </YStack>
         </Pressable>
 
-        <Button
-          accessibilityLabel={`Sepete ekle: ${product.title}`}
-          backgroundColor="$brand"
-          borderRadius={8}
-          borderWidth={0}
-          height={30}
-          onPress={() => onAddToCartPress(product)}
-          paddingHorizontal={6}
-          pressStyle={{ backgroundColor: '$brand', opacity: 0.85 }}
-          testID="showcase-add-to-cart"
-        >
-          <XStack alignItems="center" gap={4}>
-            <ShoppingBag color="white" maxFontScale={COMPACT_MAX_FONT_SCALE} size={12} />
-            <Paragraph
-              color="white"
-              fontSize={11}
-              fontWeight="700"
-              letterSpacing={0.4}
-              maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}
-              numberOfLines={1}
+        <YStack marginVertical={-ADD_TO_CART_TOUCH_OUTSET}>
+          <IconButton
+            accessibilityLabel={`Sepete ekle: ${product.title}`}
+            alignItems="stretch"
+            onPress={() => onAddToCartPress(product)}
+            testID="showcase-add-to-cart"
+          >
+            <XStack
+              alignItems="center"
+              backgroundColor="$brand"
+              borderRadius={8}
+              gap={4}
+              height={ADD_TO_CART_HEIGHT}
+              justifyContent="center"
+              paddingHorizontal={6}
             >
-              SEPETE EKLE
-            </Paragraph>
-          </XStack>
-        </Button>
+              <ShoppingBag color="white" maxFontScale={COMPACT_MAX_FONT_SCALE} size={12} />
+              <Paragraph
+                color="white"
+                fontSize={11}
+                fontWeight="700"
+                letterSpacing={0.4}
+                maxFontSizeMultiplier={COMPACT_MAX_FONT_SCALE}
+                numberOfLines={1}
+              >
+                SEPETE EKLE
+              </Paragraph>
+            </XStack>
+          </IconButton>
+        </YStack>
       </YStack>
     </YStack>
   );

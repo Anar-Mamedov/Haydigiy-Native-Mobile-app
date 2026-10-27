@@ -1,4 +1,4 @@
-import { TextInput } from 'react-native';
+import { Platform, TextInput } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -150,5 +150,25 @@ describe('OtpCodeInput', () => {
     );
 
     expect(screen.getByTestId('otp-code-input').props.editable).toBe(false);
+  });
+
+  describe('on Android', () => {
+    const originalOS = Platform.OS;
+
+    afterEach(() => {
+      Platform.OS = originalOS;
+    });
+
+    it('names the hidden field with its hint instead of a contentDescription', () => {
+      // Regresyon: Play "Düzenlenebilir öğe etiketi" — EditText'te contentDescription olmamalı.
+      Platform.OS = 'android';
+      renderWithTamagui(
+        <OtpCodeInput accessibilityLabel="6 haneli doğrulama kodu" onChangeText={jest.fn()} testID="otp" value="" />,
+      );
+
+      const input = screen.getByTestId('otp');
+      expect(input.props.accessibilityLabel).toBeUndefined();
+      expect(input.props.placeholder).toBe('6 haneli doğrulama kodu');
+    });
   });
 });

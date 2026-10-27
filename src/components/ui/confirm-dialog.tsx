@@ -1,6 +1,7 @@
 import { AlertDialog, Button, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppAlertDialog } from '@/components/ui/app-alert-dialog';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 
 export type ConfirmDialogProps = {
   open: boolean;
@@ -62,7 +63,7 @@ export function ConfirmDialog({
               <AlertDialog.Cancel asChild>
                 <Button
                   flex={1}
-                  height={44}
+                  height={MIN_TOUCH_TARGET}
                   paddingHorizontal={0}
                   justifyContent="center"
                   alignItems="center"
@@ -86,7 +87,7 @@ export function ConfirmDialog({
               <AlertDialog.Action asChild>
                 <Button
                   flex={1}
-                  height={44}
+                  height={MIN_TOUCH_TARGET}
                   paddingHorizontal={0}
                   justifyContent="center"
                   alignItems="center"

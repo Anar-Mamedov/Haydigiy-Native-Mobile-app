@@ -1,23 +1,20 @@
+import { IconButton } from '@/components/ui/icon-button';
 import { Eye, EyeOff } from '@/components/ui/icons';
-import { Button } from 'tamagui';
+
+const TOGGLE_ICON_SIZE = 20;
 
 export interface PasswordVisibilityToggleProps {
   visible: boolean;
   onToggle: () => void;
 }
 
+/** Şifre alanının sağındaki göster/gizle butonu; `IconButton` sayesinde dokunma alanı 48dp. */
 export function PasswordVisibilityToggle({ visible, onToggle }: PasswordVisibilityToggleProps) {
+  const Icon = visible ? EyeOff : Eye;
+
   return (
-    <Button
-      accessibilityLabel={visible ? 'Şifreyi gizle' : 'Şifreyi göster'}
-      accessibilityRole="button"
-      chromeless
-      circular
-      icon={visible ? <EyeOff color="$color10" /> : <Eye color="$color10" />}
-      iconSize="$7"
-      onPress={onToggle}
-      pressStyle={{ opacity: 0.6 }}
-      size="$4"
-    />
+    <IconButton accessibilityLabel={visible ? 'Şifreyi gizle' : 'Şifreyi göster'} onPress={onToggle}>
+      <Icon color="$color10" size={TOGGLE_ICON_SIZE} />
+    </IconButton>
   );
 }

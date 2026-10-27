@@ -3,9 +3,12 @@ import { Pressable } from 'react-native';
 import { Calendar, ChevronDown, Search } from '@/components/ui/icons';
 import { Input, XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { MIN_TOUCH_TARGET, getTextFieldLabelProps } from '@/components/ui';
 import { OrderDateFilter } from '@/types/order.types';
 import { OrderDateSheet, orderDateLabel } from './order-date-sheet';
 import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
+
+const ORDER_SEARCH_PLACEHOLDER = 'Ürün/Sipariş ara';
 
 type OrdersToolbarProps = {
   search: string;
@@ -25,7 +28,8 @@ export function OrdersToolbar({
 
   return (
     <>
-      <XStack alignItems="center" gap="$2">
+      {/* Arama kutusu 48dp alanı ve çerçevesiyle büyüyebildiği için tarih butonu satır yüksekliğine uzar. */}
+      <XStack alignItems="stretch" gap="$2">
         <XStack
           alignItems="center"
           backgroundColor="$background"
@@ -34,21 +38,20 @@ export function OrdersToolbar({
           borderWidth={1}
           flex={1}
           gap="$2"
-          height={44}
           paddingHorizontal="$3"
         >
           <Search color="$color10" size={18} />
           <Input
-            accessibilityLabel="Ürün veya sipariş ara"
+            {...getTextFieldLabelProps({ label: 'Ürün veya sipariş ara', placeholder: ORDER_SEARCH_PLACEHOLDER })}
             backgroundColor="transparent"
             borderWidth={0}
             flex={1}
             fontSize={14}
-            height={42}
             maxFontSizeMultiplier={MAX_FONT_SCALE}
+            minHeight={MIN_TOUCH_TARGET}
             onChangeText={onSearchChange}
             padding={0}
-            placeholder="Ürün/Sipariş ara"
+            placeholder={ORDER_SEARCH_PLACEHOLDER}
             value={search}
           />
         </XStack>
@@ -65,8 +68,9 @@ export function OrdersToolbar({
             borderColor="$borderColor"
             borderRadius="$3"
             borderWidth={1}
+            flex={1}
             gap="$1.5"
-            height={44}
+            minHeight={MIN_TOUCH_TARGET}
             paddingHorizontal="$3"
           >
             <Calendar color="$color10" size={16} />

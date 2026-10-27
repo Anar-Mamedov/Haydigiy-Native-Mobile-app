@@ -6,7 +6,14 @@ import { ChevronLeft, Search, X } from '@/components/ui/icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 
-import { AppScreen, HeaderBackButton, IconButton, MIN_TOUCH_TARGET } from '@/components/ui';
+import {
+  AppScreen,
+  HeaderBackButton,
+  IconButton,
+  MIN_TOUCH_TARGET,
+  TextActionButton,
+  getTextFieldLabelProps,
+} from '@/components/ui';
 import { usePopularProductsQuery, useSearchSuggestionsQuery } from '@/features/product/api/product.queries';
 import { PopularProductsSection } from '@/features/product/components/popular-products-section';
 import { formatCurrency } from '@/utils/format-currency';
@@ -18,6 +25,10 @@ import {
   ViewedProduct,
 } from '@/utils/recently-viewed';
 import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
+
+const SECTION_HEADER_HEIGHT = 24;
+/** Bölüm başlığındaki 48dp yazılı aksiyon, 24dp satırı büyütmeden bu kadar taşar. */
+const HEADER_ACTION_OUTSET = (MIN_TOUCH_TARGET - SECTION_HEADER_HEIGHT) / 2;
 
 export function SearchSuggestionsScreen() {
   const router = useRouter();
@@ -123,7 +134,8 @@ export function SearchSuggestionsScreen() {
       width="100%"
     >
       <HeaderBackButton Icon={ChevronLeft} onPress={handleBackPress} />
-      {/* Kutu 48dp: arama alanı ve içindeki ikon butonları en az dokunma hedefi kadar yüksek. */}
+      {/* Arama alanının kendisi (EditText) ve içindeki ikon butonları 48dp; çerçeve kutuya eklenir,
+          böylece çerçeve payı alanı 48dp'nin altına indirmez. */}
       <XStack
         flex={1}
         alignItems="center"
@@ -132,12 +144,11 @@ export function SearchSuggestionsScreen() {
         borderWidth={1}
         borderColor="$borderColor"
         paddingLeft="$3"
-        height={MIN_TOUCH_TARGET}
       >
         <Input
-          accessibilityLabel="Ürün veya kategori ara"
+          {...getTextFieldLabelProps({ label: 'Ürün veya kategori ara', placeholder: 'Ürün veya kategori ara' })}
           flex={1}
-          height="100%"
+          minHeight={MIN_TOUCH_TARGET}
           backgroundColor="transparent"
           borderWidth={0}
           maxFontSizeMultiplier={MAX_FONT_SCALE}
@@ -285,13 +296,7 @@ export function SearchSuggestionsScreen() {
               <Paragraph color="$color" fontSize={15} textAlign="center" paddingHorizontal="$4">
                 {`"${query}" için sonuç bulunamadı`}
               </Paragraph>
-              <Pressable onPress={handleSearchSubmit}>
-                {({ pressed }) => (
-                  <Paragraph color="$brand" fontSize={14} fontWeight="700" opacity={pressed ? 0.7 : 1}>
-                    Yine de ara
-                  </Paragraph>
-                )}
-              </Pressable>
+              <TextActionButton color="$brand" fontSize={14} label="Yine de ara" onPress={handleSearchSubmit} />
             </YStack>
           )
         ) : (
@@ -299,18 +304,20 @@ export function SearchSuggestionsScreen() {
           <YStack pb={30}>
             {/* Recent Searches Section */}
             <YStack paddingHorizontal="$4" paddingTop="$4" gap="$2">
-              <XStack justifyContent="space-between" alignItems="center" height={24}>
+              <XStack justifyContent="space-between" alignItems="center" height={SECTION_HEADER_HEIGHT}>
                 <Paragraph fontSize={14} fontWeight="700" color="$color">
                   Geçmiş Aramalar
                 </Paragraph>
                 {recentSearches.length > 0 ? (
-                  <Pressable onPress={handleClearHistory}>
-                    {({ pressed }) => (
-                      <Paragraph fontSize={12} color="$color10" opacity={pressed ? 0.6 : 1}>
-                        Temizle
-                      </Paragraph>
-                    )}
-                  </Pressable>
+                  <YStack marginVertical={-HEADER_ACTION_OUTSET}>
+                    <TextActionButton
+                      accessibilityLabel="Geçmiş aramaları temizle"
+                      color="$color10"
+                      fontWeight="400"
+                      label="Temizle"
+                      onPress={handleClearHistory}
+                    />
+                  </YStack>
                 ) : null}
               </XStack>
 
@@ -353,18 +360,20 @@ export function SearchSuggestionsScreen() {
 
             {/* Recently Viewed Products Section */}
             <YStack paddingTop="$5" gap="$2">
-              <XStack justifyContent="space-between" alignItems="center" paddingHorizontal="$4" height={24}>
+              <XStack justifyContent="space-between" alignItems="center" paddingHorizontal="$4" height={SECTION_HEADER_HEIGHT}>
                 <Paragraph fontSize={14} fontWeight="700" color="$color">
                   Önceden Gezdiklerim
                 </Paragraph>
                 {viewedProducts.length > 0 ? (
-                  <Pressable onPress={() => router.push('/gezdiklerim')}>
-                    {({ pressed }) => (
-                      <Paragraph fontSize={12} fontWeight="600" color="$brand" opacity={pressed ? 0.7 : 1}>
-                        Tümünü Gör
-                      </Paragraph>
-                    )}
-                  </Pressable>
+                  <YStack marginVertical={-HEADER_ACTION_OUTSET}>
+                    <TextActionButton
+                      accessibilityLabel="Önceden gezdiğim tüm ürünleri gör"
+                      color="$brand"
+                      fontWeight="600"
+                      label="Tümünü Gör"
+                      onPress={() => router.push('/gezdiklerim')}
+                    />
+                  </YStack>
                 ) : null}
               </XStack>
 

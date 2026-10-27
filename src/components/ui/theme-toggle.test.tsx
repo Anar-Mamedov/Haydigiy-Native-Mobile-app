@@ -1,3 +1,4 @@
+import { StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -32,5 +33,15 @@ describe('ThemeToggle', () => {
     expect(screen.getByLabelText('Koyu temasını seç').props.accessibilityState).toMatchObject({
       selected: true,
     });
+  });
+
+  it('keeps every segment at the 48dp touch target', () => {
+    renderWithTamagui(<ThemeToggle onValueChange={jest.fn()} value="system" />);
+
+    for (const label of ['Sistem', 'Aydınlık', 'Koyu']) {
+      expect(StyleSheet.flatten(screen.getByLabelText(`${label} temasını seç`).props.style)).toMatchObject({
+        height: 48,
+      });
+    }
   });
 });

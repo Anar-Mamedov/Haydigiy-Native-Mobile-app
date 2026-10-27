@@ -1,3 +1,4 @@
+import { StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -65,5 +66,14 @@ describe('SegmentedControl', () => {
     expect(screen.getByLabelText('Kurumsal').props.accessibilityState).toMatchObject({
       selected: true,
     });
+  });
+
+  it('keeps every segment at the 48dp touch target', () => {
+    // Regresyon: 44dp bölmeler Play "Dokunma hedefi boyutu" uyarısı veriyordu.
+    renderWithTamagui(<SegmentedControl onChange={jest.fn()} options={OPTIONS} value="individual" />);
+
+    for (const label of ['Bireysel', 'Kurumsal']) {
+      expect(StyleSheet.flatten(screen.getByLabelText(label).props.style)).toMatchObject({ height: 48 });
+    }
   });
 });

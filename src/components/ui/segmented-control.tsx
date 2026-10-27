@@ -1,5 +1,6 @@
 import { XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 
 export type SegmentedControlOption<T extends string> = {
   label: string;
@@ -44,7 +45,7 @@ export function SegmentedControl<T extends string>({
             backgroundColor={active ? '$orange3' : '$background'}
             disabled={disabled}
             flex={1}
-            height={44}
+            height={MIN_TOUCH_TARGET}
             justifyContent="center"
             key={option.value}
             onPress={() => !disabled && onChange(option.value)}

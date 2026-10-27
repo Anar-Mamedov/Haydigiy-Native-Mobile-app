@@ -1,3 +1,4 @@
+import { MIN_TOUCH_TARGET, getTextFieldLabelProps } from '@/components/ui';
 import { Search } from '@/components/ui/icons';
 import { Input, XStack } from 'tamagui';
 import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
@@ -22,17 +23,17 @@ export function HelpSearchInput({
       borderRadius="$4"
       borderWidth={1}
       gap="$2"
-      height={46}
       paddingHorizontal="$3"
     >
       <Search color="$color10" size={18} />
       <Input
-        accessibilityLabel="Yardım sayfasında ara"
+        {...getTextFieldLabelProps({ label: 'Yardım sayfasında ara', placeholder })}
         backgroundColor="transparent"
         borderWidth={0}
         flex={1}
         fontSize={14}
         maxFontSizeMultiplier={MAX_FONT_SCALE}
+        minHeight={MIN_TOUCH_TARGET}
         onChangeText={onChangeText}
         padding={0}
         placeholder={placeholder}

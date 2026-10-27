@@ -1,3 +1,4 @@
+import { StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { PasswordVisibilityToggle } from './password-visibility-toggle';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -23,5 +24,15 @@ describe('PasswordVisibilityToggle', () => {
     renderWithTamagui(<PasswordVisibilityToggle onToggle={jest.fn()} visible={false} />, 'dark');
 
     expect(screen.getByLabelText('Şifreyi göster')).toBeTruthy();
+  });
+
+  it('keeps a 48dp touch area around the eye icon', () => {
+    // Regresyon: 44x44 Tamagui butonu Play "Dokunma hedefi boyutu" uyarısı veriyordu.
+    renderWithTamagui(<PasswordVisibilityToggle onToggle={jest.fn()} visible={false} />);
+
+    expect(StyleSheet.flatten(screen.getByLabelText('Şifreyi göster').props.style)).toMatchObject({
+      minHeight: 48,
+      minWidth: 48,
+    });
   });
 });

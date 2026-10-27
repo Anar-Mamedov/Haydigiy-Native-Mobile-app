@@ -2,6 +2,7 @@ import { Button, Sheet, XStack, YStack } from 'tamagui';
 import { AppInput } from '@/components/ui/app-input';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
+import { IconButton } from '@/components/ui/icon-button';
 import { KeyboardAwareSheetScrollView } from '@/components/ui/keyboard-aware-sheet-scroll-view';
 import { SheetBottomCover } from '@/components/ui/sheet-bottom-cover';
 import { Calculator, X } from '@/components/ui/icons';
@@ -76,16 +77,9 @@ export function SizeCalculatorModal({ open, onOpenChange, onCalculateComplete }:
               Bedenimi Hesapla
             </Paragraph>
           </XStack>
-          <Button
-            accessibilityLabel="Kapat"
-            accessibilityRole="button"
-            backgroundColor="transparent"
-            chromeless
-            circular
-            icon={<X size={18} />}
-            onPress={() => onOpenChange(false)}
-            size="$3"
-          />
+          <IconButton accessibilityLabel="Kapat" onPress={() => onOpenChange(false)}>
+            <X color="$color" size={18} />
+          </IconButton>
         </XStack>
 
         <KeyboardAwareSheetScrollView

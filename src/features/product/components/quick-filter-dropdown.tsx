@@ -7,6 +7,7 @@ import { FilterProperty, ProductAvailableFilters, QuickFilterGroup } from '@/typ
 import { FilterShortcutSection } from './filter-sheet';
 import { CategoryFilterTree } from './category-filter-tree';
 import { FilterCheckbox } from '@/components/ui/filter-checkbox';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 type ActiveFilters = {
@@ -69,13 +70,14 @@ function SearchField({ onChangeText, placeholder, value }: {
   value: string;
 }) {
   return (
-    <XStack alignItems="center" backgroundColor="$backgroundHover" borderColor="$borderColor" borderRadius={5} borderWidth={1} height={48} paddingHorizontal={12}>
+    <XStack alignItems="center" backgroundColor="$backgroundHover" borderColor="$borderColor" borderRadius={5} borderWidth={1} paddingHorizontal={12}>
       <Search size={18} color="$color9" />
       <Input
         flex={1}
         backgroundColor="transparent"
         borderWidth={0}
         maxFontSizeMultiplier={MAX_FONT_SCALE}
+        minHeight={MIN_TOUCH_TARGET}
         paddingLeft={10}
         fontSize={15}
         color="$color"

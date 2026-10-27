@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Pressable } from 'react-native';
 import { ScrollView, XStack, YStack, Input } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { IconButton, MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { Search, X, TrendingDown } from '@/components/ui/icons';
 import { FavoritesFilter } from '@/types/favorite.types';
 import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
@@ -42,15 +43,14 @@ export function FavoritesToolbar({
         borderWidth={1}
         borderColor="$borderColor"
         paddingHorizontal="$3"
-        height={44}
       >
         <Search color="$color10" size={18} />
         <Input
           flex={1}
-          height="100%"
           backgroundColor="transparent"
           borderWidth={0}
           maxFontSizeMultiplier={MAX_FONT_SCALE}
+          minHeight={MIN_TOUCH_TARGET}
           paddingLeft="$2"
           fontSize={14}
           color="$color"
@@ -60,14 +60,9 @@ export function FavoritesToolbar({
           onChangeText={onSearchChange}
         />
         {searchQuery ? (
-          <Pressable
-            onPress={() => onSearchChange('')}
-            accessibilityLabel="Aramayı temizle"
-            accessibilityRole="button"
-            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 4 })}
-          >
+          <IconButton accessibilityLabel="Aramayı temizle" onPress={() => onSearchChange('')}>
             <X color="$color10" size={16} />
-          </Pressable>
+          </IconButton>
         ) : null}
       </XStack>
 

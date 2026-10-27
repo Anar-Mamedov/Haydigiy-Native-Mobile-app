@@ -40,6 +40,7 @@ export * from '@/components/ui/selectable-card';
 export * from '@/components/ui/segmented-control';
 export * from '@/components/ui/tab-strip';
 export * from '@/components/ui/text-action-button';
+export * from '@/components/ui/text-field-label';
 export * from '@/components/ui/sheet-bottom-cover';
 export * from '@/components/ui/theme-toggle';
 export * from '@/components/ui/use-fit-sheet-max-height';

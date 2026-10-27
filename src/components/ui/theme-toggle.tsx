@@ -1,6 +1,7 @@
 import { Moon, Monitor, Sun } from '@/components/ui/icons';
 import { Button, useTheme, XStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 
 export type ThemePreference = 'dark' | 'light' | 'system';
 
@@ -49,7 +50,7 @@ export function ThemeToggle({ onValueChange, value }: ThemeToggleProps) {
             borderRadius={100}
             borderWidth={0}
             flex={1}
-            height={40}
+            height={MIN_TOUCH_TARGET}
             key={option.value}
             onPress={() => onValueChange(option.value)}
             pressStyle={{ backgroundColor: isActive ? '$brand' : '$color4', opacity: 0.85 }}

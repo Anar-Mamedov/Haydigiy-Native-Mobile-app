@@ -23,4 +23,10 @@ describe('ProductRankingBadge', () => {
 
     expect(screen.queryByTestId('product-ranking-badge')).toBeNull();
   });
+
+  it('keeps the 30dp badge inside a 48dp touch target', () => {
+    renderWithTamagui(<ProductRankingBadge onPress={jest.fn()} text="En Çok Satan 1. Ürün" url={RANKING_URL} />);
+
+    expect(screen.getByTestId('product-ranking-badge').props.style).toMatchObject({ minHeight: 48 });
+  });
 });

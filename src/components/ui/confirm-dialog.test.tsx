@@ -1,3 +1,4 @@
+import { StyleSheet } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
@@ -51,5 +52,13 @@ describe('ConfirmDialog', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Evet, Kaldır' })).toBeDisabled();
+  });
+
+  it('keeps both actions at the 48dp touch target', () => {
+    renderWithTamagui(<ConfirmDialog {...baseProps} />);
+
+    for (const name of ['Vazgeç', 'Evet, Kaldır']) {
+      expect(StyleSheet.flatten(screen.getByRole('button', { name }).props.style)).toMatchObject({ height: 48 });
+    }
   });
 });
