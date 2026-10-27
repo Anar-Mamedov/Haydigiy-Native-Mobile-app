@@ -1,0 +1,243 @@
+diff --git a/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarButton/native.android.js b/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarButton/native.android.js
+index c7af88a..7f3a49c 100644
+--- a/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarButton/native.android.js
++++ b/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarButton/native.android.js
+@@ -3,7 +3,10 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.NativeToolbarButton = void 0;
+ const jsx_runtime_1 = require("react/jsx-runtime");
+-const jetpack_compose_1 = require("@expo/ui/jetpack-compose");
++// patch(haydigiy): load @expo/ui on first toolbar render, not at import. Its native
++// ExpoUI module is excluded from Android autolinking (package.json) because
++// registering it cost ~65 ms of every app start.
++const jetpack_compose_1 = () => require("@expo/ui/jetpack-compose");
+ const AnimatedItemContainer_1 = require("../../../../toolbar/AnimatedItemContainer");
+ const ToolbarItemBadge_1 = require("../ToolbarItemBadge");
+ const context_1 = require("../context");
+@@ -26,7 +29,7 @@ const NativeToolbarButton = (props) => {
+     const tintColor = props.imageRenderingMode === 'original'
+         ? null
+         : (props.tintColor ?? toolbarColors.tintColor ?? (0, defaults_1.DEFAULT_TOOLBAR_TINT_COLOR)());
+-    const button = ((0, jsx_runtime_1.jsx)(jetpack_compose_1.IconButton, { onClick: props.onPress, enabled: !props.disabled, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Icon, { source: props.source, tint: tintColor, size: 24, contentDescription: (0, ToolbarItemBadge_1.getBadgeContentDescription)(props.accessibilityLabel, props.badge) }) }));
++    const button = ((0, jsx_runtime_1.jsx)(jetpack_compose_1().IconButton, { onClick: props.onPress, enabled: !props.disabled, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Icon, { source: props.source, tint: tintColor, size: 24, contentDescription: (0, ToolbarItemBadge_1.getBadgeContentDescription)(props.accessibilityLabel, props.badge) }) }));
+     return ((0, jsx_runtime_1.jsx)(AnimatedItemContainer_1.AnimatedItemContainer, { visible: !props.hidden, children: (0, jsx_runtime_1.jsx)(ToolbarItemBadge_1.ToolbarItemBadge, { badge: props.badge, disabled: props.disabled, children: button }) }));
+ };
+ exports.NativeToolbarButton = NativeToolbarButton;
+diff --git a/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarMenu/native.android.js b/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarMenu/native.android.js
+index bedd846..73709a7 100644
+--- a/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarMenu/native.android.js
++++ b/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarMenu/native.android.js
+@@ -3,7 +3,10 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.NativeToolbarMenuAction = exports.NativeToolbarMenu = void 0;
+ const jsx_runtime_1 = require("react/jsx-runtime");
+-const jetpack_compose_1 = require("@expo/ui/jetpack-compose");
++// patch(haydigiy): load @expo/ui on first toolbar render, not at import. Its native
++// ExpoUI module is excluded from Android autolinking (package.json) because
++// registering it cost ~65 ms of every app start.
++const jetpack_compose_1 = () => require("@expo/ui/jetpack-compose");
+ const modifiers_1 = require("@expo/ui/jetpack-compose/modifiers");
+ const react_1 = require("react");
+ const primitives_1 = require("../../../../primitives");
+@@ -46,18 +49,18 @@ const NativeToolbarMenu = (props) => {
+     }
+     // Inline nested: render children directly with a divider separator
+     if (isNested && props.inline) {
+-        return ((0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)(jetpack_compose_1.HorizontalDivider, {}), props.children] }));
++        return ((0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)(jetpack_compose_1().HorizontalDivider, {}), props.children] }));
+     }
+     // Non-inline nested: DropdownMenu with DropdownMenuItem trigger
+     if (isNested) {
+-        const trailingIcon = ((0, jsx_runtime_1.jsx)(jetpack_compose_1.DropdownMenuItem.TrailingIcon, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Icon, { source: arrowRightIcon, tint: tintColor, size: 24 }) }));
+-        const leadingIcon = props.source ? ((0, jsx_runtime_1.jsx)(jetpack_compose_1.DropdownMenuItem.LeadingIcon, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Icon, { source: props.source, tint: sourceTint, size: 24 }) })) : null;
+-        return ((0, jsx_runtime_1.jsxs)(jetpack_compose_1.DropdownMenu, { expanded: expanded, onDismissRequest: () => setExpanded(false), color: backgroundColor, children: [(0, jsx_runtime_1.jsx)(jetpack_compose_1.DropdownMenu.Trigger, { children: (0, jsx_runtime_1.jsxs)(jetpack_compose_1.DropdownMenuItem, { onClick: () => {
++        const trailingIcon = ((0, jsx_runtime_1.jsx)(jetpack_compose_1().DropdownMenuItem.TrailingIcon, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Icon, { source: arrowRightIcon, tint: tintColor, size: 24 }) }));
++        const leadingIcon = props.source ? ((0, jsx_runtime_1.jsx)(jetpack_compose_1().DropdownMenuItem.LeadingIcon, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Icon, { source: props.source, tint: sourceTint, size: 24 }) })) : null;
++        return ((0, jsx_runtime_1.jsxs)(jetpack_compose_1().DropdownMenu, { expanded: expanded, onDismissRequest: () => setExpanded(false), color: backgroundColor, children: [(0, jsx_runtime_1.jsx)(jetpack_compose_1().DropdownMenu.Trigger, { children: (0, jsx_runtime_1.jsxs)(jetpack_compose_1().DropdownMenuItem, { onClick: () => {
+                             if (!props.disabled)
+                                 setExpanded(true);
+-                        }, modifiers: [(0, modifiers_1.background)(backgroundColor)], enabled: !props.disabled, children: [leadingIcon, (0, jsx_runtime_1.jsx)(jetpack_compose_1.DropdownMenuItem.Text, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Text, { color: typeof props.tintColor === 'string'
++                        }, modifiers: [(0, modifiers_1.background)(backgroundColor)], enabled: !props.disabled, children: [leadingIcon, (0, jsx_runtime_1.jsx)(jetpack_compose_1().DropdownMenuItem.Text, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Text, { color: typeof props.tintColor === 'string'
+                                         ? props.tintColor
+-                                        : (toolbarColors.tintColor ?? (0, defaults_1.DEFAULT_TOOLBAR_TINT_COLOR)()), children: props.label }) }), trailingIcon] }) }), (0, jsx_runtime_1.jsx)(jetpack_compose_1.DropdownMenu.Items, { children: (0, jsx_runtime_1.jsx)(ToolbarMenuCloseContext, { value: closeMenu, children: props.children }) })] }));
++                                        : (toolbarColors.tintColor ?? (0, defaults_1.DEFAULT_TOOLBAR_TINT_COLOR)()), children: props.label }) }), trailingIcon] }) }), (0, jsx_runtime_1.jsx)(jetpack_compose_1().DropdownMenu.Items, { children: (0, jsx_runtime_1.jsx)(ToolbarMenuCloseContext, { value: closeMenu, children: props.children }) })] }));
+     }
+     // Root: AnimatedItemContainer + IconButton trigger + DropdownMenu
+     if (!props.source) {
+@@ -66,8 +69,8 @@ const NativeToolbarMenu = (props) => {
+         }
+         return null;
+     }
+-    const iconButton = ((0, jsx_runtime_1.jsx)(jetpack_compose_1.IconButton, { onClick: () => setExpanded(true), enabled: !props.disabled, modifiers: [(0, modifiers_1.background)(backgroundColor)], children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Icon, { source: props.source, tint: sourceTint, size: 24, contentDescription: (0, ToolbarItemBadge_1.getBadgeContentDescription)(props.accessibilityLabel, props.badge) }) }));
+-    return ((0, jsx_runtime_1.jsx)(AnimatedItemContainer_1.AnimatedItemContainer, { visible: !props.hidden, children: (0, jsx_runtime_1.jsxs)(jetpack_compose_1.DropdownMenu, { expanded: expanded, onDismissRequest: () => setExpanded(false), color: backgroundColor, children: [(0, jsx_runtime_1.jsx)(jetpack_compose_1.DropdownMenu.Trigger, { children: (0, jsx_runtime_1.jsx)(ToolbarItemBadge_1.ToolbarItemBadge, { badge: props.badge, disabled: props.disabled, children: iconButton }) }), (0, jsx_runtime_1.jsx)(jetpack_compose_1.DropdownMenu.Items, { children: (0, jsx_runtime_1.jsx)(ToolbarMenuCloseContext, { value: closeMenu, children: props.children }) })] }) }));
++    const iconButton = ((0, jsx_runtime_1.jsx)(jetpack_compose_1().IconButton, { onClick: () => setExpanded(true), enabled: !props.disabled, modifiers: [(0, modifiers_1.background)(backgroundColor)], children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Icon, { source: props.source, tint: sourceTint, size: 24, contentDescription: (0, ToolbarItemBadge_1.getBadgeContentDescription)(props.accessibilityLabel, props.badge) }) }));
++    return ((0, jsx_runtime_1.jsx)(AnimatedItemContainer_1.AnimatedItemContainer, { visible: !props.hidden, children: (0, jsx_runtime_1.jsxs)(jetpack_compose_1().DropdownMenu, { expanded: expanded, onDismissRequest: () => setExpanded(false), color: backgroundColor, children: [(0, jsx_runtime_1.jsx)(jetpack_compose_1().DropdownMenu.Trigger, { children: (0, jsx_runtime_1.jsx)(ToolbarItemBadge_1.ToolbarItemBadge, { badge: props.badge, disabled: props.disabled, children: iconButton }) }), (0, jsx_runtime_1.jsx)(jetpack_compose_1().DropdownMenu.Items, { children: (0, jsx_runtime_1.jsx)(ToolbarMenuCloseContext, { value: closeMenu, children: props.children }) })] }) }));
+ };
+ exports.NativeToolbarMenu = NativeToolbarMenu;
+ /**
+@@ -94,7 +97,7 @@ const NativeToolbarMenuAction = (props) => {
+         : ((0, children_1.getFirstChildOfType)(props.children, primitives_1.Label)?.props.children ?? '');
+     if (props.hidden)
+         return null;
+-    return ((0, jsx_runtime_1.jsxs)(jetpack_compose_1.DropdownMenuItem, { onClick: handleClick, modifiers: [(0, modifiers_1.background)(backgroundColor)], enabled: !props.disabled, children: [(0, jsx_runtime_1.jsx)(jetpack_compose_1.DropdownMenuItem.Text, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Text, { color: tintColor, children: label }) }), props.source && ((0, jsx_runtime_1.jsx)(jetpack_compose_1.DropdownMenuItem.LeadingIcon, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Icon, { source: props.source, tint: tintColor, size: 24 }) })), props.isOn && ((0, jsx_runtime_1.jsx)(jetpack_compose_1.DropdownMenuItem.TrailingIcon, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Icon, { source: checkmarkIcon, tint: tintColor, size: 24 }) }))] }));
++    return ((0, jsx_runtime_1.jsxs)(jetpack_compose_1().DropdownMenuItem, { onClick: handleClick, modifiers: [(0, modifiers_1.background)(backgroundColor)], enabled: !props.disabled, children: [(0, jsx_runtime_1.jsx)(jetpack_compose_1().DropdownMenuItem.Text, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Text, { color: tintColor, children: label }) }), props.source && ((0, jsx_runtime_1.jsx)(jetpack_compose_1().DropdownMenuItem.LeadingIcon, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Icon, { source: props.source, tint: tintColor, size: 24 }) })), props.isOn && ((0, jsx_runtime_1.jsx)(jetpack_compose_1().DropdownMenuItem.TrailingIcon, { children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Icon, { source: checkmarkIcon, tint: tintColor, size: 24 }) }))] }));
+ };
+ exports.NativeToolbarMenuAction = NativeToolbarMenuAction;
+ //# sourceMappingURL=native.android.js.map
+\ No newline at end of file
+diff --git a/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarSpacer/native.android.js b/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarSpacer/native.android.js
+index 964ae85..5753e53 100644
+--- a/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarSpacer/native.android.js
++++ b/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarSpacer/native.android.js
+@@ -3,7 +3,10 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.NativeToolbarSpacer = void 0;
+ const jsx_runtime_1 = require("react/jsx-runtime");
+-const jetpack_compose_1 = require("@expo/ui/jetpack-compose");
++// patch(haydigiy): load @expo/ui on first toolbar render, not at import. Its native
++// ExpoUI module is excluded from Android autolinking (package.json) because
++// registering it cost ~65 ms of every app start.
++const jetpack_compose_1 = () => require("@expo/ui/jetpack-compose");
+ const modifiers_1 = require("@expo/ui/jetpack-compose/modifiers");
+ const AnimatedItemContainer_1 = require("../../../../toolbar/AnimatedItemContainer");
+ /**
+@@ -14,7 +17,7 @@ const NativeToolbarSpacer = (props) => {
+     if (!props.width) {
+         return null;
+     }
+-    return ((0, jsx_runtime_1.jsx)(AnimatedItemContainer_1.AnimatedItemContainer, { visible: !props.hidden, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Box, { modifiers: [(0, modifiers_1.width)(props.width)] }) }));
++    return ((0, jsx_runtime_1.jsx)(AnimatedItemContainer_1.AnimatedItemContainer, { visible: !props.hidden, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Box, { modifiers: [(0, modifiers_1.width)(props.width)] }) }));
+ };
+ exports.NativeToolbarSpacer = NativeToolbarSpacer;
+ //# sourceMappingURL=native.android.js.map
+\ No newline at end of file
+diff --git a/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarView/native.android.js b/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarView/native.android.js
+index 44b8c37..80caed1 100644
+--- a/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarView/native.android.js
++++ b/node_modules/expo-router/build/layouts/stack-utils/toolbar/StackToolbarView/native.android.js
+@@ -3,7 +3,10 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.NativeToolbarView = void 0;
+ const jsx_runtime_1 = require("react/jsx-runtime");
+-const jetpack_compose_1 = require("@expo/ui/jetpack-compose");
++// patch(haydigiy): load @expo/ui on first toolbar render, not at import. Its native
++// ExpoUI module is excluded from Android autolinking (package.json) because
++// registering it cost ~65 ms of every app start.
++const jetpack_compose_1 = () => require("@expo/ui/jetpack-compose");
+ const modifiers_1 = require("@expo/ui/jetpack-compose/modifiers");
+ const AnimatedItemContainer_1 = require("../../../../toolbar/AnimatedItemContainer");
+ const context_1 = require("../context");
+@@ -11,7 +14,7 @@ const bottomPlacementModifiers = [(0, modifiers_1.fillMaxHeight)()];
+ const NativeToolbarView = ({ children, hidden }) => {
+     const placement = (0, context_1.useToolbarPlacement)();
+     const modifiers = placement === 'bottom' ? bottomPlacementModifiers : undefined;
+-    return ((0, jsx_runtime_1.jsx)(jetpack_compose_1.Box, { contentAlignment: "center", modifiers: modifiers, children: (0, jsx_runtime_1.jsx)(AnimatedItemContainer_1.AnimatedItemContainer, { visible: !hidden, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.RNHostView, { matchContents: true, children: (0, jsx_runtime_1.jsx)(jsx_runtime_1.Fragment, { children: children }) }) }) }));
++    return ((0, jsx_runtime_1.jsx)(jetpack_compose_1().Box, { contentAlignment: "center", modifiers: modifiers, children: (0, jsx_runtime_1.jsx)(AnimatedItemContainer_1.AnimatedItemContainer, { visible: !hidden, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().RNHostView, { matchContents: true, children: (0, jsx_runtime_1.jsx)(jsx_runtime_1.Fragment, { children: children }) }) }) }));
+ };
+ exports.NativeToolbarView = NativeToolbarView;
+ //# sourceMappingURL=native.android.js.map
+\ No newline at end of file
+diff --git a/node_modules/expo-router/build/layouts/stack-utils/toolbar/ToolbarItemBadge.android.js b/node_modules/expo-router/build/layouts/stack-utils/toolbar/ToolbarItemBadge.android.js
+index 86f39ec..d06cff8 100644
+--- a/node_modules/expo-router/build/layouts/stack-utils/toolbar/ToolbarItemBadge.android.js
++++ b/node_modules/expo-router/build/layouts/stack-utils/toolbar/ToolbarItemBadge.android.js
+@@ -4,7 +4,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.getBadgeContentDescription = getBadgeContentDescription;
+ exports.ToolbarItemBadge = ToolbarItemBadge;
+ const jsx_runtime_1 = require("react/jsx-runtime");
+-const jetpack_compose_1 = require("@expo/ui/jetpack-compose");
++// patch(haydigiy): load @expo/ui on first toolbar render, not at import. Its native
++// ExpoUI module is excluded from Android autolinking (package.json) because
++// registering it cost ~65 ms of every app start.
++const jetpack_compose_1 = () => require("@expo/ui/jetpack-compose");
+ const modifiers_1 = require("@expo/ui/jetpack-compose/modifiers");
+ const font_1 = require("../../../utils/font");
+ /** A badge shows text when its value is neither null nor empty; otherwise it's a bare dot. */
+@@ -31,7 +34,7 @@ function ToolbarItemBadge({ badge, disabled, children, }) {
+     if (!badge) {
+         return (0, jsx_runtime_1.jsx)(jsx_runtime_1.Fragment, { children: children });
+     }
+-    return ((0, jsx_runtime_1.jsxs)(jetpack_compose_1.Box, { contentAlignment: "topEnd", children: [children, (0, jsx_runtime_1.jsx)(jetpack_compose_1.Badge, { containerColor: badge.style?.backgroundColor, contentColor: badge.style?.color, modifiers: disabled ? [(0, modifiers_1.alpha)(0.38)] : undefined, children: badgeHasValue(badge) ? ((0, jsx_runtime_1.jsx)(jetpack_compose_1.Text, { style: {
++    return ((0, jsx_runtime_1.jsxs)(jetpack_compose_1().Box, { contentAlignment: "topEnd", children: [children, (0, jsx_runtime_1.jsx)(jetpack_compose_1().Badge, { containerColor: badge.style?.backgroundColor, contentColor: badge.style?.color, modifiers: disabled ? [(0, modifiers_1.alpha)(0.38)] : undefined, children: badgeHasValue(badge) ? ((0, jsx_runtime_1.jsx)(jetpack_compose_1().Text, { style: {
+                         typography: 'labelSmall',
+                         fontWeight: (0, font_1.convertFontWeightToComposeFontWeight)(badge.style?.fontWeight),
+                         fontSize: badge.style?.fontSize,
+diff --git a/node_modules/expo-router/build/layouts/stack-utils/toolbar/processHeaderItemsForPlatform.android.js b/node_modules/expo-router/build/layouts/stack-utils/toolbar/processHeaderItemsForPlatform.android.js
+index 41bfa79..36c9fc2 100644
+--- a/node_modules/expo-router/build/layouts/stack-utils/toolbar/processHeaderItemsForPlatform.android.js
++++ b/node_modules/expo-router/build/layouts/stack-utils/toolbar/processHeaderItemsForPlatform.android.js
+@@ -3,7 +3,10 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.processHeaderItemsForPlatform = processHeaderItemsForPlatform;
+ const jsx_runtime_1 = require("react/jsx-runtime");
+-const jetpack_compose_1 = require("@expo/ui/jetpack-compose");
++// patch(haydigiy): load @expo/ui on first toolbar render, not at import. Its native
++// ExpoUI module is excluded from Android autolinking (package.json) because
++// registering it cost ~65 ms of every app start.
++const jetpack_compose_1 = () => require("@expo/ui/jetpack-compose");
+ const react_1 = require("react");
+ const context_1 = require("./context");
+ const NativeMenuContext_1 = require("../../../link/NativeMenuContext");
+@@ -38,6 +41,6 @@ function HeaderToolbarHostBase({ children, placement, colors, headerProps, }) {
+         headerProps?.tintColor,
+         headerProps?.backgroundColor,
+     ]);
+-    return ((0, jsx_runtime_1.jsx)(context_1.ToolbarPlacementContext.Provider, { value: placement, children: (0, jsx_runtime_1.jsx)(context_1.ToolbarColorContext.Provider, { value: stableColors, children: (0, jsx_runtime_1.jsx)(NativeMenuContext_1.NativeMenuContext, { value: true, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Host, { matchContents: true, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Row, { verticalAlignment: "center", children: children }) }) }) }) }));
++    return ((0, jsx_runtime_1.jsx)(context_1.ToolbarPlacementContext.Provider, { value: placement, children: (0, jsx_runtime_1.jsx)(context_1.ToolbarColorContext.Provider, { value: stableColors, children: (0, jsx_runtime_1.jsx)(NativeMenuContext_1.NativeMenuContext, { value: true, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Host, { matchContents: true, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Row, { verticalAlignment: "center", children: children }) }) }) }) }));
+ }
+ //# sourceMappingURL=processHeaderItemsForPlatform.android.js.map
+\ No newline at end of file
+diff --git a/node_modules/expo-router/build/toolbar/AnimatedItemContainer.android.js b/node_modules/expo-router/build/toolbar/AnimatedItemContainer.android.js
+index 7a705bd..7fb0cef 100644
+--- a/node_modules/expo-router/build/toolbar/AnimatedItemContainer.android.js
++++ b/node_modules/expo-router/build/toolbar/AnimatedItemContainer.android.js
+@@ -2,17 +2,20 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.AnimatedItemContainer = AnimatedItemContainer;
+ const jsx_runtime_1 = require("react/jsx-runtime");
+-const jetpack_compose_1 = require("@expo/ui/jetpack-compose");
++// patch(haydigiy): load @expo/ui on first toolbar render, not at import. Its native
++// ExpoUI module is excluded from Android autolinking (package.json) because
++// registering it cost ~65 ms of every app start.
++const jetpack_compose_1 = () => require("@expo/ui/jetpack-compose");
+ /**
+  * Shared animated container for Android toolbar items.
+  */
+ function AnimatedItemContainer({ visible, children, }) {
+-    return ((0, jsx_runtime_1.jsx)(jetpack_compose_1.AnimatedVisibility
++    return ((0, jsx_runtime_1.jsx)(jetpack_compose_1().AnimatedVisibility
+     // As mentioned in the docs, `scaleIn` does not animate layout, so we need to combine it with `expandIn` to get the layout animation as well. The same applies to `scaleOut` and `shrinkOut`.
+     // https://developer.android.com/reference/kotlin/androidx/compose/animation/package-summary#scaleOut(androidx.compose.animation.core.FiniteAnimationSpec,kotlin.Float,androidx.compose.ui.graphics.TransformOrigin)
+     , { 
+         // As mentioned in the docs, `scaleIn` does not animate layout, so we need to combine it with `expandIn` to get the layout animation as well. The same applies to `scaleOut` and `shrinkOut`.
+         // https://developer.android.com/reference/kotlin/androidx/compose/animation/package-summary#scaleOut(androidx.compose.animation.core.FiniteAnimationSpec,kotlin.Float,androidx.compose.ui.graphics.TransformOrigin)
+-        enterTransition: jetpack_compose_1.EnterTransition.scaleIn().plus(jetpack_compose_1.EnterTransition.expandIn()), exitTransition: jetpack_compose_1.ExitTransition.scaleOut().plus(jetpack_compose_1.ExitTransition.shrinkOut()), visible: visible, children: children }));
++        enterTransition: jetpack_compose_1().EnterTransition.scaleIn().plus(jetpack_compose_1().EnterTransition.expandIn()), exitTransition: jetpack_compose_1().ExitTransition.scaleOut().plus(jetpack_compose_1().ExitTransition.shrinkOut()), visible: visible, children: children }));
+ }
+ //# sourceMappingURL=AnimatedItemContainer.android.js.map
+\ No newline at end of file
+diff --git a/node_modules/expo-router/build/toolbar/native.android.js b/node_modules/expo-router/build/toolbar/native.android.js
+index d8c43c9..f127c6e 100644
+--- a/node_modules/expo-router/build/toolbar/native.android.js
++++ b/node_modules/expo-router/build/toolbar/native.android.js
+@@ -2,7 +2,10 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.RouterToolbarHost = RouterToolbarHost;
+ const jsx_runtime_1 = require("react/jsx-runtime");
+-const jetpack_compose_1 = require("@expo/ui/jetpack-compose");
++// patch(haydigiy): load @expo/ui on first toolbar render, not at import. Its native
++// ExpoUI module is excluded from Android autolinking (package.json) because
++// registering it cost ~65 ms of every app start.
++const jetpack_compose_1 = () => require("@expo/ui/jetpack-compose");
+ const modifiers_1 = require("@expo/ui/jetpack-compose/modifiers");
+ const react_1 = require("react");
+ const react_native_1 = require("react-native");
+@@ -19,7 +22,7 @@ function RouterToolbarHost(props) {
+     // The wrapper fills the screen so it can pin the toolbar to the bottom, but `box-none` keeps it
+     // from being a touch target. The Compose `Host` then wraps just the toolbar (matchContents), so
+     // only that area swallows touches — taps elsewhere reach the screen content below (ENG-22124).
+-    return ((0, jsx_runtime_1.jsx)(react_native_1.View, { testID: "RouterToolbarWrapper", style: styles.container, pointerEvents: "box-none", children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Host, { matchContents: { vertical: true }, style: styles.host, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.Box, { modifiers: modifiers, contentAlignment: "center", children: (0, jsx_runtime_1.jsx)(jetpack_compose_1.HorizontalFloatingToolbar, { colors: {
++    return ((0, jsx_runtime_1.jsx)(react_native_1.View, { testID: "RouterToolbarWrapper", style: styles.container, pointerEvents: "box-none", children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Host, { matchContents: { vertical: true }, style: styles.host, children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().Box, { modifiers: modifiers, contentAlignment: "center", children: (0, jsx_runtime_1.jsx)(jetpack_compose_1().HorizontalFloatingToolbar, { colors: {
+                         ...(props.backgroundColor ? { toolbarContainerColor: props.backgroundColor } : {}),
+                     }, modifiers: [(0, modifiers_1.height)(64)], children: props.children }) }) }) }));
+ }

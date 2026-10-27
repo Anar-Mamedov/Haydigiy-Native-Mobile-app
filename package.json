@@ -98,6 +98,9 @@
       "android": {
         "buildFromSource": [
           "expo-image"
+        ],
+        "exclude": [
+          "@expo/ui"
         ]
       }
     }
