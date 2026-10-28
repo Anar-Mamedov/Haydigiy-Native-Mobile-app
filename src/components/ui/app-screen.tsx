@@ -46,6 +46,11 @@ export function AppScreen({
         {scrollable ? (
           <ScrollView
             contentContainerStyle={{ flexGrow: 1 }}
+            // Varsayılan 'never', klavye açıkken ilk dokunuşu yutup yalnızca klavyeyi kapatıyordu
+            // (OTP "Doğrula ve Devam Et" ancak ikinci basışta çalışıyordu). İçteki ScrollView'ların
+            // 'handled' ayarı da bu dış ScrollView yüzünden etkisizdi. Boş alana dokunmak klavyeyi
+            // yine kapatır.
+            keyboardShouldPersistTaps="handled"
             onScroll={onScroll}
             scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
