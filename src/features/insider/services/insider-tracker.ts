@@ -27,6 +27,7 @@ import {
   toInsiderUserIdentity,
 } from '../utils/insider-identity';
 import { INSIDER_LANGUAGE, INSIDER_LOCALE } from '../utils/insider-locale';
+import { toInsiderBirthday } from '../utils/insider-birthday';
 
 /**
  * Custom event tetiklendiğinde Insider'ın beklediği ad: yalnızca küçük Latin
@@ -94,7 +95,7 @@ export interface InsiderTracker {
    */
   identifyUser(user: User): void;
   /**
-   * Profil güncellemesinden sonra yalnızca attribute'ları (ad, soyad, dil) tazeler;
+   * Profil güncellemesinden sonra yalnızca attribute'ları (ad, soyad, doğum tarihi, dil) tazeler;
    * identifier'lara DOKUNMAZ.
    *
    * E-posta ve telefon Insider'da identifier'dır. Kullanıcı bunları değiştirdiğinde
@@ -207,6 +208,8 @@ export function createInsiderTracker(
   const applyProfileAttributes = (currentUser: InsiderUserSdk, user: User): void => {
     if (user.name) currentUser.setName(user.name);
     if (user.surname) currentUser.setSurname(user.surname);
+    const birthday = toInsiderBirthday(user.birthDate);
+    if (birthday) currentUser.setBirthday(birthday);
     currentUser.setLanguage(INSIDER_LANGUAGE);
     currentUser.setLocale(INSIDER_LOCALE);
   };

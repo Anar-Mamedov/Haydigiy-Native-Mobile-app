@@ -108,4 +108,46 @@ describe('useUpdateProfileMutation', () => {
       queryClient.clear();
     });
   });
+
+  describe('birth date in the session', () => {
+    const payload = {
+      birth_date: '1990-05-12',
+      email: 'anar26271@gmail.com',
+      gender: 'male',
+      name: 'Anar',
+      phone: '5551234567',
+      surname: 'Mamedov',
+    };
+
+    beforeEach(() => {
+      useAuthStore.setState({
+        user: { email: 'anar26271@gmail.com', id: '42', name: 'Anar', phoneNumber: '5551234567' },
+      });
+    });
+
+    async function save(response: userService.UpdateProfileResponseDto) {
+      updateProfileDto.mockResolvedValueOnce(response);
+      const { queryClient, wrapper } = createMutationHarness();
+      const { result, unmount } = renderHook(() => useUpdateProfileMutation(), { wrapper });
+
+      await act(async () => {
+        await result.current.mutateAsync(payload);
+      });
+
+      unmount();
+      queryClient.clear();
+    }
+
+    it('stores the date the backend saved so Insider gets the current birthday', async () => {
+      await save({ success: true, user: { birth_date: '1985-03-01' } });
+
+      expect(useAuthStore.getState().user?.birthDate).toBe('1985-03-01');
+    });
+
+    it('falls back to the sent date when the response has no user', async () => {
+      await save({ success: true });
+
+      expect(useAuthStore.getState().user?.birthDate).toBe('1990-05-12');
+    });
+  });
 });

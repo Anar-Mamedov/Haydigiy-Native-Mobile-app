@@ -34,6 +34,9 @@ export function useUpdateProfileMutation() {
           surname: payload.surname,
           email: payload.email ?? user.email,
           phoneNumber: payload.phone ?? undefined,
+          // The saved value wins: the backend may keep a stored date it was sent `null` for.
+          birthDate:
+            result.user?.birth_date !== undefined ? result.user.birth_date : payload.birth_date,
         });
       }
     },

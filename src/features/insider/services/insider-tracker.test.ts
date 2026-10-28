@@ -65,6 +65,7 @@ function createUserMock(): jest.Mocked<InsiderUserSdk> {
   const user = {
     setName: jest.fn(),
     setSurname: jest.fn(),
+    setBirthday: jest.fn(),
     setEmail: jest.fn(),
     setPhoneNumber: jest.fn(),
     setLanguage: jest.fn(),
@@ -522,6 +523,24 @@ describe('insider tracker', () => {
     expect(order[0]).toBe('login');
     expect(order).toContain('setName');
     expect(order).toContain('setEmail');
+  });
+
+  it('sends the saved birth date as UTC midnight on identify and profile refresh', () => {
+    const { tracker, insiderUser } = createSdkHarness();
+
+    tracker.identifyUser({ ...testUser, birthDate: '1980-01-01' });
+    tracker.refreshUserAttributes({ ...testUser, birthDate: '1992-06-15' });
+
+    expect(insiderUser.setBirthday).toHaveBeenNthCalledWith(1, new Date('1980-01-01T00:00:00Z'));
+    expect(insiderUser.setBirthday).toHaveBeenNthCalledWith(2, new Date('1992-06-15T00:00:00Z'));
+  });
+
+  it('does not send a birthday when none is saved', () => {
+    const { tracker, insiderUser } = createSdkHarness();
+
+    tracker.identifyUser({ ...testUser, birthDate: null });
+
+    expect(insiderUser.setBirthday).not.toHaveBeenCalled();
   });
 
   it('skips invalid e-mail and phone attributes but still logs in with the user id', () => {

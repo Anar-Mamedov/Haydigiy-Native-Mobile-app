@@ -9,10 +9,13 @@ export interface LoginResponse {
 
 /**
  * Maps the raw backend user onto the domain User, normalizing the verification
- * flag (`email_verified` → `emailVerified`) so screens consume a stable shape.
+ * flag (`email_verified` → `emailVerified`) and the birth date
+ * (`birth_date` → `birthDate`) so screens consume a stable shape.
  * All other fields are preserved as-is.
  */
-function normalizeAuthUser(raw: (User & { phone?: string; email_verified?: boolean }) | undefined) {
+function normalizeAuthUser(
+  raw: (User & { phone?: string; email_verified?: boolean; birth_date?: string | null }) | undefined,
+) {
   if (!raw) return raw;
   const verified =
     typeof raw.emailVerified === 'boolean'
@@ -20,7 +23,7 @@ function normalizeAuthUser(raw: (User & { phone?: string; email_verified?: boole
       : typeof raw.email_verified === 'boolean'
         ? raw.email_verified
         : undefined;
-  return { ...raw, emailVerified: verified };
+  return { ...raw, emailVerified: verified, birthDate: raw.birthDate ?? raw.birth_date ?? null };
 }
 
 export interface RegisterResponse {

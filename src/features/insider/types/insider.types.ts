@@ -47,6 +47,7 @@ export interface InsiderIdentifierSdk {
 export interface InsiderUserSdk {
   setName(value: string): this;
   setSurname(value: string): this;
+  setBirthday(value: Date): this;
   setEmail(value: string): this;
   setPhoneNumber(value: string): this;
   setLanguage(value: string): this;
