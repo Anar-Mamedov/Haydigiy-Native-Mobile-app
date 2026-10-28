@@ -11,6 +11,7 @@ import { useAddToCartMutation } from '@/features/cart/api/cart.queries';
 import { buildInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { useOrderDetailQuery } from '../api/order.queries';
 import { useOpenInvoiceFromParam } from '../hooks/use-open-invoice-from-param';
+import { useReorderController } from '../hooks/use-reorder-controller';
 import { OrdersHeader } from '../components/orders-header';
 import { OrderDetailSummary } from '../components/order-detail-summary';
 import { OrderTimeline } from '../components/order-timeline';
@@ -22,6 +23,8 @@ import { OrderAddressCard } from '../components/order-address-card';
 import { OrderPaymentCard } from '../components/order-payment-card';
 import { OrderReviewSheet } from '../components/order-review-sheet';
 import { CargoTrackingSheet } from '../components/cargo-tracking-sheet';
+import { ReorderButton } from '../components/reorder-button';
+import { ReorderConfirmSheet } from '../components/reorder-confirm-sheet';
 import { MissingItemsCard } from '../components/missing-items-card';
 import { AgreementTab, OrderAgreementSheet } from '../components/order-agreement-sheet';
 import { isOrderCancellableStatus } from '../utils/order-status';
@@ -85,6 +88,7 @@ export function OrderDetailScreen() {
   // Web paritesi: satır iptal de iade de edilemiyorsa "Tekrar Satın Al" gösterilir.
   const isRepurchasable = Boolean(order) && !isCancelable && !canCreateReturn;
 
+  const reorder = useReorderController(id);
   const addToCart = useAddToCartMutation();
   const handleRepurchase = (item: OrderDetailItem) => {
     // Paket tek varyantla sepete eklenemez; bedenler yeniden seçilsin diye detaya gidilir.
@@ -225,6 +229,8 @@ export function OrderDetailScreen() {
           <OrderReturnSection onPressProduct={openProduct} order={order} />
           <ReturnGiftVoucherCard info={order.returnPaymentInfo} />
 
+          <ReorderButton isLoading={reorder.isPending} onPress={reorder.start} />
+
           {isCancelable ? (
             <Button
               accessibilityLabel="Sipariş İptal Et"
@@ -311,6 +317,14 @@ export function OrderDetailScreen() {
         open={cargoTrackingOpen}
         shipment={cargoShipment}
         shippingAddress={order.shippingAddress}
+      />
+
+      <ReorderConfirmSheet
+        confirmation={reorder.confirmation}
+        isConfirming={reorder.isConfirming}
+        onCancel={reorder.dismiss}
+        onConfirm={reorder.confirm}
+        open={reorder.isConfirmationOpen}
       />
     </AppScreen>
   );

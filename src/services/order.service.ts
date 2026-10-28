@@ -16,6 +16,7 @@ import {
   CancelSubmitResponseDto,
 } from '@/features/order/api/order-cancel.dtos';
 import { mapCancelPreview } from '@/features/order/api/order-cancel.mapper';
+import { ReorderResponseDto } from '@/features/order/api/order-reorder.dtos';
 import { CancelPreview, OrderCategory, OrderDateFilter } from '@/types/order.types';
 
 const EMPTY_PAGE = { data: [], meta: { current_page: 1, last_page: 1, per_page: 0, total: 0 } };
@@ -159,6 +160,36 @@ export function getCancelErrorMessage(error: unknown, fallback = 'Bir hata oluş
     return data?.message ?? data?.error ?? fallback;
   }
   return fallback;
+}
+
+/** The 422 "nothing is in stock" reorder answer carries a body the UI needs. */
+function getReorderAllOutOfStockPayload(error: unknown): ReorderResponseDto | null {
+  if (!isAxiosError(error) || error.response?.status !== 422) return null;
+  const data = error.response.data as ReorderResponseDto | undefined;
+  return data?.all_out_of_stock === true ? data : null;
+}
+
+/**
+ * Reorder (`POST /order/{id}/reorder`). The first call sends an empty body;
+ * `confirmed` re-sends it once the customer agreed to skip sold-out lines. The 422
+ * "all out of stock" answer is a business outcome, so its body is returned like a
+ * 200 response; every other failure (401, 404, network, 5xx, …) is rethrown.
+ */
+export async function reorderOrderDto(
+  id: number | string,
+  confirmed = false,
+): Promise<ReorderResponseDto> {
+  try {
+    const response = await apiClient.post<ReorderResponseDto>(
+      `/order/${id}/reorder`,
+      confirmed ? { confirmed: true } : {},
+    );
+    return response.data ?? {};
+  } catch (error) {
+    const outOfStock = getReorderAllOutOfStockPayload(error);
+    if (outOfStock) return outOfStock;
+    throw error;
+  }
 }
 
 export interface OrderPrepareResponseDto {

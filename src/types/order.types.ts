@@ -403,3 +403,57 @@ export type OrderCargoTracking = {
   lastMovement: OrderCargoMovement | null;
   delivered: boolean;
 };
+
+/** An order line as seen by "Siparişi Tekrarla", with its current stock. */
+export type ReorderItem = {
+  /** Stable list key (order item id, falling back to the list position). */
+  key: string;
+  orderItemId: number | null;
+  productId: number | null;
+  variantId: number | null;
+  name: string;
+  /** Size label ("Beden"); empty when the product has no size. */
+  variantName: string;
+  slug: string;
+  imageUrl: string | null;
+  requestedQuantity: number;
+  currentStock: number;
+  /** Current unit price, not the price paid in the original order. */
+  price: number;
+};
+
+export type ReorderOutOfStockItem = ReorderItem & {
+  /** Why the line cannot be added, e.g. "Stok tükendi". */
+  reason: string;
+};
+
+export type ReorderAvailableItem = ReorderItem & {
+  /** Quantity that goes into the cart, capped by the current stock. */
+  addQuantity: number;
+  /** True when less than the originally ordered quantity is in stock. */
+  isPartialStock: boolean;
+};
+
+/** Outcome of a reorder request, decided by the backend. */
+export type ReorderResult =
+  | {
+      kind: 'added';
+      message: string;
+      cartCount: number | null;
+      addedItems: ReorderAvailableItem[];
+      outOfStockItems: ReorderOutOfStockItem[];
+      /** Lines that sold out between the stock check and the cart insert. */
+      failedCount: number;
+    }
+  | {
+      kind: 'needsConfirmation';
+      message: string;
+      outOfStockItems: ReorderOutOfStockItem[];
+      availableItems: ReorderAvailableItem[];
+    }
+  | { kind: 'allOutOfStock'; message: string; outOfStockItems: ReorderOutOfStockItem[] }
+  /** Unrecognised response: surfaced as an error so the request never fails silently. */
+  | { kind: 'failed'; message: string };
+
+/** The "some lines sold out" result the customer has to confirm. */
+export type ReorderConfirmation = Extract<ReorderResult, { kind: 'needsConfirmation' }>;
