@@ -85,9 +85,20 @@ jest.mock('@/features/auth/api/auth-session', () => ({
   isAuthenticated: jest.fn(async () => true),
 }));
 
+const mockOfferIfEligible = jest.fn(async () => false);
+let mockContinueAsNewOrder: (() => void) | undefined;
+
+jest.mock('@/features/order-merge/hooks/use-order-merge-offer', () => ({
+  useOrderMergeOffer: ({ onContinueAsNewOrder }: { onContinueAsNewOrder: () => void }) => {
+    mockContinueAsNewOrder = onContinueAsNewOrder;
+    return { isChecking: false, offerIfEligible: mockOfferIfEligible };
+  },
+}));
+
 describe('useCartController checkout', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockOfferIfEligible.mockResolvedValue(false);
     jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   });
 
@@ -130,6 +141,49 @@ describe('useCartController checkout', () => {
       pathname: '/checkout',
       params: { orderToken: 'tok-1' },
     });
+  });
+
+  // Onaylanmış siparişe ekleme teklifi açılırsa yeni sipariş taslağı (/order/prepare) oluşturulmaz.
+  it('offers the approved order first and does not prepare a new order', async () => {
+    mockOfferIfEligible.mockResolvedValue(true);
+
+    const { result } = renderHook(() => useCartController());
+    await act(async () => {
+      await result.current.checkout();
+    });
+
+    expect(mockOfferIfEligible).toHaveBeenCalledTimes(1);
+    expect(mockCheckoutMutateAsync).not.toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('runs the normal checkout when the customer continues as a new order', async () => {
+    mockCheckoutMutateAsync.mockResolvedValue({ orderToken: 'tok-2', status: 'ready' });
+    renderHook(() => useCartController());
+
+    await act(async () => {
+      mockContinueAsNewOrder?.();
+    });
+
+    expect(mockCheckoutMutateAsync).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/checkout',
+      params: { orderToken: 'tok-2' },
+    });
+  });
+
+  it('asks guests to log in before checking for an approved order', async () => {
+    const { isAuthenticated } = jest.requireMock('@/features/auth/api/auth-session');
+    isAuthenticated.mockResolvedValueOnce(false);
+
+    const { result } = renderHook(() => useCartController());
+    await act(async () => {
+      await result.current.checkout();
+    });
+
+    expect(Alert.alert).toHaveBeenCalledWith('Giriş Yapın', expect.any(String), expect.any(Array));
+    expect(mockOfferIfEligible).not.toHaveBeenCalled();
+    expect(mockCheckoutMutateAsync).not.toHaveBeenCalled();
   });
 });
 

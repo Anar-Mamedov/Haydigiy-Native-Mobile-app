@@ -17,6 +17,7 @@ import {
 import { useShippingEstimateQuery } from '@/features/shipping/api/shipping.queries';
 import { useCheckoutMutation } from '@/features/checkout/api/checkout.mutations';
 import { useAddFavoriteMutation } from '@/features/favorite/api/favorite.queries';
+import { useOrderMergeOffer } from '@/features/order-merge/hooks/use-order-merge-offer';
 import { cartItemToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { isAuthenticated } from '@/features/auth/api/auth-session';
 import { CartCampaign, CartLineItem } from '@/types/cart.types';
@@ -35,8 +36,9 @@ const isOutOfStock = (message: string) =>
  * Query (`/cart/list`, `/shipping-estimate`) and every write goes through the
  * cart API (`/cart/update`, `/cart/remove`), mirroring the web cart. The item
  * count is derived from the loaded list so the header and the "Sepeti Onayla"
- * button always match the items shown. Checkout runs the same address-check then
- * `/order/prepare` flow.
+ * button always match the items shown. Checkout first offers to add the cart to an
+ * approved order (`useOrderMergeOffer`); otherwise it runs the same address-check
+ * then `/order/prepare` flow.
  */
 export function useCartController() {
   const router = useRouter();
@@ -58,8 +60,6 @@ export function useCartController() {
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const [removedMessage, setRemovedMessage] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
-
-  const isCheckingOut = checkoutMutation.isPending;
 
   const campaigns: CartCampaign[] = cartQuery.data?.campaigns ?? [];
 
@@ -241,20 +241,9 @@ export function useCartController() {
     }
   }, [router]);
 
-  const checkout = useCallback(async () => {
-    if (checkoutMutation.isPending || items.length === 0) return;
-
-    if (!(await isAuthenticated())) {
-      Alert.alert(
-        'Giriş Yapın',
-        'Sepeti onaylamak için hesabınıza giriş yapın veya ücretsiz üye olun.',
-        [
-          { text: 'Vazgeç', style: 'cancel' },
-          { text: 'Giriş Yap', onPress: () => router.push('/profile') },
-        ],
-      );
-      return;
-    }
+  /** The normal checkout: address check, `/order/prepare`, then the payment screen. */
+  const startNewOrderCheckout = useCallback(async () => {
+    if (checkoutMutation.isPending) return;
 
     try {
       const result = await checkoutMutation.mutateAsync();
@@ -283,7 +272,37 @@ export function useCartController() {
         getApiErrorMessage(error, 'Sipariş hazırlanırken bir hata oluştu.'),
       );
     }
-  }, [checkoutMutation, items.length, router]);
+  }, [checkoutMutation, router]);
+
+  const orderMerge = useOrderMergeOffer({
+    onContinueAsNewOrder: useCallback(() => {
+      void startNewOrderCheckout();
+    }, [startNewOrderCheckout]),
+  });
+  const { offerIfEligible, isChecking: isCheckingOrderMerge } = orderMerge;
+
+  const isCheckingOut = checkoutMutation.isPending || isCheckingOrderMerge;
+
+  const checkout = useCallback(async () => {
+    if (isCheckingOut || items.length === 0) return;
+
+    if (!(await isAuthenticated())) {
+      Alert.alert(
+        'Giriş Yapın',
+        'Sepeti onaylamak için hesabınıza giriş yapın veya ücretsiz üye olun.',
+        [
+          { text: 'Vazgeç', style: 'cancel' },
+          { text: 'Giriş Yap', onPress: () => router.push('/profile') },
+        ],
+      );
+      return;
+    }
+
+    // Onaylanmış ve depoya düşmemiş bir sipariş varsa önce ona eklemeyi teklif et.
+    if (await offerIfEligible()) return;
+
+    await startNewOrderCheckout();
+  }, [isCheckingOut, items.length, offerIfEligible, router, startNewOrderCheckout]);
 
   return {
     items,
@@ -323,5 +342,7 @@ export function useCartController() {
     openProductBySlug,
     goBack,
     checkout,
+    // "Mevcut siparişime ekle" offer
+    orderMerge,
   };
 }

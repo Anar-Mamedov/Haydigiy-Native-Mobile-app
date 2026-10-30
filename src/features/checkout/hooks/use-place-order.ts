@@ -2,14 +2,10 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckoutController } from './use-checkout-controller';
-import {
-  isGarantiRouterResponse,
-  isIyzicoRouterResponse,
-  mapGarantiForm,
-  mapIyzico3dsHandoff,
-} from '../api/checkout.mapper';
+import { mapIyzico3dsHandoff } from '../api/checkout.mapper';
 import { getOrderTokenSummaryError, mapOrderTokenSummary } from '../api/order-token-summary.mapper';
 import { buildGarantiFormHtml } from '../utils/build-garanti-form-html';
+import { resolvePaymentRouterHandoff } from '../utils/payment-router-handoff';
 import { getApiErrorMessage } from '../utils/error-message';
 import { isCheckoutPriceChangeMessage } from '../utils/checkout-price-change';
 import { setPurchaseSnapshot } from '../utils/purchase-snapshot';
@@ -232,21 +228,15 @@ export function usePlaceOrder(controller: CheckoutController): PlaceOrderControl
           customer_ip: ip,
         });
 
-        if (routerRes.status === 'error') {
-          throw new Error(routerRes.message ?? 'Ödeme işlemi başlatılamadı.');
-        }
-        // The backend routes Enpara cards' single payments to İyzico.
-        if (isIyzicoRouterResponse(routerRes)) {
-          openIyzico3ds(routerRes);
+        const handoff = resolvePaymentRouterHandoff(routerRes, 1);
+        // The backend routes Enpara cards' single payments to a bank-hosted 3DS page.
+        if (handoff.kind === 'hosted-3ds') {
+          markOrderSubmitted();
+          setThreeDS(handoff.handoff);
           return;
         }
-        if (!isGarantiRouterResponse(routerRes)) {
-          throw new Error(
-            'Bu ödeme için kart altyapısı şu an kullanılamıyor. Lütfen daha sonra tekrar deneyin.',
-          );
-        }
 
-        const garanti = mapGarantiForm(routerRes, 1);
+        const garanti = handoff.form;
 
         // Pre-confirm before redirecting to 3D (mirrors the web Garanti flow).
         await confirmOrderDto({

@@ -12,12 +12,13 @@ import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-es
 import { useCartController } from '@/features/cart/hooks/use-cart-controller';
 import { getCartLineKey } from '@/features/cart/utils/cart-line';
 import { InsiderRecommendationSections } from '@/features/insider/components/insider-recommendation-sections';
+import { OrderMergeOfferSheet } from '@/features/order-merge/components/order-merge-offer-sheet';
 import { useTrackCartPageView } from '@/features/insider/hooks/use-insider-page-tracking';
 
 export function CartScreen() {
   const router = useRouter();
   const controller = useCartController();
-  const { items, syncCart } = controller;
+  const { items, syncCart, orderMerge } = controller;
 
   // Insider "sepet görüntüleme": fires with the synced lines once per visit.
   useTrackCartPageView(
@@ -155,6 +156,15 @@ export function CartScreen() {
         onOpenChange={controller.setIsClearDialogOpen}
         open={controller.isClearDialogOpen}
         title="Sepeti Temizlemek İstediğinize Emin Misiniz?"
+      />
+
+      <OrderMergeOfferSheet
+        isSubmitting={orderMerge.isSubmitting}
+        offer={orderMerge.offer}
+        onConfirm={orderMerge.accept}
+        onContinueAsNewOrder={orderMerge.continueAsNewOrder}
+        onDismiss={orderMerge.dismiss}
+        open={orderMerge.isOpen}
       />
 
       {removedDialog}

@@ -68,6 +68,21 @@ describe('ConfirmSheet', () => {
     expect(baseProps.onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  // "Yeni sipariş olarak devam et" gibi iptal butonları kapatmaktan fazlasını yapar;
+  // sheet dışına dokunmak ise yalnızca kapatır.
+  it('runs onCancel from the cancel action while overlay dismissal only closes', () => {
+    const onCancel = jest.fn();
+    renderWithTamagui(<ConfirmSheet {...baseProps} onCancel={onCancel} />);
+
+    fireEvent.press(screen.getByRole('button', { name: 'Vazgeç' }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(baseProps.onOpenChange).not.toHaveBeenCalled();
+
+    screen.getByTestId('sheet-root').props.onOpenChange(false);
+    expect(baseProps.onOpenChange).toHaveBeenCalledWith(false);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
   // İstek sürerken sheet kapatılamaz; aksi halde sonuç sahipsiz kalır.
   it('locks both actions and ignores dismissal while confirming', () => {
     renderWithTamagui(<ConfirmSheet {...baseProps} isConfirming />);

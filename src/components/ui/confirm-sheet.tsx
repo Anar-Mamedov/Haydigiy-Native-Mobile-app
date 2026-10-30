@@ -20,6 +20,11 @@ export type ConfirmSheetProps = {
   /** Confirm button label while `isConfirming`. */
   confirmingLabel?: string;
   onConfirm: () => void;
+  /**
+   * Cancel button action when it means more than closing (e.g. "continue another
+   * way"). Overlay taps still only close through `onOpenChange`. Defaults to closing.
+   */
+  onCancel?: () => void;
   isConfirming?: boolean;
   testID?: string;
 };
@@ -40,6 +45,7 @@ export function ConfirmSheet({
   cancelLabel = 'Vazgeç',
   confirmingLabel = 'İşleniyor...',
   onConfirm,
+  onCancel,
   isConfirming = false,
   testID = 'confirm-sheet',
 }: ConfirmSheetProps) {
@@ -51,6 +57,12 @@ export function ConfirmSheet({
   const handleOpenChange = (next: boolean) => {
     if (!next && isConfirming) return;
     onOpenChange(next);
+  };
+
+  const handleCancel = () => {
+    if (isConfirming) return;
+    if (onCancel) onCancel();
+    else onOpenChange(false);
   };
 
   return (
@@ -131,7 +143,7 @@ export function ConfirmSheet({
             borderWidth={1}
             disabled={isConfirming}
             height={46}
-            onPress={() => handleOpenChange(false)}
+            onPress={handleCancel}
             opacity={isConfirming ? 0.5 : 1}
             pressStyle={{ backgroundColor: '$backgroundHover' }}
           >
