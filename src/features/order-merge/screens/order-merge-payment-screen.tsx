@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Spinner, XStack, YStack } from 'tamagui';
 import {
+  AppButton,
   AppScreen,
   EmptyState,
   KeyboardAwareFormScrollView,
@@ -20,7 +21,10 @@ const FOOTER_PADDING = 12;
 
 function OrderMergePaymentContent({ session }: { session: OrderMergeCardSession }) {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const payment = useOrderMergePayment(session);
+  // Sepet silinmedi: müşteri sepetten aynı ürünlerle bağımsız yeni sipariş verir.
+  const startNewOrder = () => router.dismissTo('/cart' as never);
   const payLabel = payment.isSubmitting
     ? 'İşleniyor...'
     : `${formatCurrency(session.amount)} Öde`;
@@ -37,6 +41,16 @@ function OrderMergePaymentContent({ session }: { session: OrderMergeCardSession 
           <Paragraph color="$red10" fontSize={13} testID="order-merge-payment-error">
             {payment.submitError}
           </Paragraph>
+        ) : null}
+        {payment.canStartNewOrder ? (
+          <AppButton
+            accessibilityLabel="Yeni Sipariş Olarak Devam Et"
+            accessibilityRole="button"
+            onPress={startNewOrder}
+            testID="order-merge-payment-new-order"
+          >
+            Yeni Sipariş Olarak Devam Et
+          </AppButton>
         ) : null}
       </KeyboardAwareFormScrollView>
 

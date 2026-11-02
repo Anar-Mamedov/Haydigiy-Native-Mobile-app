@@ -6,6 +6,7 @@ import { clearPurchaseSnapshot, setPurchaseSnapshot } from '../utils/purchase-sn
 import { useCartStore } from '@/features/cart/store/use-cart-store';
 import { insiderTracker } from '@/features/insider/services/insider-tracker';
 import { CartLineItem } from '@/types/cart.types';
+import * as checkoutService from '@/services/checkout.service';
 
 const searchParams: Record<string, string> = {};
 
@@ -93,5 +94,44 @@ describe('usePaymentSuccess Insider purchase event', () => {
     await waitFor(() => expect(result.current.isProcessing).toBe(false));
 
     expect(trackerMock.trackPurchase).not.toHaveBeenCalled();
+  });
+});
+
+describe('usePaymentSuccess order-merge refund', () => {
+  const refundMessage =
+    'Siparişiniz hazırlanmaya başladığı için eklenen ürünler birleştirilemedi. Ödemeniz kartınıza iade edildi.';
+
+  it('reports the refund instead of an order when the Garanti confirmation cancelled the difference', async () => {
+    const submitGarantiCallbackDto = checkoutService.submitGarantiCallbackDto as jest.MockedFunction<
+      typeof checkoutService.submitGarantiCallbackDto
+    >;
+    submitGarantiCallbackDto.mockResolvedValueOnce({ success: true, status_id: 4, message: refundMessage });
+    searchParams.url =
+      'https://haydigiy.com/odeme-basarili?mdstatus=1&procreturncode=00&orderid=HG100254-F1&order_no=HG100254-F1';
+    setPurchaseSnapshot([makeItem('42')]);
+
+    const { result } = renderPaymentSuccess();
+
+    await waitFor(() => expect(result.current.isProcessing).toBe(false));
+
+    expect(result.current.mergeRefundMessage).toBe(refundMessage);
+    expect(result.current.orderDetails).toBeNull();
+    expect(checkoutService.getOrderByTokenDto).not.toHaveBeenCalled();
+    expect(trackerMock.trackPurchase).not.toHaveBeenCalled();
+  });
+
+  it('keeps the success flow for a regular Garanti confirmation', async () => {
+    const submitGarantiCallbackDto = checkoutService.submitGarantiCallbackDto as jest.MockedFunction<
+      typeof checkoutService.submitGarantiCallbackDto
+    >;
+    submitGarantiCallbackDto.mockResolvedValueOnce({ success: true, status_id: 3, order_no: 'HG-1001' });
+    searchParams.url = 'https://haydigiy.com/odeme-basarili?mdstatus=1&procreturncode=00&orderid=HG-1001';
+
+    const { result } = renderPaymentSuccess();
+
+    await waitFor(() => expect(result.current.isProcessing).toBe(false));
+
+    expect(result.current.mergeRefundMessage).toBeNull();
+    expect(result.current.orderDetails?.orderNo).toBe('HG-1001');
   });
 });

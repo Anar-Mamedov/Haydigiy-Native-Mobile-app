@@ -8,6 +8,7 @@ import { setPurchaseSnapshot } from '@/features/checkout/utils/purchase-snapshot
 import { useCartStore } from '@/features/cart/store/use-cart-store';
 import { getClientIp, routePaymentDto } from '@/services/checkout.service';
 import { OrderMergeCardSession } from '@/types/order-merge.types';
+import { isParentOrderNotEligibleError } from '../utils/order-merge-payment-error';
 
 const IP_REGEX = /^(\d{1,3}\.){3}\d{1,3}$/;
 
@@ -16,6 +17,8 @@ export interface OrderMergePaymentController {
   canSubmit: boolean;
   isSubmitting: boolean;
   submitError: string | null;
+  /** The approved order is already being prepared: offer checking the cart out as a new order. */
+  canStartNewOrder: boolean;
   threeDS: ThreeDSPayload | null;
   submit: () => void;
   closeThreeDS: () => void;
@@ -37,9 +40,11 @@ export function useOrderMergePayment(session: OrderMergeCardSession): OrderMerge
   const [threeDS, setThreeDS] = useState<ThreeDSPayload | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [canStartNewOrder, setCanStartNewOrder] = useState(false);
 
   const submitPayment = useCallback(async () => {
     if (isSubmitting) return;
+    setCanStartNewOrder(false);
     if (!card.isValid) {
       setSubmitError('Lütfen kart bilgilerini eksiksiz doldurun.');
       return;
@@ -86,6 +91,7 @@ export function useOrderMergePayment(session: OrderMergeCardSession): OrderMerge
       });
     } catch (error) {
       setSubmitError(getApiErrorMessage(error, 'Ödeme işlemi başlatılamadı.'));
+      setCanStartNewOrder(isParentOrderNotEligibleError(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -103,6 +109,7 @@ export function useOrderMergePayment(session: OrderMergeCardSession): OrderMerge
     canSubmit: card.isValid && !isSubmitting,
     isSubmitting,
     submitError,
+    canStartNewOrder,
     threeDS,
     submit,
     closeThreeDS,

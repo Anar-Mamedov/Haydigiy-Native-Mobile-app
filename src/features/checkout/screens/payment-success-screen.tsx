@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { CheckCircle } from '@/components/ui/icons';
 import { Button, Spinner, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
@@ -9,8 +9,17 @@ import { InsiderRecommendationSections } from '@/features/insider/components/ins
 
 export function PaymentSuccessScreen() {
   const router = useRouter();
-  const { orderDetails, isProcessing } = usePaymentSuccess();
+  const { orderDetails, isProcessing, mergeRefundMessage } = usePaymentSuccess();
   const header = <ScreenHeader onBack={() => router.replace('/')} title="Güvenli Ödeme" />;
+
+  // Fark ödemesi iade edildi: sipariş oluşmadı, sonuç ekranı backend mesajıyla açılır.
+  if (mergeRefundMessage) {
+    return (
+      <Redirect
+        href={{ pathname: '/checkout/payment-failed', params: { message: mergeRefundMessage } }}
+      />
+    );
+  }
 
   if (isProcessing) {
     return (

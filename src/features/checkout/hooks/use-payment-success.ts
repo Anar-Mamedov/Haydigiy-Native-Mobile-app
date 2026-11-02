@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { parseQuery } from '../utils/parse-query';
 import { parsePrice } from '../utils/parse-price';
-import { mapOrderDetails } from '../api/checkout.mapper';
+import { mapMergeRefundMessage, mapOrderDetails } from '../api/checkout.mapper';
 import {
   getOrderByTokenDto,
   queryOrderDto,
@@ -35,12 +35,19 @@ function firstValue(value: string | string[] | undefined): string {
  * finalizes a Garanti 3D payment (`/garanti/callback`) when the intercepted URL
  * carries bank params, syncs the order (`/order/query`), then resolves the order
  * details (`/order/by-token`) for display and refreshes the cart.
+ * `mergeRefundMessage` is set instead when the confirmation says an order-merge
+ * difference was refunded (no order was created, so no purchase is reported).
  */
-export function usePaymentSuccess(): { orderDetails: OrderDetails | null; isProcessing: boolean } {
+export function usePaymentSuccess(): {
+  orderDetails: OrderDetails | null;
+  isProcessing: boolean;
+  mergeRefundMessage: string | null;
+} {
   const rawParams = useLocalSearchParams<SuccessParams>();
   const queryClient = useQueryClient();
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
+  const [mergeRefundMessage, setMergeRefundMessage] = useState<string | null>(null);
   const processedRef = useRef(false);
 
   const url = firstValue(rawParams.url);
@@ -74,7 +81,13 @@ export function usePaymentSuccess(): { orderDetails: OrderDetails | null; isProc
           if (key !== 'order_no' && key !== 'total_price') body[key] = value;
         });
         try {
-          await submitGarantiCallbackDto(body);
+          const refundMessage = mapMergeRefundMessage(await submitGarantiCallbackDto(body));
+          if (refundMessage) {
+            setMergeRefundMessage(refundMessage);
+            setIsProcessing(false);
+            queryClient.invalidateQueries({ queryKey: cartKeys.all });
+            return;
+          }
         } catch {
           // Backend may already have finalized via its own callback; ignore.
         }
@@ -145,5 +158,5 @@ export function usePaymentSuccess(): { orderDetails: OrderDetails | null; isProc
     void run();
   }, [url, secureTokenParam, orderNoParam, totalPriceParam, queryClient]);
 
-  return { orderDetails, isProcessing };
+  return { orderDetails, isProcessing, mergeRefundMessage };
 }

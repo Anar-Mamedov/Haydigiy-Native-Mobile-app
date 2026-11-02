@@ -2,6 +2,7 @@ import { PaymentTypeDto } from '@/services/payment-type.service';
 import { CargoCompanyDto } from '@/services/cargo.service';
 import { CouponValidateResponseDto } from '@/services/coupon.service';
 import {
+  GarantiCallbackResponseDto,
   Iyzico3dsInitializeResponseDto,
   OrderByTokenResponseDto,
   PaymentRouterResponseDto,
@@ -98,6 +99,20 @@ export function mapOrderDetails(dto: OrderByTokenResponseDto): OrderDetails {
     orderNo: dto.order_no,
     totalPrice: Number(dto.total_price) || 0,
   };
+}
+
+const CANCELLED_ORDER_STATUS_ID = 4;
+const MERGE_REFUND_FALLBACK_MESSAGE = 'Ürünler siparişinize eklenemedi.';
+
+/**
+ * Payment of an order-merge difference whose approved order went to the warehouse
+ * during 3D: the backend cancels the draft (status 4), refunds the card and sends the
+ * message to show. `null` for every other payment confirmation.
+ */
+export function mapMergeRefundMessage(dto: GarantiCallbackResponseDto | null | undefined): string | null {
+  if (Number(dto?.status_id) !== CANCELLED_ORDER_STATUS_ID) return null;
+  const message = typeof dto?.message === 'string' ? dto.message.trim() : '';
+  return message || MERGE_REFUND_FALLBACK_MESSAGE;
 }
 
 /**

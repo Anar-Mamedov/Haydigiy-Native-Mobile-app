@@ -1,4 +1,5 @@
 import { createElement, type ReactNode } from 'react';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react-native';
 import { useOrderMergePayment } from './use-order-merge-payment';
@@ -146,6 +147,42 @@ describe('useOrderMergePayment', () => {
     expect(result.current.submitError).toBe('Günlük ödeme limiti aşıldı.');
     expect(result.current.threeDS).toBeNull();
     expect(result.current.isSubmitting).toBe(false);
+    expect(result.current.canStartNewOrder).toBe(false);
+  });
+
+  it('offers a new order when the approved order is already being prepared', async () => {
+    const config = { headers: new AxiosHeaders() };
+    const data = {
+      status: 'error',
+      code: 'parent_order_not_eligible',
+      message: 'Maalesef siparişiniz hazırlanmaya başladığı için kabul edilmemektedir.',
+    };
+    routePaymentDto.mockRejectedValue(
+      new AxiosError('Request failed', 'ERR_BAD_REQUEST', config, null, {
+        config,
+        data,
+        headers: {},
+        status: 422,
+        statusText: '',
+      }),
+    );
+    const { result } = setup();
+    fillCard(result);
+
+    await act(async () => {
+      result.current.submit();
+    });
+
+    expect(result.current.submitError).toBe(data.message);
+    expect(result.current.canStartNewOrder).toBe(true);
+    expect(result.current.threeDS).toBeNull();
+
+    // A new attempt starts clean; the offer comes back only with the same answer.
+    routePaymentDto.mockResolvedValue({ threeDSHtmlContent: '<form>3ds</form>' });
+    await act(async () => {
+      result.current.submit();
+    });
+    expect(result.current.canStartNewOrder).toBe(false);
   });
 
   it('closes the 3DS page on cancel', async () => {

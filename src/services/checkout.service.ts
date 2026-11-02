@@ -187,13 +187,23 @@ export async function queryOrderDto(orderNo: string): Promise<void> {
   await apiClient.get(`/order/query/${encodeURIComponent(orderNo)}`);
 }
 
+export interface GarantiCallbackResponseDto {
+  success?: boolean;
+  status_id?: number | string;
+  message?: string;
+  order_no?: string;
+}
+
 /** Finalize a Garanti 3D payment from the intercepted callback params (`POST /garanti/callback`). */
-export async function submitGarantiCallbackDto(params: Record<string, string>): Promise<void> {
-  if (!appEnv.apiBaseUrl) return;
+export async function submitGarantiCallbackDto(
+  params: Record<string, string>,
+): Promise<GarantiCallbackResponseDto | null> {
+  if (!appEnv.apiBaseUrl) return null;
   const body = new URLSearchParams(params).toString();
-  await apiClient.post('/garanti/callback', body, {
+  const response = await apiClient.post<GarantiCallbackResponseDto>('/garanti/callback', body, {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   });
+  return response.data ?? null;
 }
 
 /**

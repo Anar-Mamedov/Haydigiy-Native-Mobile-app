@@ -6,6 +6,7 @@ import {
   mapGarantiForm,
   mapInstallmentPlans,
   mapIyzico3dsHandoff,
+  mapMergeRefundMessage,
   mapPaymentMethod,
 } from './checkout.mapper';
 
@@ -240,5 +241,24 @@ describe('mapGarantiForm', () => {
     expect(form.terminalId).toBe('T1');
     expect(form.successUrl).toContain('callback-success');
     expect(form.installmentCount).toBe(1);
+  });
+});
+
+describe('mapMergeRefundMessage', () => {
+  const refundMessage =
+    'Siparişiniz hazırlanmaya başladığı için eklenen ürünler birleştirilemedi. Ödemeniz kartınıza iade edildi.';
+
+  it('returns the backend message for a refunded order-merge difference', () => {
+    expect(mapMergeRefundMessage({ success: true, status_id: 4, message: refundMessage })).toBe(refundMessage);
+    expect(mapMergeRefundMessage({ success: true, status_id: '4', message: '  ' })).toBe(
+      'Ürünler siparişinize eklenemedi.',
+    );
+  });
+
+  it('ignores confirmed payments and empty answers', () => {
+    expect(mapMergeRefundMessage({ success: true, status_id: 3, message: 'Ödeme başarıyla işlendi.' })).toBeNull();
+    expect(mapMergeRefundMessage({ success: true, status_id: 16 })).toBeNull();
+    expect(mapMergeRefundMessage(null)).toBeNull();
+    expect(mapMergeRefundMessage(undefined)).toBeNull();
   });
 });
