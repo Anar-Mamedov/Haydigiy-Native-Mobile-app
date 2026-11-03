@@ -7,6 +7,7 @@ import categoryTopic from './category-topic.json';
 import config from './config.json';
 import dynamicMenu from './dynamic-menu.json';
 import errors from './errors.json';
+import feedbackForm from './feedback-form.json';
 import guestMenuNavigation from './guest-menu-navigation.json';
 import guestOrdersLogin from './guest-orders-login.json';
 import helpArticleTopic from './help-article-topic.json';
@@ -33,6 +34,7 @@ export const ASSISTANT_FIXTURE_FLOWS: Record<string, AssistantFixtureFlow> = {
   config: config as AssistantFixtureFlow,
   'dynamic-menu': dynamicMenu as AssistantFixtureFlow,
   errors: errors as AssistantFixtureFlow,
+  'feedback-form': feedbackForm as AssistantFixtureFlow,
   'guest-menu-navigation': guestMenuNavigation as AssistantFixtureFlow,
   'guest-orders-login': guestOrdersLogin as AssistantFixtureFlow,
   'help-article-topic': helpArticleTopic as AssistantFixtureFlow,

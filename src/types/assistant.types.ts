@@ -106,6 +106,29 @@ export interface AssistantVideoBlock {
   url: string;
 }
 
+/** Geri bildirim metinleri (Dash > Sabit Metinler > "Geri Bildirim"); eksik anahtar uygulama yedeğine düşer. */
+export interface AssistantFeedbackFormTexts {
+  submit: string;
+  sending: string;
+  success: string;
+  reference: string;
+  error: string;
+  cancel: string;
+}
+
+/**
+ * Sohbet içi geri bildirim formu. Blokta ALAN YOK: sorular `GET /customer-feedback/forms?context=general`
+ * cevabından `category` anahtarıyla çizilir (tek doğruluk kaynağı Form Builder).
+ */
+export interface AssistantFeedbackFormBlock {
+  type: 'feedback_form';
+  id: string;
+  context: 'general';
+  category: string;
+  title: string;
+  texts: AssistantFeedbackFormTexts;
+}
+
 export type AssistantBlock =
   | AssistantTextBlock
   | AssistantButtonsBlock
@@ -115,7 +138,8 @@ export type AssistantBlock =
   | AssistantLinkButtonBlock
   | AssistantLiveSupportBlock
   | AssistantImageBlock
-  | AssistantVideoBlock;
+  | AssistantVideoBlock
+  | AssistantFeedbackFormBlock;
 
 export interface AssistantBreadcrumbItem {
   label: string;
@@ -219,7 +243,9 @@ export type AssistantEventType =
   | 'live_support_copy'
   | 'widget_open'
   | 'widget_close'
-  | 'client_error';
+  | 'client_error'
+  /** Geri bildirim başarıyla gönderildi; yalnız ölçüm, içerik GİTMEZ. */
+  | 'feedback_submitted';
 
 export interface AssistantEvent {
   type: AssistantEventType;

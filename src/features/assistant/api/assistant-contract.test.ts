@@ -46,6 +46,30 @@ describe('Haydi Asistan sözleşmesi', () => {
     });
   });
 
+  it('feedback_form: başlık anahtarı ve metinler eşlenir, eksik metin yedeğe düşer, bozuk anahtar çizilmez', () => {
+    const step = ASSISTANT_FIXTURE_FLOWS['feedback-form'].steps[2];
+    const { blocks } = normalizeBlocks(step.response.body?.blocks, CTX);
+    expect(blocks[1]).toEqual({
+      type: 'feedback_form',
+      id: 'b6',
+      context: 'general',
+      category: 'order_payment',
+      title: 'Sipariş ve Ödeme Sorunları',
+      texts: {
+        submit: 'Gönder',
+        sending: 'Gönderiliyor…',
+        success: '✅ Geri bildiriminiz bize ulaştı, teşekkür ederiz.',
+        reference: 'Takip kodunuz:',
+        error: 'Gönderilemedi, lütfen tekrar deneyin.',
+        cancel: 'Vazgeç',
+      },
+    });
+
+    const partial = normalizeBlocks([{ type: 'feedback_form', id: 'f1', category: 'site_issues', texts: { submit: 'Yolla' } }], CTX);
+    expect(partial.blocks[0]).toMatchObject({ texts: { submit: 'Yolla', cancel: 'Vazgeç' } });
+    expect(normalizeBlocks([{ type: 'feedback_form', id: 'f2', category: '../x' }], CTX).blocks).toEqual([]);
+  });
+
   it('bilinmeyen blok atlanır, metin HTML olarak yorumlanmaz, sınır aşımı kırpılır', () => {
     const xss = '<img src=x onerror=alert(1)><script>alert(1)</script>';
     const items = Array.from({ length: 20 }, (_, index) => ({

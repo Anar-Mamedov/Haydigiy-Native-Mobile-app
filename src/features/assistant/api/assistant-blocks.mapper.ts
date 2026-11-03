@@ -8,6 +8,7 @@ import type {
   AssistantBlock,
   AssistantBreadcrumbItem,
   AssistantButtonItem,
+  AssistantFeedbackFormTexts,
   AssistantInputState,
   AssistantOrderDetailLink,
   AssistantOrderListItem,
@@ -132,6 +133,35 @@ const toTimeline = (raw: Raw, id: string): AssistantBlock => ({
     })),
 });
 
+/** Teslim belgesindeki örnek metinler; sunucu bir anahtarı göndermezse kullanılır. */
+export const DEFAULT_FEEDBACK_FORM_TEXTS: AssistantFeedbackFormTexts = {
+  submit: 'Gönder',
+  sending: 'Gönderiliyor…',
+  success: '✅ Geri bildiriminiz bize ulaştı, teşekkür ederiz.',
+  reference: 'Takip kodunuz:',
+  error: 'Gönderilemedi, lütfen tekrar deneyin.',
+  cancel: 'Vazgeç',
+};
+
+const FEEDBACK_CATEGORY_KEY = /^[a-z0-9_]{1,64}$/;
+
+const toFeedbackTexts = (value: unknown): AssistantFeedbackFormTexts => {
+  const raw = asRecord(value) ?? {};
+  const resolved = { ...DEFAULT_FEEDBACK_FORM_TEXTS };
+  for (const key of Object.keys(resolved) as (keyof AssistantFeedbackFormTexts)[]) {
+    const text = optStr(raw[key]);
+    if (text) resolved[key] = text;
+  }
+  return resolved;
+};
+
+/** Başlık anahtarı Form Builder biçiminde değilse (küçük harf/rakam/alt çizgi) blok çizilmez. */
+const toFeedbackForm = (raw: Raw, id: string): AssistantBlock | null => {
+  const category = str(raw.category);
+  if (!FEEDBACK_CATEGORY_KEY.test(category) || (raw.context !== undefined && raw.context !== 'general')) return null;
+  return { type: 'feedback_form', id, context: 'general', category, title: str(raw.title), texts: toFeedbackTexts(raw.texts) };
+};
+
 type Converter = (raw: Raw, id: string, ctx: BlockContext, issues: BlockIssue[]) => AssistantBlock | null;
 
 const CONVERTERS: Record<string, Converter> = {
@@ -193,6 +223,7 @@ const CONVERTERS: Record<string, Converter> = {
     issues.push({ code: 'bad_video', blockId: id });
     return null;
   },
+  feedback_form: (raw, id) => toFeedbackForm(raw, id),
 };
 
 export const normalizeBlocks = (

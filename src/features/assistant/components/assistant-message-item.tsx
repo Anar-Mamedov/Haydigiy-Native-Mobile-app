@@ -8,6 +8,7 @@ import { retryAssistantMessage } from '../services/assistant-turn-flow';
 import { useAssistantStore } from '../store/use-assistant-store';
 import { AssistantBodyText, AssistantBubble, UserBubble } from './assistant-surfaces';
 import { AssistantButtonsBlock } from './blocks/assistant-buttons-block';
+import { AssistantFeedbackFormBlock } from './blocks/assistant-feedback-form-block';
 import { AssistantLinkButton } from './blocks/assistant-link-button';
 import { AssistantLiveSupport } from './blocks/assistant-live-support';
 import { AssistantImage, AssistantVideo } from './blocks/assistant-media-blocks';
@@ -51,6 +52,8 @@ function AssistantBlockView({ block, restored, texts }: BlockViewProps) {
       return <AssistantImage block={block} texts={texts} />;
     case 'video':
       return <AssistantVideo block={block} texts={texts} />;
+    case 'feedback_form':
+      return <AssistantFeedbackFormBlock block={block} />;
     default:
       return null;
   }
