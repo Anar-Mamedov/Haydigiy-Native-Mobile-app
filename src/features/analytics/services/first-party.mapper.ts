@@ -202,6 +202,8 @@ export function toFirstPartyEventDto(
     screen_height: context.screenHeight,
     // Ekrana özgü `page_url` varsa (screen_viewed) o kazanır; yoksa aktif ekran.
     page_url: context.screenPath,
+    marketing_consent: context.marketingConsent,
+    ...(context.metaClickId ? { fbc: context.metaClickId } : {}),
     ...fields,
   };
 }

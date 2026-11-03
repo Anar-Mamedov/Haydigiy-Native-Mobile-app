@@ -56,6 +56,8 @@ function createDispatcher(
   const dispatcher = createAnalyticsDispatcher({
     consent,
     loadDeviceId: async () => 'device-1',
+    loadMetaClickId: async () => null,
+    clearMetaClickId: async () => undefined,
     loadDeviceInfo: () => ({
       appVersion: '2.3.24',
       deviceType: 'mobile',
@@ -262,6 +264,75 @@ describe('event context', () => {
       sessionId: 'sess-1',
       userId: null,
     });
+  });
+
+  it('stamps the marketing consent and follows later preference changes', async () => {
+    const sink = createSinkSpy({ id: 'a' });
+    const { dispatcher } = createDispatcher([sink], {
+      consent: createConsentGate({ analytics: true, functional: false, marketing: false }),
+    });
+
+    dispatcher.track(screenEvent);
+    await settle();
+    dispatcher.applyConsent(FULL_CONSENT);
+    dispatcher.track(screenEvent);
+    await settle();
+
+    expect(sink.calls.map((call) => call.context.marketingConsent)).toEqual([false, true]);
+  });
+
+  it('stamps the stored Meta click id into the context', async () => {
+    const sink = createSinkSpy({ id: 'a' });
+    const { dispatcher } = createDispatcher([sink], {
+      loadMetaClickId: async () => 'fb.1.1700000000000.IwAR0abcDEF123',
+    });
+
+    dispatcher.track(screenEvent);
+    await settle();
+
+    expect(sink.calls[0].context.metaClickId).toBe('fb.1.1700000000000.IwAR0abcDEF123');
+  });
+
+  it('leaves the Meta click id out without marketing consent', async () => {
+    const sink = createSinkSpy({ id: 'a' });
+    const loadMetaClickId = jest.fn(async () => 'fb.1.1700000000000.IwAR0abcDEF123');
+    const { dispatcher } = createDispatcher([sink], {
+      consent: createConsentGate({ analytics: true, functional: true, marketing: false }),
+      loadMetaClickId,
+    });
+
+    dispatcher.track(screenEvent);
+    await settle();
+
+    expect(sink.calls[0].context.metaClickId).toBeNull();
+    expect(loadMetaClickId).not.toHaveBeenCalled();
+  });
+
+  it('deletes the stored Meta click id when marketing consent is withdrawn', async () => {
+    const clearMetaClickId = jest.fn(async () => undefined);
+    const { dispatcher } = createDispatcher([], { clearMetaClickId });
+
+    dispatcher.applyConsent(FULL_CONSENT);
+    expect(clearMetaClickId).not.toHaveBeenCalled();
+
+    dispatcher.applyConsent({ analytics: true, functional: true, marketing: false });
+    expect(clearMetaClickId).toHaveBeenCalledTimes(1);
+  });
+
+  it('still delivers the event when the Meta click id cannot be read', async () => {
+    const sink = createSinkSpy({ id: 'a' });
+    const { dispatcher, onError } = createDispatcher([sink], {
+      loadMetaClickId: async () => {
+        throw new Error('storage unavailable');
+      },
+    });
+
+    dispatcher.track(screenEvent);
+    await settle();
+
+    expect(sink.calls).toHaveLength(1);
+    expect(sink.calls[0].context.metaClickId).toBeNull();
+    expect(onError).not.toHaveBeenCalled();
   });
 
   it('carries the active screen path into later events', async () => {

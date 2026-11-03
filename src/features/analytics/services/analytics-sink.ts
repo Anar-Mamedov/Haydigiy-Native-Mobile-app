@@ -62,4 +62,11 @@ export type AnalyticsContext = {
   screenHeight: number;
   /** Aktif ekranın yolu; web'deki `page_url` karşılığı. */
   screenPath: string | null;
+  /** Reklamdan açılışta yakalanan Meta tıklama kimliği (`fbc`); yoksa ya da süresi dolduysa null. */
+  metaClickId: string | null;
+  /**
+   * Kullanıcı pazarlama çerezlerine izin verdi mi? Sink'ler analitik onayıyla çalışır;
+   * reklam sağlayıcılarına (Meta) iletim kararı bu bilgiyle backend'de verilir.
+   */
+  marketingConsent: boolean;
 };

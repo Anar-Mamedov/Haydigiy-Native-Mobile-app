@@ -3,6 +3,7 @@ import { AnalyticsDeviceInfo, getAnalyticsDeviceInfo } from './analytics-device'
 import { AnalyticsSession, analyticsSession } from './analytics-session';
 import { AnalyticsContext, AnalyticsSink } from './analytics-sink';
 import { firstPartySink } from './first-party.sink';
+import { metaClickIdStore } from './meta-click-id-store';
 import { AnalyticsEvent, AnalyticsIdentity } from '../types/analytics.types';
 import { getDeviceId } from '@/lib/storage/device-id';
 
@@ -36,6 +37,8 @@ export type AnalyticsDispatcherDependencies = {
   session: AnalyticsSession;
   loadDeviceInfo: () => AnalyticsDeviceInfo;
   loadDeviceId: () => Promise<string>;
+  loadMetaClickId: () => Promise<string | null>;
+  clearMetaClickId: () => Promise<void>;
   onError: (message: string, error: unknown) => void;
 };
 
@@ -45,6 +48,8 @@ const defaultDependencies: AnalyticsDispatcherDependencies = {
   session: analyticsSession,
   loadDeviceInfo: getAnalyticsDeviceInfo,
   loadDeviceId: getDeviceId,
+  loadMetaClickId: () => metaClickIdStore.getFbc(),
+  clearMetaClickId: () => metaClickIdStore.clear(),
   onError: (message, error) => console.warn(message, error),
 };
 
@@ -87,6 +92,8 @@ export function createAnalyticsDispatcher(
 
   const resolveContext = async (): Promise<AnalyticsContext> => {
     const device = dependencies.loadDeviceInfo();
+    // Event'in üretildiği andaki tercih; kayıtlı tercih `enqueue` içinde zaten yüklenmiş olur.
+    const marketingConsent = dependencies.consent.isAllowed('marketing');
 
     return {
       anonymousId: await dependencies.session.getAnonymousId(),
@@ -94,6 +101,12 @@ export function createAnalyticsDispatcher(
       userId,
       deviceId: await dependencies.loadDeviceId(),
       screenPath,
+      // Reklam tanımlayıcısı yalnızca pazarlama onayıyla gider. Eşleştirmeyi güçlendirir ama
+      // zorunlu değil; okunamazsa event yine gider.
+      metaClickId: marketingConsent
+        ? await dependencies.loadMetaClickId().catch(() => null)
+        : null,
+      marketingConsent,
       ...device,
     };
   };
@@ -169,6 +182,13 @@ export function createAnalyticsDispatcher(
       // Kullanıcı az önce cevapladı; artık depoyu okumayı beklemek gereksiz.
       consentReady = Promise.resolve();
       dependencies.consent.apply(preferences);
+
+      // Pazarlama onayı geri alınınca cihazda saklanan reklam tanımlayıcısı da silinir.
+      if (!preferences.marketing) {
+        dependencies.clearMetaClickId().catch((error) => {
+          dependencies.onError('[Analytics] Meta tıklama kimliği silinemedi.', error);
+        });
+      }
     },
   };
 }

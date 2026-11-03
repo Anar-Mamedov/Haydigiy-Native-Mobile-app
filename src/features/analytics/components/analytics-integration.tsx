@@ -1,11 +1,13 @@
 import { useAnalyticsFlushOnBackground } from '../hooks/use-analytics-flush-on-background';
 import { useAnalyticsIdentityRestore } from '../hooks/use-analytics-identity-restore';
 import { useAnalyticsScreenTracking } from '../hooks/use-analytics-screen-tracking';
+import { useMetaClickIdCapture } from '../hooks/use-meta-click-id-capture';
 
 /**
  * Analytics'in uygulama kökündeki tek bağlanma noktası (web `Providers`
- * paritesi): rota değişimlerini ölçer, kalıcı oturumu kimliğe bağlar ve arka
- * plana geçişte kuyruğu boşaltır.
+ * paritesi): rota değişimlerini ölçer, kalıcı oturumu kimliğe bağlar, reklam
+ * bağlantısındaki Meta tıklama kimliğini yakalar ve arka plana geçişte kuyruğu
+ * boşaltır.
  *
  * İzin tercihi burada yüklenmez — dispatcher ilk event'i kayıtlı tercih
  * okunana kadar bekletir, böylece bu bileşen hiç mount edilmese bile izinsiz
@@ -18,6 +20,7 @@ import { useAnalyticsScreenTracking } from '../hooks/use-analytics-screen-tracki
 export function AnalyticsIntegration() {
   useAnalyticsIdentityRestore();
   useAnalyticsScreenTracking();
+  useMetaClickIdCapture();
   useAnalyticsFlushOnBackground();
 
   return null;

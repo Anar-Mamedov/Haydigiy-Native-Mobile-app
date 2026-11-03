@@ -17,6 +17,8 @@ function buildContext(): AnalyticsContext {
     os: 'Android',
     osVersion: '15',
     screenHeight: 844,
+    marketingConsent: false,
+    metaClickId: null,
     screenPath: '/cart',
     screenWidth: 390,
     sessionId: 'sess-1',

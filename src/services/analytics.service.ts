@@ -37,6 +37,18 @@ export type AnalyticsEventDto = {
   os?: string | null;
   screen_width?: number | null;
   screen_height?: number | null;
+  /**
+   * Meta tıklama kimliği (`fb.1.<ms>.<fbclid>`). ⚠️ Backend doğrulaması bu alanı henüz
+   * tanımıyor ve sessizce düşürüyor (Laravel `excludeUnvalidatedArrayKeys`); Meta
+   * `user_data.fbc`'ye iletilmesi root/connect #26 ile gelir.
+   */
+  fbc?: string;
+  /**
+   * Kullanıcının pazarlama onayı. Backend bu olayları yalnızca `true` iken Meta'ya iletmeli
+   * (Anar kararı, 2026-11-04). ⚠️ Doğrulama bu alanı henüz tanımıyor ve düşürüyor; root/connect
+   * issue'su çıkana kadar iletim bugünkü gibi sürer.
+   */
+  marketing_consent?: boolean;
   properties?: Record<string, unknown>;
 };
 

@@ -10,6 +10,8 @@ function buildContext(overrides: Partial<AnalyticsContext> = {}): AnalyticsConte
     deviceType: 'mobile',
     os: 'iOS',
     osVersion: '18.2',
+    marketingConsent: true,
+    metaClickId: null,
     screenHeight: 844,
     screenPath: '/cart',
     screenWidth: 390,
@@ -75,6 +77,26 @@ describe('toFirstPartyEventDto', () => {
       session_id: 'sess-1',
       user_id: 42,
     });
+  });
+
+  it('tells the backend whether the user allowed marketing cookies', () => {
+    expect(
+      toFirstPartyEventDto({ name: 'user_signed_up' }, buildContext({ marketingConsent: true }))
+        .marketing_consent,
+    ).toBe(true);
+    expect(
+      toFirstPartyEventDto({ name: 'user_signed_up' }, buildContext({ marketingConsent: false }))
+        .marketing_consent,
+    ).toBe(false);
+  });
+
+  it('carries the Meta click id as fbc only when the app was opened from an ad', () => {
+    const fbc = 'fb.1.1700000000000.IwAR0abcDEF123';
+
+    expect(
+      toFirstPartyEventDto({ name: 'user_signed_up' }, buildContext({ metaClickId: fbc })).fbc,
+    ).toBe(fbc);
+    expect('fbc' in toFirstPartyEventDto({ name: 'user_signed_up' }, buildContext())).toBe(false);
   });
 
   it('reports screen views under the web event name so both clients share one report', () => {
