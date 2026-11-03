@@ -25,7 +25,33 @@ const service = jest.requireMock('@/services/customer-feedback.service') as {
 const http = (status: number, data: unknown, headers: Record<string, string> = {}) =>
   Object.assign(new Error(`HTTP ${status}`), { response: { status, data, headers } });
 
-const SUCCESS = { data: { id: '3f2b', reference: 'GB-3F2B8C' } };
+const SUCCESS = { success: true, data: { id: '3f2b', reference: 'GB-3F2B8C' } };
+const THANKS = 'Geri bildiriminiz alındı. Teşekkür ederiz.';
+const SITE_ONLY = 'Yalnızca haydigiy.com adresleri kabul edilir.';
+const PRODUCT_REF = 'Ürün adı veya kodu (biliyorsanız)';
+
+/** Yalnız ürün sorusu + zorunlu mesaj ve yalnız sayfa alanı + zorunlu mesaj olan küçük form. */
+const SMALL_FORM = {
+  version: 5,
+  title: 'Konu?',
+  viewer: null,
+  categories: [
+    {
+      key: 'product_issues',
+      title: 'Ürünle İlgili Sorunlar',
+      description: 'Ürün bilgisi, fiyat, görsel ve kategori',
+      message: { mode: 'required', label: 'Sorunun açıklaması', placeholder: '' },
+      fields: [{ key: 'product_ref', type: 'text', label: PRODUCT_REF, required: false, config: { max_length: 120, autofill: 'product' } }],
+    },
+    {
+      key: 'site_issues',
+      title: 'Site ve Sayfa Sorunları',
+      description: 'Bozuk sayfa',
+      message: { mode: 'required', label: 'Sorunun açıklaması', placeholder: '' },
+      fields: [{ key: 'page', type: 'url', label: 'Sorunun yaşandığı sayfa', required: false, config: { placeholder: 'https://', autofill: 'page_url' } }],
+    },
+  ],
+};
 
 async function openOtherCategory() {
   fireEvent.press(await screen.findByLabelText('Diğer, Yukarıdaki kategoriler dışında kalan konular'));
@@ -52,7 +78,7 @@ describe('CustomerFeedbackForm', () => {
     expect(screen.getByLabelText('E-posta (isteğe bağlı)')).toBeTruthy();
   });
 
-  it('submits the documented body with an Idempotency-Key and shows the reference code', async () => {
+  it('submits the documented body with an Idempotency-Key and thanks without a tracking number', async () => {
     const onSubmitted = jest.fn();
     renderWithTamagui(<CustomerFeedbackForm onSubmitted={onSubmitted} productId={77} />);
     await openOtherCategory();
@@ -60,7 +86,9 @@ describe('CustomerFeedbackForm', () => {
     fireEvent.changeText(screen.getByLabelText('Açıklama *'), 'Kargo ile ilgili bir önerim var.');
     fireEvent.press(screen.getByTestId('feedback-submit'));
 
-    expect(await screen.findByText('GB-3F2B8C')).toBeTruthy();
+    expect(await screen.findByText(THANKS)).toBeTruthy();
+    expect(screen.queryByText('GB-3F2B8C')).toBeNull();
+    expect(screen.queryByText(/kopyala/i)).toBeNull();
     const [payload, key] = service.submitCustomerFeedbackDto.mock.calls[0];
     expect(payload).toEqual({
       context: 'general',
@@ -73,7 +101,20 @@ describe('CustomerFeedbackForm', () => {
       website: '',
     });
     expect(key).toMatch(/^[0-9a-f-]{36}$/);
-    expect(onSubmitted).toHaveBeenCalledWith({ reference: 'GB-3F2B8C', duplicate: false });
+    expect(onSubmitted).toHaveBeenCalledWith({ duplicate: false });
+  });
+
+  it('shows the same thanks for a duplicate and once the server stops sending the reference', async () => {
+    service.submitCustomerFeedbackDto.mockResolvedValue({ success: true, data: { id: '3f2b' }, duplicate: true });
+    const onSubmitted = jest.fn();
+    renderWithTamagui(<CustomerFeedbackForm onSubmitted={onSubmitted} />);
+    await openOtherCategory();
+
+    fireEvent.changeText(screen.getByLabelText('Açıklama *'), 'İkinci kez');
+    fireEvent.press(screen.getByTestId('feedback-submit'));
+
+    expect(await screen.findByText(THANKS)).toBeTruthy();
+    expect(onSubmitted).toHaveBeenCalledWith({ duplicate: true });
   });
 
   it('shows server field errors under the field and keeps what the customer wrote', async () => {
@@ -103,7 +144,7 @@ describe('CustomerFeedbackForm', () => {
     expect(screen.getByLabelText('Açıklama *').props.value).toBe('Uygulama donuyor.');
 
     fireEvent.press(screen.getByTestId('feedback-submit'));
-    expect(await screen.findByText('GB-3F2B8C')).toBeTruthy();
+    expect(await screen.findByText(THANKS)).toBeTruthy();
     const keys = service.submitCustomerFeedbackDto.mock.calls.map((call) => call[1]);
     expect(keys[0]).toBe(keys[1]);
   });
@@ -152,7 +193,7 @@ describe('CustomerFeedbackForm', () => {
   });
 
   it('fixed category (assistant): skips the list, uses block texts, and reloads when the category is gone', async () => {
-    const texts = { submit: 'Yolla', sending: 'Yollanıyor…', success: '✅ Ulaştı', reference: 'Takip kodunuz:', error: 'Gönderilemedi.', cancel: 'Vazgeç' };
+    const texts = { submit: 'Yolla', sending: 'Yollanıyor…', success: '✅ Ulaştı', error: 'Gönderilemedi.', cancel: 'Vazgeç' };
     const onCancel = jest.fn();
     const { unmount } = renderWithTamagui(<CustomerFeedbackForm allowAnother={false} fixedCategoryKey="general_other" onCancel={onCancel} texts={texts} />);
 
@@ -164,7 +205,7 @@ describe('CustomerFeedbackForm', () => {
     fireEvent.changeText(screen.getByLabelText('Açıklama *'), 'Teşekkürler');
     fireEvent.press(screen.getByText('Yolla'));
     expect(await screen.findByText('✅ Ulaştı')).toBeTruthy();
-    expect(screen.getByText('Takip kodunuz:')).toBeTruthy();
+    expect(screen.queryByText('GB-3F2B8C')).toBeNull();
     expect(screen.queryByText('Başka bir konu bildir')).toBeNull();
     unmount();
 
@@ -173,5 +214,92 @@ describe('CustomerFeedbackForm', () => {
     expect(await screen.findByText('Gönderilemedi.')).toBeTruthy();
     await waitFor(() => expect(service.getFeedbackFormDto).toHaveBeenCalledTimes(2));
     await act(async () => undefined);
+  });
+
+  it('product screen: opens on "Ürünle İlgili Sorunlar" without the product question and sends product_id', async () => {
+    service.getFeedbackFormDto.mockResolvedValue(SMALL_FORM);
+    renderWithTamagui(<CustomerFeedbackForm initialCategoryKey="product_issues" productId={77} />);
+
+    expect(await screen.findByText('Ürünle İlgili Sorunlar')).toBeTruthy();
+    expect(screen.queryByText('Konu?')).toBeNull();
+    expect(screen.queryByLabelText(PRODUCT_REF)).toBeNull();
+
+    fireEvent.changeText(screen.getByLabelText('Sorunun açıklaması *'), 'Fiyat yanlış görünüyor.');
+    fireEvent.press(screen.getByTestId('feedback-submit'));
+
+    expect(await screen.findByText(THANKS)).toBeTruthy();
+    expect(service.submitCustomerFeedbackDto.mock.calls[0][0]).toMatchObject({
+      context: 'general',
+      category_key: 'product_issues',
+      answers: [],
+      product_id: 77,
+    });
+  });
+
+  it('product screen: "Başka bir konu bildir" goes back to the category list', async () => {
+    service.getFeedbackFormDto.mockResolvedValue(SMALL_FORM);
+    renderWithTamagui(<CustomerFeedbackForm initialCategoryKey="product_issues" productId={77} />);
+
+    fireEvent.changeText(await screen.findByLabelText('Sorunun açıklaması *'), 'Taslak');
+    fireEvent.press(screen.getByTestId('feedback-other-topic'));
+
+    expect(screen.getByText('Konu?')).toBeTruthy();
+    expect(screen.queryByTestId('feedback-submit')).toBeNull();
+    // Listeden yeniden seçilen başlık kısayola dönmez, liste açık kalır.
+    fireEvent.press(screen.getByLabelText('Ürünle İlgili Sorunlar, Ürün bilgisi, fiyat, görsel ve kategori'));
+    expect(screen.getByText('Konu?')).toBeTruthy();
+    expect(screen.getByLabelText('Sorunun açıklaması *').props.value).toBe('');
+  });
+
+  it('asks the product question when "Ürünle İlgili Sorunlar" is opened outside the product screen', async () => {
+    service.getFeedbackFormDto.mockResolvedValue(SMALL_FORM);
+    renderWithTamagui(<CustomerFeedbackForm />);
+
+    fireEvent.press(await screen.findByLabelText('Ürünle İlgili Sorunlar, Ürün bilgisi, fiyat, görsel ve kategori'));
+    expect(screen.getByLabelText(PRODUCT_REF)).toBeTruthy();
+  });
+
+  it('shows the category list when the preselected category is not in the form', async () => {
+    renderWithTamagui(<CustomerFeedbackForm initialCategoryKey="removed_key" productId={77} />);
+
+    expect(await screen.findByText('Geri bildiriminiz hangi konuyla ilgili?')).toBeTruthy();
+    expect(screen.queryByTestId('feedback-other-topic')).toBeNull();
+  });
+
+  it('leaves the page field empty and accepts only site addresses there', async () => {
+    service.getFeedbackFormDto.mockResolvedValue(SMALL_FORM);
+    renderWithTamagui(<CustomerFeedbackForm />);
+    fireEvent.press(await screen.findByLabelText('Site ve Sayfa Sorunları, Bozuk sayfa'));
+
+    const page = screen.getByLabelText('Sorunun yaşandığı sayfa');
+    expect(page.props.value).toBe('');
+    fireEvent.changeText(screen.getByLabelText('Sorunun açıklaması *'), 'Sayfa açılmıyor');
+    fireEvent.changeText(page, 'https://evil.example.com/');
+    fireEvent(page, 'blur');
+
+    expect(await screen.findByText(SITE_ONLY)).toBeTruthy();
+    expect(screen.getByTestId('feedback-submit').props.accessibilityState).toMatchObject({ disabled: true });
+
+    fireEvent.changeText(screen.getByLabelText('Sorunun yaşandığı sayfa'), 'https://www.haydigiy.com/urun/x?a=1');
+    await waitFor(() => expect(screen.queryByText(SITE_ONLY)).toBeNull());
+    expect(screen.getByTestId('feedback-submit').props.accessibilityState).toMatchObject({ disabled: false });
+  });
+
+  it('shows a server 422 for the page field under that field', async () => {
+    service.getFeedbackFormDto.mockResolvedValue(SMALL_FORM);
+    service.submitCustomerFeedbackDto.mockRejectedValueOnce(
+      http(422, { success: false, code: 'validation_failed', errors: { 'answers.page': 'Geçersiz değer.' } }),
+    );
+    renderWithTamagui(<CustomerFeedbackForm />);
+    fireEvent.press(await screen.findByLabelText('Site ve Sayfa Sorunları, Bozuk sayfa'));
+
+    fireEvent.changeText(screen.getByLabelText('Sorunun açıklaması *'), 'Sayfa açılmıyor');
+    fireEvent.changeText(screen.getByLabelText('Sorunun yaşandığı sayfa'), 'https://haydigiytr.com/sepet');
+    fireEvent.press(screen.getByTestId('feedback-submit'));
+
+    expect(await screen.findByText('Geçersiz değer.')).toBeTruthy();
+    expect(service.submitCustomerFeedbackDto.mock.calls[0][0].answers).toEqual([
+      { field_key: 'page', instance_index: 0, value: 'https://haydigiytr.com/sepet' },
+    ]);
   });
 });

@@ -13,13 +13,15 @@ type CustomerFeedbackSheetProps = {
   onOpenChange: (open: boolean) => void;
   /** Ürün sayfasından açıldıysa ürünün kimliği (`product_id`). */
   productId?: number | null;
+  /** Seçili açılacak başlık (ürün ekranı); müşteri listeye dönebilir. */
+  initialCategoryKey?: string;
 };
 
 /**
  * Yeni geri bildirim formunun alttan açılan sheet'i (kanonik form sheet yapısı, AGENTS.md). Form
  * içeriği unmount'ta silinir; kapatma yalnız dış alana dokunma ve X ile yapılır.
  */
-export function CustomerFeedbackSheet({ open, onOpenChange, productId }: CustomerFeedbackSheetProps) {
+export function CustomerFeedbackSheet({ open, onOpenChange, productId, initialCategoryKey }: CustomerFeedbackSheetProps) {
   const close = () => onOpenChange(false);
 
   return (
@@ -62,7 +64,7 @@ export function CustomerFeedbackSheet({ open, onOpenChange, productId }: Custome
         </XStack>
         <KeyboardAwareSheetScrollView testID="customer-feedback-keyboard-aware-scroll">
           <YStack padding="$4">
-            {open ? <CustomerFeedbackForm onClose={close} productId={productId} /> : null}
+            {open ? <CustomerFeedbackForm initialCategoryKey={initialCategoryKey} onClose={close} productId={productId} /> : null}
           </YStack>
         </KeyboardAwareSheetScrollView>
       </Sheet.Frame>

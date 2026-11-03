@@ -347,7 +347,6 @@ export function ProductDetailScreen() {
         open={controller.showFeedback}
         onOpenChange={controller.setShowFeedback}
         productId={displayData.id}
-        productSlug={displayData.slug}
       />
       <ProductImageGalleryModal
         images={controller.productImages}

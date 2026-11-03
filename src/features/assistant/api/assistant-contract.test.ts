@@ -59,7 +59,6 @@ describe('Haydi Asistan sözleşmesi', () => {
         submit: 'Gönder',
         sending: 'Gönderiliyor…',
         success: '✅ Geri bildiriminiz bize ulaştı, teşekkür ederiz.',
-        reference: 'Takip kodunuz:',
         error: 'Gönderilemedi, lütfen tekrar deneyin.',
         cancel: 'Vazgeç',
       },

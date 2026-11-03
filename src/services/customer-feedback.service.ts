@@ -22,6 +22,8 @@ export type FeedbackUploadDto = {
 };
 
 export type FeedbackSubmitDto = {
+  success?: boolean;
+  /** `reference` geçiş süresince gelir; müşteriye gösterilmez (sözleşme v1.1 §3). */
   data?: { id?: string; reference?: string };
   duplicate?: boolean;
 };

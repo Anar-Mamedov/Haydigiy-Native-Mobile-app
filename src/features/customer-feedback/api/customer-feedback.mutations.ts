@@ -34,16 +34,16 @@ export type SubmitFeedbackVariables = { payload: FeedbackSubmitPayload; idempote
 
 /**
  * Başvuruyu gönderir (`POST /customer-feedback`). Otomatik yeniden deneme YOK: tekrarlar aynı
- * `Idempotency-Key` ile `useFeedbackSubmit` içinde yönetilir.
+ * `Idempotency-Key` ile `useFeedbackSubmit` içinde yönetilir. Başarı `success: true` ile anlaşılır;
+ * takip numarası (`data.reference`) gösterilmediği için sunucu onu kaldırınca da akış bozulmaz (v1.1 §3).
  */
 export function useSubmitCustomerFeedbackMutation() {
   return useMutation<FeedbackSubmitResult, unknown, SubmitFeedbackVariables>({
     retry: false,
     mutationFn: async ({ payload, idempotencyKey }) => {
       const dto = await submitCustomerFeedbackDto(payload, idempotencyKey);
-      const reference = dto.data?.reference;
-      if (!reference) throw new Error('customer-feedback: submit without reference');
-      return { reference, duplicate: dto.duplicate === true };
+      if (dto.success !== true) throw new Error('customer-feedback: submit without success');
+      return { duplicate: dto.duplicate === true };
     },
   });
 }

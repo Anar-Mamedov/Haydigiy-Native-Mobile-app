@@ -6,7 +6,6 @@ import { calculateSize } from '@/services/product.service';
 
 jest.mock('@/services/product.service', () => ({
   calculateSize: jest.fn(),
-  submitProductFeedback: jest.fn(),
 }));
 
 jest.mock('tamagui', () => {

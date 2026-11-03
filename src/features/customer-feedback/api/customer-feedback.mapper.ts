@@ -1,4 +1,5 @@
 import type {
+  FeedbackAutofill,
   FeedbackCategory,
   FeedbackField,
   FeedbackFieldConfig,
@@ -29,6 +30,8 @@ const FIELD_TYPES: readonly FeedbackFieldType[] = [
   'rating',
 ];
 const MESSAGE_MODES: readonly FeedbackMessageMode[] = ['hidden', 'optional', 'required'];
+/** Sözleşme v1.1 §1: her otomatik doldurma değeri yalnız kendi alan tipinde geçerlidir. */
+const AUTOFILL_BY_TYPE: Partial<Record<FeedbackFieldType, FeedbackAutofill>> = { url: 'page_url', text: 'product' };
 
 type Raw = Record<string, unknown>;
 
@@ -49,8 +52,9 @@ function toOption(value: unknown): FeedbackOption | null {
   return optionValue ? { value: optionValue, label: str(raw.label) || optionValue } : null;
 }
 
-function toConfig(value: unknown): FeedbackFieldConfig {
+function toConfig(value: unknown, type: FeedbackFieldType): FeedbackFieldConfig {
   const raw = asRecord(value) ?? {};
+  const autofill = AUTOFILL_BY_TYPE[type];
   return {
     placeholder: optStr(raw.placeholder),
     options: list(raw.options)
@@ -62,6 +66,8 @@ function toConfig(value: unknown): FeedbackFieldConfig {
     step: optNum(raw.step),
     accept: list(raw.accept).filter((item): item is string => typeof item === 'string'),
     maxSizeKb: optNum(raw.max_size_kb),
+    // Bilinmeyen değer ya da tipine uymayan değer yok sayılır, alan normal çizilir (K11).
+    autofill: autofill && raw.autofill === autofill ? autofill : undefined,
   };
 }
 
@@ -79,7 +85,7 @@ function toField(value: unknown): FeedbackField | null {
     multiple: raw.multiple === true,
     min: nullableNum(raw.min),
     max: nullableNum(raw.max),
-    config: toConfig(raw.config),
+    config: toConfig(raw.config, type),
   };
 }
 

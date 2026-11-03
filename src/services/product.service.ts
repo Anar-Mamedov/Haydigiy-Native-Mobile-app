@@ -421,21 +421,6 @@ export async function askProductQuestionDto(productId: number, question: string)
   await apiClient.post('/question', { product_id: productId, question });
 }
 
-export async function submitProductFeedback(productId: string, slug: string, value: string): Promise<any> {
-  if (!appEnv.apiBaseUrl) {
-    await sleep(100);
-    return { success: true };
-  }
-
-  getRequiredApiBaseUrl();
-  const response = await apiClient.post<any>('/product-feedback', {
-    product_id: productId,
-    product_slug: slug,
-    value
-  });
-  return response.data;
-}
-
 export async function calculateSize(height: number, weight: number, gender: string): Promise<any> {
   if (!appEnv.apiBaseUrl) {
     await sleep(150);

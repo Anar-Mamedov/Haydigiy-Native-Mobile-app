@@ -106,12 +106,14 @@ export interface AssistantVideoBlock {
   url: string;
 }
 
-/** Geri bildirim metinleri (Dash > Sabit Metinler > "Geri Bildirim"); eksik anahtar uygulama yedeğine düşer. */
+/**
+ * Geri bildirim metinleri (Dash > Sabit Metinler > "Geri Bildirim"); eksik anahtar uygulama yedeğine düşer.
+ * Sunucunun `reference` ("Takip kodunuz:") metni alınmaz: takip numarası gösterilmez (sözleşme v1.1 §3).
+ */
 export interface AssistantFeedbackFormTexts {
   submit: string;
   sending: string;
   success: string;
-  reference: string;
   error: string;
   cancel: string;
 }

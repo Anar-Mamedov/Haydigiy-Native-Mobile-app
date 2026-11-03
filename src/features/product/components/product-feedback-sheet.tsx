@@ -1,26 +1,26 @@
 import { CustomerFeedbackSheet } from '@/features/customer-feedback/components/customer-feedback-sheet';
-import { useCustomerFeedbackV2Enabled } from '@/features/customer-feedback/hooks/use-customer-feedback-v2';
-import { FeedbackModal } from './product-detail-modals';
+import { PRODUCT_FEEDBACK_CATEGORY_KEY } from '@/features/customer-feedback/constants/feedback-categories';
 
 type ProductFeedbackSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   productId: string;
-  productSlug: string;
 };
 
 const toProductId = (id: string): number | null => (/^\d{1,15}$/.test(id) ? Number(id) : null);
 
 /**
- * Ürün detayındaki "Geri Bildirim Ver": customer_feedback_v2 açıksa site geneli yeni form (ürün kimliğiyle),
- * kapalıysa eski sabit kategorili sheet (`POST /product-feedback`) aynen açılır.
+ * Ürün detayındaki "Geri Bildirim Ver" (sözleşme v1.1 §2): site geneli form "Ürünle İlgili Sorunlar"
+ * seçili açılır, ürün kimliği (`product_id`) gönderilir, ürün adı sorusu sorulmaz. Eski sabit
+ * kategorili pencere (`POST /product-feedback`) kaldırıldı; tek yol budur.
  */
-export function ProductFeedbackSheet({ open, onOpenChange, productId, productSlug }: ProductFeedbackSheetProps) {
-  const useNewForm = useCustomerFeedbackV2Enabled();
-
-  return useNewForm ? (
-    <CustomerFeedbackSheet onOpenChange={onOpenChange} open={open} productId={toProductId(productId)} />
-  ) : (
-    <FeedbackModal onOpenChange={onOpenChange} open={open} productId={productId} productSlug={productSlug} />
+export function ProductFeedbackSheet({ open, onOpenChange, productId }: ProductFeedbackSheetProps) {
+  return (
+    <CustomerFeedbackSheet
+      initialCategoryKey={PRODUCT_FEEDBACK_CATEGORY_KEY}
+      onOpenChange={onOpenChange}
+      open={open}
+      productId={toProductId(productId)}
+    />
   );
 }

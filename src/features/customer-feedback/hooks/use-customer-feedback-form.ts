@@ -8,6 +8,7 @@ import { findFeedbackCategory } from '../api/customer-feedback.mapper';
 import { CUSTOMER_FEEDBACK_TEXTS as T } from '../constants/customer-feedback-texts';
 import { buildCustomerFeedbackSchema, EMPTY_FEEDBACK_VALUES } from '../schemas/customer-feedback.schema';
 import { toFeedbackApiError } from '../utils/feedback-api-error';
+import { visibleFeedbackCategory } from '../utils/feedback-autofill';
 import { buildFeedbackPayload, pruneValuesToCategory } from '../utils/feedback-payload';
 import { collectFeedbackIssues } from '../utils/feedback-validation';
 import { useFeedbackSubmit } from './use-feedback-submit';
@@ -16,6 +17,11 @@ import { useFeedbackUploads } from './use-feedback-uploads';
 export type CustomerFeedbackFormOptions = {
   /** Haydi Asistan: başlık önceden seçili, kategori listesi çizilmez. */
   fixedCategoryKey?: string;
+  /**
+   * Ürün ekranı: bu başlık seçili açılır ve liste adımı atlanır; müşteri "Başka bir konu bildir" ile
+   * listeye dönebilir (sözleşme v1.1 §2). Başlık formda yoksa liste normal çizilir.
+   */
+  initialCategoryKey?: string;
   productId?: number | null;
   onSubmitted?: (result: FeedbackSubmitResult) => void;
 };
@@ -33,13 +39,17 @@ const contactOf = (values: FeedbackFormValues): FeedbackFormValues => ({
  * Geri bildirim formunun bütün durumu: form tanımı, seçili başlık, cevaplar (RHF + Zod), dosyalar ve
  * gönderim. Ürün sheet'i, Hesabım ekranı ve asistan kartı bu kancayı aynı gövdeyle kullanır.
  */
-export function useCustomerFeedbackForm({ fixedCategoryKey, productId, onSubmitted }: CustomerFeedbackFormOptions) {
+export function useCustomerFeedbackForm({ fixedCategoryKey, initialCategoryKey, productId, onSubmitted }: CustomerFeedbackFormOptions) {
   const formQuery = useFeedbackFormQuery();
   const feedbackForm = formQuery.data ?? null;
-  const [selectedKey, setSelectedKey] = useState<string | null>(fixedCategoryKey ?? null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(fixedCategoryKey ?? initialCategoryKey ?? null);
+  /** Liste adımını atlayan ön seçim; müşteri listeye dönünce bir daha devreye girmez. */
+  const [shortcutKey, setShortcutKey] = useState<string | null>(fixedCategoryKey ? null : (initialCategoryKey ?? null));
   const [notice, setNotice] = useState<string | null>(null);
   const [showContactInputs, setShowContactInputs] = useState(false);
-  const category = findFeedbackCategory(feedbackForm, selectedKey);
+  // Çizim, doğrulama ve gönderim aynı alan listesini kullanır (ürün biliniyorsa ürün sorusu yok).
+  const rawCategory = findFeedbackCategory(feedbackForm, selectedKey);
+  const category = useMemo(() => visibleFeedbackCategory(rawCategory, productId), [rawCategory, productId]);
 
   const resolver = useMemo(() => zodResolver(buildCustomerFeedbackSchema(category)), [category]);
   const rhf = useForm<FeedbackFormValues>({ defaultValues: EMPTY_FEEDBACK_VALUES, mode: 'onTouched', resolver });
@@ -59,17 +69,30 @@ export function useCustomerFeedbackForm({ fixedCategoryKey, productId, onSubmitt
   const uploads = useFeedbackUploads(category?.key ?? null, () => void refreshForm());
   const submission = useFeedbackSubmit();
 
-  const selectCategory = useCallback(
-    (key: string) => {
-      if (key === selectedKey) return;
+  /** Başlık değişince önceki başlığın cevapları ve dosyaları atılır; iletişim bilgisi korunur. */
+  const switchCategory = useCallback(
+    (key: string | null) => {
       setSelectedKey(key);
       setNotice(null);
       submission.setGeneralError(null);
       uploads.clear();
       rhf.reset(contactOf(rhf.getValues()));
     },
-    [rhf, selectedKey, submission, uploads],
+    [rhf, submission, uploads],
   );
+
+  const selectCategory = useCallback(
+    (key: string) => {
+      if (key !== selectedKey) switchCategory(key);
+    },
+    [selectedKey, switchCategory],
+  );
+
+  /** Ön seçili başlıktan kategori listesine döner (seçim temizlenir). */
+  const showAllCategories = useCallback(() => {
+    setShortcutKey(null);
+    switchCategory(null);
+  }, [switchCategory]);
 
   const issues = useMemo(
     () => (category ? collectFeedbackIssues(category, { ...EMPTY_FEEDBACK_VALUES, ...values }) : {}),
@@ -132,6 +155,7 @@ export function useCustomerFeedbackForm({ fixedCategoryKey, productId, onSubmitt
     submission.reset();
     uploads.clear();
     setNotice(null);
+    setShortcutKey(null);
     setSelectedKey(fixedCategoryKey ?? null);
     rhf.reset(contactOf(rhf.getValues()));
   }, [fixedCategoryKey, rhf, submission, uploads]);
@@ -145,6 +169,9 @@ export function useCustomerFeedbackForm({ fixedCategoryKey, productId, onSubmitt
     isReloading: formQuery.isFetching,
     category,
     selectCategory,
+    /** Ön seçili başlık liste olmadan çiziliyor mu (ürün ekranı). */
+    isShortcut: Boolean(shortcutKey) && category?.key === shortcutKey,
+    showAllCategories,
     control: rhf.control,
     setValue: rhf.setValue,
     errors: rhf.formState.errors,

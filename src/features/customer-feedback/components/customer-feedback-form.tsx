@@ -3,6 +3,7 @@ import { Spinner, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton } from '@/components/ui/app-button';
 import { AppRadioGroup } from '@/components/ui/app-radio-group';
+import { TextActionButton } from '@/components/ui/text-action-button';
 import type { FeedbackSubmitResult } from '@/types/customer-feedback.types';
 import { CUSTOMER_FEEDBACK_TEXTS as T } from '../constants/customer-feedback-texts';
 import { useCustomerFeedbackForm } from '../hooks/use-customer-feedback-form';
@@ -16,7 +17,6 @@ export type CustomerFeedbackFormTexts = {
   submit?: string;
   sending?: string;
   success?: string;
-  reference?: string;
   error?: string;
   cancel?: string;
 };
@@ -24,6 +24,8 @@ export type CustomerFeedbackFormTexts = {
 export type CustomerFeedbackFormProps = {
   /** Haydi Asistan: başlık seçili gelir, başlık listesi çizilmez. */
   fixedCategoryKey?: string;
+  /** Ürün ekranı: başlık seçili gelir, "Başka bir konu bildir" ile listeye dönülür. */
+  initialCategoryKey?: string;
   productId?: number | null;
   texts?: CustomerFeedbackFormTexts;
   onSubmitted?: (result: FeedbackSubmitResult) => void;
@@ -51,11 +53,12 @@ function StateMessage({ text, onRetry, busy }: { text: string; onRetry?: () => v
 }
 
 /**
- * Site geneli geri bildirim formu (sözleşme v1.0). Ürün sheet'i, Hesabım ekranı ve asistan kartı bu
- * gövdeyi barındırır; durum ve istekler `useCustomerFeedbackForm` içindedir.
+ * Site geneli geri bildirim formu (sözleşme v1.0 + v1.1). Ürün sheet'i, Hesabım ekranı ve asistan kartı
+ * bu gövdeyi barındırır; durum ve istekler `useCustomerFeedbackForm` içindedir.
  */
 export function CustomerFeedbackForm({
   fixedCategoryKey,
+  initialCategoryKey,
   productId,
   texts,
   onSubmitted,
@@ -63,7 +66,7 @@ export function CustomerFeedbackForm({
   onClose,
   allowAnother = true,
 }: CustomerFeedbackFormProps) {
-  const ctrl = useCustomerFeedbackForm({ fixedCategoryKey, productId, onSubmitted });
+  const ctrl = useCustomerFeedbackForm({ fixedCategoryKey, initialCategoryKey, productId, onSubmitted });
   const missingCategory = ctrl.status === 'ready' && Boolean(fixedCategoryKey) && !ctrl.category;
   const reloadedForMissing = useRef(false);
 
@@ -95,8 +98,6 @@ export function CustomerFeedbackForm({
       <FeedbackSuccessView
         onAnother={allowAnother ? ctrl.startOver : undefined}
         onClose={onClose}
-        reference={ctrl.result.reference}
-        referenceLabel={texts?.reference ?? T.referenceLabel}
         title={texts?.success ?? T.successTitle}
         withVideoNote={ctrl.uploads.rows.some((row) => row.kind === 'video' && row.status === 'done')}
       />
@@ -104,9 +105,9 @@ export function CustomerFeedbackForm({
   }
 
   const busy = ctrl.submitting;
-  const body = (key: string) =>
+  const body = (key: string, showDescription = false) =>
     ctrl.category && ctrl.category.key === key ? (
-      <FeedbackCategoryBody category={ctrl.category} control={ctrl.control} disabled={busy} showDescription={Boolean(fixedCategoryKey)} uploads={ctrl.uploads} />
+      <FeedbackCategoryBody category={ctrl.category} control={ctrl.control} disabled={busy} showDescription={showDescription} uploads={ctrl.uploads} />
     ) : null;
 
   return (
@@ -117,7 +118,24 @@ export function CustomerFeedbackForm({
         </Paragraph>
       ) : null}
       {fixedCategoryKey ? (
-        body(fixedCategoryKey)
+        body(fixedCategoryKey, true)
+      ) : ctrl.isShortcut && ctrl.category ? (
+        <YStack gap="$2" testID="feedback-shortcut">
+          <TextActionButton
+            accessibilityState={{ disabled: busy }}
+            alignSelf="flex-start"
+            color="$brand"
+            fontSize={13}
+            label={T.another}
+            // Gönderim sürerken başlık değiştirilmez (gönderilen içerik ekranda kalmalı).
+            onPress={() => !busy && ctrl.showAllCategories()}
+            testID="feedback-other-topic"
+          />
+          <Paragraph accessibilityRole="header" color="$color" fontSize={15} fontWeight="700">
+            {ctrl.category.title}
+          </Paragraph>
+          {body(ctrl.category.key, true)}
+        </YStack>
       ) : (
         <YStack gap="$3">
           <Paragraph accessibilityRole="header" color="$color" fontSize={15} fontWeight="700">

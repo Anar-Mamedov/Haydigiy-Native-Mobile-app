@@ -8,7 +8,7 @@ import type {
 import { CUSTOMER_FEEDBACK_TEXTS as T } from '../constants/customer-feedback-texts';
 
 /**
- * İstemci doğrulaması YALNIZ kolaylık içindir (sözleşme v1.0 §6.4, §9): son sözü sunucu söyler.
+ * İstemci doğrulaması YALNIZ kolaylık içindir (sözleşme v1.0 §6.4, §9, v1.1 §1.2): son sözü sunucu söyler.
  * Hata anahtarları sunucunun `errors` anahtarlarıyla aynıdır (`answers.<alan>`, `message`, `email`…).
  */
 
@@ -23,6 +23,20 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_CHARS = /^[0-9+\-() ]+$/;
 const URL_PATTERN = /^https?:\/\/\S+$/i;
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+/** `şema://yetki` kısmı; yetkide `kullanıcı:parola@` varsa adres reddedilir. */
+const URL_AUTHORITY = /^https?:\/\/([^/?#\s]+)/i;
+const HOST_WITH_PORT = /^([^:]+)(?::\d{1,5})?$/;
+
+/** Sayfa alanında kabul edilen alan adları; connect `customer_feedback.page_url_hosts` ile aynı liste. */
+export const SITE_URL_HOSTS: readonly string[] = [
+  'haydigiy.com',
+  'www.haydigiy.com',
+  't.haydigiy.com',
+  'haydigiytr.com',
+  'www.haydigiytr.com',
+  't.haydigiytr.com',
+  'localhost',
+];
 
 export const isEmptyAnswer = (value: FeedbackAnswerValue | undefined): boolean =>
   Array.isArray(value) ? value.length === 0 : (value ?? '').trim().length === 0;
@@ -32,6 +46,21 @@ export const isValidEmail = (value: string) => value.length <= EMAIL_MAX && EMAI
 export function isValidPhone(value: string, maxLength: number): boolean {
   const digits = value.replace(/\D/g, '').length;
   return value.length <= maxLength && PHONE_CHARS.test(value) && digits >= MIN_PHONE_DIGITS;
+}
+
+const isValidUrl = (value: string) => value.length <= URL_MAX && URL_PATTERN.test(value);
+
+/** http(s), kimlik bilgisi yok ve alan adı site listesinde (oltalama/yönlendirme adresi kabul edilmez). */
+export function isSiteUrl(value: string): boolean {
+  const authority = URL_AUTHORITY.exec(value)?.[1];
+  if (!isValidUrl(value) || !authority || authority.includes('@')) return false;
+  const host = HOST_WITH_PORT.exec(authority)?.[1]?.toLowerCase();
+  return Boolean(host) && SITE_URL_HOSTS.includes(host as string);
+}
+
+function validateUrl(field: FeedbackField, value: string): string | null {
+  if (!isValidUrl(value)) return T.invalidUrl;
+  return field.config.autofill === 'page_url' && !isSiteUrl(value) ? T.siteUrlOnly : null;
 }
 
 export function isValidDate(value: string): boolean {
@@ -74,7 +103,7 @@ function validateFilled(field: FeedbackField, value: FeedbackAnswerValue): strin
     case 'tel':
       return isValidPhone(text, 20) ? null : T.invalidPhone;
     case 'url':
-      return text.length <= URL_MAX && URL_PATTERN.test(text) ? null : T.invalidUrl;
+      return validateUrl(field, text);
     case 'number':
       return validateNumber(field, text);
     case 'date':

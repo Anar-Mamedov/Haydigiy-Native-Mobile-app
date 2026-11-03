@@ -1,7 +1,7 @@
 {
   "success": true,
   "data": {
-    "version": 3,
+    "version": 5,
     "context": "general",
     "title": "Geri bildiriminiz hangi konuyla ilgili?",
     "categories": [
@@ -68,7 +68,8 @@
             "max": null,
             "config": {
               "placeholder": "Ürün sayfasından geldiyseniz gerekmez",
-              "max_length": 120
+              "max_length": 120,
+              "autofill": "product"
             },
             "frontend_component": "FeedbackText"
           },
@@ -190,6 +191,20 @@
               ]
             },
             "frontend_component": "FeedbackRadio"
+          },
+          {
+            "key": "page",
+            "type": "url",
+            "label": "Sorunun yaşandığı sayfa",
+            "required": false,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "https://",
+              "autofill": "page_url"
+            },
+            "frontend_component": "FeedbackUrl"
           },
           {
             "key": "attachments",
@@ -421,7 +436,8 @@
             "min": null,
             "max": null,
             "config": {
-              "placeholder": "https://"
+              "placeholder": "https://",
+              "autofill": "page_url"
             },
             "frontend_component": "FeedbackUrl"
           },

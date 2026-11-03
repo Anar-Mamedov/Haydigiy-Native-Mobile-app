@@ -138,7 +138,6 @@ export const DEFAULT_FEEDBACK_FORM_TEXTS: AssistantFeedbackFormTexts = {
   submit: 'Gönder',
   sending: 'Gönderiliyor…',
   success: '✅ Geri bildiriminiz bize ulaştı, teşekkür ederiz.',
-  reference: 'Takip kodunuz:',
   error: 'Gönderilemedi, lütfen tekrar deneyin.',
   cancel: 'Vazgeç',
 };

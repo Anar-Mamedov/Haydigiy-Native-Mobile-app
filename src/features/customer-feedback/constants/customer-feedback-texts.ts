@@ -31,6 +31,7 @@ export const CUSTOMER_FEEDBACK_TEXTS = {
   invalidEmail: 'Geçerli bir e-posta girin.',
   invalidPhone: 'Geçerli bir telefon numarası girin.',
   invalidUrl: 'Adres https:// ile başlamalı.',
+  siteUrlOnly: 'Yalnızca haydigiy.com adresleri kabul edilir.',
   invalidNumber: 'Geçerli bir sayı girin.',
   invalidDate: 'Tarihi YYYY-AA-GG biçiminde girin.',
   datePlaceholder: 'YYYY-AA-GG',
@@ -59,9 +60,8 @@ export const CUSTOMER_FEEDBACK_TEXTS = {
     done: 'Yüklendi ✓',
   },
   remove: 'Kaldır',
-  // Başarı
-  successTitle: 'Geri bildiriminiz alındı',
-  referenceLabel: 'REFERANS KODU',
+  // Başarı (takip numarası gösterilmez, sözleşme v1.1 §3)
+  successTitle: 'Geri bildiriminiz alındı. Teşekkür ederiz.',
   videoNote: 'Videonuz kısa süre içinde incelemeye hazır olacak.',
   another: 'Başka bir konu bildir',
 } as const;

@@ -37,7 +37,7 @@ const block = {
 beforeEach(() => {
   jest.clearAllMocks();
   service.getFeedbackFormDto.mockResolvedValue(fixture.data);
-  service.submitCustomerFeedbackDto.mockResolvedValue({ data: { id: '1', reference: 'GB-ABC123' } });
+  service.submitCustomerFeedbackDto.mockResolvedValue({ success: true, data: { id: '1', reference: 'GB-ABC123' } });
 });
 
 describe('AssistantFeedbackFormBlock', () => {
@@ -48,8 +48,9 @@ describe('AssistantFeedbackFormBlock', () => {
     fireEvent.press(screen.getByText('Gönder'));
 
     expect(await screen.findByText('✅ Geri bildiriminiz bize ulaştı, teşekkür ederiz.')).toBeTruthy();
-    expect(screen.getByText('Takip kodunuz:')).toBeTruthy();
-    expect(screen.getByText('GB-ABC123')).toBeTruthy();
+    // Takip numarası ve etiketi gösterilmez (sözleşme v1.1 §3).
+    expect(screen.queryByText('Takip kodunuz:')).toBeNull();
+    expect(screen.queryByText('GB-ABC123')).toBeNull();
     expect(service.submitCustomerFeedbackDto.mock.calls[0][0]).toMatchObject({ context: 'general', category_key: 'general_other', website: '' });
     expect(trackAssistantEvent).toHaveBeenCalledWith('feedback_submitted', { blockId: 'b8' });
     expect(screen.queryByText('Gönder')).toBeNull();

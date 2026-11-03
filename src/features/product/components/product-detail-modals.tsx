@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Sheet, YStack, XStack, Button, Input } from 'tamagui';
+import { Sheet, YStack, XStack, Button } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { X, Table, WashingMachine, MessageSquare, Check } from '@/components/ui/icons';
+import { X, Table, WashingMachine } from '@/components/ui/icons';
 import { Pressable, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { AppSheetOverlay } from '@/components/ui/app-sheet-overlay';
 import { IconButton } from '@/components/ui/icon-button';
 import { BRAND_COLOR } from '@/lib/theme/colors';
-import { submitProductFeedback } from '@/services/product.service';
 import {
   getSizeChartImageSource,
   getSizeChartSections,
@@ -16,7 +15,6 @@ import {
   type SizeChartGender,
   type SizeChartSection,
 } from '../data/size-chart-assets';
-import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
 
 // --- WASHING INSTRUCTIONS DATA ---
 const WASHING_INSTRUCTIONS = [
@@ -53,21 +51,6 @@ const WASHING_INSTRUCTIONS = [
       'Mümkün olduğunca düşük sıcaklıkta ütülemeniz tavsiye edilir.',
     ],
   },
-];
-
-// --- FEEDBACK CATEGORIES ---
-const FEEDBACK_CATEGORIES = [
-  'Ürünün fiyatı hatalı',
-  'Ürün ismi yetersiz',
-  'Ürün adı ile ürün özellikleri/açıklamaları uyuşmuyor',
-  'Ürün özellikleri eksik ya da hatalı',
-  'Ürünün kategorisi hatalı',
-  'Görsel uygunsuz (+18 içerik)',
-  'Ürün özellikleri ile ürün açıklaması uyuşmuyor',
-  'Görsel ile ürün ismi uyuşmuyor',
-  'Ürün güvenliği bilgileri eksik/hatalı/yanlış',
-  'Ürün güvenliği riski barındıran ürün',
-  'Diğer',
 ];
 
 // --- 1. SIZE CHART MODAL ---
@@ -180,145 +163,6 @@ export function WashingInstructionsModal({ open, onOpenChange }: { open: boolean
               </YStack>
             </YStack>
           ))}
-        </ScrollView>
-      </Sheet.Frame>
-    </Sheet>
-  );
-}
-
-// --- 4. FEEDBACK MODAL ---
-export function FeedbackModal({
-  open,
-  onOpenChange,
-  productId,
-  productSlug,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  productId: string;
-  productSlug: string;
-}) {
-  const [category, setCategory] = useState('');
-  const [otherText, setOtherText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!category) return;
-    if (category === 'Diğer' && !otherText.trim()) return;
-
-    setLoading(true);
-    try {
-      const feedbackVal = category === 'Diğer' ? otherText.trim() : category;
-      await submitProductFeedback(productId, productSlug, feedbackVal);
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        onOpenChange(false);
-        setCategory('');
-        setOtherText('');
-      }, 1500);
-    } catch {
-      // Ignore
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange} snapPointsMode="percent" snapPoints={[85]} dismissOnSnapToBottom modal unmountChildrenWhenHidden>
-      <AppSheetOverlay />
-      <Sheet.Frame backgroundColor="$background" borderTopLeftRadius={16} borderTopRightRadius={16} overflow="hidden">
-        <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={16} paddingVertical={12} borderBottomWidth={1} borderBottomColor="$borderColor">
-          <XStack alignItems="center" gap="$2">
-            <MessageSquare size={18} color="$brand" />
-            <Paragraph fontSize={16} fontWeight="700">Geri Bildirim Bildir</Paragraph>
-          </XStack>
-          <IconButton accessibilityLabel="Kapat" onPress={() => onOpenChange(false)}>
-            <X color="$color" size={18} />
-          </IconButton>
-        </XStack>
-
-        <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
-          {success ? (
-            <YStack gap="$3" alignItems="center" paddingVertical="$10">
-              <XStack backgroundColor="#10B981" borderRadius={30} width={60} height={60} alignItems="center" justifyContent="center">
-                <Check size={32} color="white" />
-              </XStack>
-              <Paragraph fontWeight="700" fontSize={16} color="#10B981">Geri bildiriminiz gönderildi!</Paragraph>
-            </YStack>
-          ) : (
-            <>
-              <Paragraph fontSize={13} color="$color10" fontWeight="600">Geri bildiriminiz hangi başlıkla ilgili?</Paragraph>
-              
-              <YStack gap="$2">
-                {FEEDBACK_CATEGORIES.map((cat) => {
-                  const isChecked = category === cat;
-                  return (
-                    <Pressable key={cat} onPress={() => setCategory(cat)}>
-                      <XStack
-                        padding="$3"
-                        borderRadius={8}
-                        borderWidth={1}
-                        borderColor={isChecked ? '$brand' : '$borderColor'}
-                        backgroundColor={isChecked ? '$orange3' : '$background'}
-                        alignItems="center"
-                        gap="$2.5"
-                      >
-                        <XStack
-                          width={18}
-                          height={18}
-                          borderRadius={9}
-                          borderWidth={2}
-                          borderColor={isChecked ? '$brand' : '$borderColor'}
-                          alignItems="center"
-                          justifyContent="center"
-                        >
-                          {isChecked && <YStack width={8} height={8} borderRadius={4} backgroundColor="$brand" />}
-                        </XStack>
-                        <Paragraph fontSize={12} color="$color" flex={1}>{cat}</Paragraph>
-                      </XStack>
-                    </Pressable>
-                  );
-                })}
-              </YStack>
-
-              {category === 'Diğer' && (
-                <YStack gap="$1.5" marginTop="$1">
-                  <Paragraph fontSize={12} color="$color10" fontWeight="600">Geri Bildiriminiz</Paragraph>
-                  <Input
-                    maxFontSizeMultiplier={MAX_FONT_SCALE}
-                    value={otherText}
-                    onChangeText={setOtherText}
-                    placeholder="Geri bildiriminizi detaylandırın..."
-                    multiline
-                    numberOfLines={4}
-                    height={100}
-                    borderColor="$borderColor"
-                    borderWidth={1}
-                    borderRadius={8}
-                    padding={12}
-                    color="$color"
-                    backgroundColor="$background"
-                    textAlignVertical="top"
-                  />
-                </YStack>
-              )}
-
-              <Button
-                backgroundColor={category ? '$brand' : '$color5'}
-                borderRadius={8}
-                onPress={handleSubmit}
-                disabled={!category || loading}
-                height={46}
-                marginTop="$2"
-              >
-                <Paragraph color="white" fontWeight="800">
-                  {loading ? 'Gönderiliyor...' : 'Gönder'}
-                </Paragraph>
-              </Button>
-            </>
-          )}
         </ScrollView>
       </Sheet.Frame>
     </Sheet>

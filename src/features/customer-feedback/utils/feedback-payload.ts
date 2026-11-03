@@ -7,6 +7,7 @@ import type {
   FeedbackPlatform,
   FeedbackSubmitPayload,
 } from '@/types/customer-feedback.types';
+import { hasKnownProduct } from './feedback-autofill';
 import { isEmptyAnswer } from './feedback-validation';
 
 /** Yüklenmiş (belirteci alınmış) dosya. */
@@ -59,7 +60,7 @@ export function buildFeedbackPayload({ category, values, attachments, platform, 
   };
   const message = category.message.mode === 'hidden' ? undefined : optionalText(values.message);
   if (message) payload.message = message;
-  if (productId && Number.isSafeInteger(productId) && productId > 0) payload.product_id = productId;
+  if (hasKnownProduct(productId)) payload.product_id = productId;
   const fullName = optionalText(values.full_name);
   const email = optionalText(values.email);
   const phone = optionalText(values.phone);

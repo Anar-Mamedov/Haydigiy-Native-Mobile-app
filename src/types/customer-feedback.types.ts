@@ -1,5 +1,5 @@
 /**
- * Müşteri Geri Bildirim formu (connect `/customer-feedback`, sözleşme v1.0).
+ * Müşteri Geri Bildirim formu (connect `/customer-feedback`, sözleşme v1.0 + v1.1).
  * Form içeriği SUNUCUDAN gelir (Form Builder); bu tipler yalnız çizim için gereken alanları tanımlar.
  */
 
@@ -19,6 +19,12 @@ export type FeedbackFieldType =
 
 export type FeedbackOption = { value: string; label: string };
 
+/**
+ * Otomatik doldurma (sözleşme v1.1 §1): `url` + `page_url` sayfa alanıdır (yalnız site adresi kabul
+ * edilir); `text` + `product` ürün sorusudur (ürün biliniyorsa sorulmaz). Başka değer yok sayılır.
+ */
+export type FeedbackAutofill = 'page_url' | 'product';
+
 export type FeedbackFieldConfig = {
   placeholder?: string;
   options: FeedbackOption[];
@@ -30,6 +36,7 @@ export type FeedbackFieldConfig = {
   /** file: kabul edilen MIME türleri ve görsel başına üst sınır (KB). */
   accept: string[];
   maxSizeKb?: number;
+  autofill?: FeedbackAutofill;
 };
 
 export type FeedbackField = {
@@ -98,6 +105,7 @@ export type FeedbackSubmitPayload = {
   website: '';
 };
 
-export type FeedbackSubmitResult = { reference: string; duplicate: boolean };
+/** Takip numarası (`data.reference`) müşteriye gösterilmez (sözleşme v1.1 §3), modelde de tutulmaz. */
+export type FeedbackSubmitResult = { duplicate: boolean };
 
 export type FeedbackUploadResult = { uploadToken: string; mimeType: string; fileSize: number };

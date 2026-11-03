@@ -1,22 +1,22 @@
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppButton } from '@/components/ui/app-button';
-import { CopyField } from '@/components/ui/copy-field';
 import { CircleCheck } from '@/components/ui/icons';
 import { CUSTOMER_FEEDBACK_TEXTS as T } from '../constants/customer-feedback-texts';
 
 type FeedbackSuccessViewProps = {
   title: string;
-  referenceLabel: string;
-  reference: string;
   /** Video gönderildiyse kısa bilgi (sözleşme v1.0 §8.2). */
   withVideoNote?: boolean;
   onClose?: () => void;
   onAnother?: () => void;
 };
 
-/** Başarı: referans kodu (GB-XXXXXX, kopyalanabilir). Asistan kartında düğmesiz, salt okunur çizilir. */
-export function FeedbackSuccessView({ title, referenceLabel, reference, withVideoNote, onClose, onAnother }: FeedbackSuccessViewProps) {
+/**
+ * Başarı: onay simgesi + teşekkür. Takip numarası gösterilmez (sözleşme v1.1 §3); yinelenen gönderim
+ * (`duplicate`) de aynı ekrandır. Asistan kartında düğmesiz, salt okunur çizilir.
+ */
+export function FeedbackSuccessView({ title, withVideoNote, onClose, onAnother }: FeedbackSuccessViewProps) {
   return (
     <YStack accessibilityLiveRegion="polite" alignItems="stretch" gap="$3" testID="feedback-success">
       <XStack alignItems="center" gap="$2">
@@ -25,7 +25,6 @@ export function FeedbackSuccessView({ title, referenceLabel, reference, withVide
           {title}
         </Paragraph>
       </XStack>
-      <CopyField accessibilityLabel={`${referenceLabel} ${reference} kopyala`} label={referenceLabel} value={reference} />
       {withVideoNote ? (
         <Paragraph color="$color10" fontSize={12}>
           {T.videoNote}

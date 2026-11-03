@@ -1,5 +1,5 @@
 import type { FeedbackCategory, FeedbackField, FeedbackFormValues } from '@/types/customer-feedback.types';
-import { collectFeedbackIssues, isValidDate, validateFieldValue, validateMessage } from './feedback-validation';
+import { collectFeedbackIssues, isSiteUrl, isValidDate, validateFieldValue, validateMessage } from './feedback-validation';
 
 const field = (overrides: Partial<FeedbackField> & Pick<FeedbackField, 'type'>): FeedbackField => ({
   key: 'f',
@@ -37,6 +37,31 @@ describe('feedback validation (yalnız UX, son söz sunucuda)', () => {
     expect(validateFieldValue(field({ type: 'number', config: { options: [], accept: [], min: 1, max: 3 } }), '4')).toBe('En çok 3 olmalı.');
     expect(validateFieldValue(field({ type: 'text', config: { options: [], accept: [], maxLength: 3 } }), 'abcd')).toBe('En çok 3 karakter yazabilirsiniz.');
     expect(validateFieldValue(field({ type: 'rating', config: { options: [], accept: [], max: 5 } }), '6')).toBe('Bu alan zorunlu.');
+  });
+
+  it('accepts only site addresses in the page field (sözleşme v1.1 §1.2)', () => {
+    const page = field({ key: 'page', type: 'url', config: { options: [], accept: [], autofill: 'page_url' } });
+    const siteOnly = 'Yalnızca haydigiy.com adresleri kabul edilir.';
+
+    expect(validateFieldValue(page, 'https://evil.example.com/')).toBe(siteOnly);
+    expect(validateFieldValue(page, 'https://www.haydigiy.com/urun/x?a=1')).toBeNull();
+    expect(validateFieldValue(page, 'https://haydigiytr.com/sepet')).toBeNull();
+    expect(validateFieldValue(page, 'http://t.haydigiytr.com/k')).toBeNull();
+    expect(validateFieldValue(page, 'https://WWW.HAYDIGIY.COM:443/')).toBeNull();
+    expect(validateFieldValue(page, 'javascript:alert(1)')).toBe('Adres https:// ile başlamalı.');
+    expect(validateFieldValue(page, '')).toBeNull();
+    // Diğer bağlantı alanları yalnız genel biçim denetiminden geçer.
+    expect(validateFieldValue(field({ type: 'url' }), 'https://evil.example.com/')).toBeNull();
+  });
+
+  it('rejects look-alike hosts and addresses with credentials', () => {
+    expect(isSiteUrl('https://www.haydigiy.com.evil.com/')).toBe(false);
+    expect(isSiteUrl('https://evilhaydigiy.com/')).toBe(false);
+    expect(isSiteUrl('https://a@www.haydigiy.com/')).toBe(false);
+    expect(isSiteUrl('https://www.haydigiy.com@evil.com/')).toBe(false);
+    expect(isSiteUrl('https://user:pass@haydigiy.com/')).toBe(false);
+    expect(isSiteUrl('ftp://haydigiy.com/')).toBe(false);
+    expect(isSiteUrl('https://haydigiy.com')).toBe(true);
   });
 
   it('validates real calendar dates only', () => {
