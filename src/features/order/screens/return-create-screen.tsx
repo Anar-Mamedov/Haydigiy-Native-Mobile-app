@@ -17,6 +17,7 @@ import { ReturnConfirmSheet } from '../components/return-confirm-sheet';
 import { ReturnResultSheets } from '../components/return-result-sheets';
 import { NewIbanModal } from '../components/new-iban-modal';
 import { useReturnCreateController } from '../hooks/use-return-create-controller';
+import { parseOrderItemParam } from '../utils/order-item-groups';
 
 // Web `iade-olustur` sayfasındaki engel metinleriyle birebir aynı.
 const BLOCK_MESSAGES: Record<string, string> = {
@@ -28,7 +29,7 @@ const RETURN_FORM_KEYBOARD_BOTTOM_OFFSET = 120;
 
 export function ReturnCreateScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ id: string; item_id?: string; select_all?: string }>();
+  const params = useLocalSearchParams<{ id: string; item_id?: string; select_all?: string; urun?: string }>();
   const id = params.id ?? '';
   const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
 
@@ -39,6 +40,7 @@ export function ReturnCreateScreen() {
 
   const ctrl = useReturnCreateController(id, {
     preselectItemId: Number.isFinite(preselectItemId) ? preselectItemId : null,
+    preselectOrderItemId: parseOrderItemParam(params.urun),
     selectAll,
     enabled: isAuthenticated,
   });

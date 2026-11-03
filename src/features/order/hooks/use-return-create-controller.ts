@@ -4,6 +4,7 @@ import {
   findGroupByOrderItemId,
   flattenGroupRows,
   getGroupRowIds,
+  getOrderItemRowIds,
   getPreselectRowIds,
   type OrderItemGroup,
   type OrderItemSelectionRow,
@@ -40,7 +41,13 @@ export type ReturnItemGroup = OrderItemGroup;
 /** İade ekranının seçilebilir satırı (bir adet). */
 export type ExpandedReturnItem = OrderItemSelectionRow;
 
-type Options = { preselectItemId: number | null; selectAll: boolean; enabled: boolean };
+type Options = {
+  preselectItemId: number | null;
+  /** `?urun=` — Haydi Asistan'ın tek ürünlü siparişte işaret ettiği kalem; tüm iade edilebilir adetleri seçilir. */
+  preselectOrderItemId?: number | null;
+  selectAll: boolean;
+  enabled: boolean;
+};
 
 const matchesReason = (name: string, needle: string) =>
   name.trim().toLocaleLowerCase('tr-TR').includes(needle);
@@ -135,8 +142,11 @@ export function useReturnCreateController(orderId: string, options: Options) {
 
     const giftIds = giftRows.map((row) => row.expandedId);
     let nextSelected: string[] = [];
+    const orderItemRowIds = getOrderItemRowIds(returnableRows, options.preselectOrderItemId ?? null);
 
-    if (options.preselectItemId) {
+    if (orderItemRowIds.length > 0) {
+      nextSelected = Array.from(new Set([...orderItemRowIds, ...giftIds]));
+    } else if (options.preselectItemId) {
       // Paket bileşeni açıldıysa paketin tamamı işaretlenir; kullanıcı istemediklerini kaldırır.
       const target = findGroupByOrderItemId(returnableGroups, options.preselectItemId);
       nextSelected = target
@@ -160,6 +170,7 @@ export function useReturnCreateController(orderId: string, options: Options) {
     returnableRows,
     giftRows,
     options.preselectItemId,
+    options.preselectOrderItemId,
     options.selectAll,
     defaultReasonId,
   ]);

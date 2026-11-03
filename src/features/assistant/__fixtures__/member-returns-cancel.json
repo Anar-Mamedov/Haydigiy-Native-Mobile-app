@@ -1,6 +1,6 @@
 {
     "flow": "member-returns-cancel",
-    "description": "İade/iptal: sipariş seçilince YALNIZ o siparişin durumuna uygun eylem düğmesi gelir — hazırlanıyor/onaylandı/paketleniyor → sadece \"Siparişi iptal et\"; teslim edildi (süre içinde) → sadece \"İade et\"; kargoya verildi/yolda → eylem düğmesi YOK (nedeni söyleyen metin). Düğmeye basınca uygunsa SİTENİN iade/iptal SAYFASINA götüren link_button (iki adresli: desktop/mobile). Asistan HİÇBİR şey yazmaz.",
+    "description": "İade/iptal: konuya girince ÖNCE \"İade mi, iptal mi?\" sorulur (`buttons`, kimlikleri `intent.*`); sonra her birinin içinde \"talep oluştur\" ve \"o işlemin mevcut durumu\". İade → YALNIZ iade edilebilir siparişler listelenir; iptal → YALNIZ iptal edilebilirler; iade durumum → iade edilmiş/iade talebi olanlar; iptal durumum → iptal edilmişler (sitedeki İadeler / İptaller sekmeleri gibi AYRI; kayıt yoksa liste yerine dürüst metin). Uygun sipariş yoksa liste gelmez, sebebi söyleyen metin + Canlı Destek gelir. Siparişi seçince önce sipariş kartı (`order_card`, içinde `detail` bağlantısı) sonra sitenin iade/iptal SAYFASINA götüren link_button (iki adresli: desktop/mobile). Asistan HİÇBİR şey yazmaz.",
     "steps": [
         {
             "request": {
@@ -212,64 +212,36 @@
                         {
                             "type": "text",
                             "id": "b5",
-                            "text": "↩️ Hangi siparişiniz için işlem yapmak istersiniz? Birini seçin 👇"
+                            "text": "↩️ İade mi, iptal mi? Birini seçin 👇"
                         },
                         {
-                            "type": "order_list",
+                            "type": "buttons",
                             "id": "b6",
+                            "layout": "list",
                             "items": [
                                 {
-                                    "select_id": "rorder.2",
+                                    "id": "intent.returns_return",
+                                    "label": "↩️ İade işlemlerim",
                                     "payload": "p13",
-                                    "order_no": "HG261011000002",
-                                    "date_label": "11 Eki 2026",
-                                    "total_label": "899,00 ₺",
-                                    "status_text": "📦 Hazırlanıyor",
-                                    "tone": "info",
-                                    "summary": "2 ürün"
+                                    "style": "secondary"
                                 },
                                 {
-                                    "select_id": "rorder.3",
+                                    "id": "intent.returns_cancel",
+                                    "label": "✖️ İptal işlemlerim",
                                     "payload": "p14",
-                                    "order_no": "HG261010000003",
-                                    "date_label": "10 Eki 2026",
-                                    "total_label": "549,50 ₺",
-                                    "status_text": "🚚 Yolda",
-                                    "tone": "info",
-                                    "summary": "1 ürün"
-                                },
-                                {
-                                    "select_id": "rorder.1",
-                                    "payload": "p15",
-                                    "order_no": "HG261009000001",
-                                    "date_label": "5 Eki 2026",
-                                    "total_label": "1.249,90 ₺",
-                                    "status_text": "✅ Teslim edildi",
-                                    "tone": "success",
-                                    "summary": "1 ürün"
+                                    "style": "secondary"
                                 }
                             ]
                         },
                         {
-                            "type": "link_button",
-                            "id": "b7",
-                            "label": "Tüm siparişlerim",
-                            "kind": "liste",
-                            "open": "same",
-                            "href": {
-                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan",
-                                "mobile": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan"
-                            }
-                        },
-                        {
                             "type": "buttons",
-                            "id": "b8",
+                            "id": "b7",
                             "layout": "chips",
                             "items": [
                                 {
                                     "id": "nav.home",
                                     "label": "🏠 Ana menü",
-                                    "payload": "p16",
+                                    "payload": "p15",
                                     "style": "secondary"
                                 }
                             ]
@@ -290,8 +262,8 @@
                     "client_msg_id": "00000000-0000-4000-8000-000000000003",
                     "input": {
                         "type": "select",
-                        "id": "rorder.1",
-                        "payload": "p15"
+                        "id": "intent.returns_return",
+                        "payload": "p13"
                     }
                 }
             },
@@ -313,13 +285,13 @@
                             "label": "🏠 Ana menü",
                             "current": false,
                             "id": "nav.home",
-                            "payload": "p17"
+                            "payload": "p16"
                         },
                         {
                             "label": "📦 Siparişlerim",
                             "current": false,
                             "id": "menu.orders",
-                            "payload": "p18"
+                            "payload": "p17"
                         },
                         {
                             "label": "İade ve iptallerim",
@@ -328,52 +300,34 @@
                     ],
                     "blocks": [
                         {
-                            "type": "order_card",
+                            "type": "text",
+                            "id": "b8",
+                            "text": "↩️ İade için ne yapmak istersiniz? Birini seçin 👇"
+                        },
+                        {
+                            "type": "buttons",
                             "id": "b9",
-                            "order_no": "HG261009000001",
-                            "date_label": "5 Eki 2026",
-                            "total_label": "1.249,90 ₺",
-                            "status_text": "✅ Teslim edildi",
-                            "tone": "success",
-                            "lines": [
-                                {
-                                    "label": "Ödeme",
-                                    "value": "Kredi kartı"
-                                },
-                                {
-                                    "label": "Takip no",
-                                    "value": "1234567890123"
-                                }
-                            ],
+                            "layout": "list",
                             "items": [
                                 {
-                                    "name": "Siyah Elbise",
-                                    "qty": 1,
-                                    "variant": "M"
+                                    "id": "intent.return_new",
+                                    "label": "↩️ İade etmek istiyorum",
+                                    "payload": "p18",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "intent.return_status",
+                                    "label": "🔎 İade durumum",
+                                    "payload": "p19",
+                                    "style": "secondary"
                                 }
                             ]
                         },
                         {
-                            "type": "text",
-                            "id": "b10",
-                            "text": "✅ Siparişiniz teslim edildi. İyi günlerde kullanın! 🎉"
-                        },
-                        {
-                            "type": "text",
-                            "id": "b11",
-                            "text": "🔎 Siparişinizi buldum. Teslim edildiği için dilerseniz iade talebi oluşturabilirsiniz."
-                        },
-                        {
                             "type": "buttons",
-                            "id": "b12",
-                            "layout": "list",
+                            "id": "b10",
+                            "layout": "chips",
                             "items": [
-                                {
-                                    "id": "retn.1",
-                                    "label": "↩️ İade et",
-                                    "payload": "p19",
-                                    "style": "secondary"
-                                },
                                 {
                                     "id": "nav.home",
                                     "label": "🏠 Ana menü",
@@ -381,16 +335,6 @@
                                     "style": "secondary"
                                 }
                             ]
-                        },
-                        {
-                            "type": "live_support",
-                            "id": "b13",
-                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
-                            "label": "💬 Canlı Destek",
-                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20%C4%B0ade%20ve%20iptallerim%20Sipari%C5%9F%20no%3A%20HG261009000001%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
-                            "number": "905327805100",
-                            "number_label": "+90 532 780 51 00",
-                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: İade ve iptallerim Sipariş no: HG261009000001 Yardımcı olabilir misiniz?"
                         }
                     ]
                 }
@@ -408,8 +352,8 @@
                     "client_msg_id": "00000000-0000-4000-8000-000000000004",
                     "input": {
                         "type": "select",
-                        "id": "retn.1",
-                        "payload": "p19"
+                        "id": "intent.return_new",
+                        "payload": "p18"
                     }
                 }
             },
@@ -447,29 +391,54 @@
                     "blocks": [
                         {
                             "type": "text",
-                            "id": "b14",
-                            "text": "↩️ HG261009000001 numaralı siparişinizin iade sayfasını hazırladım. Sayfada ürünleri seçip talebi tamamlayabilirsiniz."
+                            "id": "b11",
+                            "text": "↩️ Hangi siparişiniz için işlem yapmak istersiniz? Birini seçin 👇"
+                        },
+                        {
+                            "type": "order_list",
+                            "id": "b12",
+                            "items": [
+                                {
+                                    "select_id": "retn.1",
+                                    "payload": "p23",
+                                    "order_no": "HG261009000001",
+                                    "date_label": "5 Eki 2026",
+                                    "total_label": "1.249,90 ₺",
+                                    "status_text": "✅ Teslim edildi",
+                                    "tone": "success",
+                                    "summary": "1 ürün",
+                                    "products": [
+                                        {
+                                            "name": "Siyah Elbise",
+                                            "qty": 1,
+                                            "variant": "M",
+                                            "image": "https://cdn.haydigiy.com/products/101/siyah-elbise-thumb.webp",
+                                            "unit_price_label": "1.249,90 ₺"
+                                        }
+                                    ]
+                                }
+                            ]
                         },
                         {
                             "type": "link_button",
-                            "id": "b15",
-                            "label": "İade sayfasını aç",
-                            "kind": "iade",
+                            "id": "b13",
+                            "label": "Tüm siparişlerim",
+                            "kind": "liste",
                             "open": "same",
                             "href": {
-                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fiade-olustur%2F1%3Fsrc%3Dhaydi-asistan",
-                                "mobile": "/giris?returnUrl=%2Fm%2Fhesabim%2Fiade-olustur%2F1%3Fsrc%3Dhaydi-asistan"
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan"
                             }
                         },
                         {
                             "type": "buttons",
-                            "id": "b16",
+                            "id": "b14",
                             "layout": "chips",
                             "items": [
                                 {
                                     "id": "nav.home",
                                     "label": "🏠 Ana menü",
-                                    "payload": "p23",
+                                    "payload": "p24",
                                     "style": "secondary"
                                 }
                             ]
@@ -490,8 +459,8 @@
                     "client_msg_id": "00000000-0000-4000-8000-000000000005",
                     "input": {
                         "type": "select",
-                        "id": "rorder.2",
-                        "payload": "p13"
+                        "id": "retn.1",
+                        "payload": "p23"
                     }
                 }
             },
@@ -513,13 +482,13 @@
                             "label": "🏠 Ana menü",
                             "current": false,
                             "id": "nav.home",
-                            "payload": "p24"
+                            "payload": "p25"
                         },
                         {
                             "label": "📦 Siparişlerim",
                             "current": false,
                             "id": "menu.orders",
-                            "payload": "p25"
+                            "payload": "p26"
                         },
                         {
                             "label": "İade ve iptallerim",
@@ -528,48 +497,67 @@
                     ],
                     "blocks": [
                         {
+                            "type": "text",
+                            "id": "b15",
+                            "text": "↩️ İade işlemlerim · HG261009000001 numaralı siparişiniz (5 Eki 2026)"
+                        },
+                        {
                             "type": "order_card",
-                            "id": "b17",
-                            "order_no": "HG261011000002",
-                            "date_label": "11 Eki 2026",
-                            "total_label": "899,00 ₺",
-                            "status_text": "📦 Hazırlanıyor",
-                            "tone": "info",
+                            "id": "b16",
+                            "order_no": "HG261009000001",
+                            "date_label": "5 Eki 2026",
+                            "total_label": "1.249,90 ₺",
+                            "status_text": "✅ Teslim edildi",
+                            "tone": "success",
                             "lines": [
                                 {
                                     "label": "Ödeme",
                                     "value": "Kredi kartı"
+                                },
+                                {
+                                    "label": "Takip no",
+                                    "value": "1234567890123"
                                 }
                             ],
                             "items": [
                                 {
-                                    "name": "Mavi Tunik",
-                                    "qty": 2,
-                                    "variant": "M"
+                                    "name": "Siyah Elbise",
+                                    "qty": 1,
+                                    "variant": "M",
+                                    "image": "https://cdn.haydigiy.com/products/101/siyah-elbise-thumb.webp",
+                                    "unit_price_label": "1.249,90 ₺"
                                 }
-                            ]
+                            ],
+                            "detail": {
+                                "label": "Sipariş sayfasını aç",
+                                "open": "same",
+                                "href": {
+                                    "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%2F1%3Fsrc%3Dhaydi-asistan",
+                                    "mobile": "/giris?returnUrl=%2Fm%2Fhesabim%2Fsiparislerim%2F1%3Fsrc%3Dhaydi-asistan"
+                                }
+                            }
                         },
                         {
                             "type": "text",
+                            "id": "b17",
+                            "text": "↩️ HG261009000001 numaralı siparişinizin iade sayfasını hazırladım. Sayfada ürünleri seçip talebi tamamlayabilirsiniz."
+                        },
+                        {
+                            "type": "link_button",
                             "id": "b18",
-                            "text": "📦 Siparişiniz hazırlanıyor. Kargoya verilince size haber vereceğiz."
-                        },
-                        {
-                            "type": "text",
-                            "id": "b19",
-                            "text": "🔎 Siparişinizi buldum. Henüz kargoya verilmediği için dilerseniz iptal edebilirsiniz."
+                            "label": "İade sayfasını aç",
+                            "kind": "iade",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fiade-olustur%2F1%3Furun%3D1%26src%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fm%2Fhesabim%2Fiade-olustur%2F1%3Furun%3D1%26src%3Dhaydi-asistan"
+                            }
                         },
                         {
                             "type": "buttons",
-                            "id": "b20",
-                            "layout": "list",
+                            "id": "b19",
+                            "layout": "chips",
                             "items": [
-                                {
-                                    "id": "canc.2",
-                                    "label": "✖️ Siparişi iptal et",
-                                    "payload": "p26",
-                                    "style": "secondary"
-                                },
                                 {
                                     "id": "nav.home",
                                     "label": "🏠 Ana menü",
@@ -577,16 +565,6 @@
                                     "style": "secondary"
                                 }
                             ]
-                        },
-                        {
-                            "type": "live_support",
-                            "id": "b21",
-                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
-                            "label": "💬 Canlı Destek",
-                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20%C4%B0ade%20ve%20iptallerim%20Sipari%C5%9F%20no%3A%20HG261011000002%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
-                            "number": "905327805100",
-                            "number_label": "+90 532 780 51 00",
-                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: İade ve iptallerim Sipariş no: HG261011000002 Yardımcı olabilir misiniz?"
                         }
                     ]
                 }
@@ -604,8 +582,8 @@
                     "client_msg_id": "00000000-0000-4000-8000-000000000006",
                     "input": {
                         "type": "select",
-                        "id": "canc.2",
-                        "payload": "p26"
+                        "id": "intent.return_status",
+                        "payload": "p19"
                     }
                 }
             },
@@ -643,23 +621,22 @@
                     "blocks": [
                         {
                             "type": "text",
-                            "id": "b22",
-                            "text": "✖️ HG261011000002 numaralı siparişinizin iptal sayfasını hazırladım. Sayfada ürünleri seçip iptali tamamlayabilirsiniz."
+                            "id": "b20",
+                            "text": "ℹ️ İade talebiniz ya da iade edilmiş siparişiniz görünmüyor."
                         },
                         {
-                            "type": "link_button",
-                            "id": "b23",
-                            "label": "İptal sayfasını aç",
-                            "kind": "iptal",
-                            "open": "same",
-                            "href": {
-                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparis-iptal%2F2%3Fsrc%3Dhaydi-asistan",
-                                "mobile": "/giris?returnUrl=%2Fm%2Fsiparis-iptal%2F2%3Fsrc%3Dhaydi-asistan"
-                            }
+                            "type": "live_support",
+                            "id": "b21",
+                            "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
+                            "label": "💬 Canlı Destek",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20%C4%B0ade%20durumum%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "number": "905327805100",
+                            "number_label": "+90 532 780 51 00",
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: İade durumum Yardımcı olabilir misiniz?"
                         },
                         {
                             "type": "buttons",
-                            "id": "b24",
+                            "id": "b22",
                             "layout": "chips",
                             "items": [
                                 {
@@ -686,7 +663,7 @@
                     "client_msg_id": "00000000-0000-4000-8000-000000000007",
                     "input": {
                         "type": "select",
-                        "id": "rorder.3",
+                        "id": "intent.returns_cancel",
                         "payload": "p14"
                     }
                 }
@@ -724,63 +701,350 @@
                     ],
                     "blocks": [
                         {
-                            "type": "order_card",
-                            "id": "b25",
-                            "order_no": "HG261010000003",
-                            "date_label": "10 Eki 2026",
-                            "total_label": "549,50 ₺",
-                            "status_text": "🚚 Yolda",
-                            "tone": "info",
-                            "lines": [
-                                {
-                                    "label": "Ödeme",
-                                    "value": "Kredi kartı"
-                                },
-                                {
-                                    "label": "Takip no",
-                                    "value": "9876543210987"
-                                }
-                            ],
-                            "items": [
-                                {
-                                    "name": "Kahverengi Kazak",
-                                    "qty": 1,
-                                    "variant": "M"
-                                }
-                            ]
-                        },
-                        {
                             "type": "text",
-                            "id": "b26",
-                            "text": "🚚 Siparişiniz yolda!"
-                        },
-                        {
-                            "type": "text",
-                            "id": "b27",
-                            "text": "🔎 Siparişinizi buldum. Kargoya verildiği için artık iptal edilemiyor; teslim edildikten sonra iade talebi oluşturabilirsiniz 📦"
+                            "id": "b23",
+                            "text": "✖️ İptal için ne yapmak istersiniz? Birini seçin 👇"
                         },
                         {
                             "type": "buttons",
-                            "id": "b28",
+                            "id": "b24",
                             "layout": "list",
                             "items": [
                                 {
-                                    "id": "nav.home",
-                                    "label": "🏠 Ana menü",
+                                    "id": "intent.cancel_new",
+                                    "label": "✖️ Siparişimi iptal etmek istiyorum",
                                     "payload": "p33",
+                                    "style": "secondary"
+                                },
+                                {
+                                    "id": "intent.cancel_history",
+                                    "label": "🔎 İptal durumum",
+                                    "payload": "p34",
                                     "style": "secondary"
                                 }
                             ]
                         },
                         {
-                            "type": "live_support",
+                            "type": "buttons",
+                            "id": "b25",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p35",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000008",
+                    "input": {
+                        "type": "select",
+                        "id": "intent.cancel_new",
+                        "payload": "p33"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p36"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": false,
+                            "id": "menu.orders",
+                            "payload": "p37"
+                        },
+                        {
+                            "label": "İade ve iptallerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b26",
+                            "text": "↩️ Hangi siparişiniz için işlem yapmak istersiniz? Birini seçin 👇"
+                        },
+                        {
+                            "type": "order_list",
+                            "id": "b27",
+                            "items": [
+                                {
+                                    "select_id": "canc.2",
+                                    "payload": "p38",
+                                    "order_no": "HG261011000002",
+                                    "date_label": "11 Eki 2026",
+                                    "total_label": "899,00 ₺",
+                                    "status_text": "📦 Hazırlanıyor",
+                                    "tone": "info",
+                                    "summary": "2 ürün",
+                                    "products": [
+                                        {
+                                            "name": "Mavi Tunik",
+                                            "qty": 2,
+                                            "variant": "M",
+                                            "image": "https://cdn.haydigiy.com/products/102/mavi-tunik-thumb.webp",
+                                            "unit_price_label": "449,50 ₺",
+                                            "line_total_label": "899,00 ₺"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b28",
+                            "label": "Tüm siparişlerim",
+                            "kind": "liste",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%3Fcategory%3Dall%26src%3Dhaydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "buttons",
                             "id": "b29",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p39",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000009",
+                    "input": {
+                        "type": "select",
+                        "id": "canc.2",
+                        "payload": "p38"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p40"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": false,
+                            "id": "menu.orders",
+                            "payload": "p41"
+                        },
+                        {
+                            "label": "İade ve iptallerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b30",
+                            "text": "✖️ İptal işlemlerim · HG261011000002 numaralı siparişiniz (11 Eki 2026)"
+                        },
+                        {
+                            "type": "order_card",
+                            "id": "b31",
+                            "order_no": "HG261011000002",
+                            "date_label": "11 Eki 2026",
+                            "total_label": "899,00 ₺",
+                            "status_text": "📦 Hazırlanıyor",
+                            "tone": "info",
+                            "lines": [
+                                {
+                                    "label": "Ödeme",
+                                    "value": "Kredi kartı"
+                                }
+                            ],
+                            "items": [
+                                {
+                                    "name": "Mavi Tunik",
+                                    "qty": 2,
+                                    "variant": "M",
+                                    "image": "https://cdn.haydigiy.com/products/102/mavi-tunik-thumb.webp",
+                                    "unit_price_label": "449,50 ₺",
+                                    "line_total_label": "899,00 ₺"
+                                }
+                            ],
+                            "detail": {
+                                "label": "Sipariş sayfasını aç",
+                                "open": "same",
+                                "href": {
+                                    "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparislerim%2F2%3Fsrc%3Dhaydi-asistan",
+                                    "mobile": "/giris?returnUrl=%2Fm%2Fhesabim%2Fsiparislerim%2F2%3Fsrc%3Dhaydi-asistan"
+                                }
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "id": "b32",
+                            "text": "✖️ HG261011000002 numaralı siparişinizin iptal sayfasını hazırladım. Sayfada ürünleri seçip iptali tamamlayabilirsiniz."
+                        },
+                        {
+                            "type": "link_button",
+                            "id": "b33",
+                            "label": "İptal sayfasını aç",
+                            "kind": "iptal",
+                            "open": "same",
+                            "href": {
+                                "desktop": "/giris?returnUrl=%2Fhesabim%2Fsiparis-iptal%2F2%3Furun%3D2%26src%3Dhaydi-asistan",
+                                "mobile": "/giris?returnUrl=%2Fm%2Fsiparis-iptal%2F2%3Furun%3D2%26src%3Dhaydi-asistan"
+                            }
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b34",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p42",
+                                    "style": "secondary"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "path": "/api/assistant/turn",
+                "headers": {
+                    "X-Assistant-Platform": "web",
+                    "X-Assistant-Token": "ast_0b9d2c1e-6a4f-4d7e-9a53-1c8f5a2b7e10.ORNEK-IMZA"
+                },
+                "body": {
+                    "client_msg_id": "00000000-0000-4000-8000-000000000010",
+                    "input": {
+                        "type": "select",
+                        "id": "intent.cancel_history",
+                        "payload": "p34"
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "body": {
+                    "turn_id": "t_01ORNEKTURN000000000000AA",
+                    "session": {
+                        "auth_level": "site_login",
+                        "expires_at": "2026-10-12T14:00:00+03:00"
+                    },
+                    "input": {
+                        "mode": "none",
+                        "placeholder": "Mesajınızı yazın…",
+                        "maxlength": 500
+                    },
+                    "breadcrumb": [
+                        {
+                            "label": "🏠 Ana menü",
+                            "current": false,
+                            "id": "nav.home",
+                            "payload": "p43"
+                        },
+                        {
+                            "label": "📦 Siparişlerim",
+                            "current": false,
+                            "id": "menu.orders",
+                            "payload": "p44"
+                        },
+                        {
+                            "label": "İade ve iptallerim",
+                            "current": true
+                        }
+                    ],
+                    "blocks": [
+                        {
+                            "type": "text",
+                            "id": "b35",
+                            "text": "ℹ️ İptal edilmiş siparişiniz görünmüyor."
+                        },
+                        {
+                            "type": "live_support",
+                            "id": "b36",
                             "hint": "Yardımcı olamadıysam temsilcilerimizden de destek alabilirsiniz 💬",
                             "label": "💬 Canlı Destek",
-                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20%C4%B0ade%20ve%20iptallerim%20Sipari%C5%9F%20no%3A%20HG261010000003%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
+                            "href": "https://wa.me/905327805100?text=Merhaba%2C%20Haydi%20Asistan%20%C3%BCzerinden%20yaz%C4%B1yorum.%20Talebim%3A%20%C4%B0ptal%20durumum%20Yard%C4%B1mc%C4%B1%20olabilir%20misiniz%3F",
                             "number": "905327805100",
                             "number_label": "+90 532 780 51 00",
-                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: İade ve iptallerim Sipariş no: HG261010000003 Yardımcı olabilir misiniz?"
+                            "copy_text": "Merhaba, Haydi Asistan üzerinden yazıyorum. Talebim: İptal durumum Yardımcı olabilir misiniz?"
+                        },
+                        {
+                            "type": "buttons",
+                            "id": "b37",
+                            "layout": "chips",
+                            "items": [
+                                {
+                                    "id": "nav.home",
+                                    "label": "🏠 Ana menü",
+                                    "payload": "p45",
+                                    "style": "secondary"
+                                }
+                            ]
                         }
                     ]
                 }

@@ -3,6 +3,7 @@ import {
   findGroupByOrderItemId,
   flattenGroupRows,
   getGroupRowIds,
+  getOrderItemRowIds,
   getPreselectRowIds,
   type OrderItemGroup,
   type OrderItemSelectionRow,
@@ -28,7 +29,13 @@ export type CancelItemGroup = OrderItemGroup;
 /** İptal ekranının seçilebilir satırı (bir adet). */
 export type ExpandedCancelItem = OrderItemSelectionRow;
 
-type Options = { preselectItemId: number | null; selectAll: boolean; enabled: boolean };
+type Options = {
+  preselectItemId: number | null;
+  /** `?urun=` — Haydi Asistan'ın tek ürünlü siparişte işaret ettiği kalem; sipariş iptal edilebiliyorsa tüm adetleri seçilir. */
+  preselectOrderItemId?: number | null;
+  selectAll: boolean;
+  enabled: boolean;
+};
 
 /**
  * Orchestrates the order cancellation flow: per-unit selection + reason, the
@@ -93,7 +100,15 @@ export function useOrderCancelController(orderId: string, options: Options) {
     if (appliedTokenRef.current === focusToken) return;
     appliedTokenRef.current = focusToken;
 
-    if (options.preselectItemId) {
+    const orderItemRowIds = getOrderItemRowIds(
+      expandedItems,
+      options.preselectOrderItemId ?? null,
+      () => isCancelable,
+    );
+
+    if (orderItemRowIds.length > 0) {
+      setSelectedIds(orderItemRowIds);
+    } else if (options.preselectItemId) {
       // Paket bileşeni açıldıysa paketin tamamı işaretlenir; kullanıcı istemediklerini kaldırır.
       const target = findGroupByOrderItemId(itemGroups, options.preselectItemId);
       setSelectedIds(target ? getPreselectRowIds(target) : []);
@@ -103,7 +118,15 @@ export function useOrderCancelController(orderId: string, options: Options) {
       setSelectedIds([]);
     }
     setItemReasons({});
-  }, [focusToken, itemGroups, expandedItems, options.preselectItemId, options.selectAll, isCancelable]);
+  }, [
+    focusToken,
+    itemGroups,
+    expandedItems,
+    options.preselectItemId,
+    options.preselectOrderItemId,
+    options.selectAll,
+    isCancelable,
+  ]);
 
   // Selected units default to the "Vazgeçtim" reason until the user changes it.
   useEffect(() => {

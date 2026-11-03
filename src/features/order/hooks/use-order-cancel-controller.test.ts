@@ -250,3 +250,25 @@ describe('useOrderCancelController — paket (bundle) satırı', () => {
     });
   });
 });
+
+describe('useOrderCancelController — ?urun= ön seçimi (Haydi Asistan)', () => {
+  const ORDER = {
+    ...BUNDLE_ORDER,
+    items: [{ id: 7001, quantity: 2, name: 'İki adet ürün' }],
+    displayItems: [{ id: 7001, quantity: 2, name: 'İki adet ürün' }],
+  };
+
+  const render = (order: unknown, preselectOrderItemId: number | null) => {
+    useOrderDetailQuery.mockReturnValue({ data: order, isPending: false, isError: false, refetch: jest.fn() });
+    return renderHook(() => useOrderCancelController('10', { ...OPTIONS, preselectOrderItemId })).result;
+  };
+
+  it('selects every unit of the item when the order can be cancelled', () => {
+    expect(render(ORDER, 7001).current.selectedIds).toEqual(['7001-0', '7001-1']);
+  });
+
+  it('silently ignores a missing item or an order that can no longer be cancelled', () => {
+    expect(render(ORDER, 9999).current.selectedIds).toEqual([]);
+    expect(render({ ...ORDER, status: 'Kargoya Verildi', statusId: 4 }, 7001).current.selectedIds).toEqual([]);
+  });
+});

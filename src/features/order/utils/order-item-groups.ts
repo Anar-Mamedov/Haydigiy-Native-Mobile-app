@@ -149,3 +149,29 @@ export function getPreselectRowIds(group: OrderItemGroup): string[] {
   const firstRow = group.rows[0];
   return firstRow ? [firstRow.expandedId] : [];
 }
+
+/**
+ * `?urun=<order_items.id>` değeri (Haydi Asistan tek ürünlü siparişte iade/iptal bağlantısına ekler).
+ * Boş ya da geçersiz değer `null` olur ve ön seçim sessizce yapılmaz.
+ */
+export function parseOrderItemParam(raw: string | string[] | null | undefined): number | null {
+  const value = (Array.isArray(raw) ? raw[0] : raw ?? '').trim();
+  if (!/^\d{1,15}$/.test(value)) return null;
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+/**
+ * `?urun=` ile açılan ekranda işaretlenecek satırlar: kalemin seçilebilir BÜTÜN adetleri (tam kalan adet).
+ * Kalem yoksa ya da hiçbir satırı uygun değilse boş liste döner; müşteri seçimi sonra değiştirebilir.
+ */
+export function getOrderItemRowIds(
+  rows: OrderItemSelectionRow[],
+  orderItemId: number | null,
+  isEligible: (row: OrderItemSelectionRow) => boolean = () => true,
+): string[] {
+  if (orderItemId === null) return [];
+  return rows
+    .filter((row) => row.orderItemId === orderItemId && isEligible(row))
+    .map((row) => row.expandedId);
+}

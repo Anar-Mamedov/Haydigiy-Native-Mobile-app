@@ -25,6 +25,13 @@ describe('resolveAssistantLinkTarget', () => {
     );
   });
 
+  it('tek ürünlü sipariş: iade/iptal bağlantısındaki ?urun= ve src giriş sarmalından sonra korunur', () => {
+    const iade = '/giris?returnUrl=%2Fm%2Fhesabim%2Fiade-olustur%2F1%3Furun%3D1%26src%3Dhaydi-asistan';
+    const iptal = '/giris?returnUrl=%2Fm%2Fsiparis-iptal%2F2%3Furun%3D2%26src%3Dhaydi-asistan';
+    expect(resolveAssistantLinkTarget(iade, true)).toEqual(route('/return-create/1?urun=1&src=haydi-asistan'));
+    expect(resolveAssistantLinkTarget(iptal, true)).toEqual(route('/order-cancel/2?urun=2&src=haydi-asistan'));
+  });
+
   it('"Faturamı aç": girişli müşteri sipariş ekranına fatura=1 ile gider, misafir Hesabım ekranına', () => {
     const href = '/giris?returnUrl=%2Fm%2Fhesabim%2Fsiparislerim%2F100001%3Ffatura%3D1%26src%3Dhaydi-asistan';
     expect(resolveAssistantLinkTarget(href, true)).toEqual(

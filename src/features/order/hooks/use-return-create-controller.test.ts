@@ -662,3 +662,37 @@ describe('useReturnCreateController — hata sonrası yeniden deneme ve PTT geri
     expect(result.current.successMessage).toBeNull();
   });
 });
+
+describe('useReturnCreateController — ?urun= ön seçimi (Haydi Asistan)', () => {
+  const ORDER = {
+    ...makeOrder(6),
+    items: [
+      { id: 201, quantity: 2, isNonReturnable: false, returnStatus: null, title: 'İki adet' },
+      { id: 202, quantity: 1, isNonReturnable: true, returnStatus: null, title: 'İade edilemez' },
+      { id: 203, quantity: 1, isNonReturnable: false, returnStatus: 'gift_product', title: 'Hediye' },
+    ],
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useOrderDetailQuery.mockReturnValue({ data: ORDER, isPending: false, isError: false, refetch: jest.fn() });
+  });
+
+  const render = (preselectOrderItemId: number | null) =>
+    renderHook(() => useReturnCreateController('10', { ...OPTIONS, preselectOrderItemId })).result;
+
+  it('selects every returnable unit of the item plus the gift rows', () => {
+    expect(render(201).current.selectedItems).toEqual(['201-0', '201-1', '203-0']);
+  });
+
+  it('silently ignores an item that is missing or not returnable', () => {
+    expect(render(999).current.selectedItems).toEqual([]);
+    expect(render(202).current.selectedItems).toEqual([]);
+  });
+
+  it('keeps the selection editable', () => {
+    const result = render(201);
+    act(() => result.current.toggleItem('201-1'));
+    expect(result.current.selectedItems).toEqual(['201-0', '203-0']);
+  });
+});

@@ -4,7 +4,9 @@ import {
   findGroupByOrderItemId,
   flattenGroupRows,
   getGroupRowIds,
+  getOrderItemRowIds,
   getPreselectRowIds,
+  parseOrderItemParam,
 } from './order-item-groups';
 import { OrderDetailItem } from '@/types/order.types';
 
@@ -190,5 +192,27 @@ describe('grup yardımcıları', () => {
 
     expect(getPreselectRowIds(groups[0])).toHaveLength(4);
     expect(getPreselectRowIds(multiUnit[0])).toEqual(['700-0']);
+  });
+});
+
+describe('?urun= ön seçimi (Haydi Asistan)', () => {
+  it('parses only positive integers', () => {
+    expect(parseOrderItemParam('15')).toBe(15);
+    expect(parseOrderItemParam(' 15 ')).toBe(15);
+    expect(parseOrderItemParam(['16', '17'])).toBe(16);
+    for (const raw of [undefined, null, '', '0', '-3', '1.5', '1e3', 'abc', '9'.repeat(20)]) {
+      expect(parseOrderItemParam(raw)).toBeNull();
+    }
+  });
+
+  it('returns every eligible unit of the item (full remaining quantity)', () => {
+    const rows = flattenGroupRows(
+      buildOrderItemGroups([makeItem({ id: 7, quantity: 2 }), makeItem({ id: 8, isNonReturnable: true })]),
+    );
+
+    expect(getOrderItemRowIds(rows, 7)).toEqual(['7-0', '7-1']);
+    expect(getOrderItemRowIds(rows, 8, (row) => !row.isNonReturnable)).toEqual([]);
+    expect(getOrderItemRowIds(rows, 99)).toEqual([]);
+    expect(getOrderItemRowIds(rows, null)).toEqual([]);
   });
 });

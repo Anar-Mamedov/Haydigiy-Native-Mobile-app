@@ -6,6 +6,7 @@ import { TriangleAlert } from '@/components/ui/icons';
 import { AppScreen, EmptyState, SectionCard } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useOrderCancelController } from '../hooks/use-order-cancel-controller';
+import { parseOrderItemParam } from '../utils/order-item-groups';
 import { OrdersHeader } from '../components/orders-header';
 import { CancelItemRow } from '../components/cancel-item-row';
 import { OrderItemGroupCard } from '../components/order-item-group-card';
@@ -15,7 +16,7 @@ import { formatOrderPrice } from '../utils/order-status';
 
 export function OrderCancelScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ id: string; item_id?: string; select_all?: string }>();
+  const params = useLocalSearchParams<{ id: string; item_id?: string; select_all?: string; urun?: string }>();
   const id = params.id ?? '';
   const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
 
@@ -24,6 +25,7 @@ export function OrderCancelScreen() {
 
   const controller = useOrderCancelController(id, {
     preselectItemId: Number.isFinite(preselectItemId) ? preselectItemId : null,
+    preselectOrderItemId: parseOrderItemParam(params.urun),
     selectAll,
     enabled: isAuthenticated,
   });
