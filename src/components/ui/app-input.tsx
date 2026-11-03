@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { GetProps, Input, Label, XStack, YStack, styled } from 'tamagui';
+import { ReactNode, Ref } from 'react';
+import { GetProps, GetRef, Input, Label, XStack, YStack, styled } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { getTextFieldLabelProps } from '@/components/ui/text-field-label';
@@ -28,6 +28,8 @@ export type AppInputProps = GetProps<typeof StyledInput> & {
   hideVisibleLabel?: boolean;
   /** Element pinned to the right edge, vertically centered inside the field (e.g. a password eye). */
   rightElement?: ReactNode;
+  /** React 19 ref prop: lets form libraries focus the field (e.g. RHF `setFocus` on the first error). */
+  ref?: Ref<GetRef<typeof StyledInput>>;
 };
 
 export function AppInput({

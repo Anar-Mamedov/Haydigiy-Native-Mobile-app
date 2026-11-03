@@ -1,0 +1,685 @@
+{
+  "success": true,
+  "data": {
+    "version": 3,
+    "context": "general",
+    "title": "Geri bildiriminiz hangi konuyla ilgili?",
+    "categories": [
+      {
+        "key": "product_issues",
+        "title": "Ürünle İlgili Sorunlar",
+        "description": "Ürün bilgisi, fiyat, görsel ve kategori",
+        "message": {
+          "mode": "required",
+          "label": "Sorunun açıklaması",
+          "placeholder": "Neyi düzeltmemizi istersiniz?"
+        },
+        "fields": [
+          {
+            "key": "issue_type",
+            "type": "select",
+            "label": "Sorun türü",
+            "required": true,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Seçiniz",
+              "options": [
+                {
+                  "value": "info_wrong",
+                  "label": "Ürün bilgisi hatalı veya eksik"
+                },
+                {
+                  "value": "price_wrong",
+                  "label": "Fiyat hatalı"
+                },
+                {
+                  "value": "image_wrong",
+                  "label": "Görsel hatalı veya uygunsuz"
+                },
+                {
+                  "value": "category_wrong",
+                  "label": "Kategori hatalı"
+                },
+                {
+                  "value": "size_wrong",
+                  "label": "Beden veya ölçü bilgisi hatalı"
+                },
+                {
+                  "value": "stock_wrong",
+                  "label": "Stok bilgisi hatalı"
+                },
+                {
+                  "value": "other",
+                  "label": "Diğer"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackSelect"
+          },
+          {
+            "key": "product_ref",
+            "type": "text",
+            "label": "Ürün adı veya kodu (biliyorsanız)",
+            "required": false,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Ürün sayfasından geldiyseniz gerekmez",
+              "max_length": 120
+            },
+            "frontend_component": "FeedbackText"
+          },
+          {
+            "key": "attachments",
+            "type": "file",
+            "label": "Ekran görüntüsü veya video",
+            "required": false,
+            "multiple": true,
+            "min": null,
+            "max": 5,
+            "config": {
+              "accept": [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "video/mp4",
+                "video/quicktime"
+              ],
+              "max_size_kb": 5120
+            },
+            "frontend_component": "FeedbackFile"
+          }
+        ]
+      },
+      {
+        "key": "site_issues",
+        "title": "Site ve Sayfa Sorunları",
+        "description": "Bozuk sayfa, çalışmayan buton veya görüntüleme hatası",
+        "message": {
+          "mode": "required",
+          "label": "Sorunun açıklaması",
+          "placeholder": "Ne yapmaya çalışırken ne oldu?"
+        },
+        "fields": [
+          {
+            "key": "issue_type",
+            "type": "select",
+            "label": "Sorun türü",
+            "required": true,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Seçiniz",
+              "options": [
+                {
+                  "value": "page_error",
+                  "label": "Sayfa açılmıyor veya hata veriyor"
+                },
+                {
+                  "value": "button_broken",
+                  "label": "Buton veya bağlantı çalışmıyor"
+                },
+                {
+                  "value": "layout_broken",
+                  "label": "Görüntü veya tasarım bozuk"
+                },
+                {
+                  "value": "slow",
+                  "label": "Sayfa çok yavaş"
+                },
+                {
+                  "value": "search_filter",
+                  "label": "Arama veya filtre çalışmıyor"
+                },
+                {
+                  "value": "other",
+                  "label": "Diğer"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackSelect"
+          },
+          {
+            "key": "device",
+            "type": "radio",
+            "label": "Hangi cihazda yaşandı?",
+            "required": true,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "options": [
+                {
+                  "value": "phone",
+                  "label": "Telefon"
+                },
+                {
+                  "value": "computer",
+                  "label": "Bilgisayar"
+                },
+                {
+                  "value": "tablet",
+                  "label": "Tablet"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackRadio"
+          },
+          {
+            "key": "recurring",
+            "type": "radio",
+            "label": "Sorun tekrar ediyor mu?",
+            "required": true,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "options": [
+                {
+                  "value": "yes",
+                  "label": "Evet"
+                },
+                {
+                  "value": "no",
+                  "label": "Hayır"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackRadio"
+          },
+          {
+            "key": "attachments",
+            "type": "file",
+            "label": "Ekran görüntüsü veya video",
+            "required": false,
+            "multiple": true,
+            "min": null,
+            "max": 5,
+            "config": {
+              "accept": [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "video/mp4",
+                "video/quicktime"
+              ],
+              "max_size_kb": 5120
+            },
+            "frontend_component": "FeedbackFile"
+          }
+        ]
+      },
+      {
+        "key": "order_payment",
+        "title": "Sipariş ve Ödeme Sorunları",
+        "description": "Sepet, ödeme, sipariş ve işlem hataları",
+        "message": {
+          "mode": "required",
+          "label": "Ne oldu?",
+          "placeholder": "Hangi adımda, nasıl bir hata aldınız?"
+        },
+        "fields": [
+          {
+            "key": "issue_type",
+            "type": "select",
+            "label": "Sorun türü",
+            "required": true,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Seçiniz",
+              "options": [
+                {
+                  "value": "payment_failed",
+                  "label": "Ödeme yapılamıyor"
+                },
+                {
+                  "value": "order_failed",
+                  "label": "Sipariş oluşturulamıyor"
+                },
+                {
+                  "value": "cart_issue",
+                  "label": "Sepet sorunu"
+                },
+                {
+                  "value": "coupon_issue",
+                  "label": "Kupon veya indirim çalışmıyor"
+                },
+                {
+                  "value": "card_verification",
+                  "label": "Kart doğrulama (3D Secure / SMS) hatası"
+                },
+                {
+                  "value": "double_charge",
+                  "label": "Çift çekim veya yanlış tutar"
+                },
+                {
+                  "value": "invoice_issue",
+                  "label": "Fatura sorunu"
+                },
+                {
+                  "value": "other",
+                  "label": "Diğer"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackSelect"
+          },
+          {
+            "key": "order_no",
+            "type": "text",
+            "label": "Sipariş numarası (varsa)",
+            "required": false,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Örn. 123456",
+              "max_length": 120
+            },
+            "frontend_component": "FeedbackText"
+          },
+          {
+            "key": "payment_method",
+            "type": "select",
+            "label": "Ödeme yöntemi",
+            "required": false,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Seçiniz",
+              "options": [
+                {
+                  "value": "credit_card",
+                  "label": "Kredi veya banka kartı"
+                },
+                {
+                  "value": "bank_transfer",
+                  "label": "Havale / EFT"
+                },
+                {
+                  "value": "cash_on_delivery",
+                  "label": "Kapıda ödeme"
+                },
+                {
+                  "value": "other",
+                  "label": "Diğer"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackSelect"
+          },
+          {
+            "key": "device",
+            "type": "radio",
+            "label": "Hangi cihazda yaşandı?",
+            "required": false,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "options": [
+                {
+                  "value": "phone",
+                  "label": "Telefon"
+                },
+                {
+                  "value": "computer",
+                  "label": "Bilgisayar"
+                },
+                {
+                  "value": "tablet",
+                  "label": "Tablet"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackRadio"
+          },
+          {
+            "key": "attachments",
+            "type": "file",
+            "label": "Ekran görüntüsü veya video",
+            "required": false,
+            "multiple": true,
+            "min": null,
+            "max": 5,
+            "config": {
+              "accept": [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "video/mp4",
+                "video/quicktime"
+              ],
+              "max_size_kb": 5120
+            },
+            "frontend_component": "FeedbackFile"
+          }
+        ]
+      },
+      {
+        "key": "security_privacy",
+        "title": "Güvenlik ve Gizlilik",
+        "description": "Şüpheli işlem, veri güvenliği veya gizlilik sorunu",
+        "message": {
+          "mode": "required",
+          "label": "Şüpheli işlem veya olayın açıklaması",
+          "placeholder": "Ne fark ettiniz, ne zaman oldu?"
+        },
+        "fields": [
+          {
+            "key": "issue_type",
+            "type": "select",
+            "label": "Güvenlik sorununun türü",
+            "required": true,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Seçiniz",
+              "options": [
+                {
+                  "value": "suspicious_activity",
+                  "label": "Şüpheli işlem veya hesap hareketi"
+                },
+                {
+                  "value": "unauthorized_access",
+                  "label": "Hesabıma izinsiz giriş"
+                },
+                {
+                  "value": "personal_data",
+                  "label": "Kişisel verilerimle ilgili sorun"
+                },
+                {
+                  "value": "fraud",
+                  "label": "Sahte site, mesaj veya dolandırıcılık"
+                },
+                {
+                  "value": "vulnerability",
+                  "label": "Güvenlik açığı bildirimi"
+                },
+                {
+                  "value": "other",
+                  "label": "Diğer"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackSelect"
+          },
+          {
+            "key": "related_link",
+            "type": "url",
+            "label": "İlgili sayfa veya işlem bağlantısı",
+            "required": false,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "https://"
+            },
+            "frontend_component": "FeedbackUrl"
+          },
+          {
+            "key": "attachments",
+            "type": "file",
+            "label": "Ekran görüntüsü veya video",
+            "required": false,
+            "multiple": true,
+            "min": null,
+            "max": 5,
+            "config": {
+              "accept": [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "video/mp4",
+                "video/quicktime"
+              ],
+              "max_size_kb": 5120
+            },
+            "frontend_component": "FeedbackFile"
+          }
+        ]
+      },
+      {
+        "key": "shipping_delivery",
+        "title": "Kargo ve Teslimat",
+        "description": "Kargo bilgisi, teslimat ve takip sorunları",
+        "message": {
+          "mode": "optional",
+          "label": "Açıklama",
+          "placeholder": "Eklemek istediğiniz bilgi"
+        },
+        "fields": [
+          {
+            "key": "order_no",
+            "type": "text",
+            "label": "Sipariş numarası",
+            "required": true,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Örn. 123456",
+              "max_length": 120
+            },
+            "frontend_component": "FeedbackText"
+          },
+          {
+            "key": "issue_type",
+            "type": "select",
+            "label": "Sorun türü",
+            "required": true,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Seçiniz",
+              "options": [
+                {
+                  "value": "late",
+                  "label": "Kargom gecikti"
+                },
+                {
+                  "value": "tracking_wrong",
+                  "label": "Takip bilgisi görünmüyor veya yanlış"
+                },
+                {
+                  "value": "not_received",
+                  "label": "Teslim edildi görünüyor ama almadım"
+                },
+                {
+                  "value": "address_issue",
+                  "label": "Adres bilgisi sorunu"
+                },
+                {
+                  "value": "damaged",
+                  "label": "Hasarlı teslimat"
+                },
+                {
+                  "value": "wrong_missing",
+                  "label": "Eksik veya yanlış ürün geldi"
+                },
+                {
+                  "value": "courier_issue",
+                  "label": "Kargo görevlisiyle ilgili sorun"
+                },
+                {
+                  "value": "other",
+                  "label": "Diğer"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackSelect"
+          },
+          {
+            "key": "attachments",
+            "type": "file",
+            "label": "Fotoğraf veya video",
+            "required": false,
+            "multiple": true,
+            "min": null,
+            "max": 5,
+            "config": {
+              "accept": [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "video/mp4",
+                "video/quicktime"
+              ],
+              "max_size_kb": 5120
+            },
+            "frontend_component": "FeedbackFile"
+          }
+        ]
+      },
+      {
+        "key": "account_membership",
+        "title": "Hesap ve Üyelik",
+        "description": "Giriş, kayıt, şifre ve üyelik sorunları",
+        "message": {
+          "mode": "required",
+          "label": "Sorunun açıklaması",
+          "placeholder": "Ne yapmaya çalışırken ne oldu?"
+        },
+        "fields": [
+          {
+            "key": "issue_type",
+            "type": "select",
+            "label": "Sorun türü",
+            "required": true,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Seçiniz",
+              "options": [
+                {
+                  "value": "login",
+                  "label": "Giriş yapamıyorum"
+                },
+                {
+                  "value": "password",
+                  "label": "Şifremi sıfırlayamıyorum"
+                },
+                {
+                  "value": "register",
+                  "label": "Kayıt olamıyorum"
+                },
+                {
+                  "value": "verification_code",
+                  "label": "Doğrulama kodu veya SMS gelmiyor"
+                },
+                {
+                  "value": "update_info",
+                  "label": "Üyelik bilgilerimi güncelleyemiyorum"
+                },
+                {
+                  "value": "close_account",
+                  "label": "Hesabımı kapatmak veya silmek istiyorum"
+                },
+                {
+                  "value": "other",
+                  "label": "Diğer"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackSelect"
+          },
+          {
+            "key": "device",
+            "type": "radio",
+            "label": "Hangi cihazda yaşandı?",
+            "required": false,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "options": [
+                {
+                  "value": "phone",
+                  "label": "Telefon"
+                },
+                {
+                  "value": "computer",
+                  "label": "Bilgisayar"
+                },
+                {
+                  "value": "tablet",
+                  "label": "Tablet"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackRadio"
+          }
+        ]
+      },
+      {
+        "key": "suggestion",
+        "title": "Öneri ve İyileştirme",
+        "description": "Yeni özellik, tasarım veya kullanım önerileri",
+        "message": {
+          "mode": "required",
+          "label": "Öneriniz",
+          "placeholder": "Düşüncelerinizi bizimle paylaşın"
+        },
+        "fields": [
+          {
+            "key": "topic",
+            "type": "select",
+            "label": "Konu",
+            "required": true,
+            "multiple": false,
+            "min": null,
+            "max": null,
+            "config": {
+              "placeholder": "Seçiniz",
+              "options": [
+                {
+                  "value": "feature",
+                  "label": "Yeni özellik"
+                },
+                {
+                  "value": "design",
+                  "label": "Tasarım"
+                },
+                {
+                  "value": "usability",
+                  "label": "Kullanım kolaylığı"
+                },
+                {
+                  "value": "range_campaign",
+                  "label": "Ürün veya kampanya önerisi"
+                },
+                {
+                  "value": "other",
+                  "label": "Diğer"
+                }
+              ]
+            },
+            "frontend_component": "FeedbackSelect"
+          }
+        ]
+      },
+      {
+        "key": "general_other",
+        "title": "Diğer",
+        "description": "Yukarıdaki kategoriler dışında kalan konular",
+        "message": {
+          "mode": "required",
+          "label": "Açıklama",
+          "placeholder": "Bize iletmek istediğiniz konu"
+        },
+        "fields": []
+      }
+    ],
+    "viewer": null
+  }
+}

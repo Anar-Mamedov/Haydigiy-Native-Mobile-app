@@ -28,8 +28,22 @@ jest.mock('@/services/feedback.service', () => ({
   sendFeedbackDto: jest.fn(),
 }));
 
+jest.mock('@/features/customer-feedback/hooks/use-customer-feedback-v2', () => ({
+  useCustomerFeedbackV2Enabled: jest.fn(() => false),
+}));
+
+jest.mock('@/features/customer-feedback/components/customer-feedback-form', () => ({
+  CustomerFeedbackForm: () => {
+    const { Text } = jest.requireActual('react-native');
+    return <Text>yeni-geri-bildirim-formu</Text>;
+  },
+}));
+
 const mockAuthStatus = useAuthStatus as jest.Mock;
 const mockSend = sendFeedbackDto as jest.Mock;
+const mockUseNewForm = (
+  jest.requireMock('@/features/customer-feedback/hooks/use-customer-feedback-v2') as { useCustomerFeedbackV2Enabled: jest.Mock }
+).useCustomerFeedbackV2Enabled;
 
 const messageInput = () => screen.getByLabelText('Geri bildiriminiz');
 const submitButton = () => screen.getByText('Gönder');
@@ -48,6 +62,7 @@ describe('FeedbackScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockAuthStatus.mockReturnValue({ isAuthenticated: true, isLoading: false });
+    mockUseNewForm.mockReturnValue(false);
   });
 
   it.each(['light', 'dark'] as const)('renders the web texts and an accessible field in %s theme', (theme) => {
@@ -107,6 +122,17 @@ describe('FeedbackScreen', () => {
     mockSend.mockRejectedValueOnce(axiosError(422, { message: 'Mesaj çok uzun.' }));
     fireEvent.press(submitButton());
     expect(await screen.findByText('Mesaj çok uzun.')).toBeTruthy();
+  });
+
+  it('customer_feedback_v2: renders the new site-wide form, also for guests', () => {
+    mockUseNewForm.mockReturnValue(true);
+    mockAuthStatus.mockReturnValue({ isAuthenticated: false, isLoading: false });
+
+    renderWithTamagui(<FeedbackScreen />);
+
+    expect(screen.getByText('yeni-geri-bildirim-formu')).toBeTruthy();
+    expect(screen.getByTestId('customer-feedback-keyboard-aware-scroll')).toBeTruthy();
+    expect(screen.queryByText('Giriş Yapın')).toBeNull();
   });
 
   it('asks guests to sign in', () => {

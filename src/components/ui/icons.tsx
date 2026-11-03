@@ -92,6 +92,7 @@ import {
   Undo2 as LucideUndo2,
   User as LucideUser,
   UserRound as LucideUserRound,
+  Video as LucideVideo,
   WashingMachine as LucideWashingMachine,
   X as LucideX,
   XCircle as LucideXCircle,
@@ -215,6 +216,7 @@ export const Truck = withFontScale(LucideTruck);
 export const Undo2 = withFontScale(LucideUndo2);
 export const User = withFontScale(LucideUser);
 export const UserRound = withFontScale(LucideUserRound);
+export const Video = withFontScale(LucideVideo);
 export const WashingMachine = withFontScale(LucideWashingMachine);
 export const X = withFontScale(LucideX);
 export const XCircle = withFontScale(LucideXCircle);

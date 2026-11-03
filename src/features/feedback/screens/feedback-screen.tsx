@@ -2,6 +2,8 @@ import { useRouter } from 'expo-router';
 import { Spinner, YStack } from 'tamagui';
 import { AppScreen, EmptyState, KeyboardAwareFormScrollView, ScreenHeader, SectionCard } from '@/components/ui';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
+import { CustomerFeedbackForm } from '@/features/customer-feedback/components/customer-feedback-form';
+import { useCustomerFeedbackV2Enabled } from '@/features/customer-feedback/hooks/use-customer-feedback-v2';
 import { FEEDBACK_TEXTS } from '../constants/feedback-texts';
 import { useFeedbackForm } from '../hooks/use-feedback-form';
 import { FeedbackForm } from '../components/feedback-form';
@@ -15,6 +17,7 @@ export function FeedbackScreen() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
   const form = useFeedbackForm();
+  const useNewForm = useCustomerFeedbackV2Enabled();
 
   const handleBack = () => {
     if (router.canGoBack()) router.back();
@@ -22,6 +25,23 @@ export function FeedbackScreen() {
   };
 
   const header = <ScreenHeader onBack={handleBack} title={FEEDBACK_TEXTS.title} />;
+
+  // customer_feedback_v2: site geneli yeni form; misafir de gönderebilir (üyelik yalnız iletişim bilgisini tamamlar).
+  if (useNewForm) {
+    return (
+      <AppScreen backgroundColor="$color3" gap={0} header={header} padding={0} scrollable={false}>
+        <KeyboardAwareFormScrollView
+          bottomOffset={FEEDBACK_KEYBOARD_BOTTOM_OFFSET}
+          contentContainerStyle={{ padding: 12 }}
+          testID="customer-feedback-keyboard-aware-scroll"
+        >
+          <SectionCard elevated>
+            <CustomerFeedbackForm />
+          </SectionCard>
+        </KeyboardAwareFormScrollView>
+      </AppScreen>
+    );
+  }
 
   if (authLoading) {
     return (

@@ -32,11 +32,8 @@ import { ProductFeedbackButton } from '../components/product-feedback-button';
 import { ProductVideoModal } from '../components/product-video-modal';
 import { ProductImageGalleryModal } from '../components/product-image-gallery-modal';
 import { NotifyStockDialog } from '../components/notify-stock-dialog';
-import {
-  SizeChartModal,
-  WashingInstructionsModal,
-  FeedbackModal,
-} from '../components/product-detail-modals';
+import { SizeChartModal, WashingInstructionsModal } from '../components/product-detail-modals';
+import { ProductFeedbackSheet } from '../components/product-feedback-sheet';
 import { SizeCalculatorModal } from '../components/size-calculator-modal';
 
 /**
@@ -346,7 +343,7 @@ export function ProductDetailScreen() {
         open={controller.showWashing}
         onOpenChange={controller.setShowWashing}
       />
-      <FeedbackModal
+      <ProductFeedbackSheet
         open={controller.showFeedback}
         onOpenChange={controller.setShowFeedback}
         productId={displayData.id}
