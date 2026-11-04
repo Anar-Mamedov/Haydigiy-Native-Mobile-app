@@ -95,16 +95,6 @@ function makeController(overrides: Record<string, unknown> = {}) {
     reasonsError: null,
     reasonsLoading: false,
     refetch: jest.fn(),
-    refund: {
-      isGiftVoucher: false,
-      methods: [],
-      select: jest.fn(),
-      selected: null,
-      selectedId: null,
-      showSelector: false,
-    },
-    refundError: null,
-    refundLoading: false,
     returnableGroups: [],
     returnableRows: [],
     returnBlockReason: null,
@@ -118,7 +108,6 @@ function makeController(overrides: Record<string, unknown> = {}) {
     setNote: mockSetNote,
     setReturnMethod: jest.fn(),
     shouldCollectIban: false,
-    shouldShowIbanSelect: false,
     successMessage: null,
     toggleItem: jest.fn(),
     toggleGroup: jest.fn(),
@@ -163,56 +152,21 @@ describe('ReturnCreateScreen', () => {
     expect(screen.queryByText('Bu sipariş için zaten iade talebi oluşturulmuştur.')).toBeNull();
   });
 
-  it('offers the required refund-method select and keeps the IBAN block for the IBAN option', () => {
-    mockController = makeController({
-      refund: {
-        isGiftVoucher: false,
-        methods: [
-          { id: 1, name: 'IBAN', code: 'iban' },
-          { id: 2, name: 'Kupon', code: 'gift_voucher' },
-        ],
-        select: jest.fn(),
-        selected: { id: 1, name: 'IBAN', code: 'iban' },
-        selectedId: 1,
-        showSelector: true,
-      },
-      shouldCollectIban: true,
-      shouldShowIbanSelect: true,
-    });
+  // Web `b339307e6`: geri ödeme yöntemi seçimi yok; kapıda ödemede IBAN bloğu doğrudan gösterilir.
+  it('shows the refund details block without a refund-method picker on a pay-on-delivery order', () => {
+    mockController = makeController({ shouldCollectIban: true });
 
     renderWithTamagui(<ReturnCreateScreen />);
 
-    expect(screen.getByText(/Geri Ödeme Yöntemi/)).toBeTruthy();
-    expect(screen.getByLabelText('Geri Ödeme Yöntemi').props.options).toEqual([
-      { label: 'İademin IBAN’ıma yapılmasını istiyorum', value: 1 },
-      { label: 'İademin Kupon olarak tanımlanmasını istiyorum', value: 2 },
-    ]);
-    expect(screen.getByText("İade IBAN'ı")).toBeTruthy();
+    expect(screen.getByText('Geri Ödeme Bilgileri')).toBeTruthy();
+    expect(screen.queryByText(/Geri Ödeme Yöntemi/)).toBeNull();
     expect(screen.queryByTestId('refund-method-coupon-notice')).toBeNull();
   });
 
-  it('hides the IBAN block and warns about the coupon once it is the selected refund method', () => {
-    mockController = makeController({
-      refund: {
-        isGiftVoucher: true,
-        methods: [
-          { id: 1, name: 'IBAN', code: 'iban' },
-          { id: 2, name: 'Kupon', code: 'gift_voucher' },
-        ],
-        select: jest.fn(),
-        selected: { id: 2, name: 'Kupon', code: 'gift_voucher' },
-        selectedId: 2,
-        showSelector: true,
-      },
-      shouldCollectIban: false,
-      shouldShowIbanSelect: true,
-    });
-
+  it('shows no refund details block on a card-paid order', () => {
     renderWithTamagui(<ReturnCreateScreen />);
 
-    expect(screen.getByLabelText('Geri Ödeme Yöntemi')).toBeTruthy();
-    expect(screen.getByTestId('refund-method-coupon-notice')).toBeTruthy();
-    expect(screen.queryByText("İade IBAN'ı")).toBeNull();
+    expect(screen.queryByText('Geri Ödeme Bilgileri')).toBeNull();
   });
 
   // İade isteği doğrudan gitmez: buton önce ürün/neden özetini onaya açar.

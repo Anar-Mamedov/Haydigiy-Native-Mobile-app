@@ -177,9 +177,6 @@ export type ReturnReason = { id: number; name: string };
 
 export type ReturnMethod = 'ptt' | 'hepsijet';
 
-/** A refund method offered for pay-on-delivery returns (`iban`, `gift_voucher`, …). */
-export type RefundMethod = { id: number; name: string; code: string };
-
 /** How a completed return was refunded; carries the coupon for gift-voucher refunds. */
 export type ReturnPaymentInfo = {
   type: string | null;

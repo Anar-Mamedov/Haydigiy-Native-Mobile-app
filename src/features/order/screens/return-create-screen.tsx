@@ -7,7 +7,6 @@ import { AppInput, AppScreen, EmptyState, KeyboardAwareFormScrollView, SectionCa
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { infoPageRoute } from '@/features/info-pages/routes';
 import { OrdersHeader } from '../components/orders-header';
-import { RefundMethodSection } from '../components/refund-method-section';
 import { ReturnItemRow } from '../components/return-item-row';
 import { OrderItemGroupCard } from '../components/order-item-group-card';
 import { ReturnIbanSection } from '../components/return-iban-section';
@@ -205,15 +204,6 @@ export function ReturnCreateScreen() {
               ))}
             </YStack>
           )}
-
-          {ctrl.refund.showSelector ? (
-            <RefundMethodSection
-              error={ctrl.refundError}
-              loading={ctrl.refundLoading}
-              onSelect={() => ctrl.iban.setIbanError(null)}
-              refund={ctrl.refund}
-            />
-          ) : null}
 
           {ctrl.shouldCollectIban ? (
             <ReturnIbanSection

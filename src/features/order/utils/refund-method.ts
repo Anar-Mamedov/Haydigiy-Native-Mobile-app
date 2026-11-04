@@ -1,22 +1,13 @@
-import { RefundMethod, ReturnPaymentInfo } from '@/types/order.types';
+import { ReturnPaymentInfo } from '@/types/order.types';
 
-/** Backend refund-method codes (`GET /return-requests/refund-methods`). */
-export const REFUND_METHOD_IBAN = 'iban';
+/** Backend refund-method code of a return settled as a store coupon. */
 export const REFUND_METHOD_GIFT_VOUCHER = 'gift_voucher';
 
 /**
- * Resolves which method is active: the user's pick while it is still in the list.
- * There is no default — the refund method is a required, explicit choice (web parity).
+ * True when the completed return was settled as a store coupon instead of a transfer.
+ * New returns can no longer pick a coupon (backend `0b6d92d`), but earlier ones
+ * still show their coupon in the order detail.
  */
-export function resolveRefundMethod(
-  methods: RefundMethod[],
-  pickedId: number | null,
-): RefundMethod | null {
-  if (pickedId === null) return null;
-  return methods.find((method) => method.id === pickedId) ?? null;
-}
-
-/** True when the completed return was settled as a store coupon instead of a transfer. */
 export function isGiftVoucherRefund(info: ReturnPaymentInfo | null | undefined): boolean {
   if (!info) return false;
   return info.type === REFUND_METHOD_GIFT_VOUCHER || info.refundMethodCode === REFUND_METHOD_GIFT_VOUCHER;

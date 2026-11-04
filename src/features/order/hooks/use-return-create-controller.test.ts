@@ -14,7 +14,6 @@ jest.mock('../api/order.queries', () => ({
 jest.mock('../api/return.queries', () => ({
   useReturnReasonsQuery: jest.fn(() => ({ data: [], isPending: false, isError: false })),
   usePaymentMethodsQuery: jest.fn(() => ({ data: undefined, isPending: true })),
-  useRefundMethodsQuery: jest.fn(() => ({ data: undefined, isPending: true, isError: false })),
 }));
 
 const mockSubmit = jest.fn();
@@ -42,12 +41,6 @@ const { useOrderDetailQuery } = jest.requireMock('../api/order.queries') as {
 const usePaymentMethodsQuery = returnQueries.usePaymentMethodsQuery as jest.MockedFunction<
   typeof returnQueries.usePaymentMethodsQuery
 >;
-const useRefundMethodsQuery = returnQueries.useRefundMethodsQuery as jest.MockedFunction<
-  typeof returnQueries.useRefundMethodsQuery
->;
-
-const IBAN_METHOD = { id: 1, name: 'IBAN', code: 'iban' };
-const GIFT_VOUCHER_METHOD = { id: 2, name: 'Kupon', code: 'gift_voucher' };
 const SAVED_IBAN = { id: 7, iban: 'TR000000000000000000000000', ibanName: 'Test Kullanıcı', isDefault: true };
 
 function makeOrder(paymentMethodId: number) {
@@ -95,7 +88,7 @@ describe('useReturnCreateController — kartlı sipariş iade kilidi', () => {
     act(() => result.current.toggleItem('101-0'));
     act(() => result.current.setItemReason('101-0', 5));
 
-    expect(result.current.shouldShowIbanSelect).toBe(false);
+    expect(result.current.shouldCollectIban).toBe(false);
     expect(usePaymentMethodsQuery).toHaveBeenLastCalledWith(false);
     expect(result.current.canSubmit).toBe(true);
   });
@@ -114,24 +107,19 @@ describe('useReturnCreateController — kartlı sipariş iade kilidi', () => {
     act(() => result.current.toggleItem('101-0'));
     act(() => result.current.setItemReason('101-0', 5));
 
-    expect(result.current.shouldShowIbanSelect).toBe(true);
+    expect(result.current.shouldCollectIban).toBe(true);
     expect(usePaymentMethodsQuery).toHaveBeenLastCalledWith(true);
     expect(result.current.canSubmit).toBe(false);
   });
 });
 
-describe('useReturnCreateController — geri ödeme yöntemi (IBAN / kupon)', () => {
+describe('useReturnCreateController — geri ödeme (IBAN)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSubmit.mockResolvedValue({ return_code: 'IADE-1' });
   });
 
-  function setup(
-    paymentMethodId: number,
-    refundQuery: { data?: typeof IBAN_METHOD[]; isError?: boolean } = {
-      data: [IBAN_METHOD, GIFT_VOUCHER_METHOD],
-    },
-  ) {
+  function setup(paymentMethodId: number) {
     useOrderDetailQuery.mockReturnValue({
       data: makeOrder(paymentMethodId),
       isPending: false,
@@ -143,11 +131,6 @@ describe('useReturnCreateController — geri ödeme yöntemi (IBAN / kupon)', ()
       isPending: false,
       isError: false,
     } as never);
-    useRefundMethodsQuery.mockReturnValue({
-      data: refundQuery.data,
-      isPending: false,
-      isError: refundQuery.isError ?? false,
-    } as never);
 
     const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
     act(() => result.current.toggleItem('101-0'));
@@ -155,20 +138,10 @@ describe('useReturnCreateController — geri ödeme yöntemi (IBAN / kupon)', ()
     return result;
   }
 
-  // Web paritesi: geri ödeme yöntemi zorunlu bir tercih, varsayılan seçim yapılmaz.
-  it('starts with no method picked, hides the IBAN and blocks submit', () => {
+  // Web `b339307e6` / `ddf03d38c`, backend `0b6d92d`: yöntem seçimi yok, kapıda
+  // ödeme iadesi her zaman IBAN'a yapılır ve IBAN doğrudan istenir.
+  it('asks for the IBAN right away on a pay-on-delivery order and submits it without a refund method', async () => {
     const result = setup(2);
-
-    expect(result.current.refund.showSelector).toBe(true);
-    expect(result.current.refund.selectedId).toBeNull();
-    expect(result.current.shouldCollectIban).toBe(false);
-    expect(result.current.canSubmit).toBe(false);
-  });
-
-  it('asks for the IBAN and submits it once the IBAN method is picked', async () => {
-    const result = setup(2);
-
-    act(() => result.current.refund.select(IBAN_METHOD.id));
 
     expect(result.current.shouldCollectIban).toBe(true);
     expect(result.current.canSubmit).toBe(true);
@@ -177,75 +150,30 @@ describe('useReturnCreateController — geri ödeme yöntemi (IBAN / kupon)', ()
       await result.current.handleSubmit();
     });
 
-    expect(mockSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        refundMethodId: IBAN_METHOD.id,
-        iban: SAVED_IBAN.iban,
-        ibanName: SAVED_IBAN.ibanName,
-      }),
+    const payload = mockSubmit.mock.calls[0][0];
+    expect(payload).toEqual(
+      expect.objectContaining({ iban: SAVED_IBAN.iban, ibanName: SAVED_IBAN.ibanName }),
     );
+    expect(payload).not.toHaveProperty('refundMethodId');
   });
 
-  it('drops the IBAN requirement and fields once the coupon is picked', async () => {
-    const result = setup(2);
-
-    act(() => result.current.refund.select(GIFT_VOUCHER_METHOD.id));
-
-    expect(result.current.refund.isGiftVoucher).toBe(true);
-    expect(result.current.shouldCollectIban).toBe(false);
-    expect(result.current.canSubmit).toBe(true);
-
-    await act(async () => {
-      await result.current.handleSubmit();
-    });
-
-    const payload = mockSubmit.mock.calls[0][0];
-    expect(payload.refundMethodId).toBe(GIFT_VOUCHER_METHOD.id);
-    expect(payload.iban).toBeUndefined();
-    expect(payload.ibanName).toBeUndefined();
+  it('treats payment method 3 as pay-on-delivery too', () => {
+    expect(setup(3).current.shouldCollectIban).toBe(true);
   });
 
-  it('still asks for an explicit choice when a single method comes back', () => {
-    const result = setup(2, { data: [IBAN_METHOD] });
-
-    expect(result.current.refund.showSelector).toBe(true);
-    expect(result.current.canSubmit).toBe(false);
-
-    act(() => result.current.refund.select(IBAN_METHOD.id));
-
-    expect(result.current.canSubmit).toBe(true);
-  });
-
-  // Liste alınamazsa seçilecek bir şey yoktur: seçim gizlenir, id gönderilmez ve
-  // IBAN yine istenir; backend `refund_method_id` gelmediğinde IBAN varsayar.
-  it('falls back to the IBAN without an id when the method list fails to load', async () => {
-    const result = setup(2, { data: undefined, isError: true });
-
-    expect(result.current.refund.showSelector).toBe(false);
-    expect(result.current.shouldCollectIban).toBe(true);
-    expect(result.current.canSubmit).toBe(true);
-
-    await act(async () => {
-      await result.current.handleSubmit();
-    });
-
-    const payload = mockSubmit.mock.calls[0][0];
-    expect(payload.refundMethodId).toBeNull();
-    expect(payload.iban).toBe(SAVED_IBAN.iban);
-  });
-
-  it('never loads or sends a refund method for a card-paid order', async () => {
+  it('never asks for or sends an IBAN for a card-paid order', async () => {
     const result = setup(6);
 
-    expect(useRefundMethodsQuery).toHaveBeenLastCalledWith(false);
-    expect(result.current.refund.showSelector).toBe(false);
+    expect(result.current.shouldCollectIban).toBe(false);
     expect(result.current.canSubmit).toBe(true);
 
     await act(async () => {
       await result.current.handleSubmit();
     });
 
-    expect(mockSubmit.mock.calls[0][0].refundMethodId).toBeUndefined();
+    const payload = mockSubmit.mock.calls[0][0];
+    expect(payload.iban).toBeUndefined();
+    expect(payload.ibanName).toBeUndefined();
   });
 });
 
@@ -451,16 +379,10 @@ describe('useReturnCreateController — iade onayı', () => {
       isError: false,
     } as never);
     usePaymentMethodsQuery.mockReturnValue({ data: [SAVED_IBAN], isPending: false, isError: false } as never);
-    useRefundMethodsQuery.mockReturnValue({
-      data: [IBAN_METHOD, GIFT_VOUCHER_METHOD],
-      isPending: false,
-      isError: false,
-    } as never);
 
     const { result } = renderHook(() => useReturnCreateController('10', OPTIONS));
     act(() => result.current.toggleItem('101-0'));
     act(() => result.current.toggleItem('101-1'));
-    act(() => result.current.refund.select(IBAN_METHOD.id));
     return result;
   }
 
@@ -490,8 +412,8 @@ describe('useReturnCreateController — iade onayı', () => {
     ]);
     expect(result.current.confirmSummary.details).toEqual([
       { label: 'İade Yöntemi', value: 'PTT Kargo Şubesinden Gönder' },
-      { label: 'Geri Ödeme', value: 'IBAN' },
-      { label: "İade IBAN'ı", value: 'TR00 0000 0000 0000 0000 0000 00' },
+      { label: 'Geri Ödeme', value: "IBAN'a İade" },
+      { label: 'Geri Ödeme Bilgileri', value: 'TR00 0000 0000 0000 0000 0000 00' },
       { label: 'IBAN Sahibi', value: 'Test Kullanıcı' },
       { label: 'Not', value: 'Kargo poşetiyle göndereceğim.' },
     ]);

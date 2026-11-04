@@ -91,7 +91,7 @@ describe('buildReturnConfirmDetails', () => {
   const base = {
     isStorePickup: false,
     pickupDateLabel: null,
-    refundMethodName: null,
+    isIbanRefund: false,
     iban: null,
     note: '   ',
   };
@@ -102,13 +102,13 @@ describe('buildReturnConfirmDetails', () => {
     ]);
   });
 
-  it('lists the pickup date, refund method, IBAN and note for a Hepsijet return', () => {
+  it('lists the pickup date, IBAN refund, IBAN and note for a pay-on-delivery Hepsijet return', () => {
     expect(
       buildReturnConfirmDetails({
         isStorePickup: false,
         returnMethod: 'hepsijet',
         pickupDateLabel: '7 Eki Çarşamba',
-        refundMethodName: "IBAN'a İade",
+        isIbanRefund: true,
         iban: { iban: 'TR120006200000000000000001', ibanName: 'Ayşe Yılmaz' },
         note: '  Kargo poşetiyle göndereceğim.  ',
       }),
@@ -116,7 +116,7 @@ describe('buildReturnConfirmDetails', () => {
       { label: 'İade Yöntemi', value: 'Adresimden Randevulu Aldır' },
       { label: 'Kurye Randevusu', value: '7 Eki Çarşamba' },
       { label: 'Geri Ödeme', value: "IBAN'a İade" },
-      { label: "İade IBAN'ı", value: 'TR12 0006 2000 0000 0000 0000 01' },
+      { label: 'Geri Ödeme Bilgileri', value: 'TR12 0006 2000 0000 0000 0000 01' },
       { label: 'IBAN Sahibi', value: 'Ayşe Yılmaz' },
       { label: 'Not', value: 'Kargo poşetiyle göndereceğim.' },
     ]);

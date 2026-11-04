@@ -12,14 +12,9 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useOrderDetailQuery } from '../api/order.queries';
-import {
-  usePaymentMethodsQuery,
-  useRefundMethodsQuery,
-  useReturnReasonsQuery,
-} from '../api/return.queries';
+import { usePaymentMethodsQuery, useReturnReasonsQuery } from '../api/return.queries';
 import { useSubmitReturnRequestMutation } from '../api/return.mutations';
 import { useRecreatePttReturn } from './use-recreate-ptt-return';
-import { useRefundMethod } from './use-refund-method';
 import { useReturnConfirmation } from './use-return-confirmation';
 import { useReturnIban } from './use-return-iban';
 import { formatPickupDate, useScheduledReturn } from './use-scheduled-return';
@@ -34,6 +29,7 @@ import { getReturnErrorMessage, SubmitReturnRequestPayload } from '@/services/re
 import { ReturnMethod, ReturnPhoto, ReturnSubmitItem } from '@/types/order.types';
 
 export const PHOTO_REQUIRED_REASON_ID = 2;
+/** Kapıda ödeme yöntemleri: bu siparişlerin iadesi IBAN'a yapılır (web `iade-olustur`). */
 const IBAN_PAYMENT_METHOD_IDS = [2, 3];
 
 /** İade ekranının kartı: tek ürün ya da içindeki ürünler tek tek seçilebilen paket. */
@@ -65,24 +61,19 @@ export function useReturnCreateController(orderId: string, options: Options) {
   const order = detailQuery.data ?? null;
   const reasons = useMemo(() => reasonsQuery.data ?? [], [reasonsQuery.data]);
 
-  const shouldShowIbanSelect = order
+  // Web `b339307e6` / `ddf03d38c` ve backend `0b6d92d`: geri ödeme yöntemi seçimi
+  // kalktı; kapıda ödeme iadesi her zaman IBAN'a yapılır, IBAN doğrudan istenir.
+  // Kartlı siparişlerde geri ödeme karta döner, IBAN sorulmaz.
+  const shouldCollectIban = order
     ? IBAN_PAYMENT_METHOD_IDS.includes(order.paymentMethodId ?? -1)
     : false;
-  const paymentMethodsQuery = usePaymentMethodsQuery(options.enabled && shouldShowIbanSelect);
+  const paymentMethodsQuery = usePaymentMethodsQuery(options.enabled && shouldCollectIban);
   const paymentMethods = useMemo(
     () => paymentMethodsQuery.data ?? [],
     [paymentMethodsQuery.data],
   );
 
-  const refundMethodsQuery = useRefundMethodsQuery(options.enabled && shouldShowIbanSelect);
-  const refundMethods = useMemo(() => refundMethodsQuery.data ?? [], [refundMethodsQuery.data]);
-  const refund = useRefundMethod(shouldShowIbanSelect, refundMethods, refundMethodsQuery.isPending);
-  // IBAN yalnızca kullanıcı IBAN yöntemini seçtiğinde sorulur ve gönderilir.
-  // `useReturnIban` yine kapıda ödeme bayrağıyla beslenir; aksi halde yönteme
-  // her geçişte kullanıcının girdiği IBAN temizlenirdi.
-  const shouldCollectIban = refund.requiresIban;
-
-  const iban = useReturnIban(shouldShowIbanSelect, paymentMethods);
+  const iban = useReturnIban(shouldCollectIban, paymentMethods);
   const [returnMethod, setReturnMethod] = useState<ReturnMethod>('ptt');
   const scheduled = useScheduledReturn(order, options.enabled && returnMethod === 'hepsijet');
   const submitMutation = useSubmitReturnRequestMutation();
@@ -249,11 +240,7 @@ export function useReturnCreateController(orderId: string, options: Options) {
     // IBAN listesi yalnızca kapıda ödeme siparişlerinde yüklenir; kartlı
     // siparişlerde sorgu devre dışıdır ve devre dışı sorgu sonsuza dek
     // `isPending` kalır — koşulsuz beklemek kartlı iadeleri tamamen kilitler.
-    (!shouldShowIbanSelect || !paymentMethodsQuery.isPending) &&
-    // Aynı gerekçe iade yöntemi sorgusu için de geçerli.
-    (!shouldShowIbanSelect || !refundMethodsQuery.isPending) &&
-    // Geri ödeme yöntemi zorunlu bir tercih; varsayılan seçim yapılmaz.
-    refund.hasRequiredSelection &&
+    (!shouldCollectIban || !paymentMethodsQuery.isPending) &&
     (!shouldCollectIban || iban.hasValidForSubmit) &&
     isScheduleReady &&
     !scheduled.pickupSubmitting;
@@ -300,13 +287,12 @@ export function useReturnCreateController(orderId: string, options: Options) {
         orderId: order.id,
         cargoCompany,
         note: note.trim() || undefined,
-        refundMethodId: shouldShowIbanSelect ? refund.selectedId : undefined,
         iban: resolvedIban?.iban,
         ibanName: resolvedIban?.ibanName,
         items: buildItemsPayload(),
       };
     },
-    [order, shouldCollectIban, iban, note, shouldShowIbanSelect, refund.selectedId, buildItemsPayload],
+    [order, shouldCollectIban, iban, note, buildItemsPayload],
   );
 
   const handleSubmit = useCallback(async () => {
@@ -383,7 +369,7 @@ export function useReturnCreateController(orderId: string, options: Options) {
         isStorePickup,
         returnMethod,
         pickupDateLabel: scheduled.selectedDate ? formatPickupDate(scheduled.selectedDate) : null,
-        refundMethodName: refund.showSelector ? (refund.selected?.name ?? null) : null,
+        isIbanRefund: shouldCollectIban,
         iban: shouldCollectIban
           ? pickConfirmIban({
               savedIbans: paymentMethods,
@@ -403,8 +389,6 @@ export function useReturnCreateController(orderId: string, options: Options) {
       isStorePickup,
       returnMethod,
       scheduled.selectedDate,
-      refund.showSelector,
-      refund.selected,
       shouldCollectIban,
       paymentMethods,
       iban.selectedIbanId,
@@ -459,16 +443,12 @@ export function useReturnCreateController(orderId: string, options: Options) {
     setNote,
     returnMethod,
     setReturnMethod,
-    shouldShowIbanSelect,
     shouldCollectIban,
     paymentMethods,
     paymentLoading: paymentMethodsQuery.isPending,
     paymentError: paymentMethodsQuery.isError
       ? 'Ödeme bilgileri yüklenirken bir hata oluştu.'
       : null,
-    refund,
-    refundLoading: shouldShowIbanSelect && refundMethodsQuery.isPending,
-    refundError: refundMethodsQuery.isError ? 'İade yöntemleri yüklenemedi.' : null,
     iban,
     scheduled,
     reasonsLoading: reasonsQuery.isPending,

@@ -30,7 +30,7 @@ export function ReturnIbanSection({
           <>
             <XStack alignItems="center" justifyContent="space-between">
               <Paragraph color="$color" fontSize={14} fontWeight="700">
-                İade IBAN&apos;ı
+                Geri Ödeme Bilgileri
               </Paragraph>
               <Paragraph
                 accessibilityLabel="Yeni IBAN ekle"
@@ -68,7 +68,7 @@ export function ReturnIbanSection({
         ) : (
           <>
             <Paragraph color="$color" fontSize={14} fontWeight="700">
-              İade IBAN&apos;ı
+              Geri Ödeme Bilgileri
             </Paragraph>
             <AppInput
               autoCapitalize="characters"

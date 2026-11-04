@@ -1,10 +1,8 @@
-import { RefundMethodDto, ReturnItemPayloadDto, ReturnReasonDto } from './return.dtos';
-import { REFUND_METHOD_GIFT_VOUCHER } from '../utils/refund-method';
+import { ReturnItemPayloadDto, ReturnReasonDto } from './return.dtos';
 import { PaymentMethodDto } from '@/services/payment.service';
 import { AddressDto } from '@/services/address.service';
 import {
   PaymentMethod,
-  RefundMethod,
   ReturnReason,
   ReturnSubmitItem,
   SavedAddress,
@@ -13,22 +11,6 @@ import {
 /** Maps a raw return-reason DTO to the domain model used by the UI. */
 export function mapReturnReason(dto: ReturnReasonDto): ReturnReason {
   return { id: dto.id, name: dto.name };
-}
-
-/**
- * Maps refund-method DTOs, dropping entries without a usable id or code so a
- * malformed row can never render an unselectable option.
- */
-export function mapRefundMethods(dtos: RefundMethodDto[]): RefundMethod[] {
-  return dtos.flatMap((dto) => {
-    const id = Number(dto?.id);
-    const code = typeof dto?.code === 'string' ? dto.code.trim() : '';
-    if (!Number.isFinite(id) || !code) return [];
-    const apiName = typeof dto?.name === 'string' && dto.name.trim() ? dto.name.trim() : code;
-    // Web paritesi: hediye çeki yöntemi müşteriye her yerde "Kupon" olarak gösterilir.
-    const name = code === REFUND_METHOD_GIFT_VOUCHER ? 'Kupon' : apiName;
-    return [{ id, name, code }];
-  });
 }
 
 /** Maps a domain return item to the API field shape (sans the file part). */

@@ -49,12 +49,14 @@ type BuildDetailsInput = {
   returnMethod: ReturnMethod;
   /** Hepsijet kurye randevusunun biçimlenmiş tarihi. */
   pickupDateLabel: string | null;
-  /** Geri ödeme yöntemi — yalnızca kullanıcıya seçim sunulduğunda gösterilir. */
-  refundMethodName: string | null;
+  /** Kapıda ödeme iadesi: geri ödeme IBAN'a yapılır (web `IBAN'a İade` satırı). */
+  isIbanRefund: boolean;
   /** İadenin yatacağı hesap — yalnızca IBAN toplanıyorsa dolu. */
   iban: ReturnConfirmIban | null;
   note: string;
 };
+
+const IBAN_REFUND_LABEL = "IBAN'a İade";
 
 const RETURN_METHOD_LABELS: Record<ReturnMethod, string> = {
   ptt: 'PTT Kargo Şubesinden Gönder',
@@ -116,7 +118,7 @@ export function buildReturnConfirmDetails({
   isStorePickup,
   returnMethod,
   pickupDateLabel,
-  refundMethodName,
+  isIbanRefund,
   iban,
   note,
 }: BuildDetailsInput): ReturnConfirmDetail[] {
@@ -130,11 +132,11 @@ export function buildReturnConfirmDetails({
   if (!isStorePickup && returnMethod === 'hepsijet' && pickupDateLabel) {
     details.push({ label: 'Kurye Randevusu', value: pickupDateLabel });
   }
-  if (refundMethodName) {
-    details.push({ label: 'Geri Ödeme', value: refundMethodName });
+  if (isIbanRefund) {
+    details.push({ label: 'Geri Ödeme', value: IBAN_REFUND_LABEL });
   }
   if (iban?.iban) {
-    details.push({ label: "İade IBAN'ı", value: formatIbanInput(getIbanDigits(iban.iban)) });
+    details.push({ label: 'Geri Ödeme Bilgileri', value: formatIbanInput(getIbanDigits(iban.iban)) });
     if (iban.ibanName) details.push({ label: 'IBAN Sahibi', value: iban.ibanName });
   }
 
