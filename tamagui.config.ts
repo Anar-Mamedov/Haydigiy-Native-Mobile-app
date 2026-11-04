@@ -53,6 +53,11 @@ export const config = createTamagui({
   settings: {
     ...defaultConfig.settings,
     onlyAllowShorthands: false,
+    // Koyu mod kaldırıldı; uygulama her zaman açık temada. v5 varsayılanı `true` iken iOS'ta
+    // tema renkleri `DynamicColorIOS` olarak verilir ve sistem koyu moda geçince iOS bunları
+    // uygulamanın kendi tema seçiminden bağımsız olarak koyuya çevirir (içerik kararır,
+    // yeniden çizilmeyen başlık/alt menü açık kalır). Kapalıyken renkler yalnız `<Theme>`'den gelir.
+    fastSchemeChange: false,
   },
   // OS yazı boyutu tavanı tüm Tamagui metin ve input'larına buradan uygulanır.
   defaultProps: FONT_SCALE_DEFAULT_PROPS,
