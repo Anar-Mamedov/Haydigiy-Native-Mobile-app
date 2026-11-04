@@ -75,3 +75,41 @@ describe('AssistantOrderCard detail bağlantısı', () => {
     expect(screen.getByText('Sipariş sayfasını aç')).toBeTruthy();
   });
 });
+
+describe('AssistantOrderCard kalemleri', () => {
+  const items = [
+    {
+      name: 'Bot',
+      qty: 2,
+      variant: '38',
+      image: 'https://cdn.haydigiy.com/products/bot.webp',
+      unit_price_label: '449,50 ₺',
+      line_total_label: '899,00 ₺',
+      note: '↩️ 1 adet iade edildi',
+    },
+    { name: 'Mont', qty: 1 },
+  ];
+
+  it.each([undefined, 'dark'] as const)('görsel, adet, fiyat ve iade notunu sunucudan geldiği gibi basar (%s tema)', (theme) => {
+    renderCard({ ...card, items }, theme);
+
+    expect(screen.getAllByTestId('assistant-order-product')).toHaveLength(2);
+    expect(screen.getAllByTestId('assistant-order-product-image')).toHaveLength(1);
+    expect(screen.getByText('Bot')).toBeTruthy();
+    expect(screen.getByText('38 · 2 adet')).toBeTruthy();
+    expect(screen.getByText('449,50 ₺')).toBeTruthy();
+    expect(screen.getByText('899,00 ₺')).toBeTruthy();
+    expect(screen.getByText('↩️ 1 adet iade edildi')).toBeTruthy();
+    expect(screen.getByText('1 adet')).toBeTruthy();
+  });
+
+  it('görsel yüklenemezse kalem görselsiz kalır', () => {
+    renderCard({ ...card, items: [items[0]] });
+
+    fireEvent(screen.getByTestId('assistant-order-product-image'), 'error', { nativeEvent: { error: 'failed' } });
+
+    expect(screen.queryByTestId('assistant-order-product-image')).toBeNull();
+    expect(screen.getByText('Bot')).toBeTruthy();
+  });
+});
+

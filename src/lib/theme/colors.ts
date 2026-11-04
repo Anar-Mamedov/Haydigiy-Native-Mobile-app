@@ -100,13 +100,17 @@ export const SHEET_OVERLAY_COLOR = 'rgba(0, 0, 0, 0.5)';
 
 /**
  * Haydi Asistan sohbet yüzeyleri. Marka turuncusu beyaz yazıyla 2,8:1 verdiği için yazılı dolgu
- * yüzeylerde kullanılmaz: müşteri balonu açık şeftali zemin + temanın yazı rengi; sayfa düğmesi
- * markanın koyu tonu (beyaz yazı 5,0:1); Canlı Destek koyu WhatsApp yeşili (beyaz yazı 5,0:1).
- * Koyu temada balon zemini yarı saydam turuncuya döner ki koyu yüzeyde kaybolmasın.
+ * yüzeylerde kullanılmaz:
+ * - Vurgu (`ASSISTANT_ACCENT_COLOR`): markanın koyu tonu, beyaz yazı/simgeyle 5,0:1. Müşteri
+ *   balonu ve seçenek/bağlantı düğmelerinin simge kutusu bunu kullanır (web turuncu balon).
+ * - Açık vurgu (`ASSISTANT_ACCENT_TINT_*`): şeftali zemin ve kenar; bağlantı düğmesi ile ok
+ *   halkaları. Üstündeki yazı `brandTintText`. Koyu temada yarı saydam turuncuya döner ki koyu
+ *   yüzeyde kaybolmasın.
+ * - Canlı Destek: koyu WhatsApp yeşili (beyaz yazı 5,0:1).
  */
-export const ASSISTANT_USER_BUBBLE_COLOR = '#fff4eb';
-export const ASSISTANT_USER_BUBBLE_COLOR_DARK = 'rgba(242, 122, 26, 0.18)';
-export const ASSISTANT_USER_BUBBLE_BORDER_COLOR = '#fbd5b5';
-export const ASSISTANT_USER_BUBBLE_BORDER_COLOR_DARK = 'rgba(242, 122, 26, 0.4)';
-export const ASSISTANT_LINK_BUTTON_COLOR = '#b9500b';
+export const ASSISTANT_ACCENT_COLOR = '#b9500b';
+export const ASSISTANT_ACCENT_TINT_COLOR = '#fff4eb';
+export const ASSISTANT_ACCENT_TINT_COLOR_DARK = 'rgba(242, 122, 26, 0.18)';
+export const ASSISTANT_ACCENT_TINT_BORDER_COLOR = '#fbd5b5';
+export const ASSISTANT_ACCENT_TINT_BORDER_COLOR_DARK = 'rgba(242, 122, 26, 0.4)';
 export const ASSISTANT_LIVE_SUPPORT_COLOR = '#15803d';

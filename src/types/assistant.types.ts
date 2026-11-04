@@ -36,6 +36,23 @@ export interface AssistantOrderListItem {
   tone: AssistantTone;
   summary?: string;
   note?: string;
+  /** Siparişteki ürünler (web `432e82929`); kartın altında kompakt çizilir. */
+  products?: AssistantOrderProduct[];
+}
+
+/**
+ * Sipariş kalemi (connect `AssistantOrderPresenter::itemRows`). Fiyat ve not metinleri
+ * sunucudan hazır gelir ("449,50 ₺", "↩️ 1 adet iade edildi"); istemci hesaplamaz.
+ */
+export interface AssistantOrderProduct {
+  name: string;
+  qty: number;
+  variant?: string;
+  /** Yalnız izinli CDN adresinden gelen ürün görseli; değilse hiç çizilmez. */
+  image?: string;
+  unit_price_label?: string;
+  line_total_label?: string;
+  note?: string;
 }
 
 export interface AssistantOrderListBlock {
@@ -54,7 +71,7 @@ export interface AssistantOrderCardBlock {
   status_text: string;
   tone: AssistantTone;
   lines: { label: string; value: string }[];
-  items: { name: string; qty: number; variant?: string }[];
+  items: AssistantOrderProduct[];
   more_count?: number;
   /** Kart içi sipariş sayfası bağlantısı; gelmezse ya da adresi desen dışıysa hiçbir şey çizilmez. */
   detail?: AssistantOrderDetailLink;

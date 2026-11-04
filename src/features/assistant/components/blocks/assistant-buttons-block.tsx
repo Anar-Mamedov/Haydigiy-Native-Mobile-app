@@ -1,9 +1,12 @@
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { ArrowUpRight } from '@/components/ui/icons';
 import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import type { AssistantButtonItem, AssistantButtonsBlock as ButtonsBlock } from '@/types/assistant.types';
 import { selectAssistantOption } from '../../services/assistant-turn-flow';
 import { useAssistantStore } from '../../store/use-assistant-store';
+import { splitLeadingEmoji } from '../../utils/assistant-label-emoji';
+import { AssistantArrowCircle, AssistantIconTile } from '../assistant-surfaces';
 
 type AssistantButtonsBlockProps = {
   block: ButtonsBlock;
@@ -12,6 +15,29 @@ type AssistantButtonsBlockProps = {
 };
 
 const DIMMED_OPACITY = 0.5;
+const LIST_BUTTON_MIN_HEIGHT = 54;
+
+/** Liste düğmesi: baştaki emoji simge kutusuna alınır, sağda ok halkası (web `0aae36636`). */
+function ListButtonContent({ label }: { label: string }) {
+  const { icon, text } = splitLeadingEmoji(label);
+  return (
+    <XStack alignItems="center" gap="$3">
+      {icon ? (
+        <AssistantIconTile>
+          <Paragraph fontSize={16} lineHeight={20}>
+            {icon}
+          </Paragraph>
+        </AssistantIconTile>
+      ) : null}
+      <Paragraph color="$color" flex={1} fontSize={14} fontWeight="700">
+        {text}
+      </Paragraph>
+      <AssistantArrowCircle>
+        <ArrowUpRight color="$brandTintText" size={16} />
+      </AssistantArrowCircle>
+    </XStack>
+  );
+}
 
 /** Seçenek düğmeleri: etiket AYNEN basılır, id/payload AYNEN geri gönderilir (kural 4). */
 export function AssistantButtonsBlock({ block, restored }: AssistantButtonsBlockProps) {
@@ -32,30 +58,31 @@ export function AssistantButtonsBlock({ block, restored }: AssistantButtonsBlock
         const dimmed = restored || item.disabled;
         return (
           <YStack
+            accessibilityLabel={item.label}
             accessibilityRole="button"
             accessibilityState={{ disabled: inactive }}
-            alignItems={isChips ? 'center' : 'flex-start'}
-            backgroundColor="$background"
-            borderColor={isChips ? '$brand' : '$borderColor'}
-            borderRadius={isChips ? '$10' : '$5'}
+            alignItems={isChips ? 'center' : 'stretch'}
+            backgroundColor={isChips ? '$assistantAccentTint' : '$background'}
+            borderColor="$assistantAccentTintBorder"
+            borderRadius={isChips ? '$10' : '$6'}
             borderWidth={1}
             justifyContent="center"
             key={item.id}
-            minHeight={MIN_TOUCH_TARGET}
+            minHeight={isChips ? MIN_TOUCH_TARGET : LIST_BUTTON_MIN_HEIGHT}
             onPress={() => handlePress(item)}
             opacity={dimmed ? DIMMED_OPACITY : 1}
-            paddingHorizontal={isChips ? '$4' : '$3.5'}
+            paddingHorizontal={isChips ? '$4' : '$3'}
             paddingVertical="$2"
             pressStyle={inactive ? undefined : { backgroundColor: '$color3' }}
             testID={`assistant-button-${item.id}`}
           >
-            <Paragraph
-              color={isChips ? '$brandTintText' : '$color'}
-              fontSize={isChips ? 14 : 15}
-              fontWeight={isChips ? '700' : '500'}
-            >
-              {item.label}
-            </Paragraph>
+            {isChips ? (
+              <Paragraph color="$brandTintText" fontSize={13} fontWeight="700">
+                {item.label}
+              </Paragraph>
+            ) : (
+              <ListButtonContent label={item.label} />
+            )}
           </YStack>
         );
       })}

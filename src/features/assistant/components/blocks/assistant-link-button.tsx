@@ -19,6 +19,7 @@ import {
 import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import type { AssistantLinkButtonBlock } from '@/types/assistant.types';
 import { useAssistantLinkPress } from '../../hooks/use-assistant-link-press';
+import { AssistantArrowCircle, AssistantIconTile } from '../assistant-surfaces';
 
 /** `kind` YALNIZ simge içindir; yönlendirme her zaman `href`'tedir (README §6.6). */
 const KIND_ICONS: Record<string, ComponentType<AppIconProps>> = {
@@ -34,9 +35,13 @@ const KIND_ICONS: Record<string, ComponentType<AppIconProps>> = {
   iptal: XCircle,
 };
 
-const ICON_SIZE = 20;
+const ICON_SIZE = 18;
+const LINK_BUTTON_MIN_HEIGHT = 52;
 
-/** Sitedeki sayfanın uygulamadaki karşılığına götüren belirgin düğme (etiket AYNEN basılır). */
+/**
+ * Sitedeki sayfanın uygulamadaki karşılığına götüren belirgin düğme (etiket AYNEN basılır).
+ * Web `0aae36636`: açık zemin, turuncu simge kutusu ve sağda ok halkası.
+ */
 export function AssistantLinkButton({ block }: { block: AssistantLinkButtonBlock }) {
   const onPress = useAssistantLinkPress();
   const Icon = KIND_ICONS[block.kind] ?? Link2;
@@ -46,21 +51,27 @@ export function AssistantLinkButton({ block }: { block: AssistantLinkButtonBlock
       accessibilityLabel={block.label}
       accessibilityRole="link"
       alignItems="center"
-      backgroundColor="$assistantLinkButton"
-      borderRadius="$5"
-      gap="$2.5"
-      minHeight={MIN_TOUCH_TARGET}
+      backgroundColor="$background"
+      borderColor="$assistantAccentTintBorder"
+      borderRadius="$6"
+      borderWidth={1}
+      gap="$3"
+      minHeight={Math.max(MIN_TOUCH_TARGET, LINK_BUTTON_MIN_HEIGHT)}
       onPress={() => onPress(block)}
-      paddingHorizontal="$3.5"
+      paddingHorizontal="$3"
       paddingVertical="$2.5"
-      pressStyle={{ opacity: 0.85 }}
+      pressStyle={{ backgroundColor: '$color3' }}
       testID={`assistant-link-${block.id}`}
     >
-      <Icon color="white" size={ICON_SIZE} />
-      <Paragraph color="white" flex={1} fontSize={15} fontWeight="700">
+      <AssistantIconTile>
+        <Icon color="white" size={ICON_SIZE} />
+      </AssistantIconTile>
+      <Paragraph color="$brandTintText" flex={1} fontSize={14} fontWeight="800">
         {block.label}
       </Paragraph>
-      <ArrowUpRight color="white" size={ICON_SIZE} />
+      <AssistantArrowCircle>
+        <ArrowUpRight color="$brandTintText" size={16} />
+      </AssistantArrowCircle>
     </XStack>
   );
 }

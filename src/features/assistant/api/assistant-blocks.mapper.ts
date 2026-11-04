@@ -12,6 +12,7 @@ import type {
   AssistantInputState,
   AssistantOrderDetailLink,
   AssistantOrderListItem,
+  AssistantOrderProduct,
   AssistantTone,
 } from '@/types/assistant.types';
 
@@ -58,7 +59,44 @@ const toButtonItem = (value: unknown): AssistantButtonItem | null => {
   };
 };
 
-const toOrderItem = (value: unknown): AssistantOrderListItem | null => {
+const MAX_ORDER_PRODUCTS = 10;
+
+/**
+ * Sipariş kalemleri: kart (`order_card.items`) ve liste (`order_list.items[].products`)
+ * aynı kuralla normalize edilir. Görsel yalnız izinli CDN'den kabul edilir; değilse
+ * kalem görselsiz çizilir ve `bad_image` yazılır. Sözleşme alanı `image`'dır.
+ */
+const toOrderProducts = (
+  value: unknown,
+  blockId: string,
+  ctx: BlockContext,
+  issues: BlockIssue[],
+): AssistantOrderProduct[] =>
+  list(value)
+    .map(asRecord)
+    .filter((item): item is Raw => !!item && !!str(item.name))
+    .slice(0, MAX_ORDER_PRODUCTS)
+    .map((item) => {
+      const candidate = optStr(item.image);
+      const image = candidate && isSafeImageUrl(candidate, ctx.imageHosts) ? candidate : undefined;
+      if (candidate && !image) issues.push({ code: 'bad_image', blockId });
+      return {
+        name: str(item.name),
+        qty: Math.max(1, Number(item.qty) || 1),
+        variant: optStr(item.variant),
+        image,
+        unit_price_label: optStr(item.unit_price_label),
+        line_total_label: optStr(item.line_total_label),
+        note: optStr(item.note),
+      };
+    });
+
+const toOrderItem = (
+  value: unknown,
+  blockId: string,
+  ctx: BlockContext,
+  issues: BlockIssue[],
+): AssistantOrderListItem | null => {
   const raw = asRecord(value);
   if (!raw || !str(raw.select_id) || !str(raw.payload)) return null;
   return {
@@ -71,6 +109,7 @@ const toOrderItem = (value: unknown): AssistantOrderListItem | null => {
     tone: tone(raw.tone),
     summary: optStr(raw.summary),
     note: optStr(raw.note),
+    products: Array.isArray(raw.products) ? toOrderProducts(raw.products, blockId, ctx, issues) : undefined,
   };
 };
 
@@ -90,7 +129,7 @@ const toOrderDetail = (
   return { label: str(raw.label), href: { desktop: href.desktop, mobile: href.mobile } };
 };
 
-const toOrderCard = (raw: Raw, id: string, issues: BlockIssue[]): AssistantBlock => ({
+const toOrderCard = (raw: Raw, id: string, ctx: BlockContext, issues: BlockIssue[]): AssistantBlock => ({
   type: 'order_card',
   id,
   order_no: str(raw.order_no),
@@ -102,15 +141,7 @@ const toOrderCard = (raw: Raw, id: string, issues: BlockIssue[]): AssistantBlock
     .map(asRecord)
     .filter((line): line is Raw => !!line && !!str(line.label))
     .map((line) => ({ label: str(line.label), value: str(line.value) })),
-  items: list(raw.items)
-    .map(asRecord)
-    .filter((item): item is Raw => !!item && !!str(item.name))
-    .slice(0, 10)
-    .map((item) => ({
-      name: str(item.name),
-      qty: Math.max(1, Number(item.qty) || 1),
-      variant: optStr(item.variant),
-    })),
+  items: toOrderProducts(raw.items, id, ctx, issues),
   more_count: typeof raw.more_count === 'number' && raw.more_count > 0 ? raw.more_count : undefined,
   detail: toOrderDetail(raw.detail, id, issues),
 });
@@ -177,16 +208,16 @@ const CONVERTERS: Record<string, Converter> = {
       items: items.slice(0, 12),
     };
   },
-  order_list: (raw, id) => ({
+  order_list: (raw, id, ctx, issues) => ({
     type: 'order_list',
     id,
     items: list(raw.items)
-      .map(toOrderItem)
+      .map((item) => toOrderItem(item, id, ctx, issues))
       .filter((item): item is AssistantOrderListItem => !!item)
       .slice(0, 10),
     empty_text: optStr(raw.empty_text),
   }),
-  order_card: (raw, id, _ctx, issues) => toOrderCard(raw, id, issues),
+  order_card: (raw, id, ctx, issues) => toOrderCard(raw, id, ctx, issues),
   timeline: (raw, id) => toTimeline(raw, id),
   link_button: (raw, id, _ctx, issues) => {
     const href = asRecord(raw.href);

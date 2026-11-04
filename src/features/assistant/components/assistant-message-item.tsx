@@ -6,7 +6,7 @@ import type { AssistantBlock, AssistantMessage, AssistantTexts } from '@/types/a
 import { retrySessionStart } from '../services/assistant-session-flow';
 import { retryAssistantMessage } from '../services/assistant-turn-flow';
 import { useAssistantStore } from '../store/use-assistant-store';
-import { AssistantBodyText, AssistantBubble, UserBubble } from './assistant-surfaces';
+import { AssistantBodyText, AssistantBubble, AssistantUserText, UserBubble } from './assistant-surfaces';
 import { AssistantButtonsBlock } from './blocks/assistant-buttons-block';
 import { AssistantFeedbackFormBlock } from './blocks/assistant-feedback-form-block';
 import { AssistantLinkButton } from './blocks/assistant-link-button';
@@ -83,7 +83,7 @@ function UserItem({ message, texts }: { message: UserMessage; texts: AssistantTe
   return (
     <YStack alignItems="flex-end" alignSelf="flex-end" gap="$1" maxWidth="85%">
       <UserBubble opacity={message.status === 'pending' ? 0.7 : 1}>
-        <AssistantBodyText>{message.text}</AssistantBodyText>
+        <AssistantUserText>{message.text}</AssistantUserText>
       </UserBubble>
       {message.status === 'failed' ? (
         <XStack alignItems="center" gap="$1.5">

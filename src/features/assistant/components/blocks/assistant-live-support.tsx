@@ -3,9 +3,11 @@ import { Linking } from 'react-native';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
+import { WhatsappIcon } from '@/components/ui/whatsapp-icon';
 import type { AssistantTexts } from '@/types/assistant.types';
 import { useAssistantCopy } from '../../hooks/use-assistant-copy';
 import { trackAssistantEvent } from '../../services/assistant-events';
+import { splitLeadingEmoji } from '../../utils/assistant-label-emoji';
 import { AssistantMutedText } from '../assistant-surfaces';
 
 type AssistantLiveSupportProps = {
@@ -18,6 +20,8 @@ type AssistantLiveSupportProps = {
   copyText?: string;
   blockId?: string;
 };
+
+const LIVE_SUPPORT_MIN_HEIGHT = 52;
 
 /**
  * Canlı Destek (WhatsApp) — her zaman çalışmalı (README §7.2). Dokunuştan sonra kalıcı yedek satır:
@@ -54,16 +58,19 @@ export function AssistantLiveSupport({
         accessibilityRole="link"
         alignItems="center"
         backgroundColor="$assistantLiveSupport"
-        borderRadius="$5"
+        borderRadius="$6"
+        gap="$2.5"
         justifyContent="center"
-        minHeight={MIN_TOUCH_TARGET}
+        minHeight={Math.max(MIN_TOUCH_TARGET, LIVE_SUPPORT_MIN_HEIGHT)}
         onPress={handleOpen}
         paddingHorizontal="$4"
         pressStyle={{ opacity: 0.85 }}
         testID={blockId ? `assistant-live-${blockId}` : 'assistant-live-fallback'}
       >
-        <Paragraph color="white" fontSize={15} fontWeight="700">
-          {label}
+        {/* Web `0aae36636`: baştaki emoji yerine WhatsApp simgesi; ekran okuyucu tam etiketi duyar. */}
+        <WhatsappIcon color="white" size={18} />
+        <Paragraph color="white" fontSize={14} fontWeight="800">
+          {splitLeadingEmoji(label).text}
         </Paragraph>
       </XStack>
       {showBackup ? (

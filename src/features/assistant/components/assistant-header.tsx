@@ -30,7 +30,7 @@ export function AssistantHeader({ texts, onBack, onClose }: AssistantHeaderProps
       <HeaderBackButton onPress={onBack} />
       <YStack
         alignItems="center"
-        backgroundColor="$brand"
+        backgroundColor="$assistantAccent"
         borderRadius={AVATAR_SIZE / 2}
         height={AVATAR_SIZE}
         justifyContent="center"
@@ -38,12 +38,10 @@ export function AssistantHeader({ texts, onBack, onClose }: AssistantHeaderProps
       >
         <MessageCircleMore color="white" size={20} strokeWidth={2.2} />
       </YStack>
+      {/* Web `0aae36636` başlığın altındaki "Sanal asistan" alt yazısını kaldırdı. */}
       <YStack flex={1}>
         <Paragraph accessibilityRole="header" color="$color" fontSize={16} fontWeight="700" numberOfLines={1}>
           {texts.title}
-        </Paragraph>
-        <Paragraph color="$color11" fontSize={12} numberOfLines={1}>
-          {texts.subtitle}
         </Paragraph>
       </YStack>
       <IconButton accessibilityLabel={texts.close_label} onPress={onClose} testID="assistant-close">

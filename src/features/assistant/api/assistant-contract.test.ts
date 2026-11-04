@@ -154,6 +154,65 @@ describe('Haydi Asistan sözleşmesi', () => {
     });
   });
 
+  it('order_card kalemleri görsel, fiyat ve notu taşır; görsel yalnız izinli CDN adresinden kabul edilir', () => {
+    const card = {
+      type: 'order_card',
+      id: 'c-image',
+      order_no: '#3',
+      date_label: '',
+      total_label: '',
+      status_text: '',
+      tone: 'info',
+      lines: [],
+      items: [
+        {
+          name: 'Bot',
+          qty: 2,
+          variant: '38',
+          image: 'https://cdn.haydigiy.com/products/bot.webp',
+          unit_price_label: '449,50 ₺',
+          line_total_label: '899,00 ₺',
+          note: '↩️ 1 adet iade edildi',
+        },
+        { name: 'Mont', qty: 1, image: 'https://evil.com/mont.webp' },
+        { name: 'Elbise', qty: 1 },
+      ],
+    };
+
+    const result = normalizeBlocks([card], CTX);
+    const block = result.blocks[0];
+    if (block.type !== 'order_card') throw new Error('order_card bekleniyordu');
+    expect(block.items[0]).toEqual(card.items[0]);
+    expect(block.items[1]).toEqual({ name: 'Mont', qty: 1, image: undefined, variant: undefined, unit_price_label: undefined, line_total_label: undefined, note: undefined });
+    expect(block.items[2].image).toBeUndefined();
+    expect(result.issues).toEqual([{ code: 'bad_image', blockId: 'c-image' }]);
+  });
+
+  it('order_list products alanı kart kalemleriyle aynı kurallarla normalize edilir', () => {
+    const rawProducts = [
+      { name: 'Mavi Tunik', qty: 1, variant: 'M', image: 'https://cdn.haydigiy.com/products/tunik.webp', unit_price_label: '449,50 ₺' },
+      { name: 'Siyah Elbise', qty: 2, image: 'https://evil.com/elbise.png', line_total_label: '450,00 ₺', note: '1 adet iade edildi' },
+    ];
+    const orderList = {
+      type: 'order_list',
+      id: 'orders',
+      items: [
+        { select_id: 'order.2', payload: 'p13', order_no: '#2', date_label: '', total_label: '899,00 ₺', status_text: '', tone: 'info', products: rawProducts },
+        { select_id: 'order.3', payload: 'p14', order_no: '#3', date_label: '', total_label: '', status_text: '', tone: 'info' },
+      ],
+    };
+    const card = { type: 'order_card', id: 'card', order_no: '#2', date_label: '', total_label: '', status_text: '', tone: 'info', lines: [], items: rawProducts };
+
+    const listResult = normalizeBlocks([orderList], CTX);
+    const cardResult = normalizeBlocks([card], CTX);
+    const listBlock = listResult.blocks[0];
+    const cardBlock = cardResult.blocks[0];
+    if (listBlock.type !== 'order_list' || cardBlock.type !== 'order_card') throw new Error('blok türü beklenmiyor');
+    expect(listBlock.items[0].products).toEqual(cardBlock.items);
+    expect(listBlock.items[1].products).toBeUndefined();
+    expect(listResult.issues).toEqual([{ code: 'bad_image', blockId: 'orders' }]);
+  });
+
   it('wa.me deseni bozuksa yedek Canlı Destek adresi kullanılır', () => {
     const [block] = normalizeBlocks(
       [

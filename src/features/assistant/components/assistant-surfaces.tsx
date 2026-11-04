@@ -12,24 +12,31 @@ export const AssistantBubble = styled(YStack, {
   backgroundColor: '$color2',
   borderColor: '$borderColor',
   borderRadius: '$6',
-  borderBottomLeftRadius: '$2',
+  borderTopLeftRadius: '$2',
   borderWidth: 1,
   maxWidth: '100%',
   paddingHorizontal: '$3.5',
   paddingVertical: '$2.5',
 });
 
+/** Müşteri balonu: web gibi turuncu dolgu; markanın koyu tonu beyaz yazıyla okunur kalır (5,0:1). */
 export const UserBubble = styled(YStack, {
   name: 'AssistantUserBubble',
   alignSelf: 'flex-end',
-  backgroundColor: '$assistantUserBubble',
-  borderColor: '$assistantUserBubbleBorder',
+  backgroundColor: '$assistantAccent',
   borderRadius: '$6',
-  borderBottomRightRadius: '$2',
-  borderWidth: 1,
+  borderTopRightRadius: '$2',
   maxWidth: '100%',
   paddingHorizontal: '$3.5',
   paddingVertical: '$2.5',
+});
+
+/** Müşteri balonundaki yazı; zemin iki temada da aynı koyu turuncu olduğu için yazı hep beyaz. */
+export const AssistantUserText = styled(Paragraph, {
+  name: 'AssistantUserText',
+  color: 'white',
+  fontSize: 15,
+  lineHeight: 22,
 });
 
 export const AssistantCard = styled(YStack, {
@@ -40,6 +47,32 @@ export const AssistantCard = styled(YStack, {
   borderWidth: 1,
   gap: '$2',
   padding: '$3.5',
+});
+
+/** Seçenek ve bağlantı düğmelerinin baştaki simge kutusu (beyaz simge ya da emoji). */
+export const AssistantIconTile = styled(YStack, {
+  name: 'AssistantIconTile',
+  alignItems: 'center',
+  backgroundColor: '$assistantAccent',
+  borderRadius: '$4',
+  flexShrink: 0,
+  height: 36,
+  justifyContent: 'center',
+  width: 36,
+});
+
+/** Düğme ve sipariş kartlarının sağındaki yuvarlak ok halkası; simge `$brandTintText` ile çizilir. */
+export const AssistantArrowCircle = styled(YStack, {
+  name: 'AssistantArrowCircle',
+  alignItems: 'center',
+  backgroundColor: '$assistantAccentTint',
+  borderColor: '$assistantAccentTintBorder',
+  borderRadius: 1000,
+  borderWidth: 1,
+  flexShrink: 0,
+  height: 32,
+  justifyContent: 'center',
+  width: 32,
 });
 
 export const AssistantBodyText = styled(Paragraph, {

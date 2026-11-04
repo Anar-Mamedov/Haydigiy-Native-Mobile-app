@@ -11,6 +11,7 @@ import { selectAssistantOption } from '../../services/assistant-turn-flow';
 import { useAssistantStore } from '../../store/use-assistant-store';
 import { fillCount } from '../../utils/assistant-texts';
 import {
+  AssistantArrowCircle,
   AssistantBodyText,
   AssistantBubble,
   AssistantCard,
@@ -18,6 +19,9 @@ import {
   AssistantToneBadge,
 } from '../assistant-surfaces';
 import { AssistantOrderDetailLink } from './assistant-order-detail-link';
+import { AssistantOrderProducts } from './assistant-order-products';
+
+const ACCENT_BAR_WIDTH = 3;
 
 type OrderSummaryFields = Pick<
   AssistantOrderListItem,
@@ -27,8 +31,8 @@ type OrderSummaryFields = Pick<
 function OrderSummary({ order }: { order: OrderSummaryFields }) {
   return (
     <YStack gap="$1">
-      <XStack alignItems="flex-start" gap="$2" justifyContent="space-between">
-        <Paragraph color="$color" flexShrink={1} fontSize={15} fontWeight="800">
+      <XStack alignItems="center" gap="$3" justifyContent="space-between">
+        <Paragraph color="$color" flexShrink={1} fontSize={15} fontWeight="800" numberOfLines={1}>
           {order.order_no}
         </Paragraph>
         <AssistantToneBadge text={order.status_text} tone={order.tone} />
@@ -64,7 +68,7 @@ export function AssistantOrderList({
   };
 
   return (
-    <YStack gap="$2">
+    <YStack gap="$2.5">
       {block.items.map((item) => (
         <AssistantCard
           accessibilityRole="button"
@@ -72,16 +76,32 @@ export function AssistantOrderList({
           key={item.select_id}
           onPress={() => handlePress(item)}
           opacity={restored ? 0.5 : 1}
+          overflow="hidden"
+          paddingLeft="$4"
           pressStyle={restored ? undefined : { backgroundColor: '$color2' }}
           testID={`assistant-order-${item.select_id}`}
         >
-          <XStack alignItems="center" gap="$2">
-            <YStack flex={1} gap="$1">
+          {/* Web'deki turuncu kenar çizgisi: kartın tıklanabilir sipariş olduğunu belli eder. */}
+          <YStack
+            backgroundColor="$brand"
+            borderBottomRightRadius={ACCENT_BAR_WIDTH}
+            borderTopRightRadius={ACCENT_BAR_WIDTH}
+            bottom="$3"
+            left={0}
+            position="absolute"
+            top="$3"
+            width={ACCENT_BAR_WIDTH}
+          />
+          <XStack alignItems="center" gap="$3">
+            <YStack flex={1} gap="$1" minWidth={0}>
               <OrderSummary order={item} />
               {item.summary ? <AssistantBodyText fontSize={14}>{item.summary}</AssistantBodyText> : null}
               {item.note ? <AssistantMutedText>{item.note}</AssistantMutedText> : null}
+              {item.products ? <AssistantOrderProducts compact products={item.products} /> : null}
             </YStack>
-            <ChevronRight color="$color9" size={20} />
+            <AssistantArrowCircle>
+              <ChevronRight color="$brandTintText" size={16} />
+            </AssistantArrowCircle>
           </XStack>
         </AssistantCard>
       ))}
@@ -108,18 +128,7 @@ export function AssistantOrderCard({
           </Paragraph>
         </XStack>
       ))}
-      {block.items.length > 0 ? (
-        <YStack borderTopColor="$borderColor" borderTopWidth={1} gap="$1" paddingTop="$2">
-          {block.items.map((item, index) => (
-            <XStack gap="$2" justifyContent="space-between" key={`${item.name}-${index}`}>
-              <AssistantBodyText flexShrink={1} fontSize={14}>
-                {item.variant ? `${item.name} · ${item.variant}` : item.name}
-              </AssistantBodyText>
-              <AssistantMutedText fontSize={14}>×{item.qty}</AssistantMutedText>
-            </XStack>
-          ))}
-        </YStack>
-      ) : null}
+      <AssistantOrderProducts products={block.items} />
       {block.more_count ? (
         <AssistantMutedText>{fillCount(texts.more_items, block.more_count)}</AssistantMutedText>
       ) : null}
