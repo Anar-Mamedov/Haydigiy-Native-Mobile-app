@@ -49,3 +49,29 @@ describe('AppButton touch target', () => {
     expect(heightStyleOf('small-button')).toMatchObject({ minHeight: 48 });
   });
 });
+
+describe('AppButton disabled state', () => {
+  /**
+   * Görünüme giden `aria-disabled`. React Native bunu `accessibilityState.disabled`'a çevirir; Android
+   * görünümün `enabled`'ını yalnız bu anahtar varken günceller (`BaseViewManager.setViewState`).
+   */
+  function ariaDisabledOf(testID: string) {
+    return screen.getByTestId(testID).props['aria-disabled'];
+  }
+
+  it('tells the native view it is enabled again after disabled true -> false', () => {
+    // Regresyon (HMA-41, tamagui#4217): beden seçilince etkinleşen "Sepete Ekle" Android'de yalnız yazıya
+    // basınca çalışıyordu. `disabled` kalkınca değer hiç gönderilmiyor, görünüm `enabled=false` kalıyordu.
+    const button = (disabled: boolean) => (
+      <AppButton disabled={disabled} onPress={jest.fn()} testID="add-to-cart">
+        Sepete Ekle
+      </AppButton>
+    );
+    const { rerender } = renderWithTamagui(button(true));
+    expect(ariaDisabledOf('add-to-cart')).toBe(true);
+
+    rerender(button(false));
+
+    expect(ariaDisabledOf('add-to-cart')).toBe(false);
+  });
+});
