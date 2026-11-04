@@ -30,6 +30,15 @@ describe('buildProductDetailRoute', () => {
     expect(buildProductDetailRoute(baseProduct).params).not.toHaveProperty('best');
   });
 
+  it('carries the list category together with the popularity list only', () => {
+    expect(buildProductDetailRoute(baseProduct, 0, { best: 'views', categoryId: '260' }).params).toMatchObject({
+      best: 'views',
+      c: '260',
+    });
+    expect(buildProductDetailRoute(baseProduct, 0, { best: 'views' }).params).not.toHaveProperty('c');
+    expect(buildProductDetailRoute(baseProduct, 0, { categoryId: '260' }).params).not.toHaveProperty('c');
+  });
+
   it('falls back to the id when the slug is missing', () => {
     const route = buildProductDetailRoute({ ...baseProduct, slug: '' });
 

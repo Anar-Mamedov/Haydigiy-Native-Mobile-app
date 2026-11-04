@@ -1,6 +1,6 @@
 import { ProductDto, SearchProductsResponseDto, SearchSuggestionsResponseDto } from '@/features/product/api/product.dtos';
 import { mockProductDtos } from '@/features/product/data/mock-product-dtos';
-import type { BestListingValue } from '@/features/product/utils/best-listing';
+import type { BestListingValue, ProductListingContext } from '@/features/product/utils/best-listing';
 import { apiClient } from '@/lib/axios';
 import { appEnv, getRequiredApiBaseUrl } from '@/lib/env';
 import { sleep } from '@/utils/sleep';
@@ -203,10 +203,11 @@ export async function getCurrentSlugById(id: string): Promise<{ success: boolean
 }
 
 /**
- * Ürün detayı. Popülerlik listesinden açıldıysa `best` de gönderilir; API sıralama
- * rozetini (`ranking_text` / `ranking_url`) o listeye göre döndürür (web paritesi).
+ * Ürün detayı. Popülerlik listesinden açıldıysa `best` ve listenin kategorisi (`c`)
+ * de gönderilir; API sıralama rozetini (`ranking_text` / `ranking_url`) o listeye
+ * göre döndürür (web paritesi). Bağlam `buildProductListingContext` ile kurulur.
  */
-export async function getProductDetailBySlug(slug: string, best?: BestListingValue): Promise<any> {
+export async function getProductDetailBySlug(slug: string, listing: ProductListingContext = {}): Promise<any> {
   if (!appEnv.apiBaseUrl) {
     await sleep(150);
     const baseProduct = mockProductDtos.find((p) => p.slug === slug) || mockProductDtos[0];
@@ -338,7 +339,7 @@ export async function getProductDetailBySlug(slug: string, best?: BestListingVal
 
   getRequiredApiBaseUrl();
   const response = await apiClient.get<any>(`/product/${slug}`, {
-    params: { p: 1, best }
+    params: { p: 1, best: listing.best, c: listing.best ? listing.categoryId : undefined },
   });
   return response.data;
 }

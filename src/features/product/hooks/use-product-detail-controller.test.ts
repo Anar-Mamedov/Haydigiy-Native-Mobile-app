@@ -163,13 +163,39 @@ describe('useProductDetailController — popülerlik listesi', () => {
   it('asks the detail for the popularity list the product was opened from', () => {
     setup({}, { id: 'deneme-urun', best: 'favorites' });
 
-    expect(useProductDetailsQueryMock).toHaveBeenCalledWith('deneme-urun', 'favorites');
+    expect(useProductDetailsQueryMock).toHaveBeenCalledWith('deneme-urun', { best: 'favorites' });
   });
 
-  it('ignores an unsupported list value', () => {
-    setup({}, { id: 'deneme-urun', best: 'reviews' });
+  it('asks the detail with the list category when it came with the list', () => {
+    setup({}, { id: 'deneme-urun', best: 'views', c: '260' });
 
-    expect(useProductDetailsQueryMock).toHaveBeenCalledWith('deneme-urun', undefined);
+    expect(useProductDetailsQueryMock).toHaveBeenCalledWith('deneme-urun', { best: 'views', categoryId: '260' });
+  });
+
+  it('ignores an unsupported list value and a category left over without a list', () => {
+    setup({}, { id: 'deneme-urun', best: 'reviews', c: '260' });
+
+    expect(useProductDetailsQueryMock).toHaveBeenCalledWith('deneme-urun', {});
+  });
+
+  it('keeps the list and its category when switching color', () => {
+    const { result } = setup({}, { id: 'deneme-urun', best: 'views', c: '260' });
+
+    act(() =>
+      result.current.handleColorSelect({
+        id: '3',
+        slug: 'deneme-urun-mavi',
+        name: 'Mavi',
+        price: 199.99,
+        imageUrl: 'https://example.com/m.png',
+      } as never),
+    );
+
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: expect.objectContaining({ id: 'deneme-urun-mavi', best: 'views', c: '260' }),
+      }),
+    );
   });
 
   it('keeps the popularity list when switching to a similar product', () => {

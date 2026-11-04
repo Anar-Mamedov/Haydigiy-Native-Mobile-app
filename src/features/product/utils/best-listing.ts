@@ -19,6 +19,34 @@ export function parseBestListingValue(value: string | string[] | null | undefine
 }
 
 /**
+ * Ürün detayına taşınan liste bağlamı (web `withBestListingValue`). Detay isteği
+ * `/product/{slug}?best=views&c=260` olarak gider; API sıralama rozetini o
+ * kategorideki listeye göre hesaplar.
+ */
+export type ProductListingContext = {
+  best?: BestListingValue;
+  /** Listenin kategori kimliği (`c`); yalnız `best` ile birlikte anlamlıdır. */
+  categoryId?: string;
+};
+
+/**
+ * Liste bağlamını tek kuralla kurar: geçerli bir `best` yoksa bağlam boştur ve
+ * kategori de taşınmaz (web `ea80c956d` / `0aae36636`: renk/varyant geçişinden
+ * kalmış eski bir `c` detay isteğine sızmamalı).
+ */
+export function buildProductListingContext(
+  best: string | string[] | null | undefined,
+  categoryId: number | string | string[] | null | undefined,
+): ProductListingContext {
+  const parsedBest = parseBestListingValue(best);
+  if (!parsedBest) return {};
+
+  const rawCategoryId = Array.isArray(categoryId) ? categoryId[0] : categoryId;
+  const normalizedCategoryId = rawCategoryId == null ? '' : String(rawCategoryId).trim();
+  return normalizedCategoryId ? { best: parsedBest, categoryId: normalizedCategoryId } : { best: parsedBest };
+}
+
+/**
  * Başka bir popülerlik listesine geçiş. Web gibi yalnızca kategori (`c`) ve
  * `best` taşınır; önceki listenin sıralama/filtre seçimleri sıfırlanır.
  */

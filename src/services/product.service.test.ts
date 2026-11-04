@@ -1,4 +1,4 @@
-import { searchProductDtos } from './product.service';
+import { getProductDetailBySlug, searchProductDtos } from './product.service';
 import { apiClient } from '@/lib/axios';
 
 jest.mock('@/lib/axios', () => ({
@@ -82,5 +82,28 @@ describe('searchProductDtos', () => {
     const response = await searchProductDtos({ menu_url: 'cok-satanlar', page: 1 });
 
     expect(response.menu_item).toEqual({ name: 'Çok Satanlar' });
+  });
+});
+
+describe('getProductDetailBySlug', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedGet.mockResolvedValue({ data: { id: 1 } } as never);
+  });
+
+  it('sends the popularity list and its category like the web detail request', async () => {
+    await getProductDetailBySlug('gomlek-123', { best: 'views', categoryId: '260' });
+
+    expect(mockedGet).toHaveBeenCalledWith('/product/gomlek-123', {
+      params: { p: 1, best: 'views', c: '260' },
+    });
+  });
+
+  it('never sends a category without a popularity list', async () => {
+    await getProductDetailBySlug('gomlek-123', { categoryId: '260' });
+
+    expect(mockedGet).toHaveBeenCalledWith('/product/gomlek-123', {
+      params: { p: 1, best: undefined, c: undefined },
+    });
   });
 });

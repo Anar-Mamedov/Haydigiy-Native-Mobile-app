@@ -32,7 +32,7 @@ import { ProductVideoModal } from '../components/product-video-modal';
 import { ProductListHeader } from '../components/product-list-header';
 import { SUBCATEGORY_STRIP_HEIGHT, SubcategoryStrip } from '../components/subcategory-strip';
 import { BEST_LISTING_TABS_HEIGHT, BestListingTabs } from '../components/best-listing-tabs';
-import { buildBestListingRoute, type BestListingValue } from '../utils/best-listing';
+import { buildBestListingRoute, buildProductListingContext, type BestListingValue } from '../utils/best-listing';
 import { resolveColorVariantTarget } from '../utils/color-variant-route';
 import { buildProductDetailRoute } from '../utils/product-detail-route';
 import { ProductListingFilters } from '../utils/listing-deep-link-params';
@@ -210,8 +210,11 @@ export function ProductListScreen({
     setQuickFilterSection((currentSection) => (currentSection === section ? null : section));
   };
 
+  // Web gibi detaya listenin kategorisi de taşınır (`best` yoksa ikisi de düşer).
   const handleProductPress = (product: Product, imageIndex = 0) => {
-    router.push(buildProductDetailRoute(product, imageIndex, { best }));
+    router.push(
+      buildProductDetailRoute(product, imageIndex, buildProductListingContext(best, categoryId ?? categoryDetails?.id)),
+    );
   };
 
   // Web gibi listeler arası geçiş yalnız kategori + best taşır; seçimler sıfırlanır.

@@ -2,7 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { productKeys } from './product.keys';
 import { mapProductDetailDto } from './product.mapper';
 import { getCurrentSlugById, getProductDetailBySlug } from '@/services/product.service';
-import type { BestListingValue } from '../utils/best-listing';
+import type { ProductListingContext } from '../utils/best-listing';
 
 /**
  * Browsing back and forth between the list and the same product within this
@@ -17,9 +17,9 @@ export const PRODUCT_DETAIL_STALE_TIME = 60 * 1000;
  * home showcase quick add share it, so a size sheet opened from the home page
  * warms the cache for the detail screen and vice versa.
  */
-export function productDetailQueryOptions(idOrSlug: string, best?: BestListingValue) {
+export function productDetailQueryOptions(idOrSlug: string, listing: ProductListingContext = {}) {
   return queryOptions({
-    queryKey: productKeys.detail(idOrSlug, best),
+    queryKey: productKeys.detail(idOrSlug, listing),
     staleTime: PRODUCT_DETAIL_STALE_TIME,
     queryFn: async () => {
       let slug = idOrSlug;
@@ -36,7 +36,7 @@ export function productDetailQueryOptions(idOrSlug: string, best?: BestListingVa
         }
       }
 
-      const rawDetail = await getProductDetailBySlug(slug, best);
+      const rawDetail = await getProductDetailBySlug(slug, listing);
       return mapProductDetailDto(rawDetail);
     },
   });
