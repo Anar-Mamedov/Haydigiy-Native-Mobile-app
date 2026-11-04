@@ -31,8 +31,9 @@ type OrderSummaryFields = Pick<
 function OrderSummary({ order }: { order: OrderSummaryFields }) {
   return (
     <YStack gap="$1">
-      <XStack alignItems="center" gap="$3" justifyContent="space-between">
-        <Paragraph color="$color" flexShrink={1} fontSize={15} fontWeight="800" numberOfLines={1}>
+      {/* Sipariş numarası hiç kısaltılmaz; dar ekranda durum rozeti alt satıra iner. */}
+      <XStack alignItems="center" columnGap="$3" flexWrap="wrap" justifyContent="space-between" rowGap="$1.5">
+        <Paragraph color="$color" fontSize={15} fontWeight="800">
           {order.order_no}
         </Paragraph>
         <AssistantToneBadge text={order.status_text} tone={order.tone} />
