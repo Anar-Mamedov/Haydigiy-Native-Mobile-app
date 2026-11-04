@@ -57,6 +57,13 @@ export function mapCargoCompany(dto: CargoCompanyDto): CargoCompany {
   };
 }
 
+/**
+ * Kuruş rounding slack: the backend floors the per-month price of interest-free
+ * plans (İyzico `installmentPrice × count ≤ price`), so their total can sit a
+ * kuruş below the single-payment amount but never meaningfully above it.
+ */
+const INTEREST_FREE_TOLERANCE = 0.01;
+
 /** Maps the İyzico installment lookup into sorted, payable (≥2) installment plans. */
 export function mapInstallmentPlans(
   dto: InstallmentResponseDto,
@@ -76,6 +83,7 @@ export function mapInstallmentPlans(
         ratio: Number.isFinite(ratio) ? ratio : 0,
         total: Number.isFinite(total) ? total : 0,
         perMonth: Number.isFinite(perMonth) ? perMonth : 0,
+        isInterestFree: amount > 0 && Number.isFinite(total) && total - amount <= INTEREST_FREE_TOLERANCE,
       };
     })
     .filter((plan) => Number.isInteger(plan.installment) && plan.installment > 1 && plan.total > 0 && plan.perMonth > 0)

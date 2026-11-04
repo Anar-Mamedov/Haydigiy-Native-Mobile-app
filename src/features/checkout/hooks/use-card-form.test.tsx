@@ -11,7 +11,7 @@ const mockedUseInstallmentPlansQuery = useInstallmentPlansQuery as jest.MockedFu
 >;
 
 const threeInstallments = [
-  { installment: 3, ratio: 5, total: 3150, perMonth: 1050 },
+  { installment: 3, ratio: 5, total: 3150, perMonth: 1050, isInterestFree: false },
 ];
 
 describe('useCardForm price refresh', () => {
@@ -46,7 +46,7 @@ describe('useCardForm price refresh', () => {
     expect(result.current.isLoadingInstallments).toBe(true);
 
     mockedUseInstallmentPlansQuery.mockReturnValue({
-      data: [{ installment: 3, ratio: 5, total: 3360, perMonth: 1120 }],
+      data: [{ installment: 3, ratio: 5, total: 3360, perMonth: 1120, isInterestFree: false }],
       isFetching: false,
     } as ReturnType<typeof useInstallmentPlansQuery>);
 

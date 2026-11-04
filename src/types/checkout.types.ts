@@ -39,6 +39,12 @@ export type InstallmentPlan = {
   ratio: number;
   total: number;
   perMonth: number;
+  /**
+   * The plan costs no more than the single-payment total (no interest), shown as
+   * "Peşin Fiyatına". Derived from the backend's totals, not from the installment
+   * count, so it follows the backend's 2–3 installment campaign automatically.
+   */
+  isInterestFree: boolean;
 };
 
 /** A coupon that has been validated and applied to the order. */

@@ -109,6 +109,43 @@ describe('mapInstallmentPlans', () => {
     expect(plans.map((p) => p.installment)).toEqual([2, 3]);
     expect(plans[1].perMonth).toBe(36);
   });
+
+  it('flags plans whose total does not exceed the single-payment amount as interest-free', () => {
+    // Backend 2-3 taksit kampanyası: taksit tutarı aşağı yuvarlanır, toplam peşin tutarın kuruş altında kalabilir.
+    const plans = mapInstallmentPlans(
+      {
+        status: 'success',
+        installmentDetails: [
+          {
+            installmentPrices: [
+              { installmentNumber: 2, installmentPrice: 500, totalPrice: 1000 },
+              { installmentNumber: 3, installmentPrice: 333.33, totalPrice: 999.99 },
+              { installmentNumber: 4, installmentPrice: 275.85, totalPrice: 1103.4 },
+            ],
+          },
+        ],
+      },
+      1000,
+    );
+
+    expect(plans.map((plan) => [plan.installment, plan.isInterestFree])).toEqual([
+      [2, true],
+      [3, true],
+      [4, false],
+    ]);
+  });
+
+  it('does not flag a plan as interest-free when it costs more than the single payment', () => {
+    const [plan] = mapInstallmentPlans(
+      {
+        status: 'success',
+        installmentDetails: [{ installmentPrices: [{ installmentNumber: 3, installmentPrice: 34, totalPrice: 102 }] }],
+      },
+      100,
+    );
+
+    expect(plan.isInterestFree).toBe(false);
+  });
 });
 
 describe('mapCheckoutAddress', () => {

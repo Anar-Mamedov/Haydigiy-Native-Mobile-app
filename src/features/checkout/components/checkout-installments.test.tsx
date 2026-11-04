@@ -4,8 +4,8 @@ import { InstallmentPlan } from '@/types/checkout.types';
 import { CheckoutInstallments } from './checkout-installments';
 
 const plans: InstallmentPlan[] = [
-  { installment: 3, ratio: 0, total: 300, perMonth: 100 },
-  { installment: 6, ratio: 0.05, total: 315, perMonth: 52.5 },
+  { installment: 3, ratio: 0, total: 300, perMonth: 100, isInterestFree: true },
+  { installment: 6, ratio: 0.05, total: 315, perMonth: 52.5, isInterestFree: false },
 ];
 
 describe('CheckoutInstallments', () => {
@@ -21,7 +21,7 @@ describe('CheckoutInstallments', () => {
       />,
     );
 
-    fireEvent.press(screen.getByLabelText('3 taksit'));
+    fireEvent.press(screen.getByLabelText('3 taksit, peşin fiyatına'));
 
     expect(onSelect).toHaveBeenCalledWith(3);
   });
@@ -43,5 +43,22 @@ describe('CheckoutInstallments', () => {
     fireEvent.press(screen.getByLabelText('6 taksit'));
 
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it.each(['light', 'dark'] as const)('tags only interest-free plans with "Peşin Fiyatına" in the %s theme', (theme) => {
+    renderWithTamagui(
+      <CheckoutInstallments
+        installmentPlans={plans}
+        isLoading={false}
+        onSelect={jest.fn()}
+        selectedInstallment={1}
+        singlePaymentTotal={300}
+      />,
+      theme,
+    );
+
+    expect(screen.getAllByTestId('installment-interest-free-tag')).toHaveLength(1);
+    expect(screen.getByText('Peşin Fiyatına')).toBeTruthy();
+    expect(screen.getByLabelText('6 taksit')).toBeTruthy();
   });
 });
