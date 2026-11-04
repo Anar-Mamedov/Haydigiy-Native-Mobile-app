@@ -23,6 +23,10 @@ jest.mock('expo-router', () => ({
   },
 }));
 
+jest.mock('@/features/assistant/hooks/use-above-assistant-launcher-position', () => ({
+  useAboveAssistantLauncherPosition: () => ({ bottom: 18, right: 18 }),
+}));
+
 jest.mock('@/features/promotions/components/top-banner', () => ({
   TopBanner: () => null,
 }));

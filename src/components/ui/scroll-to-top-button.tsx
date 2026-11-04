@@ -13,7 +13,9 @@ type ScrollToTopButtonProps = {
   testID?: string;
 };
 
-const BUTTON_SIZE = MIN_TOUCH_TARGET;
+/** Butonun çapı; aynı köşedeki başka yüzen düğmelerle hizalamak için dışarı açılır. */
+export const SCROLL_TO_TOP_BUTTON_SIZE = MIN_TOUCH_TARGET;
+const BUTTON_SIZE = SCROLL_TO_TOP_BUTTON_SIZE;
 
 /**
  * Uzun listelerde sağ alt köşede beliren "en başa dön" butonu.

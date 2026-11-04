@@ -32,9 +32,21 @@ describe('AssistantLauncher', () => {
     expect(mockPush).toHaveBeenCalledWith('/assistant');
   });
 
-  it('seçili ekranlar dışında ve asistan kapalıyken çizilmez', () => {
-    mockPathname = '/cart';
+  it.each(['/categories', '/kategori/kadin-elbise', '/favorites', '/profile', '/order/100001'])(
+    'anasayfa dışındaki sekme ekranlarında da çizilir: %s',
+    (pathname) => {
+      mockPathname = pathname;
+      renderWithTamagui(<AssistantLauncher />);
+      expect(screen.getByTestId('assistant-launcher')).toBeTruthy();
+    },
+  );
+
+  it('dışlanan ekranlarda (sepet, form) ve asistan kapalıyken çizilmez', () => {
+    mockPathname = '/address-form';
     const { rerender } = renderWithTamagui(<AssistantLauncher />);
+    expect(screen.queryByTestId('assistant-launcher')).toBeNull();
+    mockPathname = '/cart';
+    rerender(<AssistantLauncher />);
     expect(screen.queryByTestId('assistant-launcher')).toBeNull();
     mockPathname = '/';
     mockAvailable = false;

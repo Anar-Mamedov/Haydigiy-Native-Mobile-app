@@ -6,7 +6,8 @@ import { Paragraph } from '@/components/ui/app-paragraph';
 import { useRouter } from 'expo-router';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 
-import { AppScreen, EmptyState, ScrollToTopButton } from '@/components/ui';
+import { AppScreen, EmptyState, SCROLL_TO_TOP_BUTTON_SIZE, ScrollToTopButton } from '@/components/ui';
+import { useAboveAssistantLauncherPosition } from '@/features/assistant/hooks/use-above-assistant-launcher-position';
 import { ProductCard } from '@/features/product/components/product-card';
 import { useCartCount } from '@/features/cart/api/cart.queries';
 import { CartCampaignBanner } from '@/features/cart/components/cart-campaign-banner';
@@ -76,6 +77,8 @@ export function ProductListScreen({
   const router = useRouter();
   const listRef = useRef<FlashListRef<Product>>(null);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  // "Başa dön" düğmesi sağ-alttaki "Haydi Asistan" düğmesiyle çakışmasın: asistan görünürken üstüne çıkar.
+  const scrollToTopPosition = useAboveAssistantLauncherPosition(SCROLL_TO_TOP_BUTTON_SIZE);
 
   // Cart integration — badge count derives from the hydrated cart store.
   const cartCount = useCartCount();
@@ -388,7 +391,12 @@ export function ProductListScreen({
             }
           />
 
-          <ScrollToTopButton onPress={handleScrollToTop} visible={showScrollToTop} />
+          <ScrollToTopButton
+            bottom={scrollToTopPosition.bottom}
+            onPress={handleScrollToTop}
+            right={scrollToTopPosition.right}
+            visible={showScrollToTop}
+          />
         </YStack>
       )}
 
