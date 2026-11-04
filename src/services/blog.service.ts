@@ -1,7 +1,13 @@
-import { blogApiClient } from '@/lib/blog-api-client';
+import { apiClient } from '@/lib/axios';
+import { appEnv } from '@/lib/env';
 import { isMissingResourceApiError } from '@/utils/api-error';
 
 /**
+ * Blog okuma uçları ana API'de (connect `routes/blog.php`); web de 30.10.2026'dan
+ * beri blog isteklerini `NEXT_PUBLIC_API_BASE_URL`'e atıyor. İstekler bu yüzden
+ * diğer servislerle aynı paylaşılan `apiClient`'tan geçer. API adresi tanımlı
+ * değilken (mock katalog) blog boş döner.
+ *
  * Blog API yanıtları alan adlarını tutarlı vermiyor (`cover_image`/`mainImage`,
  * `publishedAt`/`published_at` ...). DTO'lar bu yüzden gevşek tutulur; hangi
  * alanın tercih edileceğine mapper karar verir (web `normalizePost` ile aynı).
@@ -89,7 +95,9 @@ export function buildBlogPostListQuery({ page, categorySlug }: BlogPostListParam
 
 /** Yayımlanmış blog yazılarının bir sayfası (`GET /blog/posts`). */
 export async function getBlogPostsDto(params: BlogPostListParams): Promise<BlogPostListResponseDto> {
-  const response = await blogApiClient.get<BlogPostListResponseDto>('/blog/posts', {
+  if (!appEnv.apiBaseUrl) return {};
+
+  const response = await apiClient.get<BlogPostListResponseDto>('/blog/posts', {
     params: buildBlogPostListQuery(params),
   });
   return response.data ?? {};
@@ -100,8 +108,10 @@ export async function getBlogPostsDto(params: BlogPostListParams): Promise<BlogP
  * döndüğünde `null` verilir; ekran bunu hata değil "yazı yok" durumu olarak gösterir.
  */
 export async function getBlogPostDto(slug: string): Promise<BlogPostDto | null> {
+  if (!appEnv.apiBaseUrl) return null;
+
   try {
-    const response = await blogApiClient.get<{ data?: BlogPostDto | null }>(
+    const response = await apiClient.get<{ data?: BlogPostDto | null }>(
       `/blog/posts/${encodeURIComponent(slug)}`,
     );
     return response.data?.data ?? null;
@@ -113,7 +123,9 @@ export async function getBlogPostDto(slug: string): Promise<BlogPostDto | null> 
 
 /** Aktif blog kategorileri (`GET /blog/categories`). */
 export async function getBlogCategoriesDto(): Promise<BlogCategoryDto[]> {
-  const response = await blogApiClient.get<{ data?: BlogCategoryDto[] | null }>('/blog/categories', {
+  if (!appEnv.apiBaseUrl) return [];
+
+  const response = await apiClient.get<{ data?: BlogCategoryDto[] | null }>('/blog/categories', {
     params: { status: 'active' },
   });
   const categories = response.data?.data;
