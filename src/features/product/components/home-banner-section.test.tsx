@@ -35,18 +35,13 @@ afterEach(() => {
 });
 
 describe('HomeBannerSection', () => {
-  it('shows CDN banners without Cloudflare image transformations', () => {
+  it('requests the banner at the physical width it occupies instead of the 1080 px source', () => {
     renderWithTamagui(<HomeBannerSection content={bannerContent('https://cdn.haydigiy.com/banners/a.webp')} width={182.5} />);
 
-    expect(imageUri()).toBe('https://cdn.haydigiy.com/banners/a.webp');
-  });
-
-  it('uses the pre-generated product variant that covers the banner width', () => {
-    const large = 'https://cdn.haydigiy.com/uploads/2026/10/23/x/large/elbise.webp';
-    renderWithTamagui(<HomeBannerSection content={bannerContent(large)} width={182.5} />);
-
-    // 182.5 dp × 2.625 ≈ 479 px → medium (600 px).
-    expect(imageUri()).toBe(large.replace('/large/', '/medium/'));
+    // 182.5 dp × 2.625 ≈ 479 px → 480 px bucket.
+    expect(imageUri()).toBe(
+      'https://cdn.haydigiy.com/cdn-cgi/image/width=480,quality=80,format=webp,fit=scale-down/banners/a.webp',
+    );
   });
 
   it('sizes the box from the loaded image and opens the banner link', () => {

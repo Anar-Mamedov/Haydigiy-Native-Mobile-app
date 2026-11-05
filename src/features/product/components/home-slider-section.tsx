@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { ScrollView, XStack, YStack } from 'tamagui';
 import { useImageAspectRatio } from '@/components/ui/use-image-aspect-ratio';
 import { StoryContent } from '@/types/page-design.types';
-import { selectProductImageVariant } from '@/utils/cdn';
+import { buildResizedCdnImageUrl } from '@/utils/cdn';
 import { handleLinkPress } from '@/utils/link-handler';
 import { isSlideInWindow } from '../utils/slide-window';
 
@@ -123,7 +123,7 @@ export function HomeSliderSection({ content }: HomeSliderSectionProps) {
                     <Image
                       contentFit="cover"
                       onLoad={index === 0 ? onFirstSlideLoad : undefined}
-                      source={{ uri: selectProductImageVariant(imageUri, imagePixelWidth) ?? imageUri }}
+                      source={{ uri: buildResizedCdnImageUrl(imageUri, imagePixelWidth) ?? imageUri }}
                       style={{
                         height: '100%',
                         width: '100%',

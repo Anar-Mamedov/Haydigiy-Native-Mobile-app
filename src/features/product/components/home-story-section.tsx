@@ -6,7 +6,7 @@ import { HorizontalRail } from '@/components/ui/horizontal-rail';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { StoryContent, StoryItem } from '@/types/page-design.types';
 import { tokenValues } from '@/lib/theme/token-values';
-import { selectProductImageVariant } from '@/utils/cdn';
+import { buildResizedCdnImageUrl } from '@/utils/cdn';
 import { handleLinkPress } from '@/utils/link-handler';
 
 type HomeStorySectionProps = {
@@ -49,7 +49,7 @@ function StoryBubble({ borderRadius, item }: StoryBubbleProps) {
               recyclingKey={imageUri}
               source={{
                 uri:
-                  selectProductImageVariant(imageUri, PixelRatio.getPixelSizeForLayoutSize(STORY_IMAGE_SIZE)) ??
+                  buildResizedCdnImageUrl(imageUri, PixelRatio.getPixelSizeForLayoutSize(STORY_IMAGE_SIZE)) ??
                   imageUri,
               }}
               style={{ height: '100%', width: '100%' }}
