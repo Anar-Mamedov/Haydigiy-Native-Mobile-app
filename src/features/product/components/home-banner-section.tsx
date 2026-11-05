@@ -4,7 +4,7 @@ import { YStack } from 'tamagui';
 import { useImageAspectRatio } from '@/components/ui/use-image-aspect-ratio';
 import { HOME_SECTION_GAP } from '@/features/product/utils/home-layout';
 import { BannerContent } from '@/types/page-design.types';
-import { buildResizedCdnImageUrl } from '@/utils/cdn';
+import { selectProductImageVariant } from '@/utils/cdn';
 import { handleLinkPress } from '@/utils/link-handler';
 
 type HomeBannerSectionProps = {
@@ -63,8 +63,7 @@ type BannerImageItemProps = {
 
 function BannerImageItem({ imageUri, itemText, onPress, width }: BannerImageItemProps) {
   const { aspectRatio, onLoad } = useImageAspectRatio(imageUri, FALLBACK_BANNER_ASPECT_RATIO);
-  // 1080 px kaynak yerine bannerın ekranda kapladığı fiziksel genişlik istenir.
-  const sizedUri = buildResizedCdnImageUrl(imageUri, PixelRatio.getPixelSizeForLayoutSize(width)) ?? imageUri;
+  const sizedUri = selectProductImageVariant(imageUri, PixelRatio.getPixelSizeForLayoutSize(width)) ?? imageUri;
 
   return (
     <YStack
