@@ -16,65 +16,14 @@ export function resolveCdnUrl(path: string | null | undefined): string | null {
   return `${CDN_BASE_URL}/${trimmed.startsWith('/') ? trimmed.slice(1) : trimmed}`;
 }
 
-/**
- * Cloudflare Image Resizing açık olan zone. `EXPO_PUBLIC_CDN_URL` başka bir hosta çevrilse bile
- * `/cdn-cgi/image/` yalnızca bu kökte üretilir; dönüşümü desteklemeyen bir hostta görsel kırılmaz.
- */
-const IMAGE_RESIZING_ORIGIN = 'https://cdn.haydigiy.com';
-
-/**
- * İstenen genişlikler bu kovalara yuvarlanır. Cloudflare her (görsel, seçenek) çiftini ayrı bir
- * "benzersiz dönüşüm" sayar; az sayıda sabit kova hem önbellek isabetini hem maliyeti dengeler.
- */
-export const RESIZED_IMAGE_WIDTHS = [160, 240, 320, 480, 640, 828, 1080, 1280] as const;
-
-const RESIZED_IMAGE_QUALITY = 80;
-
-/** Dönüştürülmeyecek biçimler: SVG vektördür, GIF animasyonu yeniden kodlamak pahalıdır. */
-const NON_RESIZABLE_EXTENSION = /\.(svg|gif)(\?|#|$)/i;
-
-/** Ekranda `pixelWidth` fiziksel piksel kaplayacak görsel için en küçük yeterli kova. */
-export function pickResizedImageWidth(pixelWidth: number): number {
-  const target = Math.max(1, Math.ceil(pixelWidth));
-  return RESIZED_IMAGE_WIDTHS.find((width) => width >= target) ?? RESIZED_IMAGE_WIDTHS[RESIZED_IMAGE_WIDTHS.length - 1];
-}
-
-/**
- * CDN'deki pazarlama görselini (banner, slider, hikâye) görüntüleneceği genişlikte ister. Cloudflare,
- * istemci `Accept` başlığında WebP bildirirse WebP, bildirmezse JPEG döner; ikisi de kaynak 1080 px
- * WebP'den (400–800 KB) çok küçüktür. `fit=scale-down` kaynaktan büyük görsel üretmez. CDN dışındaki,
- * zaten dönüştürülmüş ya da dönüştürülemeyen adresler olduğu gibi döner.
- *
- * Örnek: `https://cdn.haydigiy.com/cdn-cgi/image/width=480,quality=80,format=webp,fit=scale-down/banners/x.webp`
- */
-export function buildResizedCdnImageUrl(url: string | null | undefined, pixelWidth: number): string | null {
-  if (!url || url.trim() === '') return null;
-  const trimmed = url.trim();
-  const originPrefix = `${IMAGE_RESIZING_ORIGIN}/`;
-
-  if (
-    !trimmed.startsWith(originPrefix) ||
-    trimmed.includes('/cdn-cgi/') ||
-    NON_RESIZABLE_EXTENSION.test(trimmed) ||
-    !Number.isFinite(pixelWidth) ||
-    pixelWidth <= 0
-  ) {
-    return trimmed;
-  }
-
-  const options = [
-    `width=${pickResizedImageWidth(pixelWidth)}`,
-    `quality=${RESIZED_IMAGE_QUALITY}`,
-    'format=webp',
-    'fit=scale-down',
-  ].join(',');
-
-  return `${IMAGE_RESIZING_ORIGIN}/cdn-cgi/image/${options}/${trimmed.slice(originPrefix.length)}`;
-}
+/** Hazır görsel varyantlarının bulunduğu CDN kökü. Başka hostlardaki adreslere dokunulmaz. */
+const PRODUCT_IMAGE_ORIGIN = 'https://cdn.haydigiy.com';
 
 /**
  * Ürün yüklemelerinin CDN'de önceden üretilmiş boyutları (genişlik px, 2:3 oran):
  * `thumb` 200×300, `medium` 600×900, `large` 1200×1800. Bu varyantlar ek dönüşüm maliyeti doğurmaz.
+ * Ücretli Cloudflare görsel dönüşümü kullanılmaz; banner'lar panelde yüklenirken sıkıştırılır ve
+ * olduğu gibi gösterilir.
  */
 const PRODUCT_IMAGE_VARIANTS = [
   { name: 'thumb', width: 200 },
@@ -93,7 +42,7 @@ const PRODUCT_VARIANT_SEGMENT = /(\/uploads\/(?:[^/?#]+\/)*)(thumb|medium|large)
 export function selectProductImageVariant(url: string | null | undefined, pixelWidth: number): string | null {
   if (!url || url.trim() === '') return null;
   const trimmed = url.trim();
-  if (!trimmed.startsWith(`${IMAGE_RESIZING_ORIGIN}/`) || !Number.isFinite(pixelWidth) || pixelWidth <= 0) {
+  if (!trimmed.startsWith(`${PRODUCT_IMAGE_ORIGIN}/`) ||!Number.isFinite(pixelWidth) || pixelWidth <= 0) {
     return trimmed;
   }
 

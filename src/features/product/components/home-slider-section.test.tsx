@@ -53,13 +53,10 @@ describe('HomeSliderSection', () => {
     expect(slideIndexes()).toEqual([0, 1, 2]);
   });
 
-  it('requests slides at the slider width instead of the full-size source', () => {
+  it('shows slides as stored, without Cloudflare image transformations', () => {
     renderWithTamagui(<HomeSliderSection content={content} />);
 
-    // Initial width 300 dp × 2.625 ≈ 788 px → 828 px bucket.
-    expect(mountedSlideImages()[0]).toBe(
-      'https://cdn.haydigiy.com/cdn-cgi/image/width=828,quality=80,format=webp,fit=scale-down/banners/slide-0.webp',
-    );
+    expect(mountedSlideImages()[0]).toBe('https://cdn.haydigiy.com/banners/slide-0.webp');
   });
 
   it('renders nothing without slides', () => {
