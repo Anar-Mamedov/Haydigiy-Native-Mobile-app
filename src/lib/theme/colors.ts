@@ -114,3 +114,14 @@ export const ASSISTANT_ACCENT_TINT_COLOR_DARK = 'rgba(242, 122, 26, 0.18)';
 export const ASSISTANT_ACCENT_TINT_BORDER_COLOR = '#fbd5b5';
 export const ASSISTANT_ACCENT_TINT_BORDER_COLOR_DARK = 'rgba(242, 122, 26, 0.4)';
 export const ASSISTANT_LIVE_SUPPORT_COLOR = '#15803d';
+
+/**
+ * Bilgi/uyarı kartı (profilde "E-Posta Adresinizi Doğrulamanız Gerekmektedir"): web'deki kartla aynı
+ * tonlar. Turuncu yazı ve dolgu düğme (`NOTICE_COLOR`), şeftali zemin ve kenar. Koyu temada zemin
+ * ve kenar yarı saydam turuncuya döner ki koyu yüzeyde kaybolmasın.
+ */
+export const NOTICE_COLOR = '#ff8b00';
+export const NOTICE_BACKGROUND_COLOR = '#fff3e5';
+export const NOTICE_BACKGROUND_COLOR_DARK = 'rgba(255, 139, 0, 0.16)';
+export const NOTICE_BORDER_COLOR = '#ffdfbc';
+export const NOTICE_BORDER_COLOR_DARK = 'rgba(255, 139, 0, 0.4)';

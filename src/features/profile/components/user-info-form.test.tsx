@@ -328,4 +328,13 @@ describe('UserInfoForm', () => {
     await waitFor(() => expect(screen.getByText('Ad en az 2 karakter olmalıdır')).toBeTruthy());
     expect(mockMutateAsync).not.toHaveBeenCalled();
   });
+
+  it('leaves the unverified e-mail notice to the card above the form', () => {
+    // The card with the "Doğrula" button lives on the screen (EmailVerificationPrompt),
+    // like the web; the form no longer repeats a note under the field.
+    renderWithTamagui(<UserInfoForm profile={{ ...profile, emailVerified: false }} />);
+
+    expect(screen.queryByText('E-postanız doğrulanmamış.')).toBeNull();
+    expect(screen.queryByText('E-Posta Adresinizi Doğrulamanız Gerekmektedir')).toBeNull();
+  });
 });

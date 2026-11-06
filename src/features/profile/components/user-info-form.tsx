@@ -194,8 +194,6 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
     }
   };
 
-  const showVerifyNote = Boolean(profile.email) && profile.emailVerified === false;
-
   return (
     <YStack gap="$4">
       <Controller
@@ -235,30 +233,25 @@ export function UserInfoForm({ profile }: UserInfoFormProps) {
         )}
       />
 
-      <YStack gap="$1">
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <AppInput
-              autoCapitalize="none"
-              backgroundColor={FIELD_BACKGROUND}
-              errorMessage={errors.email?.message}
-              id="user-info-email"
-              keyboardType="email-address"
-              label="E-posta"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
-          )}
-        />
-        {showVerifyNote ? (
-          <Paragraph color="$yellow10" fontSize={12}>
-            E-postanız doğrulanmamış.
-          </Paragraph>
-        ) : null}
-      </YStack>
+      {/* An unverified address is announced by the card above the form (user-info-screen). */}
+      <Controller
+        control={control}
+        name="email"
+        render={({ field: { onChange, onBlur, value } }) => (
+          <AppInput
+            autoCapitalize="none"
+            backgroundColor={FIELD_BACKGROUND}
+            errorMessage={errors.email?.message}
+            id="user-info-email"
+            keyboardType="email-address"
+            label="E-posta"
+            onBlur={onBlur}
+            onChangeText={onChange}
+            value={value}
+          />
+        )}
+      />
+
 
       <YStack gap="$2">
         <Paragraph color="$color" fontSize={14} fontWeight="600">

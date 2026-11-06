@@ -122,7 +122,14 @@ export async function registerApi(payload: RegisterPayload): Promise<RegisterRes
   return response.data;
 }
 
-export async function sendCodeApi(payload: { type: 'phone'; value: string }): Promise<SendCodeResponse> {
+/**
+ * `POST /auth/send-code`: an SMS code for a phone number, or an e-mail code for the
+ * signed-in user's address (see `verifyEmailCodeApi`).
+ */
+export async function sendCodeApi(payload: {
+  type: 'phone' | 'email';
+  value: string;
+}): Promise<SendCodeResponse> {
   if (!appEnv.apiBaseUrl) {
     // Mock Mode
     return {
@@ -157,6 +164,22 @@ export async function verifyCodeApi(payload: {
 
   const response = await apiClient.post('/auth/verify-code', payload);
   return { ...response.data, user: normalizeAuthUser(response.data?.user) };
+}
+
+/**
+ * Confirms the signed-in user's e-mail with the code sent by
+ * `sendCodeApi({ type: 'email' })`; the backend then sets `email_verified_at`.
+ * The endpoint answers like a login and mints a new token, but the current session
+ * stays as it is, so the response body is not used.
+ */
+export async function verifyEmailCodeApi(payload: { email: string; code: string }): Promise<void> {
+  if (!appEnv.apiBaseUrl) return;
+
+  await apiClient.post('/auth/verify-code', {
+    type: 'email',
+    value: payload.email,
+    code: payload.code,
+  });
 }
 
 export async function fastLoginInitApi(payload: { identifier: string }): Promise<FastLoginInitResponse> {

@@ -5,6 +5,8 @@ import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
 import { useUserProfileQuery } from '../api/profile.queries';
 import { UserInfoForm, uiDebugId } from '../components/user-info-form';
 import { DeleteAccountButton } from '../components/delete-account-button';
+import { EmailVerificationPrompt } from '../components/email-verification-prompt';
+import { getUnverifiedEmail } from '../utils/email-verification';
 
 export function UserInfoScreen() {
   const router = useRouter();
@@ -72,8 +74,12 @@ export function UserInfoScreen() {
     );
   }
 
+  const unverifiedEmail = getUnverifiedEmail(query.data);
+
   return (
     <AppScreen header={header}>
+      {/* Above the form, like the web's verification card. */}
+      {unverifiedEmail ? <EmailVerificationPrompt email={unverifiedEmail} /> : null}
       <UserInfoForm profile={query.data} />
       <DeleteAccountButton />
     </AppScreen>
