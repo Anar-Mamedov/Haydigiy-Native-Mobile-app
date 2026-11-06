@@ -1,35 +1,4 @@
-import {
-  formatSearchResultsHeading,
-  formatSearchTerm,
-  toTurkishLowerCase,
-  toTurkishTitleCase,
-} from './format-search-heading';
-
-describe('toTurkishTitleCase', () => {
-  it('capitalises Turkish dotless and dotted i correctly', () => {
-    // Web e3e9620b9: `\b` ASCII dışı harfleri tanımadığı için "ışıKlı" çıkıyordu.
-    expect(toTurkishTitleCase('ışıklı')).toBe('Işıklı');
-    expect(toTurkishTitleCase('istanbul')).toBe('İstanbul');
-    expect(toTurkishTitleCase('çiçekli şal')).toBe('Çiçekli Şal');
-    expect(toTurkishTitleCase('ğ ü ö')).toBe('Ğ Ü Ö');
-  });
-
-  it('lowercases the rest of each word with Turkish rules', () => {
-    expect(toTurkishTitleCase('IŞIKLI PİJAMA')).toBe('Işıklı Pijama');
-    expect(toTurkishTitleCase('İPEK')).toBe('İpek');
-  });
-
-  it('collapses repeated spaces', () => {
-    expect(toTurkishTitleCase('uzun   elbise')).toBe('Uzun Elbise');
-  });
-});
-
-describe('toTurkishLowerCase', () => {
-  it('maps I to ı and İ to i', () => {
-    expect(toTurkishLowerCase('IŞIK')).toBe('ışık');
-    expect(toTurkishLowerCase('İNCİ')).toBe('inci');
-  });
-});
+import { formatSearchResultsHeading, formatSearchTerm } from './format-search-heading';
 
 describe('formatSearchTerm', () => {
   it('de-slugs and title-cases the query', () => {

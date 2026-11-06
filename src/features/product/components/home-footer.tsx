@@ -5,6 +5,7 @@ import { Button, Card, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { InfoPageLinkList } from '@/features/info-pages/components/info-page-link-list';
 import { FOOTER_INFO_LINKS } from '@/features/info-pages/data/info-page-links';
+import { StoreAdvantagesBand } from './store-advantages-band';
 
 const paymentLogos = [
   'https://haydigiy.com/troy-logo.png',
@@ -37,6 +38,9 @@ export function HomeFooter() {
 
   return (
     <YStack gap="$4" marginTop="$5" paddingHorizontal="$2" paddingBottom="$6">
+      {/* The web footer opens with the same advantages band. */}
+      <StoreAdvantagesBand />
+
       {/* Contact & Info Cards */}
       <YStack gap="$3">
         <Card borderColor="$borderColor" borderRadius="$4" borderWidth={1} padding="$4">

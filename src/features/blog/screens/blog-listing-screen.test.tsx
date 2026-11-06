@@ -55,7 +55,8 @@ describe('BlogListingScreen', () => {
     renderWithTamagui(<BlogListingScreen />, theme);
 
     expect(await screen.findByTestId('blog-featured-yazi-2')).toBeTruthy();
-    expect(screen.getByText('Stil · İlham · HaydiGiy')).toBeTruthy();
+    // Upper-cased the Turkish way by Paragraph (textTransform).
+    expect(screen.getByText('STİL · İLHAM · HAYDİGİY')).toBeTruthy();
     expect(screen.getAllByText('Blog').length).toBeGreaterThan(0);
     expect(screen.getByLabelText('Tümü')).toBeTruthy();
     expect(screen.getByLabelText('Kazak/Triko')).toBeTruthy();

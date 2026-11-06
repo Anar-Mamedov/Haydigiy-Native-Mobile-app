@@ -34,6 +34,14 @@ describe('HomeFooter', () => {
     },
   );
 
+  it('opens with the advantages band of the web footer', () => {
+    renderWithTamagui(<HomeFooter />);
+
+    expect(screen.getByTestId('store-advantages-band')).toBeTruthy();
+    expect(screen.getByText('24 Saatte Kargoda')).toBeTruthy();
+    expect(screen.getByText('%100 Güvenli Ödeme Sayfası')).toBeTruthy();
+  });
+
   it('opens the info page of a footer link', () => {
     renderWithTamagui(<HomeFooter />);
 

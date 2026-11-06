@@ -29,7 +29,9 @@ describe('StorePickupScreen', () => {
     renderWithTamagui(<StorePickupScreen />, theme);
 
     // Başlık çubuğu + "Nasıl çalışır?" bölümünün üst etiketi.
-    expect(screen.getAllByText('Mağazadan Al')).toHaveLength(2);
+    // Hero title, and the upper-cased "how it works" eyebrow (Turkish İ/I kept).
+    expect(screen.getByText('Mağazadan Al')).toBeTruthy();
+    expect(screen.getByText('MAĞAZADAN AL')).toBeTruthy();
     expect(screen.getByText('Niğde’deysen kargo ücreti ödeme!')).toBeTruthy();
     expect(screen.getByText('Nasıl çalışır?')).toBeTruthy();
     expect(screen.getByText('Siparişini oluştur')).toBeTruthy();

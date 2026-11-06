@@ -8,42 +8,10 @@
  * Expo Router rota parametrelerini zaten çözülmüş verir ve ikinci çözme
  * "%50 indirim" gibi gerçek aramaları "P indirim"e çevirirdi.
  *
- * Türkçe büyük/küçük harf dönüşümü (i/İ, ı/I) elle yapılır: Hermes'te
- * `toLocaleUpperCase('tr-TR')` yerel ayarı her derlemede dikkate almıyor ve
- * "istanbul" → "Istanbul" gibi yanlış sonuç üretebiliyor. Kelime sınırı için
- * `\b` kullanılmaz; JS'te `\b` yalnızca ASCII harfleri tanır ve "ışıklı" gibi
- * kelimelerde ilk ASCII harfi ("k") büyütür. Boşlukla bölmek güvenlidir.
+ * Türkçe büyük/küçük harf dönüşümü `turkish-case.ts`'te (i/İ, ı/I elle eşlenir).
  */
 
-/** Türkçe'ye özgü harfleri genel dönüşümden önce eşler. */
-const TURKISH_LOWER: Record<string, string> = { I: 'ı', İ: 'i' };
-const TURKISH_UPPER: Record<string, string> = { i: 'İ', ı: 'I' };
-
-/** Metni Türkçe kurallarıyla küçük harfe çevirir ("IŞIK" → "ışık", "İPEK" → "ipek"). */
-export function toTurkishLowerCase(value: string): string {
-  return value.replace(/[Iİ]/g, (char) => TURKISH_LOWER[char]).toLowerCase();
-}
-
-/** Tek bir karakteri Türkçe kurallarıyla büyük harfe çevirir ("i" → "İ"). */
-function toTurkishUpperChar(char: string): string {
-  return TURKISH_UPPER[char] ?? char.toUpperCase();
-}
-
-/**
- * Her kelimenin ilk harfini büyütür, kalanını küçültür ("ışıklı PİJAMA" →
- * "Işıklı Pijama"). Ardışık boşluklar teke indirilir.
- */
-export function toTurkishTitleCase(value: string): string {
-  return toTurkishLowerCase(value)
-    .split(' ')
-    .filter((word) => word.length > 0)
-    .map((word) => {
-      // Kod noktası bazında böl: vekil çiftli (emoji vb.) ilk karakter bölünmesin.
-      const [first, ...rest] = Array.from(word);
-      return toTurkishUpperChar(first) + rest.join('');
-    })
-    .join(' ');
-}
+import { toTurkishTitleCase } from './turkish-case';
 
 /** Arama terimini görüntülenecek biçime getirir; boşsa `undefined` döner. */
 export function formatSearchTerm(searchTerm?: string | null): string | undefined {

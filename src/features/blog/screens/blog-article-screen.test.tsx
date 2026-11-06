@@ -72,13 +72,14 @@ describe('BlogArticleScreen', () => {
 
     expect(await screen.findByText('Körüklü Çizme Rehberi')).toBeTruthy();
     expect(mockGetPost).toHaveBeenCalledWith('cizme-rehberi');
-    expect(screen.getByText('Kısa Cevap')).toBeTruthy();
+    // Upper-cased the Turkish way by Paragraph (textTransform).
+    expect(screen.getByText('KISA CEVAP')).toBeTruthy();
     expect(screen.getByText('Körüklü çizme kışın hem sıcak tutar hem şık durur.')).toBeTruthy();
-    expect(screen.getByText('Yazıdaki ürünler')).toBeTruthy();
+    expect(screen.getByText('YAZIDAKİ ÜRÜNLER')).toBeTruthy();
     expect(screen.getByText('849,99 TL')).toBeTruthy();
     expect(screen.getByText('Bakım')).toBeTruthy();
     expect(screen.getByText('Fırçalayın')).toBeTruthy();
-    expect(screen.getByText('Çizme')).toBeTruthy();
+    expect(screen.getByText('ÇİZME')).toBeTruthy();
     expect(screen.getByText('Sık Sorulan Sorular')).toBeTruthy();
     // İçerikteki başlık tekrarı atlandığı için başlık tek kez görünür.
     expect(screen.getAllByText('Körüklü Çizme Rehberi')).toHaveLength(1);
@@ -136,6 +137,6 @@ describe('BlogArticleScreen', () => {
 
     expect(await screen.findByText('Bir Hata Oluştu')).toBeTruthy();
     fireEvent.press(screen.getByText('Tekrar Dene'));
-    expect(await screen.findByText('Kısa Cevap')).toBeTruthy();
+    expect(await screen.findByText('KISA CEVAP')).toBeTruthy();
   });
 });
