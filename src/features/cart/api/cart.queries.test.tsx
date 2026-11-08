@@ -3,13 +3,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import {
   useAddBundleToCartMutation,
+  useAddCartGiftMutation,
   useAddToCartMutation,
+  useCartCampaignBannerQuery,
   useCartQuery,
   useClearCartMutation,
   useRemoveBundleMutation,
   useRemoveCartItemMutation,
   useUpdateBundleQuantityMutation,
+  useUpdateCartItemMutation,
 } from './cart.queries';
+import { cartKeys } from './cart.keys';
 import { useCartStore } from '../store/use-cart-store';
 import { insiderTracker } from '@/features/insider/services/insider-tracker';
 import { CartLineItem } from '@/types/cart.types';
@@ -23,6 +27,8 @@ jest.mock('@/services/cart.service', () => ({
   addBundleToCartDto: jest.fn(async () => undefined),
   updateBundleQuantityDto: jest.fn(async () => undefined),
   removeBundleDto: jest.fn(async () => undefined),
+  addCartGiftDto: jest.fn(async () => ({})),
+  getCartCampaignsDto: jest.fn(async () => ({ campaigns: [] })),
 }));
 
 jest.mock('@/features/insider/services/insider-tracker', () => ({
@@ -52,6 +58,12 @@ const updateCartItemDto = cartService.updateCartItemDto as jest.MockedFunction<
   typeof cartService.updateCartItemDto
 >;
 const getCartDto = cartService.getCartDto as jest.MockedFunction<typeof cartService.getCartDto>;
+const addCartGiftDto = cartService.addCartGiftDto as jest.MockedFunction<
+  typeof cartService.addCartGiftDto
+>;
+const getCartCampaignsDto = cartService.getCartCampaignsDto as jest.MockedFunction<
+  typeof cartService.getCartCampaignsDto
+>;
 const trackerMock = insiderTracker as jest.Mocked<typeof insiderTracker>;
 
 function makeItem(variantId: string): CartLineItem {
@@ -99,8 +111,25 @@ beforeEach(() => {
   removeBundleDto.mockResolvedValue(undefined);
   updateCartItemDto.mockResolvedValue(undefined);
   getCartDto.mockResolvedValue({ cart: [] });
+  addCartGiftDto.mockResolvedValue({});
+  getCartCampaignsDto.mockResolvedValue({ campaigns: [] });
   useCartStore.setState({ items: [] });
 });
+
+/** Aynı varyantın ücretli ve hediye satırı: backend bunları ayrı `cart_item_id` ile döndürür. */
+function makeLine(cartItemId: string, overrides: Partial<CartLineItem> = {}): CartLineItem {
+  return { ...makeItem('555'), cartItemId, ...overrides };
+}
+
+/** İstemciyi dışarı açan sarmalayıcı; invalidation'ı doğrulamak için. */
+function createClientWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  const clientWrapper = ({ children }: { children: React.ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return { queryClient, clientWrapper };
+}
 
 describe('useCartQuery', () => {
   // Geri sayım ve satır kampanya fiyatı tamamen backend yanıtına bağlı:
@@ -188,9 +217,9 @@ describe('useClearCartMutation', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(removeCartItemDto).toHaveBeenCalledTimes(3);
-    expect(removeCartItemDto).toHaveBeenCalledWith(11);
-    expect(removeCartItemDto).toHaveBeenCalledWith(22);
-    expect(removeCartItemDto).toHaveBeenCalledWith(33);
+    expect(removeCartItemDto).toHaveBeenCalledWith(11, undefined);
+    expect(removeCartItemDto).toHaveBeenCalledWith(22, undefined);
+    expect(removeCartItemDto).toHaveBeenCalledWith(33, undefined);
     // Optimistic clear leaves the store empty on success.
     expect(useCartStore.getState().items).toEqual([]);
   });
@@ -277,7 +306,7 @@ describe('useRemoveCartItemMutation', () => {
 
     const { result } = renderHook(() => useRemoveCartItemMutation(), { wrapper });
 
-    result.current.mutate('11');
+    result.current.mutate({ kind: 'variant', variantId: '11' });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(trackerMock.trackRemoveFromCart).toHaveBeenCalledWith('11');
@@ -289,7 +318,7 @@ describe('useRemoveCartItemMutation', () => {
 
     const { result } = renderHook(() => useRemoveCartItemMutation(), { wrapper });
 
-    result.current.mutate('11');
+    result.current.mutate({ kind: 'variant', variantId: '11' });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(trackerMock.trackRemoveFromCart).toHaveBeenCalledWith('11');
@@ -302,7 +331,7 @@ describe('useRemoveCartItemMutation', () => {
 
     const { result } = renderHook(() => useRemoveCartItemMutation(), { wrapper });
 
-    result.current.mutate('11');
+    result.current.mutate({ kind: 'variant', variantId: '11' });
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     expect(trackerMock.trackRemoveFromCart).not.toHaveBeenCalled();
@@ -490,7 +519,7 @@ describe('useClearCartMutation — karışık sepet', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(removeBundleDto).toHaveBeenCalledWith('101703d9');
-    expect(removeCartItemDto).toHaveBeenCalledWith(11);
+    expect(removeCartItemDto).toHaveBeenCalledWith(11, undefined);
     expect(removeCartItemDto).toHaveBeenCalledTimes(1);
     expect(useCartStore.getState().items).toEqual([]);
   });
@@ -509,5 +538,162 @@ describe('useClearCartMutation — karışık sepet', () => {
 
     expect(useCartStore.getState().items).toHaveLength(2);
     expect(trackerMock.trackCartCleared).not.toHaveBeenCalled();
+  });
+});
+
+describe('useCartQuery — kampanya hediyeleri', () => {
+  it('maps the gift row, its cart_item_id and the gifts the customer can still pick', async () => {
+    getCartDto.mockResolvedValue({
+      cart: [
+        {
+          cart_item_id: 901,
+          variant_id: 555,
+          quantity: 1,
+          gift_quantity: 0,
+          old_price: null,
+          price: '100.00',
+          current_price: '100.00',
+          stock_quantity: '5',
+          in_stock: true,
+          product: { id: 42, name: 'Pijama', slug: 'pijama' },
+        },
+        {
+          cart_item_id: 902,
+          variant_id: 555,
+          quantity: 1,
+          gift_quantity: 1,
+          old_price: null,
+          price: '0.00',
+          current_price: '0',
+          stock_quantity: '5',
+          in_stock: true,
+          product: { id: 42, name: 'Pijama', slug: 'pijama' },
+        },
+      ],
+      available_gifts: [
+        {
+          product_id: 77,
+          name: 'Çorap',
+          image: 'https://cdn/corap.jpg',
+          quantity: 1,
+          campaign_ids: [12],
+          variants: [{ variant_id: 3001, name: 'Standart', available_quantity: 4, can_add: true }],
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useCartQuery(), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const [paid, gift] = result.current.data?.items ?? [];
+    expect(paid).toMatchObject({ cartItemId: '901', variantId: '555' });
+    expect(paid.isGift).toBeUndefined();
+    expect(gift).toMatchObject({ cartItemId: '902', variantId: '555', isGift: true, unitPrice: 0 });
+    expect(result.current.data?.availableGifts).toEqual([
+      expect.objectContaining({ productId: '77', campaignId: '12', quantity: 1 }),
+    ]);
+  });
+});
+
+describe('useUpdateCartItemMutation', () => {
+  it('sends cart_item_id and changes only the targeted row when a variant has a gift row too', async () => {
+    useCartStore.setState({ items: [makeLine('901'), makeLine('902', { isGift: true, unitPrice: 0 })] });
+
+    const { result } = renderHook(() => useUpdateCartItemMutation(), { wrapper });
+
+    result.current.mutate({ target: { kind: 'variant', variantId: '555', cartItemId: '901' }, quantity: 3 });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(updateCartItemDto).toHaveBeenCalledWith(555, 3, 901);
+    const items = useCartStore.getState().items;
+    expect(items[0].quantity).toBe(3);
+    // Hediye satırı aynı varyantta olsa da etkilenmez.
+    expect(items[1].quantity).toBe(1);
+  });
+
+  it('falls back to the variant when the backend sent no cart_item_id', async () => {
+    useCartStore.setState({ items: [makeItem('11')] });
+
+    const { result } = renderHook(() => useUpdateCartItemMutation(), { wrapper });
+
+    result.current.mutate({ target: { kind: 'variant', variantId: '11' }, quantity: 2 });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(updateCartItemDto).toHaveBeenCalledWith(11, 2, undefined);
+    expect(useCartStore.getState().items[0].quantity).toBe(2);
+  });
+});
+
+describe('useRemoveCartItemMutation — hediye satırı', () => {
+  it('removes only the gift row so the paid row of the same variant stays', async () => {
+    useCartStore.setState({ items: [makeLine('901'), makeLine('902', { isGift: true, unitPrice: 0 })] });
+
+    const { result } = renderHook(() => useRemoveCartItemMutation(), { wrapper });
+
+    result.current.mutate({ kind: 'variant', variantId: '555', cartItemId: '902' });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(removeCartItemDto).toHaveBeenCalledWith(555, 902);
+    const items = useCartStore.getState().items;
+    expect(items).toHaveLength(1);
+    expect(items[0].cartItemId).toBe('901');
+    expect(trackerMock.trackCartCleared).not.toHaveBeenCalled();
+  });
+});
+
+describe('useAddCartGiftMutation', () => {
+  const GIFT = {
+    productId: '77',
+    campaignId: '12',
+    name: 'Çorap',
+    imageUrl: '',
+    quantity: 2,
+    sizes: [{ variantId: '3001', name: 'Standart', availableQuantity: 4, canAdd: true }],
+  };
+
+  it('posts the chosen size with the campaign and refreshes the cart', async () => {
+    const { queryClient, clientWrapper } = createClientWrapper();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useAddCartGiftMutation(), { wrapper: clientWrapper });
+
+    result.current.mutate({ gift: GIFT, variantId: '3001' });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(addCartGiftDto).toHaveBeenCalledWith({
+      campaignId: 12,
+      productId: 77,
+      variantId: 3001,
+      quantity: 2,
+    });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: cartKeys.all });
+    // Hediye eklemesi web'deki gibi add-to-cart olarak raporlanmaz.
+    expect(trackerMock.trackAddToCart).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the cart after a failure too, since stock or the campaign right may have changed', async () => {
+    addCartGiftDto.mockRejectedValueOnce(new Error('stok yok'));
+    const { queryClient, clientWrapper } = createClientWrapper();
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useAddCartGiftMutation(), { wrapper: clientWrapper });
+
+    result.current.mutate({ gift: GIFT, variantId: '3001' });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: cartKeys.all });
+  });
+});
+
+describe('useCartCampaignBannerQuery', () => {
+  it('asks for the campaigns of the listed category and keys the cache by it', async () => {
+    const { queryClient, clientWrapper } = createClientWrapper();
+
+    const { result } = renderHook(() => useCartCampaignBannerQuery(48), { wrapper: clientWrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(getCartCampaignsDto).toHaveBeenCalledWith(48);
+    expect(queryClient.getQueryState(cartKeys.campaigns(48))).toBeDefined();
+    expect(queryClient.getQueryState(cartKeys.campaigns())).toBeUndefined();
   });
 });

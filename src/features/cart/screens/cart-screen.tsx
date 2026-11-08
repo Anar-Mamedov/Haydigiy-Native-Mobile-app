@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ScrollView, Spinner, YStack } from 'tamagui';
 import { AppScreen, ConfirmDialog, EmptyState } from '@/components/ui';
+import { AvailableGiftsCard } from '@/features/cart/components/available-gifts-card';
+import { CartGiftItemCard } from '@/features/cart/components/cart-gift-item-card';
 import { CartHeader } from '@/features/cart/components/cart-header';
 import { CartItemCard } from '@/features/cart/components/cart-item-card';
 import { CartRemoveItemDialog } from '@/features/cart/components/cart-remove-item-dialog';
@@ -10,7 +12,7 @@ import { CartSummaryBar } from '@/features/cart/components/cart-summary-bar';
 import { FreeShippingCampaignCard } from '@/features/cart/components/free-shipping-campaign-card';
 import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-estimate-info';
 import { useCartController } from '@/features/cart/hooks/use-cart-controller';
-import { getCartLineKey } from '@/features/cart/utils/cart-line';
+import { getCartLineKey, isGiftCartLine } from '@/features/cart/utils/cart-line';
 import { InsiderRecommendationSections } from '@/features/insider/components/insider-recommendation-sections';
 import { OrderMergeOfferSheet } from '@/features/order-merge/components/order-merge-offer-sheet';
 import { useTrackCartPageView } from '@/features/insider/hooks/use-insider-page-tracking';
@@ -105,20 +107,37 @@ export function CartScreen() {
           showsVerticalScrollIndicator={false}
         >
           <ShippingEstimateInfo estimate={controller.shippingEstimate} />
+          <AvailableGiftsCard gifts={controller.availableGifts} />
           <FreeShippingCampaignCard campaigns={controller.campaigns} subtotal={controller.subtotal} />
 
-          {items.map((item) => (
-            <CartItemCard
-              deliveryMessage={controller.shippingEstimate?.message}
-              item={item}
-              key={getCartLineKey(item)}
-              onPressBundleComponent={(component) => controller.openProductBySlug(component.slug)}
-              onPressProduct={() => controller.openProduct(item)}
-              onQuantityChange={(quantity) => controller.changeQuantity(item, quantity)}
-              onRemovePress={() => controller.requestRemove(item)}
-              updating={controller.updatingLineKey === getCartLineKey(item)}
-            />
-          ))}
+          {items.map((item) => {
+            const lineKey = getCartLineKey(item);
+
+            // Kampanya hediyesinin adedi değiştirilemez; ayrı kartta yalnız silinebilir.
+            if (isGiftCartLine(item)) {
+              return (
+                <CartGiftItemCard
+                  item={item}
+                  key={lineKey}
+                  onPressProduct={() => controller.openProduct(item)}
+                  onRemovePress={() => controller.requestRemove(item)}
+                />
+              );
+            }
+
+            return (
+              <CartItemCard
+                deliveryMessage={controller.shippingEstimate?.message}
+                item={item}
+                key={lineKey}
+                onPressBundleComponent={(component) => controller.openProductBySlug(component.slug)}
+                onPressProduct={() => controller.openProduct(item)}
+                onQuantityChange={(quantity) => controller.changeQuantity(item, quantity)}
+                onRemovePress={() => controller.requestRemove(item)}
+                updating={controller.updatingLineKey === lineKey}
+              />
+            );
+          })}
 
           <InsiderRecommendationSections
             productIds={items.map((item) => item.productId)}

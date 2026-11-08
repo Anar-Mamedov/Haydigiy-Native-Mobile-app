@@ -12,7 +12,7 @@ jest.mock('expo-router', () => ({
 
 const mockBannerQuery = jest.fn();
 jest.mock('@/features/cart/api/cart.queries', () => ({
-  useCartCampaignBannerQuery: () => mockBannerQuery(),
+  useCartCampaignBannerQuery: (categoryId?: number) => mockBannerQuery(categoryId),
 }));
 
 const SINGLE: CartCampaignBannerStatus = {
@@ -256,10 +256,74 @@ describe('CartCampaignBanner', () => {
     expect(screen.queryByTestId('cart-campaign-banner')).toBeNull();
   });
 
+  it('asks for the campaigns of the listed category', () => {
+    mockBannerQuery.mockReturnValue({ data: SINGLE });
+    renderWithTamagui(<CartCampaignBanner categoryId={48} />);
+
+    expect(mockBannerQuery).toHaveBeenCalledWith(48);
+  });
+
   it('renders nothing while the campaign request is still pending or failed', () => {
     mockBannerQuery.mockReturnValue({ data: undefined });
     renderWithTamagui(<CartCampaignBanner />);
 
     expect(screen.queryByTestId('cart-campaign-banner')).toBeNull();
+  });
+});
+
+describe('CartCampaignBannerView — hediye kampanyası', () => {
+  const GIFT: CartCampaignBannerStatus = {
+    currentAmount: 0,
+    slides: [
+      {
+        id: '90',
+        campaignName: 'Pijama alana çorap hediye',
+        threshold: null,
+        message: 'Şu şartları karşılarsanız, Çorap HEDİYE! Pijama kategorisinden ürün.',
+        progress: 100,
+        gift: {
+          products: [
+            { productId: '77', name: 'Çorap', imageUrl: 'https://cdn/corap.jpg', quantity: 2 },
+          ],
+          conditions: ['Pijama kategorisinden ürün', 'En az 2 ürün'],
+        },
+      },
+    ],
+  };
+
+  it('shows the gift products, the conditions and the call to action instead of an amount', () => {
+    const onGoToCart = jest.fn();
+    renderWithTamagui(<CartCampaignBannerView onGoToCart={onGoToCart} status={GIFT} />);
+
+    expect(screen.getByTestId('cart-campaign-gift-slide')).toBeTruthy();
+    expect(screen.getByText('Pijama alana çorap hediye')).toBeTruthy();
+    expect(screen.getByText('2 adet Çorap')).toBeTruthy();
+    expect(screen.getByText('HEDİYE!!!')).toBeTruthy();
+    expect(screen.getByText('Şartlar:')).toBeTruthy();
+    expect(screen.getByText('• Pijama kategorisinden ürün')).toBeTruthy();
+    expect(screen.getByText('• En az 2 ürün')).toBeTruthy();
+    expect(screen.queryByText(/Toplam:/)).toBeNull();
+
+    fireEvent.press(screen.getByLabelText('Sepete git'));
+    expect(onGoToCart).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves out the conditions block when the backend sends none', () => {
+    const slide = GIFT.slides[0];
+    renderWithTamagui(
+      <CartCampaignBannerView
+        onGoToCart={jest.fn()}
+        status={{ ...GIFT, slides: [{ ...slide, gift: { products: slide.gift!.products, conditions: [] } }] }}
+      />,
+    );
+
+    expect(screen.queryByText('Şartlar:')).toBeNull();
+  });
+
+  it('keeps its labels readable in the dark theme', () => {
+    renderWithTamagui(<CartCampaignBannerView onGoToCart={jest.fn()} status={GIFT} />, 'dark');
+
+    expect(screen.getByText('2 adet Çorap')).toBeTruthy();
+    expect(screen.getByLabelText('Sepete git')).toBeTruthy();
   });
 });

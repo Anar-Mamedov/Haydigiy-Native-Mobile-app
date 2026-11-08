@@ -7,10 +7,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScrollView, XStack, YStack } from 'tamagui';
-import { AppButton } from '@/components/ui/app-button';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { Info } from '@/components/ui/icons';
 import { useCartCampaignBannerQuery } from '@/features/cart/api/cart.queries';
+import { CartCampaignCtaButton } from '@/features/cart/components/cart-campaign-cta-button';
+import { CartCampaignGiftSlide } from '@/features/cart/components/cart-campaign-gift-slide';
 import { CartCampaignBannerSlide, CartCampaignBannerStatus } from '@/types/cart.types';
 import { formatAmount } from '@/utils/format-currency';
 
@@ -81,21 +82,26 @@ function CartCampaignBannerSlideView({ currentAmount, onGoToCart, slide }: Slide
           </Paragraph>
         </YStack>
 
-        <AppButton
-          accessibilityLabel="Sepete git"
-          accessibilityRole="button"
-          backgroundColor="$brand"
-          borderColor="$brand"
-          color="white"
-          minWidth={92}
-          onPress={onGoToCart}
-          pressStyle={{ backgroundColor: '$brand', borderColor: '$brand', opacity: 0.85 }}
-          testID="cart-campaign-banner-cta"
-        >
-          Sepete git
-        </AppButton>
+        <CartCampaignCtaButton onPress={onGoToCart} />
       </XStack>
     </YStack>
+  );
+}
+
+/** Sayfanın türüne göre görünümü seçer: hediye kampanyası ya da tutar/eşik kampanyası. */
+function CampaignSlide({ currentAmount, onGoToCart, slide }: SlideProps) {
+  if (slide.gift) {
+    return (
+      <CartCampaignGiftSlide
+        campaignName={slide.campaignName}
+        gift={slide.gift}
+        onGoToCart={onGoToCart}
+      />
+    );
+  }
+
+  return (
+    <CartCampaignBannerSlideView currentAmount={currentAmount} onGoToCart={onGoToCart} slide={slide} />
   );
 }
 
@@ -184,11 +190,7 @@ export function CartCampaignBannerView({ status, onGoToCart }: CartCampaignBanne
               key={slide.id}
               width={width}
             >
-              <CartCampaignBannerSlideView
-                currentAmount={currentAmount}
-                onGoToCart={onGoToCart}
-                slide={slide}
-              />
+              <CampaignSlide currentAmount={currentAmount} onGoToCart={onGoToCart} slide={slide} />
             </YStack>
           ))}
         </ScrollView>
@@ -196,11 +198,7 @@ export function CartCampaignBannerView({ status, onGoToCart }: CartCampaignBanne
         // Tek kampanyada karusel hiç kurulmaz; çoklu kampanyada da genişlik
         // ölçülene kadar ilk sayfa çizilir, böylece bant boş bir kutu olarak
         // görünmez.
-        <CartCampaignBannerSlideView
-          currentAmount={currentAmount}
-          onGoToCart={onGoToCart}
-          slide={slides[0]}
-        />
+        <CampaignSlide currentAmount={currentAmount} onGoToCart={onGoToCart} slide={slides[0]} />
       )}
 
       {hasCarousel ? (
@@ -228,14 +226,15 @@ export function CartCampaignBannerView({ status, onGoToCart }: CartCampaignBanne
 /**
  * Ürün listesi ekranında gösterilen sepet kampanya bandı — web'deki
  * `CartCampaignBanner`'ın karşılığı. Ekran kampanya verisini hiç görmez;
- * yalnızca bu bileşeni yerleştirir.
+ * yalnızca bu bileşeni yerleştirir ve listelenen kategoriyi verir; backend
+ * kategoriye özel hediye kampanyasını buna göre döndürür.
  *
  * Gösterilecek kampanya yoksa (boş sepet, kampanyasız hesap ya da başarısız
  * istek) hiçbir şey render edilmez ve liste düzeni olduğu gibi kalır.
  */
-export function CartCampaignBanner() {
+export function CartCampaignBanner({ categoryId }: { categoryId?: number }) {
   const router = useRouter();
-  const { data: status } = useCartCampaignBannerQuery();
+  const { data: status } = useCartCampaignBannerQuery(categoryId);
 
   if (!status || status.slides.length === 0) return null;
 

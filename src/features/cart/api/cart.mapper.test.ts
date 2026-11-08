@@ -1,10 +1,16 @@
 import {
+  mapAvailableGifts,
   mapCartCampaignBannerStatus,
   mapCartCampaignDto,
   mapCartItemDto,
   mapCartResponse,
 } from './cart.mapper';
-import { CartCampaignDto, CartCampaignsResponseDto, CartItemDto } from './cart.dtos';
+import {
+  AvailableGiftDto,
+  CartCampaignDto,
+  CartCampaignsResponseDto,
+  CartItemDto,
+} from './cart.dtos';
 
 function makeDto(overrides: Partial<CartItemDto> = {}): CartItemDto {
   return {
@@ -155,6 +161,84 @@ describe('mapCartCampaignDto', () => {
   // değer (0 dahil) gizler.
   it('leaves the counter undefined when the backend omits it', () => {
     expect(mapCartCampaignDto(campaignDto()).counter).toBeUndefined();
+  });
+});
+
+describe('mapCartItemDto (kampanya hediyesi)', () => {
+  it('carries the cart_item_id so a row is targeted even when its variant has another row', () => {
+    expect(mapCartItemDto(makeDto({ cart_item_id: 901, gift_quantity: 0 }))).toMatchObject({
+      cartItemId: '901',
+      variantId: '555',
+    });
+  });
+
+  it('marks a row whose whole quantity is a gift and prices it at zero', () => {
+    const line = mapCartItemDto(
+      makeDto({
+        cart_item_id: 902,
+        quantity: 1,
+        gift_quantity: 1,
+        old_price: null,
+        price: '0.00',
+        current_price: '0',
+        current_discounted_price: '0',
+      }),
+    );
+
+    expect(line.isGift).toBe(true);
+    expect(line.unitPrice).toBe(0);
+    expect(line.originalPrice).toBeUndefined();
+  });
+
+  it('does not treat a paid row or a partly gifted row as a gift', () => {
+    expect(mapCartItemDto(makeDto({ gift_quantity: 0 })).isGift).toBeUndefined();
+    expect(mapCartItemDto(makeDto({ quantity: 2, gift_quantity: 1 })).isGift).toBeUndefined();
+    expect(mapCartItemDto(makeDto({ gift_quantity: null })).isGift).toBeUndefined();
+  });
+});
+
+describe('mapAvailableGifts', () => {
+  function makeGiftDto(overrides: Partial<AvailableGiftDto> = {}): AvailableGiftDto {
+    return {
+      product_id: 77,
+      name: 'Çorap',
+      slug: 'corap',
+      image: 'https://cdn/corap.jpg',
+      quantity: 2,
+      campaign_ids: [12, 13],
+      variants: [
+        { variant_id: 3001, name: 'S', available_quantity: 5, can_add: true },
+        { variant_id: 3002, name: null, available_quantity: 1, can_add: false },
+      ],
+      ...overrides,
+    };
+  }
+
+  it('maps an offer with its campaign and real sizes', () => {
+    expect(mapAvailableGifts([makeGiftDto()])).toEqual([
+      {
+        productId: '77',
+        campaignId: '12',
+        name: 'Çorap',
+        slug: 'corap',
+        imageUrl: 'https://cdn/corap.jpg',
+        quantity: 2,
+        sizes: [
+          { variantId: '3001', name: 'S', availableQuantity: 5, canAdd: true },
+          { variantId: '3002', name: 'Standart', availableQuantity: 1, canAdd: false },
+        ],
+      },
+    ]);
+  });
+
+  it('drops offers that cannot be added: no campaign or no size', () => {
+    expect(mapAvailableGifts([makeGiftDto({ campaign_ids: [] })])).toEqual([]);
+    expect(mapAvailableGifts([makeGiftDto({ variants: [] })])).toEqual([]);
+  });
+
+  it('returns an empty list for a missing field', () => {
+    expect(mapAvailableGifts(undefined)).toEqual([]);
+    expect(mapAvailableGifts(null)).toEqual([]);
   });
 });
 
@@ -451,5 +535,58 @@ describe('mapCartCampaignBannerStatus', () => {
         campaigns: [makeCampaign({ message: '   ' })],
       }),
     ).toBeNull();
+  });
+});
+
+describe('mapCartCampaignBannerStatus (hediye kampanyası)', () => {
+  const GIFT_MESSAGE =
+    'Şu şartları karşılarsanız, Çorap HEDİYE! Pijama kategorisinden ürün; En az 2 ürün.';
+
+  it('adds the gift products and the backend conditions to a gift_product slide', () => {
+    const status = mapCartCampaignBannerStatus({
+      campaigns: [
+        makeCampaign({
+          id: 90,
+          name: 'Pijama alana çorap hediye',
+          type: 'gift_product',
+          threshold: null,
+          remaining: 0,
+          message: GIFT_MESSAGE,
+          conditions: ['Pijama kategorisinden ürün', ' En az 2 ürün ', ''],
+          gift_products: [{ product_id: 77, name: 'Çorap', image: 'https://cdn/corap.jpg', quantity: 1 }],
+        }),
+      ],
+    });
+
+    expect(status?.slides[0]).toMatchObject({
+      id: '90',
+      campaignName: 'Pijama alana çorap hediye',
+      gift: {
+        products: [{ productId: '77', name: 'Çorap', imageUrl: 'https://cdn/corap.jpg', quantity: 1 }],
+        // Şartlar metinden ayrıştırılmaz; yalnız boşluklar temizlenir.
+        conditions: ['Pijama kategorisinden ürün', 'En az 2 ürün'],
+      },
+    });
+  });
+
+  it('keeps a gift campaign without products as a normal slide', () => {
+    const status = mapCartCampaignBannerStatus({
+      campaigns: [makeCampaign({ type: 'gift_product', message: GIFT_MESSAGE, gift_products: [] })],
+    });
+
+    expect(status?.slides[0].gift).toBeUndefined();
+  });
+
+  it('never adds gift content to other campaign types', () => {
+    const status = mapCartCampaignBannerStatus({
+      campaigns: [
+        makeCampaign({
+          message: 'Sepete 100 TL daha ekleyin.',
+          gift_products: [{ product_id: 77, name: 'Çorap', image: null, quantity: 1 }],
+        }),
+      ],
+    });
+
+    expect(status?.slides[0].gift).toBeUndefined();
   });
 });

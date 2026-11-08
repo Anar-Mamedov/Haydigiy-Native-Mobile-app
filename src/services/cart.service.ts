@@ -2,13 +2,35 @@ import { apiClient } from '@/lib/axios';
 import { appEnv } from '@/lib/env';
 import { getAccessToken } from '@/lib/storage/secure-storage';
 import { getDeviceId } from '@/lib/storage/device-id';
-import { CartCampaignsResponseDto, CartResponseDto } from '@/features/cart/api/cart.dtos';
+import {
+  AddCartGiftResponseDto,
+  CartCampaignsResponseDto,
+  CartResponseDto,
+} from '@/features/cart/api/cart.dtos';
 import { BundleSelection } from '@/types/bundle.types';
 
 type CartMutationPayload = {
   variant_id: number;
+  /** Aynı varyantın ücretli ve hediye satırı ayrı durduğu için tek satırı hedefler. */
+  cart_item_id?: number;
   quantity?: number;
   device_id?: string;
+};
+
+type CartGiftAddPayload = {
+  campaign_id: number;
+  product_id: number;
+  variant_id: number;
+  quantity: number;
+  device_id?: string;
+};
+
+/** Sepete eklenecek hediyenin seçimi; hak ve stok backend'de yeniden doğrulanır. */
+export type CartGiftSelection = {
+  campaignId: number;
+  productId: number;
+  variantId: number;
+  quantity: number;
 };
 
 type BundleAddPayload = {
@@ -50,6 +72,9 @@ export async function getCartDto(): Promise<CartResponseDto> {
   return {
     cart: Array.isArray(response.data?.cart) ? response.data.cart : [],
     campaigns: Array.isArray(response.data?.campaigns) ? response.data.campaigns : [],
+    available_gifts: Array.isArray(response.data?.available_gifts)
+      ? response.data.available_gifts
+      : [],
     user_discount: response.data?.user_discount,
     removed_items: response.data?.removed_items,
     message: response.data?.message,
@@ -61,15 +86,23 @@ export async function getCartDto(): Promise<CartResponseDto> {
  * Sepet kampanya durumunu döndürür. `/cart/list` sepet satırlarını taşır;
  * kampanya bandı satırlara değil yalnızca eşik/tutar bilgisine ihtiyaç duyduğu
  * için ayrı ve daha hafif olan bu ucu kullanır.
+ *
+ * `categoryId` listelenen kategoridir (`c`); backend o kategoriye özel hediye
+ * kampanyasını buna göre döndürür.
  */
-export async function getCartCampaignsDto(): Promise<CartCampaignsResponseDto> {
+export async function getCartCampaignsDto(categoryId?: number): Promise<CartCampaignsResponseDto> {
   if (!appEnv.apiBaseUrl) {
     return EMPTY_CAMPAIGNS;
   }
 
   const deviceId = await getGuestDeviceId();
+  const hasCategory = typeof categoryId === 'number' && Number.isSafeInteger(categoryId) && categoryId > 0;
+  const params = {
+    ...(deviceId ? { device_id: deviceId } : {}),
+    ...(hasCategory ? { c: categoryId } : {}),
+  };
   const response = await apiClient.get<CartCampaignsResponseDto>('/cart/campaigns', {
-    params: deviceId ? { device_id: deviceId } : undefined,
+    params: Object.keys(params).length > 0 ? params : undefined,
   });
 
   return {
@@ -90,24 +123,58 @@ export async function addToCartDto(variantId: number, quantity = 1): Promise<voi
   await apiClient.post('/cart/add', payload);
 }
 
-export async function updateCartItemDto(variantId: number, quantity: number): Promise<void> {
+/**
+ * Satır adedini günceller. `cartItemId` verilirse yalnız o satır değişir; yoksa
+ * backend varyantın tüm satırlarına dokunur (hediye satırı varsa onu da küçültür).
+ */
+export async function updateCartItemDto(
+  variantId: number,
+  quantity: number,
+  cartItemId?: number,
+): Promise<void> {
   if (!appEnv.apiBaseUrl) return;
 
   const deviceId = await getGuestDeviceId();
   const payload: CartMutationPayload = { variant_id: variantId, quantity };
+  if (cartItemId) payload.cart_item_id = cartItemId;
   if (deviceId) payload.device_id = deviceId;
 
   await apiClient.patch('/cart/update', payload);
 }
 
-export async function removeCartItemDto(variantId: number): Promise<void> {
+/**
+ * Satırı siler. `cartItemId` olmadan backend, varyantta hediye satırı varsa o
+ * varyantın ücretli ve hediye satırlarını birlikte siler.
+ */
+export async function removeCartItemDto(variantId: number, cartItemId?: number): Promise<void> {
   if (!appEnv.apiBaseUrl) return;
 
   const deviceId = await getGuestDeviceId();
   const payload: CartMutationPayload = { variant_id: variantId };
+  if (cartItemId) payload.cart_item_id = cartItemId;
   if (deviceId) payload.device_id = deviceId;
 
   await apiClient.delete('/cart/remove', { data: payload });
+}
+
+/**
+ * Müşterinin seçtiği bedenle hak ettiği hediyeyi sepete ücretsiz ekler. Tutar ve
+ * hak istemciden alınmaz; backend kampanya uygunluğunu ve stoğu yeniden doğrular.
+ */
+export async function addCartGiftDto(selection: CartGiftSelection): Promise<AddCartGiftResponseDto> {
+  if (!appEnv.apiBaseUrl) return {};
+
+  const deviceId = await getGuestDeviceId();
+  const payload: CartGiftAddPayload = {
+    campaign_id: selection.campaignId,
+    product_id: selection.productId,
+    variant_id: selection.variantId,
+    quantity: selection.quantity,
+  };
+  if (deviceId) payload.device_id = deviceId;
+
+  const response = await apiClient.post<AddCartGiftResponseDto>('/cart/gifts/add', payload);
+  return response.data ?? {};
 }
 
 /**

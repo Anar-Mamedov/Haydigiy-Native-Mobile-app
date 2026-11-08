@@ -1,8 +1,11 @@
 import {
+  canChangeCartLineQuantity,
   getCartLineKey,
   getCartLineMaxQuantity,
   getCartLineTarget,
+  getCartLineTargetKey,
   isBundleCartLine,
+  isGiftCartLine,
 } from './cart-line';
 import { CartLineItem } from '@/types/cart.types';
 
@@ -79,5 +82,43 @@ describe('getCartLineMaxQuantity', () => {
   it('falls back to a fixed cap for bundles without stock, and 0 for products', () => {
     expect(getCartLineMaxQuantity(bundleLine)).toBe(10);
     expect(getCartLineMaxQuantity({ ...productLine, stock: undefined })).toBe(0);
+  });
+});
+
+describe('kampanya hediyesi satırları', () => {
+  const paidLine: CartLineItem = { ...productLine, cartItemId: '901' };
+  const giftLine: CartLineItem = { ...productLine, cartItemId: '902', unitPrice: 0, isGift: true };
+
+  it('keys rows by cart_item_id so a variant’s paid and gift rows never share a key', () => {
+    expect(getCartLineKey(paidLine)).toBe('cart:901');
+    expect(getCartLineKey(giftLine)).toBe('cart:902');
+    // Bundle önceliği korunur.
+    expect(getCartLineKey({ ...bundleLine, cartItemId: '903' })).toBe(
+      'bundle:101703d9-b539-458e-ba74-8f334359e14f',
+    );
+  });
+
+  it('carries the cart_item_id in the mutation target', () => {
+    expect(getCartLineTarget(giftLine)).toEqual({
+      kind: 'variant',
+      variantId: '4321',
+      cartItemId: '902',
+    });
+  });
+
+  it('builds the same key from a target as from its line', () => {
+    for (const line of [paidLine, giftLine, productLine, bundleLine]) {
+      const target = getCartLineTarget(line);
+      expect(target && getCartLineTargetKey(target)).toBe(getCartLineKey(line));
+    }
+  });
+
+  it('allows quantity changes everywhere except on gift rows', () => {
+    expect(isGiftCartLine(giftLine)).toBe(true);
+    expect(isGiftCartLine(paidLine)).toBe(false);
+    expect(canChangeCartLineQuantity(giftLine)).toBe(false);
+    expect(canChangeCartLineQuantity(paidLine)).toBe(true);
+    expect(canChangeCartLineQuantity(bundleLine)).toBe(true);
+    expect(canChangeCartLineQuantity(null)).toBe(false);
   });
 });

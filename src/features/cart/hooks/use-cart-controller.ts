@@ -20,12 +20,14 @@ import { useAddFavoriteMutation } from '@/features/favorite/api/favorite.queries
 import { useOrderMergeOffer } from '@/features/order-merge/hooks/use-order-merge-offer';
 import { cartItemToInsiderInput } from '@/features/insider/utils/insider-product.mapper';
 import { isAuthenticated } from '@/features/auth/api/auth-session';
-import { CartCampaign, CartLineItem } from '@/types/cart.types';
+import { AvailableGift, CartCampaign, CartLineItem } from '@/types/cart.types';
 import { getApiErrorMessage } from '@/utils/api-error';
 import {
   CartLineTarget,
+  canChangeCartLineQuantity,
   getCartLineMaxQuantity,
   getCartLineTarget,
+  getCartLineTargetKey,
 } from '@/features/cart/utils/cart-line';
 
 const isOutOfStock = (message: string) =>
@@ -62,6 +64,7 @@ export function useCartController() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const campaigns: CartCampaign[] = cartQuery.data?.campaigns ?? [];
+  const availableGifts: AvailableGift[] = cartQuery.data?.availableGifts ?? [];
 
   // Surface the backend "items removed (out of stock)" notice once per fetch.
   useEffect(() => {
@@ -94,13 +97,18 @@ export function useCartController() {
 
   /**
    * Güncellenmekte olan satırın kimliği. Bundle satırlarının `variant_id`'si
-   * olmadığı için satır kimliği (`getCartLineKey`) üzerinden takip edilir.
+   * olmadığı ve bir varyantın birden fazla satırı olabildiği için satır kimliği
+   * (`getCartLineKey`) üzerinden takip edilir.
    */
-  const updatingLineKey = updateMutation.isPending
-    ? `variant:${updateMutation.variables?.variantId}`
-    : updateBundleMutation.isPending
-    ? `bundle:${updateBundleMutation.variables?.bundleGroupId}`
-    : undefined;
+  const updatingLineKey =
+    updateMutation.isPending && updateMutation.variables
+      ? getCartLineTargetKey(updateMutation.variables.target)
+      : updateBundleMutation.isPending && updateBundleMutation.variables
+      ? getCartLineTargetKey({
+          kind: 'bundle',
+          bundleGroupId: updateBundleMutation.variables.bundleGroupId,
+        })
+      : undefined;
 
   /**
    * Sepet yazma işlemleri sessizce başarısız olmaz. Mutasyon iyimser güncellemeyi
@@ -113,7 +121,8 @@ export function useCartController() {
 
   const changeQuantity = useCallback(
     (item: CartLineItem, quantity: number) => {
-      if (quantity < 1) return;
+      // Kampanya hediyesinin adedi değiştirilemez; kart da adet kontrolü çizmez.
+      if (quantity < 1 || !canChangeCartLineQuantity(item)) return;
 
       const target = getCartLineTarget(item);
       if (!target) return;
@@ -132,7 +141,7 @@ export function useCartController() {
         return;
       }
 
-      updateMutation.mutate({ variantId: target.variantId, quantity: capped }, { onError });
+      updateMutation.mutate({ target, quantity: capped }, { onError });
     },
     [alertWriteFailure, updateBundleMutation, updateMutation],
   );
@@ -145,7 +154,7 @@ export function useCartController() {
     setRemoveTarget(null);
   }, []);
 
-  /** Satırı kendi ucundan siler: bundle `bundle_group_id`, normal ürün `variant_id`. */
+  /** Satırı kendi ucundan siler: bundle `bundle_group_id`, normal ürün `cart_item_id`. */
   const removeLine = useCallback(
     (item: CartLineItem) => {
       const target = getCartLineTarget(item);
@@ -157,7 +166,7 @@ export function useCartController() {
       if (target.kind === 'bundle') {
         removeBundleMutation.mutate(target.bundleGroupId, { onError });
       } else {
-        removeMutation.mutate(target.variantId, { onError });
+        removeMutation.mutate(target, { onError });
       }
       return true;
     },
@@ -310,6 +319,7 @@ export function useCartController() {
     subtotal,
     total,
     campaigns,
+    availableGifts,
     shippingEstimate: shippingQuery.data,
     // Async read state
     isLoading: cartQuery.isPending,

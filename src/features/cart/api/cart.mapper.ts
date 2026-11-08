@@ -1,8 +1,16 @@
-import { CartCampaignDto, CartCampaignsResponseDto, CartItemDto } from './cart.dtos';
 import {
+  AvailableGiftDto,
+  CartCampaignDto,
+  CartCampaignsResponseDto,
+  CartItemDto,
+} from './cart.dtos';
+import {
+  AvailableGift,
+  AvailableGiftSize,
   CartCampaign,
   CartCampaignBannerSlide,
   CartCampaignBannerStatus,
+  CartCampaignGiftDetails,
   CartLineItem,
 } from '@/types/cart.types';
 import { isBundleLine, mapBundleComponents } from '@/features/bundle/api/bundle.mapper';
@@ -24,10 +32,27 @@ function toAmount(value: number | string | null | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** Adet alanları sayı ya da sayısal metin gelebilir; geçersizse en az 1 kabul edilir. */
+function toPositiveCount(value: unknown): number {
+  const parsed = Math.trunc(Number(value));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+/**
+ * Satırın tamamı ücretsiz kampanya hediyesi mi? Backend bundle dışı her satırı
+ * tek `cart_item_id` ile döndürür; `gift_quantity` ya 0 ya da satırın tüm adedidir.
+ * Ücretli/hediye karışık satır bu yüzden yoktur ve hediye sayılmaz.
+ */
+function isWholeGiftLine(dto: CartItemDto, isBundle: boolean): boolean {
+  if (isBundle) return false;
+  const giftQuantity = Number(dto.gift_quantity ?? 0);
+  return Number.isFinite(giftQuantity) && giftQuantity > 0 && giftQuantity >= dto.quantity;
+}
+
 /**
  * Maps a backend cart line into the cart domain model consumed by the UI and the
- * Zustand store. The backend cart is keyed by `variant_id`, which is preserved so
- * update/remove mutations can target the correct line.
+ * Zustand store. Normal lines carry both `variant_id` and `cart_item_id`; the
+ * latter targets a single row because a variant's paid and gift rows stay apart.
  */
 export function mapCartItemDto(dto: CartItemDto): CartLineItem {
   const product = dto.product;
@@ -50,6 +75,7 @@ export function mapCartItemDto(dto: CartItemDto): CartLineItem {
   const campaignDiscount = toAmount(dto.campaign_discount) ?? 0;
   const campaignTotal = toAmount(dto.campaign_total);
   const hasCampaignPrice = campaignDiscount > 0 && campaignTotal !== null;
+  const hasCartItemId = !isBundle && dto.cart_item_id != null;
 
   return {
     // Bundle satırının `variant_id`'si yoktur; kimlik `bundleGroupId` üzerinden taşınır.
@@ -71,6 +97,9 @@ export function mapCartItemDto(dto: CartItemDto): CartLineItem {
     size: dto.variant?.size?.name ?? undefined,
     color: (product?.color?.name ?? product?.color_name)?.trim() || undefined,
     ...(hasCampaignPrice ? { campaignDiscount, campaignTotal } : {}),
+    // Bundle satırı `bundle_group_id` ile hedeflenir; satır kimliği yalnız normal ürünlerde taşınır.
+    ...(hasCartItemId ? { cartItemId: String(dto.cart_item_id) } : {}),
+    ...(isWholeGiftLine(dto, isBundle) ? { isGift: true } : {}),
     ...(isBundle
       ? {
           itemType: 'bundle' as const,
@@ -85,6 +114,49 @@ export function mapCartItemDto(dto: CartItemDto): CartLineItem {
 /** Drops malformed lines (e.g. a deleted product) so the UI never crashes on null. */
 export function mapCartResponse(items: CartItemDto[]): CartLineItem[] {
   return items.filter((item) => item?.product).map(mapCartItemDto);
+}
+
+function mapAvailableGiftSizes(dto: AvailableGiftDto): AvailableGiftSize[] {
+  if (!Array.isArray(dto.variants)) return [];
+
+  return dto.variants
+    .filter((variant) => variant?.variant_id != null)
+    .map((variant) => ({
+      variantId: String(variant.variant_id),
+      name: (typeof variant.name === 'string' ? variant.name.trim() : '') || 'Standart',
+      availableQuantity: Math.max(0, Number(variant.available_quantity) || 0),
+      canAdd: Boolean(variant.can_add),
+    }));
+}
+
+/**
+ * Tek hediye teklifini domain modeline çevirir. Kampanya kimliği ya da bedeni
+ * olmayan teklif eklenemeyeceği için gösterilmez (`null`).
+ */
+function mapAvailableGiftDto(dto: AvailableGiftDto | null | undefined): AvailableGift | null {
+  if (!dto || dto.product_id == null) return null;
+
+  const campaignId = (Array.isArray(dto.campaign_ids) ? dto.campaign_ids : []).find(
+    (id) => Number.isFinite(Number(id)) && Number(id) > 0,
+  );
+  const sizes = mapAvailableGiftSizes(dto);
+  if (campaignId === undefined || sizes.length === 0) return null;
+
+  return {
+    productId: String(dto.product_id),
+    campaignId: String(campaignId),
+    name: (typeof dto.name === 'string' ? dto.name.trim() : '') || 'Hediye ürün',
+    slug: dto.slug || undefined,
+    imageUrl: dto.image ?? '',
+    quantity: toPositiveCount(dto.quantity),
+    sizes,
+  };
+}
+
+/** `/cart/list` yanıtındaki `available_gifts` alanını sepet ekranının modeline çevirir. */
+export function mapAvailableGifts(dtos: AvailableGiftDto[] | null | undefined): AvailableGift[] {
+  if (!Array.isArray(dtos)) return [];
+  return dtos.map(mapAvailableGiftDto).filter((gift): gift is AvailableGift => gift !== null);
 }
 
 export function mapCartCampaignDto(dto: CartCampaignDto): CartCampaign {
@@ -114,6 +186,37 @@ function readCampaignMessage(campaign: CartCampaignDto): string {
   return typeof campaign.message === 'string' ? campaign.message.trim() : '';
 }
 
+function isGiftCampaign(campaign: CartCampaignDto): boolean {
+  return campaign.type === 'gift_product' || campaign.campaign_type === 'gift_product';
+}
+
+/**
+ * Hediye kampanyasının bant içeriği. Şartlar backend'in cümleleriyle olduğu gibi
+ * taşınır; web'in yaptığı gibi metinden kategori/adet ayrıştırılmaz (metin
+ * değişince bozulur ve iş kuralı istemciye gömülür). Hediye ürünü yoksa sayfa
+ * normal kampanya sayfası olarak kalır.
+ */
+function toGiftDetails(campaign: CartCampaignDto): CartCampaignGiftDetails | undefined {
+  if (!isGiftCampaign(campaign) || !Array.isArray(campaign.gift_products)) return undefined;
+
+  const products = campaign.gift_products
+    .filter((gift) => gift?.product_id != null)
+    .map((gift) => ({
+      productId: String(gift.product_id),
+      name: (typeof gift.name === 'string' ? gift.name.trim() : '') || 'Hediye ürün',
+      imageUrl: gift.image ?? '',
+      quantity: toPositiveCount(gift.quantity),
+    }));
+  if (products.length === 0) return undefined;
+
+  const conditions = (Array.isArray(campaign.conditions) ? campaign.conditions : [])
+    .filter((condition): condition is string => typeof condition === 'string')
+    .map((condition) => condition.trim())
+    .filter((condition) => condition.length > 0);
+
+  return { products, conditions };
+}
+
 function toBannerSlide(
   campaign: CartCampaignDto,
   index: number,
@@ -125,6 +228,7 @@ function toBannerSlide(
   // Backend yüzdeyi göndermezse kampanyanın kendi eşiğinden türetilir.
   const apiProgress = toFiniteAmount(campaign.progress_percentage);
   const progress = apiProgress ?? (threshold ? (currentAmount / threshold) * 100 : 100);
+  const gift = toGiftDetails(campaign);
 
   return {
     id: campaign.id !== undefined && campaign.id !== null ? String(campaign.id) : `slide-${index}`,
@@ -132,6 +236,7 @@ function toBannerSlide(
     threshold,
     message: readCampaignMessage(campaign),
     progress: Math.min(100, progress),
+    ...(gift ? { gift } : {}),
   };
 }
 

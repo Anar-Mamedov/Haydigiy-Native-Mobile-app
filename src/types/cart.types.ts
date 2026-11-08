@@ -1,3 +1,5 @@
+import { BundleComponent } from '@/types/bundle.types';
+
 export type CartCampaign = {
   id: number;
   name: string;
@@ -18,6 +20,23 @@ export type CartCampaign = {
   counter?: number;
 };
 
+/** Hediye kampanyasında verilen ürün. */
+export type CartCampaignGiftProduct = {
+  productId: string;
+  name: string;
+  imageUrl: string;
+  quantity: number;
+};
+
+/**
+ * Hediye kampanyası (`gift_product`) sayfasının ek içeriği. Şartlar backend'in
+ * yazdığı cümlelerle olduğu gibi gösterilir; istemci metinden kural çıkarmaz.
+ */
+export type CartCampaignGiftDetails = {
+  products: CartCampaignGiftProduct[];
+  conditions: string[];
+};
+
 /** Kampanya bandındaki tek bir kampanya; bant birden fazlasını karusel gösterir. */
 export type CartCampaignBannerSlide = {
   /** Karusel anahtarı; backend kampanya kimliği ya da sıra numarası. */
@@ -28,6 +47,32 @@ export type CartCampaignBannerSlide = {
   message: string;
   /** 0-100 aralığına sıkıştırılmış ilerleme. */
   progress: number;
+  /** Yalnız hediye ürünü olan hediye kampanyalarında dolu; sayfa o zaman hediyeyi gösterir. */
+  gift?: CartCampaignGiftDetails;
+};
+
+/** Hediyenin seçilebilecek bir bedeni. */
+export type AvailableGiftSize = {
+  variantId: string;
+  name: string;
+  availableQuantity: number;
+  /** Hediyenin tüm adedi için stok yoksa beden listede görünür ama seçilemez. */
+  canAdd: boolean;
+};
+
+/**
+ * Müşterinin hak ettiği ve bedenini seçip sepete ücretsiz ekleyebileceği hediye.
+ * Hangi hediyelerin sunulacağına backend karar verir; istemci yalnızca gösterir.
+ */
+export type AvailableGift = {
+  productId: string;
+  /** Ekleme isteğinde gönderilen kampanya kimliği. */
+  campaignId: string;
+  name: string;
+  slug?: string;
+  imageUrl: string;
+  quantity: number;
+  sizes: AvailableGiftSize[];
 };
 
 /**
@@ -44,8 +89,6 @@ export type CartCampaignBannerStatus = {
   slides: CartCampaignBannerSlide[];
 };
 
-import { BundleComponent } from '@/types/bundle.types';
-
 export type CartLineItem = {
   imageUrl: string;
   productId: string;
@@ -58,6 +101,13 @@ export type CartLineItem = {
   color?: string;
   /** Server cart line identifier; required for update/remove API calls. */
   variantId?: string;
+  /**
+   * Sepet satırının sunucudaki kimliği. Aynı varyantın ücretli ve hediye satırı
+   * ayrı durabildiği için satırı tekil olarak bu anahtarlar ve hedefler.
+   */
+  cartItemId?: string;
+  /** Satırın tamamı ücretsiz kampanya hediyesi; adedi değiştirilemez, yalnız silinebilir. */
+  isGift?: boolean;
   /** Catalog slug used to deep-link back to the product detail screen. */
   slug?: string;
   /** Pre-discount unit price; drives the struck-through original price. */

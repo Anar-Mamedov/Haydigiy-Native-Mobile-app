@@ -37,6 +37,16 @@ export const BRAND_TINT_TEXT_COLOR = '#b5560a';
 export const BRAND_TINT_TEXT_COLOR_DARK = '#fed7aa';
 
 /**
+ * Açık turuncu marka zemini ve kenarı (sepette kampanya hediyesi kartları). Üstündeki turuncu
+ * yazı `BRAND_TINT_TEXT_COLOR` ile okunur. Koyu temada yarı saydam turuncuya döner ki koyu
+ * yüzeyde kaybolmasın. Tamagui prop'larında `$brandTint` / `$brandTintBorder` tercih edilmeli.
+ */
+export const BRAND_TINT_BACKGROUND_COLOR = '#fff7ed';
+export const BRAND_TINT_BACKGROUND_COLOR_DARK = 'rgba(242, 122, 26, 0.08)';
+export const BRAND_TINT_BORDER_COLOR = '#fed7aa';
+export const BRAND_TINT_BORDER_COLOR_DARK = 'rgba(242, 122, 26, 0.25)';
+
+/**
  * Checkout payment description badge color, used for texts such as
  * "Peşin fiyatına 3 taksit" under the secure payment badge.
  */

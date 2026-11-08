@@ -241,6 +241,32 @@ describe('AppSelect', () => {
     });
   });
 
+  it('lists a disabled option without letting it be selected', () => {
+    const onValueChange = jest.fn();
+    renderWithTamagui(
+      <AppSelect
+        label="Beden"
+        onValueChange={onValueChange}
+        options={[
+          { label: 'S', value: 's' },
+          { disabled: true, label: 'M (Stok yetersiz)', value: 'm' },
+        ]}
+        placeholder="Beden seçin"
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Beden'));
+    const disabledOption = screen.getByLabelText('M (Stok yetersiz)');
+    fireEvent.press(disabledOption);
+
+    expect(disabledOption.props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }));
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('app-select-sheet')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('S'));
+    expect(onValueChange).toHaveBeenCalledWith('s');
+  });
+
   it('does not offer a search field or lock the list height for a plain select', () => {
     renderWithTamagui(
       <AppSelect label="Ay" onValueChange={jest.fn()} options={OPTIONS} placeholder="Ay" />,

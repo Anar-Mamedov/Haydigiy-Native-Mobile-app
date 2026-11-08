@@ -239,7 +239,10 @@ describe('useCartController — bundle satırı', () => {
 
     act(() => result.current.changeQuantity(variantLine, 3));
 
-    expect(mockUpdateVariantQuantity.mock.calls[0][0]).toEqual({ variantId: '200', quantity: 3 });
+    expect(mockUpdateVariantQuantity.mock.calls[0][0]).toEqual({
+      target: { kind: 'variant', variantId: '200' },
+      quantity: 3,
+    });
     expect(mockUpdateBundleQuantity).not.toHaveBeenCalled();
   });
 
@@ -291,5 +294,55 @@ describe('useCartController — bundle satırı', () => {
     act(() => mockUpdateVariantQuantity.mock.calls[0][1].onError({ isAxiosError: true, response: { status: 500 } }));
 
     expect(Alert.alert).toHaveBeenCalledWith('Hata', 'Adet güncellenemedi. Lütfen tekrar deneyin.');
+  });
+});
+
+describe('useCartController — kampanya hediyesi satırı', () => {
+  const paidLine: CartLineItem = { ...mockItems[0], cartItemId: '10' };
+  const giftLine: CartLineItem = {
+    ...mockItems[0],
+    cartItemId: '11',
+    unitPrice: 0,
+    isGift: true,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+  });
+
+  it('never sends a quantity change for a gift line (the backend rejects it with 422)', () => {
+    const { result } = renderHook(() => useCartController());
+
+    act(() => result.current.changeQuantity(giftLine, 2));
+
+    expect(mockUpdateVariantQuantity).not.toHaveBeenCalled();
+  });
+
+  it('targets the paid row by cart_item_id when the same variant also has a gift row', () => {
+    const { result } = renderHook(() => useCartController());
+
+    act(() => result.current.changeQuantity(paidLine, 2));
+
+    expect(mockUpdateVariantQuantity.mock.calls[0][0]).toEqual({
+      target: { kind: 'variant', variantId: '200', cartItemId: '10' },
+      quantity: 2,
+    });
+  });
+
+  it('removes only the gift row by its cart_item_id', () => {
+    const { result } = renderHook(() => useCartController());
+
+    act(() => {
+      result.current.requestRemove(giftLine);
+    });
+    act(() => {
+      result.current.confirmRemove();
+    });
+
+    expect(mockRemoveVariant).toHaveBeenCalledWith(
+      { kind: 'variant', variantId: '200', cartItemId: '11' },
+      expect.anything(),
+    );
   });
 });

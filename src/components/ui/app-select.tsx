@@ -78,6 +78,11 @@ export type AppSelectOption = {
   value: string | number;
   /** Optional second row line (e.g. the IBAN under the holder name). */
   description?: string;
+  /**
+   * Listede görünür ama seçilemez (ör. stoğu yetmeyen beden), web `<option disabled>`
+   * karşılığı. Nedeni etikette yazılmalı; soluk görünüm tek başına bilgi taşımaz.
+   */
+  disabled?: boolean;
 };
 
 export interface AppSelectProps {
@@ -289,25 +294,29 @@ export function AppSelect({
             ) : null}
             {filteredOptions.map((option) => {
               const isSelected = option.value === value;
+              const isOptionDisabled = Boolean(option.disabled);
               return (
                 <XStack
                   accessibilityLabel={
                     option.description ? `${option.label} - ${option.description}` : option.label
                   }
                   accessibilityRole="button"
-                  accessibilityState={{ selected: isSelected }}
+                  accessibilityState={{ disabled: isOptionDisabled, selected: isSelected }}
                   alignItems="center"
                   backgroundColor={isSelected ? '$backgroundHover' : 'transparent'}
                   borderRadius="$3"
+                  disabled={isOptionDisabled}
                   gap="$2"
                   justifyContent="space-between"
                   key={String(option.value)}
                   onPress={() => {
+                    if (isOptionDisabled) return;
                     onValueChange(option.value);
                     close();
                   }}
+                  opacity={isOptionDisabled ? 0.5 : 1}
                   padding="$3"
-                  pressStyle={{ backgroundColor: '$backgroundHover' }}
+                  pressStyle={isOptionDisabled ? undefined : { backgroundColor: '$backgroundHover' }}
                 >
                   <YStack flex={1}>
                     <Paragraph

@@ -1,9 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cartKeys } from './cart.keys';
-import { mapCartCampaignBannerStatus, mapCartCampaignDto, mapCartResponse } from './cart.mapper';
+import {
+  mapAvailableGifts,
+  mapCartCampaignBannerStatus,
+  mapCartCampaignDto,
+  mapCartResponse,
+} from './cart.mapper';
 import { calculateCartItemCount, useCartStore } from '../store/use-cart-store';
 import {
   addBundleToCartDto,
+  addCartGiftDto,
   addToCartDto,
   getCartCampaignsDto,
   getCartDto,
@@ -12,7 +18,12 @@ import {
   updateBundleQuantityDto,
   updateCartItemDto,
 } from '@/services/cart.service';
-import { CartLineTarget, getCartLineKey } from '@/features/cart/utils/cart-line';
+import {
+  CartItemLineTarget,
+  CartLineTarget,
+  getCartLineKey,
+  getCartLineTargetKey,
+} from '@/features/cart/utils/cart-line';
 import { BundleSelection } from '@/types/bundle.types';
 import { insiderTracker } from '@/features/insider/services/insider-tracker';
 import { InsiderProductInput } from '@/features/insider/utils/insider-product.mapper';
@@ -21,7 +32,7 @@ import {
   cartItemToAnalyticsProduct,
   trackingSnapshotToAnalyticsProduct,
 } from '@/features/analytics/utils/analytics-product.mapper';
-import { CartLineItem } from '@/types/cart.types';
+import { AvailableGift, CartLineItem } from '@/types/cart.types';
 
 /**
  * Fetches the account (or guest) cart from the backend and hydrates the Zustand
@@ -46,6 +57,7 @@ export function useCartQuery() {
       return {
         items,
         campaigns,
+        availableGifts: mapAvailableGifts(dto.available_gifts),
         userDiscount: Number(dto.user_discount ?? 0),
         removedMessage: hasRemoved ? dto.message ?? 'Sepetiniz güncellendi.' : null,
       };
@@ -55,7 +67,9 @@ export function useCartQuery() {
 }
 
 /**
- * Ürün listesi ekranındaki sepet kampanya bandının verisi.
+ * Ürün listesi ekranındaki sepet kampanya bandının verisi. `categoryId`
+ * listelenen kategoridir; backend kategoriye özel hediye kampanyasını buna göre
+ * döndürür, bu yüzden anahtarın parçasıdır.
  *
  * Anahtar `cartKeys.all` altında olduğu için sepet mutasyonlarının ve oturum
  * değişiminde `CartHydrator`'ın yaptığı invalidation bu sorguyu da tazeler —
@@ -66,10 +80,10 @@ export function useCartQuery() {
  * `error` durumunda tutulur, sessizce yutulmaz; UI ise ekranı bozmamak için
  * bandı gizler.
  */
-export function useCartCampaignBannerQuery() {
+export function useCartCampaignBannerQuery(categoryId?: number) {
   return useQuery({
-    queryKey: cartKeys.campaigns(),
-    queryFn: async () => mapCartCampaignBannerStatus(await getCartCampaignsDto()),
+    queryKey: cartKeys.campaigns(categoryId),
+    queryFn: async () => mapCartCampaignBannerStatus(await getCartCampaignsDto(categoryId)),
     staleTime: 30_000,
   });
 }
@@ -88,18 +102,26 @@ function rollbackTo(items: CartLineItem[]) {
   useCartStore.getState().setItems(items);
 }
 
+/** `cartItemId` varsa sayıya çevrilir; yoksa istek varyant üzerinden gider. */
+function toCartItemIdParam(target: CartItemLineTarget): number | undefined {
+  return target.cartItemId ? Number(target.cartItemId) : undefined;
+}
+
+/**
+ * Normal ürün satırının adedini günceller. Satır `cart_item_id` ile hedeflenir;
+ * aynı varyantın hediye satırı varsa iyimser güncelleme ona dokunmaz.
+ */
 export function useUpdateCartItemMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ variantId, quantity }: { variantId: string; quantity: number }) =>
-      updateCartItemDto(Number(variantId), quantity),
-    onMutate: ({ variantId, quantity }) => {
+    mutationFn: ({ target, quantity }: { target: CartItemLineTarget; quantity: number }) =>
+      updateCartItemDto(Number(target.variantId), quantity, toCartItemIdParam(target)),
+    onMutate: ({ target, quantity }) => {
       const previous = useCartStore.getState().items;
+      const lineKey = getCartLineTargetKey(target);
       useCartStore.getState().setItems(
-        previous.map((item) =>
-          item.variantId === variantId ? { ...item, quantity } : item,
-        ),
+        previous.map((item) => (getCartLineKey(item) === lineKey ? { ...item, quantity } : item)),
       );
       return { previous };
     },
@@ -112,28 +134,33 @@ export function useUpdateCartItemMutation() {
   });
 }
 
+/**
+ * Normal ürün satırını siler. `cart_item_id` ile yalnız hedeflenen satır silinir;
+ * olmadan backend varyantın ücretli ve hediye satırlarını birlikte siler.
+ */
 export function useRemoveCartItemMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (variantId: string) => removeCartItemDto(Number(variantId)),
-    onMutate: (variantId) => {
+    mutationFn: (target: CartItemLineTarget) =>
+      removeCartItemDto(Number(target.variantId), toCartItemIdParam(target)),
+    onMutate: (target) => {
       const previous = useCartStore.getState().items;
-      useCartStore.getState().setItems(
-        previous.filter((item) => item.variantId !== variantId),
-      );
+      const lineKey = getCartLineTargetKey(target);
+      useCartStore.getState().setItems(previous.filter((item) => getCartLineKey(item) !== lineKey));
       return { previous };
     },
-    onError: (_error, _variantId, context) => {
+    onError: (_error, _target, context) => {
       if (context?.previous) rollbackTo(context.previous);
     },
-    onSuccess: (_data, variantId, context) => {
-      const removed = context?.previous.find((item) => item.variantId === variantId);
+    onSuccess: (_data, target, context) => {
+      const lineKey = getCartLineTargetKey(target);
+      const removed = context?.previous.find((item) => getCartLineKey(item) === lineKey);
       if (!removed) return;
       insiderTracker.trackRemoveFromCart(removed.productId);
       analytics.track({ name: 'remove_from_cart', product: cartItemToAnalyticsProduct(removed) });
       // Insider: removing the last line also counts as clearing the cart.
-      const remaining = context.previous.filter((item) => item.variantId !== variantId);
+      const remaining = context.previous.filter((item) => getCartLineKey(item) !== lineKey);
       if (remaining.length === 0) {
         insiderTracker.trackCartCleared();
         analytics.track({ name: 'cart_cleared', itemCount: 0 });
@@ -165,7 +192,7 @@ export function useClearCartMutation() {
           // Bundle satırı tek parça silinir; içindeki ürünler ayrı satır değildir.
           target.kind === 'bundle'
             ? removeBundleDto(target.bundleGroupId)
-            : removeCartItemDto(Number(target.variantId)),
+            : removeCartItemDto(Number(target.variantId), toCartItemIdParam(target)),
         ),
       );
       if (results.some((result) => result.status === 'rejected')) {
@@ -202,7 +229,7 @@ export function useUpdateBundleQuantityMutation() {
       updateBundleQuantityDto(bundleGroupId, quantity),
     onMutate: ({ bundleGroupId, quantity }) => {
       const previous = useCartStore.getState().items;
-      const lineKey = `bundle:${bundleGroupId}`;
+      const lineKey = getCartLineTargetKey({ kind: 'bundle', bundleGroupId });
       useCartStore.getState().setItems(
         previous.map((item) => (getCartLineKey(item) === lineKey ? { ...item, quantity } : item)),
       );
@@ -225,7 +252,7 @@ export function useRemoveBundleMutation() {
     mutationFn: (bundleGroupId: string) => removeBundleDto(bundleGroupId),
     onMutate: (bundleGroupId) => {
       const previous = useCartStore.getState().items;
-      const lineKey = `bundle:${bundleGroupId}`;
+      const lineKey = getCartLineTargetKey({ kind: 'bundle', bundleGroupId });
       useCartStore.getState().setItems(previous.filter((item) => getCartLineKey(item) !== lineKey));
       return { previous };
     },
@@ -233,7 +260,7 @@ export function useRemoveBundleMutation() {
       if (context?.previous) rollbackTo(context.previous);
     },
     onSuccess: (_data, bundleGroupId, context) => {
-      const lineKey = `bundle:${bundleGroupId}`;
+      const lineKey = getCartLineTargetKey({ kind: 'bundle', bundleGroupId });
       const removed = context?.previous.find((item) => getCartLineKey(item) === lineKey);
       if (!removed) return;
       insiderTracker.trackRemoveFromCart(removed.productId);
@@ -280,6 +307,29 @@ export function useAddBundleToCartMutation() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
+  });
+}
+
+/**
+ * Müşterinin seçtiği bedenle hak ettiği hediyeyi sepete ücretsiz ekler.
+ *
+ * İyimser güncelleme yapılmaz: hediye satırı ve kalan teklifler backend'in
+ * doğrulamasına bağlıdır. Başarıda da hatada da sepet ve kampanyalar tazelenir;
+ * hata anında stok ya da kampanya hakkı değişmiş olabilir. Hediye eklemesi web
+ * ile aynı şekilde add-to-cart olayı olarak raporlanmaz.
+ */
+export function useAddCartGiftMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ gift, variantId }: { gift: AvailableGift; variantId: string }) =>
+      addCartGiftDto({
+        campaignId: Number(gift.campaignId),
+        productId: Number(gift.productId),
+        variantId: Number(variantId),
+        quantity: gift.quantity,
+      }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: cartKeys.all }),
   });
 }
 

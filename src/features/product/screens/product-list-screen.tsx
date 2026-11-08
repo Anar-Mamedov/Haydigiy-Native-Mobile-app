@@ -359,7 +359,7 @@ export function ProductListScreen({
             }
             // Kampanya bandı listenin başlığı olarak akar; web'de olduğu gibi
             // listelemenin en üstünde durur ve içerikle birlikte yukarı kayar.
-            ListHeaderComponent={<CartCampaignBanner />}
+            ListHeaderComponent={<CartCampaignBanner categoryId={categoryId ?? categoryDetails?.id} />}
             ListEmptyComponent={
               <EmptyState
                 actionLabel={activeFiltersCount > 0 ? 'Filtreleri Temizle' : undefined}
