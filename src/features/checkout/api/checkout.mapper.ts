@@ -64,7 +64,7 @@ export function mapCargoCompany(dto: CargoCompanyDto): CargoCompany {
  */
 const INTEREST_FREE_TOLERANCE = 0.01;
 
-/** Maps the İyzico installment lookup into sorted, payable (≥2) installment plans. */
+/** Maps the installment lookup into sorted, payable (≥2) installment plans. */
 export function mapInstallmentPlans(
   dto: InstallmentResponseDto,
   amount: number,

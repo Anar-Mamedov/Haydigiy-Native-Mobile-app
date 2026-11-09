@@ -1,9 +1,11 @@
 import { apiClient } from '@/lib/axios';
 
 /**
- * İyzico installment-rate lookup. This is a RATE/BIN data endpoint used to show
- * installment plans for the card; the actual installment payment is processed by
- * İyzico 3DS. Mirrors the web `CardInformation` installment lookup.
+ * Installment-rate lookup for a card BIN. This is a RATE/BIN data endpoint used to
+ * show installment plans; it starts no payment. The backend `/payment-router`
+ * answers with the active installment gateway's plans (VakıfBank or İyzico, chosen
+ * in the panel), so the app never picks the bank itself. Mirrors the web
+ * `CardInformation` installment lookup.
  */
 
 export interface InstallmentPriceDto {
@@ -21,12 +23,12 @@ export interface InstallmentResponseDto {
   }[];
 }
 
-/** Installment plans for an 8-digit BIN + amount (`POST /iyzico-prod/installments`). */
+/** Installment plans for an 8-digit BIN + amount (`POST /payment-router/installments`). */
 export async function getInstallmentsDto(
   binNumber: string,
   price: number,
 ): Promise<InstallmentResponseDto> {
-  const response = await apiClient.post<InstallmentResponseDto>('/iyzico-prod/installments', {
+  const response = await apiClient.post<InstallmentResponseDto>('/payment-router/installments', {
     binNumber,
     price,
   });

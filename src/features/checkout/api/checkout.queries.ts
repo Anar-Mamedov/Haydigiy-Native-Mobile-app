@@ -59,7 +59,7 @@ export function useCheckoutAddressesQuery(enabled = true) {
 }
 
 /**
- * İyzico installment plans for an 8-digit BIN + single-payment amount. The amount
+ * Installment plans for an 8-digit BIN + single-payment amount. The amount
  * is the Tek Çekim total so the rates stay stable while the user picks a plan.
  *
  * The key uses the kuruş-precision amount (web parity: the web refetches on any
