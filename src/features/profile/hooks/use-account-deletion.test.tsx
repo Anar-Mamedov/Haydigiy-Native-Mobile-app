@@ -85,6 +85,8 @@ describe('useAccountDeletion', () => {
       expect.anything(),
     );
     await waitFor(() => expect(mockLogout).toHaveBeenCalledTimes(1));
+    // Hesap kapanırken backend bütün token'ları siliyor; ayrıca `/auth/logout` atılmaz.
+    expect(mockLogout).toHaveBeenCalledWith({ revokeServerSession: false });
     expect(mockReplace).toHaveBeenCalledWith('/');
     expect(result.current.isVerificationOpen).toBe(false);
   });

@@ -59,7 +59,8 @@ export function useAccountDeletion() {
   }, []);
 
   const completeDeletion = useCallback(async () => {
-    await logout();
+    // Hesap kapanırken backend kullanıcının bütün token'larını siliyor; `/auth/logout` 401 dönerdi.
+    await logout({ revokeServerSession: false });
     setIsConfirmOpen(false);
     setIsVerificationOpen(false);
     resetVerificationState();

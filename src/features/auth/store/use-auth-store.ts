@@ -8,16 +8,38 @@ import {
 } from '@/features/insider/services/insider-tracker';
 import { analytics } from '@/features/analytics/services/analytics-dispatcher';
 import { userToAnalyticsIdentity } from '@/features/analytics/utils/analytics-identity';
+import { logoutApi } from '@/services/auth.service';
 import { User } from '@/types/auth.types';
+
+export type LogoutOptions = {
+  /**
+   * `false`: token sunucuda zaten silindi (ör. hesap silme bütün token'ları siliyor),
+   * `POST /auth/logout` atılmaz. Varsayılan: atılır.
+   */
+  revokeServerSession?: boolean;
+};
 
 type AuthState = {
   user: User | null;
   isLoading: boolean;
   /** `method` yalnızca Insider `user_login` eventini zenginleştirir; oturum akışını etkilemez. */
   login: (token: string, user: User, method?: InsiderLoginMethod) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (options?: LogoutOptions) => Promise<void>;
   setUser: (user: User | null) => void;
 };
+
+/**
+ * Token'ı sunucuda siler; çıkıştan sonra kopyalanmış bir token kullanılamaz. Best-effort:
+ * ağ hatası, zaman aşımı ya da 401 (token zaten geçersiz) çıkışı engellemez, yerel temizlik
+ * her durumda yapılır. Çevrimdışı kullanıcı da çıkış yapabilmelidir.
+ */
+async function revokeServerSession(): Promise<void> {
+  try {
+    await logoutApi();
+  } catch (error) {
+    if (__DEV__) console.warn('Sunucudaki oturum kapatılamadı, yalnızca cihazdan çıkış yapıldı.', error);
+  }
+}
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -44,9 +66,13 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
-      logout: async () => {
+      logout: async (options) => {
         set({ isLoading: true });
         try {
+          // Sıra önemli: istek token'ı SecureStore'dan okur, token silinmeden önce gitmeli.
+          if (options?.revokeServerSession !== false) {
+            await revokeServerSession();
+          }
           await clearAccessToken();
           set({ user: null, isLoading: false });
           // Sıra önemli: event önce gider, kullanıcı sonra anonimleşir.

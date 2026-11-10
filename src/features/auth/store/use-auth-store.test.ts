@@ -2,6 +2,13 @@ import { useAuthStore } from '@/features/auth/store/use-auth-store';
 import { getAccessToken } from '@/lib/storage/secure-storage';
 import { appStorage } from '@/lib/storage/mmkv';
 import { insiderTracker } from '@/features/insider/services/insider-tracker';
+import { logoutApi } from '@/services/auth.service';
+
+jest.mock('@/services/auth.service', () => ({
+  logoutApi: jest.fn(),
+}));
+
+const logoutApiMock = logoutApi as jest.MockedFunction<typeof logoutApi>;
 
 jest.mock('@/features/insider/services/insider-tracker', () => ({
   insiderTracker: {
@@ -31,6 +38,58 @@ describe('useAuthStore', () => {
       isLoading: false,
     });
     jest.clearAllMocks();
+    logoutApiMock.mockResolvedValue(undefined);
+  });
+
+  /**
+   * Regresyon (HMA-60): çıkış yalnızca cihazdaki token'ı siliyordu, token sunucuda geçerli
+   * kalıyordu. İstek token'ı SecureStore'dan okuduğu için token silinmeden önce gitmelidir.
+   */
+  const sessionUser = { id: 'user-9', name: 'Anar', email: 'anar@example.com' };
+
+  it('revokes the token on the server before deleting it from the device', async () => {
+    await useAuthStore.getState().login('test-token-xyz', sessionUser);
+    let tokenDuringRequest: string | null = null;
+    logoutApiMock.mockImplementationOnce(async () => {
+      tokenDuringRequest = await getAccessToken();
+    });
+
+    await useAuthStore.getState().logout();
+
+    expect(logoutApiMock).toHaveBeenCalledTimes(1);
+    expect(tokenDuringRequest).toBe('test-token-xyz');
+    expect(await getAccessToken()).toBeNull();
+    expect(useAuthStore.getState().user).toBeNull();
+  });
+
+  it('still signs out locally when the server request fails', async () => {
+    await useAuthStore.getState().login('test-token-xyz', sessionUser);
+    logoutApiMock.mockRejectedValueOnce(new Error('Network Error'));
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await expect(useAuthStore.getState().logout()).resolves.toBeUndefined();
+
+    expect(await getAccessToken()).toBeNull();
+    expect(useAuthStore.getState().user).toBeNull();
+    expect(useAuthStore.getState().isLoading).toBe(false);
+    expect(trackerMock.trackUserLogout).toHaveBeenCalledWith('user');
+    warnSpy.mockRestore();
+  });
+
+  it('skips the server request when the token is already revoked', async () => {
+    await useAuthStore.getState().login('test-token-xyz', sessionUser);
+
+    await useAuthStore.getState().logout({ revokeServerSession: false });
+
+    expect(logoutApiMock).not.toHaveBeenCalled();
+    expect(await getAccessToken()).toBeNull();
+    expect(useAuthStore.getState().user).toBeNull();
+  });
+
+  it('does not call the server when the session expires on its own', () => {
+    useAuthStore.getState().setUser(null);
+
+    expect(logoutApiMock).not.toHaveBeenCalled();
   });
 
   it('initially has no authenticated user', () => {

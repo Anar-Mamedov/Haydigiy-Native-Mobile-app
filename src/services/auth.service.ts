@@ -254,6 +254,23 @@ export async function fastLoginVerifyApi(payload: {
   return { ...response.data, user: normalizeAuthUser(response.data?.user) };
 }
 
+/** Kept short so a slow network never leaves the user waiting on the logout button. */
+const LOGOUT_TIMEOUT_MS = 5000;
+
+/**
+ * Revokes the current access token on the backend (`POST /auth/logout`) so it
+ * stops working after the user signs out. The request carries the token through
+ * the shared client's interceptor, so it must run before the token is cleared.
+ * Offline failures are expected here; they skip the network error log.
+ */
+export async function logoutApi(): Promise<void> {
+  if (!appEnv.apiBaseUrl) return;
+
+  await apiClient.post('/auth/logout', undefined, {
+    timeout: LOGOUT_TIMEOUT_MS,
+    skipNetworkErrorLog: true,
+  });
+}
 
 /**
  * Deletion contract version asked of `POST /auth/deactivate`. The endpoint stays
