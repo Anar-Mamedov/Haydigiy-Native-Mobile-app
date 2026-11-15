@@ -2,7 +2,7 @@ import { defaultConfig } from '@tamagui/config/v5';
 import { createAnimations } from '@tamagui/animations-react-native';
 import { createTamagui } from 'tamagui';
 import { APP_DARK_THEME_COLORS, APP_LIGHT_THEME_COLORS } from './src/lib/theme/app-theme-colors';
-import { FONT_SCALE_DEFAULT_PROPS } from './src/lib/theme/font-scale';
+import { APP_DEFAULT_PROPS } from './src/lib/theme/default-props';
 
 // Use Tamagui's React Native Animated driver instead of the Reanimated driver.
 // With Reanimated 4 + RN 0.83 New Architecture, RN's dev render-logging
@@ -59,8 +59,9 @@ export const config = createTamagui({
     // yeniden çizilmeyen başlık/alt menü açık kalır). Kapalıyken renkler yalnız `<Theme>`'den gelir.
     fastSchemeChange: false,
   },
-  // OS yazı boyutu tavanı tüm Tamagui metin ve input'larına buradan uygulanır.
-  defaultProps: FONT_SCALE_DEFAULT_PROPS,
+  // OS yazı boyutu tavanı tüm Tamagui metinlerine, placeholder rengi tüm metin alanlarına
+  // buradan uygulanır.
+  defaultProps: APP_DEFAULT_PROPS,
   animations,
 });
 

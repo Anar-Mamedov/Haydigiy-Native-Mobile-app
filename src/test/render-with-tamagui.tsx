@@ -4,12 +4,13 @@ import { defaultConfig } from '@tamagui/config/v5';
 import { createTamagui, TamaguiProvider, Theme } from 'tamagui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { APP_DARK_THEME_COLORS, APP_LIGHT_THEME_COLORS } from '@/lib/theme/app-theme-colors';
-import { FONT_SCALE_DEFAULT_PROPS } from '@/lib/theme/font-scale';
+import { APP_DEFAULT_PROPS } from '@/lib/theme/default-props';
 
 const testConfig = createTamagui({
   ...defaultConfig,
-  // Uygulama config'iyle aynı yazı boyutu tavanı; testler gerçek davranışı görsün.
-  defaultProps: FONT_SCALE_DEFAULT_PROPS,
+  // Uygulama config'iyle aynı varsayılanlar (yazı boyutu tavanı, placeholder rengi); testler
+  // gerçek davranışı görsün.
+  defaultProps: APP_DEFAULT_PROPS,
   themes: {
     ...defaultConfig.themes,
     light: {
