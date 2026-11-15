@@ -120,10 +120,16 @@ export const sendAssistantTurnDto = (token: string, clientMsgId: string, input: 
 export const getAssistantHistoryDto = (token: string) =>
   request({ method: 'GET', url: '/assistant/history?limit=30', token });
 
-/** Ölçüm: cevap beklenmez, hata yutulur; akışı ASLA bekletmez (README §4.6). */
-export const postAssistantEvents = (token: string, events: AssistantEvent[]): void => {
-  request({ method: 'POST', url: '/assistant/event', token, body: { events } }).catch(() => undefined);
-};
+/**
+ * Ölçüm: hata yutulur, akışı ASLA bekletmez (README §4.6). Olay ölçümdür; 401 dahil hiçbir hata
+ * kullanıcıya gösterilmez, yeni oturum açtırmaz. Dönen söz yalnız sıralama içindir (kapanışta olay
+ * logout'tan ÖNCE bitsin) ve asla reddedilmez.
+ */
+export const postAssistantEvents = (token: string, events: AssistantEvent[]): Promise<void> =>
+  request({ method: 'POST', url: '/assistant/event', token, body: { events } }).then(
+    () => undefined,
+    () => undefined,
+  );
 
 /** En iyi çaba: başarısız olsa da yerel oturum silinir (README §4.7). */
 export const logoutAssistantSession = (token: string): void => {

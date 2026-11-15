@@ -21,22 +21,25 @@ const schedule = (delay: number) => {
   timer = setTimeout(flushAssistantEvents, delay);
 };
 
-export function flushAssistantEvents(): void {
+/** Kuyruğu gönderir; dönen söz tüm parti istekleri bitince (başarı ya da hata) çözülür, asla reddedilmez. */
+export function flushAssistantEvents(): Promise<void> {
   if (timer) clearTimeout(timer);
   timer = null;
-  if (queue.length === 0) return;
+  if (queue.length === 0) return Promise.resolve();
   const token = getActiveAssistantSession()?.token;
   if (!token) {
     waitAttempts += 1;
     if (waitAttempts <= MAX_WAIT_ATTEMPTS) schedule(WAIT_DELAY_MS);
     else queue.length = 0;
-    return;
+    return Promise.resolve();
   }
   waitAttempts = 0;
   const batch = queue.splice(0, queue.length);
+  const sends: Promise<void>[] = [];
   for (let start = 0; start < batch.length; start += MAX_BATCH) {
-    postAssistantEvents(token, batch.slice(start, start + MAX_BATCH));
+    sends.push(postAssistantEvents(token, batch.slice(start, start + MAX_BATCH)));
   }
+  return Promise.all(sends).then(() => undefined);
 }
 
 export function trackAssistantEvent(
@@ -49,8 +52,17 @@ export function trackAssistantEvent(
   if (details.kind) event.kind = details.kind.slice(0, 32);
   if (details.code) event.code = details.code.slice(0, 32);
   queue.push(event);
-  if (options.flushNow) flushAssistantEvents();
+  if (options.flushNow) void flushAssistantEvents();
   else if (!timer) schedule(FLUSH_DELAY_MS);
+}
+
+/**
+ * Olayı kuyruğa ekleyip bekleyenlerle birlikte HEMEN gönderir; istek bitince (başarı ya da hata) çözülür.
+ * Token o anki oturumdan okunur, bu yüzden oturum silinmeden ÖNCE çağrılmalıdır.
+ */
+export function flushAssistantEventNow(type: AssistantEventType): Promise<void> {
+  queue.push({ type, at: new Date().toISOString() });
+  return flushAssistantEvents();
 }
 
 export const trackAssistantClientError = (code: string, blockId?: string): void =>

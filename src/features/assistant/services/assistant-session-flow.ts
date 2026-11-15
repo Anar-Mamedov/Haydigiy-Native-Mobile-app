@@ -20,7 +20,7 @@ import {
   parseTurnState,
   textMessage,
 } from '../utils/assistant-messages';
-import { flushAssistantEvents, trackAssistantClientError, trackAssistantEvent } from './assistant-events';
+import { flushAssistantEventNow, trackAssistantClientError } from './assistant-events';
 
 /**
  * Oturum yaşam döngüsü (README §3, §4.2, §4.5, §4.7). Site token'ı (SecureStore) yalnız `POST /session`'a
@@ -110,7 +110,7 @@ export const syncAuthState = async (): Promise<boolean> => {
   if (!session) return false;
   const hasSiteToken = !!(await getAccessToken());
   if (hasSiteToken && session.authLevel !== 'site_login' && !session.siteTokenSent) {
-    logoutAssistantSession(session.token);
+    // Misafir oturumu sunucuda 30 dk içinde kendiliğinden düşer; logout yalnız girişli oturuma atılır.
     store().setSession(null);
     store().replaceMessages(markRestored(store().messages));
     return startSession();
@@ -150,15 +150,19 @@ export const retrySessionStart = async (): Promise<void> => {
   await ensureConversation();
 };
 
-/** Tamamen kapatma (X): balonlar silinir, oturum sunucuda kapatılır (README §3-d). */
+/**
+ * Tamamen kapatma (X), README §3-d. Ağ sırası: önce `widget_close` olayı (bitmesi beklenir), sonra yalnız
+ * girişli (`site_login`) oturumda logout; aynı anda giderlerse logout önce ulaşıp olayı 401'le
+ * düşürebiliyordu. Misafir oturumu sunucuda 30 dk içinde kendiliğinden düşer; her kapanışta logout atmak
+ * gereksiz istek demek. Olay isteği token'ı hemen okuduğu için balonlar beklemeden silinir.
+ */
 export const closeAssistant = (): void => {
   const session = getActiveAssistantSession();
-  if (session) {
-    trackAssistantEvent('widget_close', {}, { flushNow: true });
-    logoutAssistantSession(session.token);
-  }
+  const eventSent = session ? flushAssistantEventNow('widget_close') : Promise.resolve();
   store().resetConversation();
-  flushAssistantEvents();
+  if (session?.authLevel === 'site_login') {
+    void eventSent.then(() => logoutAssistantSession(session.token));
+  }
 };
 
 export const showSessionExpired = async (message: string): Promise<void> => {

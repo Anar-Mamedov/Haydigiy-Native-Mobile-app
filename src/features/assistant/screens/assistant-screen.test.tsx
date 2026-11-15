@@ -1,7 +1,9 @@
-import { act, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { getAssistantConfigDto } from '@/services/assistant.service';
 import { ASSISTANT_FIXTURE_FLOWS } from '../__fixtures__';
+import { trackAssistantEvent } from '../services/assistant-events';
+import { closeAssistant } from '../services/assistant-session-flow';
 import { useAssistantStore } from '../store/use-assistant-store';
 import { AssistantScreen } from './assistant-screen';
 
@@ -58,6 +60,32 @@ describe('AssistantScreen', () => {
     renderWithTamagui(<AssistantScreen />, 'dark');
     expect(await screen.findByTestId('assistant-unavailable')).toBeTruthy();
     expect(screen.queryByTestId('assistant-message-list')).toBeNull();
+  });
+
+  const widgetCloseCalls = () =>
+    (trackAssistantEvent as jest.Mock).mock.calls.filter(([type]) => type === 'widget_close');
+
+  it('geri ile ayrılınca (sohbet korunur) odak kaybında widget_close gider', async () => {
+    (getAssistantConfigDto as jest.Mock).mockResolvedValue(enabledConfig);
+    const { unmount } = renderWithTamagui(<AssistantScreen />);
+    expect(await screen.findByTestId('assistant-message-list')).toBeTruthy();
+
+    unmount();
+
+    expect(closeAssistant).not.toHaveBeenCalled();
+    expect(widgetCloseCalls()).toHaveLength(1);
+  });
+
+  it('X ile kapatınca widget_close yalnız closeAssistant\'tan gider; odak kaybı ikinci olay atmaz', async () => {
+    (getAssistantConfigDto as jest.Mock).mockResolvedValue(enabledConfig);
+    const { unmount } = renderWithTamagui(<AssistantScreen />);
+    expect(await screen.findByTestId('assistant-message-list')).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId('assistant-close'));
+    unmount();
+
+    expect(closeAssistant).toHaveBeenCalledTimes(1);
+    expect(widgetCloseCalls()).toHaveLength(0);
   });
 
   it('/config alınamazsa yeniden deneme durumu gösterilir', async () => {

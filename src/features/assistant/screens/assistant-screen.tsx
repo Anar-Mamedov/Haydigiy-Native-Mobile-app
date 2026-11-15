@@ -11,7 +11,6 @@ import { AssistantMessageList } from '../components/assistant-message-list';
 import { AssistantLiveSupport } from '../components/blocks/assistant-live-support';
 import { useAssistantAvailability } from '../hooks/use-assistant-availability';
 import { useAssistantConversation } from '../hooks/use-assistant-conversation';
-import { closeAssistant } from '../services/assistant-session-flow';
 import { useAssistantStore } from '../store/use-assistant-store';
 import { DEFAULT_ASSISTANT_TEXTS } from '../utils/assistant-texts';
 
@@ -24,14 +23,14 @@ export function AssistantScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { available, config, isLoading, isError, refetch } = useAssistantAvailability();
-  useAssistantConversation(available);
+  const conversation = useAssistantConversation(available);
   const inputMode = useAssistantStore((state) => state.input.mode);
   const texts = config?.texts ?? DEFAULT_ASSISTANT_TEXTS;
   const fallback = config?.fallback ?? DEFAULT_ASSISTANT_FALLBACK;
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const handleClose = () => {
-    closeAssistant();
+    conversation.close();
     goBack();
   };
 
