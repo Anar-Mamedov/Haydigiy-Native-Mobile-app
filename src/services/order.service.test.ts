@@ -1,4 +1,4 @@
-import { reorderOrderDto } from './order.service';
+import { isOrderUnderReviewError, reorderOrderDto } from './order.service';
 import { apiClient } from '@/lib/axios';
 
 jest.mock('@/lib/axios', () => ({
@@ -65,5 +65,20 @@ describe('reorderOrderDto', () => {
     const network = { isAxiosError: true, code: 'ERR_NETWORK', message: 'Network Error' };
     post.mockRejectedValueOnce(network);
     await expect(reorderOrderDto('42')).rejects.toBe(network);
+  });
+});
+
+describe('isOrderUnderReviewError', () => {
+  it('reads order_under_review from the 409 and 422 cancel answers', () => {
+    const message = 'İptal işleminiz kontrol gerektiriyor. Lütfen çağrı merkezi ile iletişime geçiniz.';
+    expect(isOrderUnderReviewError(axiosError(409, { message, order_under_review: true }))).toBe(true);
+    expect(isOrderUnderReviewError(axiosError(422, { message: 'İade yarıda kaldı.', order_under_review: true }))).toBe(true);
+  });
+
+  it('is false without the flag, for a non-boolean flag and for non-HTTP errors', () => {
+    expect(isOrderUnderReviewError(axiosError(422, { message: 'Bu sipariş iptal edilemez.' }))).toBe(false);
+    expect(isOrderUnderReviewError(axiosError(409, { order_under_review: 'true' }))).toBe(false);
+    expect(isOrderUnderReviewError({ isAxiosError: true, code: 'ERR_NETWORK', message: 'Network Error' })).toBe(false);
+    expect(isOrderUnderReviewError(new Error('boom'))).toBe(false);
   });
 });

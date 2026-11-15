@@ -21,6 +21,7 @@ import {
   getAcknowledgementRequiredPreview,
   getCancelErrorMessage,
   getCancellationBlockedPreview,
+  isOrderUnderReviewError,
 } from '@/services/order.service';
 import { CancelItem, CancelPreview} from '@/types/order.types';
 
@@ -216,16 +217,28 @@ export function useOrderCancelController(orderId: string, options: Options) {
     [router],
   );
 
-  const handleError = useCallback((error: unknown, items: CancelItem[]) => {
-    const preview = getCancellationBlockedPreview(error) ?? getAcknowledgementRequiredPreview(error);
-    if (preview) {
-      setWarningPreview(preview);
-      setPendingItems(items);
-      return;
-    }
-    setWarningPreview(null);
-    Alert.alert('Hata', getCancelErrorMessage(error));
-  }, []);
+  const handleError = useCallback(
+    (error: unknown, items: CancelItem[]) => {
+      const preview = getCancellationBlockedPreview(error) ?? getAcknowledgementRequiredPreview(error);
+      if (preview) {
+        setWarningPreview(preview);
+        setPendingItems(items);
+        return;
+      }
+      setWarningPreview(null);
+      if (!isOrderUnderReviewError(error)) {
+        Alert.alert('Hata', getCancelErrorMessage(error));
+        return;
+      }
+      // Sipariş kontrole geçti ("İptal işlemi kontrol ediliyor"): iptal ekranında yapılacak bir şey
+      // kalmadı, "Tamam" sipariş detayına götürür. Detay yığında varsa ona dönülür (geri tuşu iptal
+      // ekranına dönmez), yoksa iptal ekranının yerine açılır.
+      Alert.alert('Hata', getCancelErrorMessage(error), [
+        { text: 'Tamam', onPress: () => router.dismissTo(`/order/${orderId}` as never) },
+      ]);
+    },
+    [router, orderId],
+  );
 
   const cancel = useCallback(async () => {
     if (!order || !isCancelable) {

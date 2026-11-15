@@ -2,9 +2,12 @@ import { act, renderHook } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { useOrderCancelController } from './use-order-cancel-controller';
 
+const mockDismissTo = jest.fn();
+const mockReplace = jest.fn();
+
 jest.mock('expo-router', () => ({
   useFocusEffect: jest.fn(),
-  useRouter: () => ({ back: jest.fn(), canGoBack: () => false, replace: jest.fn() }),
+  useRouter: () => ({ back: jest.fn(), canGoBack: () => false, dismissTo: mockDismissTo, replace: mockReplace }),
 }));
 
 jest.mock('../api/order.queries', () => ({
@@ -270,5 +273,70 @@ describe('useOrderCancelController — ?urun= ön seçimi (Haydi Asistan)', () =
   it('silently ignores a missing item or an order that can no longer be cancelled', () => {
     expect(render(ORDER, 9999).current.selectedIds).toEqual([]);
     expect(render({ ...ORDER, status: 'Kargoya Verildi', statusId: 4 }, 7001).current.selectedIds).toEqual([]);
+  });
+});
+
+describe('useOrderCancelController — iptal kontrole düşünce (order_under_review)', () => {
+  const axiosError = (status: number, data: unknown) => ({
+    isAxiosError: true,
+    message: `Request failed with status code ${status}`,
+    response: { data, status },
+  });
+  const REVIEW_MESSAGE = 'İptal işleminiz kontrol gerektiriyor. Lütfen çağrı merkezi ile iletişime geçiniz.';
+
+  /** Son Alert'in "Tamam" düğmesine basar (düğme verilmediyse native varsayılan: ekranda kalınır). */
+  const pressAlertOk = () => {
+    const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as { onPress?: () => void }[] | undefined;
+    buttons?.find((button) => button.onPress)?.onPress?.();
+  };
+
+  it('"Tamam" sipariş detayına götürür; mesaj backend\'in mesajıdır', async () => {
+    mockSubmit.mockRejectedValueOnce(axiosError(409, { message: REVIEW_MESSAGE, order_under_review: true }));
+    const { result } = setup();
+
+    await act(async () => {
+      await result.current.cancelAll();
+    });
+
+    expect(Alert.alert).toHaveBeenCalledWith('Hata', REVIEW_MESSAGE, [expect.objectContaining({ text: 'Tamam' })]);
+    expect(mockDismissTo).not.toHaveBeenCalled();
+
+    pressAlertOk();
+    expect(mockDismissTo).toHaveBeenCalledWith('/order/10');
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('uyarı onayından (acknowledged) gelen 422 + bayrakta da detaya gider', async () => {
+    mockPreview.mockResolvedValue({ cancellationBlocked: false, campaignWillBreak: true });
+    mockSubmit.mockRejectedValueOnce(axiosError(422, { message: 'İade yarıda kaldı.', order_under_review: true }));
+    const { result } = setup();
+
+    act(() => result.current.toggleSelect('9001-0'));
+    await act(async () => {
+      await result.current.cancel();
+    });
+    expect(result.current.showWarning).toBe(true);
+
+    await act(async () => {
+      await result.current.confirmWarning();
+    });
+
+    expect(result.current.showWarning).toBe(false);
+    pressAlertOk();
+    expect(mockDismissTo).toHaveBeenCalledWith('/order/10');
+  });
+
+  it('bayraksız hatada kullanıcı iptal ekranında kalır', async () => {
+    mockSubmit.mockRejectedValueOnce(axiosError(422, { message: 'Bu sipariş iptal edilemez.' }));
+    const { result } = setup();
+
+    await act(async () => {
+      await result.current.cancelAll();
+    });
+
+    expect(Alert.alert).toHaveBeenCalledWith('Hata', 'Bu sipariş iptal edilemez.');
+    pressAlertOk();
+    expect(mockDismissTo).not.toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 });

@@ -154,6 +154,18 @@ export function getCancellationBlockedPreview(error: unknown): CancelPreview | n
   return extractPreviewFromError(data);
 }
 
+/**
+ * İptal hatası, siparişin kontrole geçtiğini bildiriyor mu (`order_under_review: true`). Backend bunu
+ * 409 "İptal işleminiz kontrol gerektiriyor" cevabında ve banka iadesi başlayıp iptal yarıda kalan 422
+ * cevabında verir; sipariş "İptal işlemi kontrol ediliyor" durumundadır ve iptal ekranında yapılacak
+ * bir şey kalmamıştır.
+ */
+export function isOrderUnderReviewError(error: unknown): boolean {
+  if (!isAxiosError(error)) return false;
+  const data = error.response?.data as { order_under_review?: unknown } | undefined;
+  return data?.order_under_review === true;
+}
+
 export function getCancelErrorMessage(error: unknown, fallback = 'Bir hata oluştu'): string {
   if (isAxiosError(error)) {
     const data = error.response?.data as { message?: string; error?: string } | undefined;
