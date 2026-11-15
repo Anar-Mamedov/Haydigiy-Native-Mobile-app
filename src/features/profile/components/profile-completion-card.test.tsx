@@ -40,12 +40,20 @@ describe('ProfileCompletionCard', () => {
     expect(screen.getByText('%0')).toBeTruthy();
   });
 
-  it('shows the completed state without an action at 100%', () => {
+  it('renders nothing once the profile is complete (100%)', () => {
     renderWithTamagui(<ProfileCompletionCard completion={getProfileCompletion(FULL_PROFILE)} loading={false} onComplete={jest.fn()} />);
 
-    expect(screen.getByText('%100')).toBeTruthy();
-    expect(screen.getByText('Profil bilgileriniz eksiksiz.')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Profili tamamla' })).toBeNull();
+    expect(screen.queryByTestId('profile-completion-card')).toBeNull();
+    expect(screen.queryByTestId('profile-completion-skeleton', { includeHiddenElements: true })).toBeNull();
+    expect(screen.queryByText('%100')).toBeNull();
+    expect(screen.queryByRole('progressbar')).toBeNull();
+  });
+
+  it('stays hidden at 100% even while a refetch is loading', () => {
+    renderWithTamagui(<ProfileCompletionCard completion={getProfileCompletion(FULL_PROFILE)} loading onComplete={jest.fn()} />);
+
+    expect(screen.queryByTestId('profile-completion-card')).toBeNull();
+    expect(screen.queryByTestId('profile-completion-skeleton', { includeHiddenElements: true })).toBeNull();
   });
 
   it('draws a hidden skeleton while the profile loads', () => {

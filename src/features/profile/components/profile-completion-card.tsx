@@ -20,9 +20,12 @@ const TRACK_HEIGHT = 8;
 /**
  * Hesabım ekranındaki profil doluluk kartı (web'deki ProfileCompletionBar'ın
  * karşılığı). Yüklenirken aynı yükseklikte iskelet çizilir, böylece profil gelince
- * alttaki içerik kaymaz. Profil okunamazsa kart hiç çizilmez.
+ * alttaki içerik kaymaz. Profil okunamazsa ya da zaten eksiksizse (%100) kart hiç
+ * çizilmez: müşteriden istenecek bir şey kalmamıştır.
  */
 export function ProfileCompletionCard({ completion, loading, onComplete }: ProfileCompletionCardProps) {
+  if (completion?.isComplete) return null;
+
   if (!completion) {
     if (!loading) return null;
 
@@ -44,8 +47,7 @@ export function ProfileCompletionCard({ completion, loading, onComplete }: Profi
     );
   }
 
-  const { isComplete, missingLabels, percent } = completion;
-  const accentColor = isComplete ? '$green10' : '$brand';
+  const { missingLabels, percent } = completion;
 
   return (
     <SectionCard elevated testID="profile-completion-card">
@@ -54,41 +56,33 @@ export function ProfileCompletionCard({ completion, loading, onComplete }: Profi
           <Paragraph color="$color10" fontSize={13} lineHeight={ROW_HEIGHT}>
             {TITLE}
           </Paragraph>
-          <Paragraph color={accentColor} fontSize={13} fontWeight="700" lineHeight={ROW_HEIGHT}>
+          <Paragraph color="$brand" fontSize={13} fontWeight="700" lineHeight={ROW_HEIGHT}>
             %{percent}
           </Paragraph>
         </XStack>
         <ProgressTrack
           accessibilityLabel={TITLE}
-          color={accentColor}
+          color="$brand"
           height={TRACK_HEIGHT}
           testID="profile-completion-track"
           value={percent}
         />
         <XStack alignItems="center" gap="$2" minHeight={ROW_HEIGHT}>
-          {isComplete ? (
-            <Paragraph color="$color10" fontSize={12} lineHeight={ROW_HEIGHT}>
-              Profil bilgileriniz eksiksiz.
+          <Paragraph color="$color10" flex={1} fontSize={12} lineHeight={ROW_HEIGHT} numberOfLines={1}>
+            Eksik: {missingLabels.join(', ')}
+          </Paragraph>
+          <Pressable
+            accessibilityHint="Kullanıcı bilgileri ekranını açar"
+            accessibilityLabel="Profili tamamla"
+            accessibilityRole="button"
+            hitSlop={12}
+            onPress={onComplete}
+            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+          >
+            <Paragraph color="$brand" fontSize={12} fontWeight="700" lineHeight={ROW_HEIGHT}>
+              Tamamla
             </Paragraph>
-          ) : (
-            <>
-              <Paragraph color="$color10" flex={1} fontSize={12} lineHeight={ROW_HEIGHT} numberOfLines={1}>
-                Eksik: {missingLabels.join(', ')}
-              </Paragraph>
-              <Pressable
-                accessibilityHint="Kullanıcı bilgileri ekranını açar"
-                accessibilityLabel="Profili tamamla"
-                accessibilityRole="button"
-                hitSlop={12}
-                onPress={onComplete}
-                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-              >
-                <Paragraph color="$brand" fontSize={12} fontWeight="700" lineHeight={ROW_HEIGHT}>
-                  Tamamla
-                </Paragraph>
-              </Pressable>
-            </>
-          )}
+          </Pressable>
         </XStack>
       </YStack>
     </SectionCard>
