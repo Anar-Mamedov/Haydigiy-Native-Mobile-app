@@ -13,6 +13,7 @@ import { FreeShippingCampaignCard } from '@/features/cart/components/free-shippi
 import { ShippingEstimateInfo } from '@/features/shipping/components/shipping-estimate-info';
 import { useCartController } from '@/features/cart/hooks/use-cart-controller';
 import { getCartLineKey, isGiftCartLine } from '@/features/cart/utils/cart-line';
+import { groupCartGifts } from '@/features/cart/utils/group-cart-gifts';
 import { InsiderRecommendationSections } from '@/features/insider/components/insider-recommendation-sections';
 import { OrderMergeOfferSheet } from '@/features/order-merge/components/order-merge-offer-sheet';
 import { useTrackCartPageView } from '@/features/insider/hooks/use-insider-page-tracking';
@@ -106,14 +107,15 @@ export function CartScreen() {
           contentContainerStyle={{ padding: 12, gap: 12 }}
           showsVerticalScrollIndicator={false}
         >
-          <ShippingEstimateInfo estimate={controller.shippingEstimate} />
           <AvailableGiftsCard gifts={controller.availableGifts} />
+          <ShippingEstimateInfo estimate={controller.shippingEstimate} />
           <FreeShippingCampaignCard campaigns={controller.campaigns} subtotal={controller.subtotal} />
 
-          {items.map((item) => {
+          {groupCartGifts(items).map(({ item, gifts }) => {
             const lineKey = getCartLineKey(item);
 
-            // Kampanya hediyesinin adedi değiştirilemez; ayrı kartta yalnız silinebilir.
+            // Kampanya hediyesinin adedi değiştirilemez; yalnız silinebilir. Ebeveyni sepette
+            // olmayan hediye kendi kartında durur.
             if (isGiftCartLine(item)) {
               return (
                 <CartGiftItemCard
@@ -128,6 +130,15 @@ export function CartScreen() {
             return (
               <CartItemCard
                 deliveryMessage={controller.shippingEstimate?.message}
+                footer={gifts.map((gift) => (
+                  <CartGiftItemCard
+                    attached
+                    item={gift}
+                    key={getCartLineKey(gift)}
+                    onPressProduct={() => controller.openProduct(gift)}
+                    onRemovePress={() => controller.requestRemove(gift)}
+                  />
+                ))}
                 item={item}
                 key={lineKey}
                 onPressBundleComponent={(component) => controller.openProductBySlug(component.slug)}

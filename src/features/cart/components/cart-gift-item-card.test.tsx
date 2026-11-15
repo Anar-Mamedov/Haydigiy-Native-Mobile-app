@@ -16,25 +16,37 @@ const GIFT_LINE: CartLineItem = {
   isGift: true,
 };
 
-function renderCard(theme?: 'light' | 'dark') {
+function renderCard({ attached, item = GIFT_LINE, theme }: { attached?: boolean; item?: CartLineItem; theme?: 'light' | 'dark' } = {}) {
   const onPressProduct = jest.fn();
   const onRemovePress = jest.fn();
   renderWithTamagui(
-    <CartGiftItemCard item={GIFT_LINE} onPressProduct={onPressProduct} onRemovePress={onRemovePress} />,
+    <CartGiftItemCard attached={attached} item={item} onPressProduct={onPressProduct} onRemovePress={onRemovePress} />,
     theme,
   );
   return { onPressProduct, onRemovePress };
 }
 
 describe('CartGiftItemCard', () => {
-  it('marks the row as a free campaign gift', () => {
+  it('shows a compact free gift row: HEDİYE and one size · quantity · free line', () => {
     renderCard();
 
     expect(screen.getByText('HEDİYE')).toBeTruthy();
-    expect(screen.getByText('Pamuklu Çorap')).toBeTruthy();
-    expect(screen.getByText('Ücretsiz')).toBeTruthy();
-    expect(screen.getByText(/2 adet ·/)).toBeTruthy();
-    expect(screen.getByText('Kampanya hediyesi · Adet değiştirilemez')).toBeTruthy();
+    expect(screen.getByText('Beden: Standart · 2 adet · Ücretsiz')).toBeTruthy();
+    expect(screen.queryByText('Kampanya hediyesi · Adet değiştirilemez')).toBeNull();
+  });
+
+  it('keeps the product name out of sight but in the screen reader labels', () => {
+    renderCard();
+
+    expect(screen.queryByText('Pamuklu Çorap')).toBeNull();
+    expect(screen.getByLabelText('Pamuklu Çorap ürün detayı')).toBeTruthy();
+    expect(screen.getByLabelText('Pamuklu Çorap hediyesini sil')).toBeTruthy();
+  });
+
+  it('drops the size from the line when the gift has none', () => {
+    renderCard({ item: { ...GIFT_LINE, size: undefined, quantity: 1 } });
+
+    expect(screen.getByText('1 adet · Ücretsiz')).toBeTruthy();
   });
 
   it('offers no quantity control, only removal', () => {
@@ -55,11 +67,19 @@ describe('CartGiftItemCard', () => {
     expect(onPressProduct).toHaveBeenCalledTimes(1);
   });
 
+  it('drops its own frame when attached under its product card', () => {
+    renderCard({ attached: true });
+
+    expect(screen.queryByTestId('cart-gift-item-card')).toBeNull();
+    expect(screen.getByTestId('cart-gift-item-attached')).toBeTruthy();
+    expect(screen.getByLabelText('Pamuklu Çorap hediyesini sil')).toBeTruthy();
+  });
+
   it('keeps its labels and the remove control readable in the dark theme', () => {
-    renderCard('dark');
+    renderCard({ theme: 'dark' });
 
     expect(screen.getByText('HEDİYE')).toBeTruthy();
-    expect(screen.getByText('Ücretsiz')).toBeTruthy();
+    expect(screen.getByText('Beden: Standart · 2 adet · Ücretsiz')).toBeTruthy();
     expect(screen.getByLabelText('Pamuklu Çorap hediyesini sil')).toBeTruthy();
   });
 });

@@ -38,6 +38,11 @@ export interface CartItemDto {
    * tek `cart_item_id` ile döndürdüğünden ya 0 ya da satırın tüm adedidir.
    */
   gift_quantity?: number | null;
+  /**
+   * Hediye satırının bağlı olduğu ücretli satır: `cart:<cart_item_id>` ya da
+   * `bundle:<bundle_group_id>` (connect af3b1e9). Eşleşmeye backend karar verir.
+   */
+  parent_cart_key?: string | null;
   old_price: string | null;
   price: string;
   discounted_price?: string | null;
@@ -122,6 +127,8 @@ export interface AvailableGiftDto {
   image: string | null;
   quantity: number;
   campaign_ids: number[];
+  /** Hediyeyi hak ettiren sepet satırı (`cart:<id>` / `bundle:<id>`); web de uygulama da henüz kullanmıyor. */
+  parent_cart_key?: string | null;
   variants: AvailableGiftVariantDto[];
 }
 

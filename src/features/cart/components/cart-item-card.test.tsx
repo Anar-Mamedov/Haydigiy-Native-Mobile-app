@@ -1,4 +1,5 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, screen, within } from '@testing-library/react-native';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { CartItemCard } from './cart-item-card';
 import { CartLineItem } from '@/types/cart.types';
@@ -136,5 +137,20 @@ describe('CartItemCard — normal ürün', () => {
     expect(screen.getByText('Son 1 Ürün!')).toBeTruthy();
     expect(screen.queryByText('PAKET')).toBeNull();
     expect(screen.queryByText(/Paket içeriği/)).toBeNull();
+  });
+});
+
+describe('CartItemCard — kartın altındaki içerik (footer)', () => {
+  it('renders the footer inside its own card frame, below the line', () => {
+    renderCard({ item: PRODUCT_LINE, footer: <Paragraph>Bağlı hediye</Paragraph> });
+
+    expect(within(screen.getByTestId('cart-item-card')).getByText('Bağlı hediye')).toBeTruthy();
+  });
+
+  it('adds nothing when there is no footer', () => {
+    renderCard({ item: PRODUCT_LINE });
+
+    expect(screen.queryByText('Bağlı hediye')).toBeNull();
+    expect(screen.getByText('Uzun Kollu Gömlek')).toBeTruthy();
   });
 });

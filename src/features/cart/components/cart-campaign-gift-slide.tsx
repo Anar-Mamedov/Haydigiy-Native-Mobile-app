@@ -1,111 +1,113 @@
+import { useState } from 'react';
 import { Image } from 'expo-image';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { Gift } from '@/components/ui/icons';
-import { CartCampaignCtaButton } from '@/features/cart/components/cart-campaign-cta-button';
-import { CartCampaignGiftDetails, CartCampaignGiftProduct } from '@/types/cart.types';
+import { CompactButton } from '@/components/ui/compact-button';
+import { IconButton } from '@/components/ui/icon-button';
+import { CircleAlert } from '@/components/ui/icons';
+import { CartCampaignGiftTermsSheet } from '@/features/cart/components/cart-campaign-gift-terms-sheet';
+import { CartCampaignGiftDetails } from '@/types/cart.types';
 
-const GIFT_IMAGE_WIDTH = 45;
-const GIFT_IMAGE_HEIGHT = 60;
+const GIFT_IMAGE_WIDTH = 36;
+const GIFT_IMAGE_HEIGHT = 48;
 
 type CartCampaignGiftSlideProps = {
   campaignName: string;
   gift: CartCampaignGiftDetails;
   onGoToCart: () => void;
+  /** Şartlar yüzeyi açılınca/kapanınca; bant açıkken karuseli bekletir. */
+  onTermsVisibilityChange?: (open: boolean) => void;
 };
 
-function GiftProductRow({ product }: { product: CartCampaignGiftProduct }) {
-  return (
-    <XStack alignItems="center" gap="$2" minWidth={0}>
-      <YStack
-        backgroundColor="$backgroundHover"
-        borderRadius="$2"
-        height={GIFT_IMAGE_HEIGHT}
-        overflow="hidden"
-        width={GIFT_IMAGE_WIDTH}
-      >
-        {product.imageUrl ? (
-          <Image
-            accessibilityIgnoresInvertColors
-            contentFit="cover"
-            source={{ uri: product.imageUrl }}
-            style={{ width: '100%', height: '100%' }}
-          />
-        ) : null}
-      </YStack>
-      <Paragraph color="$color" flex={1} fontSize={13} fontWeight="600" lineHeight={17} numberOfLines={2}>
-        {product.quantity > 1 ? `${product.quantity} adet ${product.name}` : product.name}
-      </Paragraph>
-    </XStack>
-  );
-}
-
 /**
- * Hediye kampanyası (`gift_product`) sayfası: kampanya adı, hediye ürünleri,
- * şartlar ve "Sepete git". Tutar/eşik gösterilmez; hediyenin koşulu tutar değil
- * şartlardır.
+ * Hediye kampanyası (`gift_product`) sayfası — web `CartCampaignBanner` hediye sayfasının
+ * karşılığı. Tek satır: ilk hediyenin görseli, "<başlık> <N adet ürün, …> HEDİYE!!!", şartları
+ * açan ⓘ ve "Sepete git". Şartlar bantta listelenmez, ⓘ ile alttan açılan yüzeyde gösterilir.
  *
- * Başlık kampanya adıdır. Web başlığı backend'in Türkçe şart cümlelerinden
- * regex'le üretiyor; burada şartlar olduğu gibi listelenir ki metin değişince
- * bant bozulmasın ve iş kuralı istemciye gömülmesin.
+ * Başlık kampanya adıdır (HMA-54). Web başlığı backend'in Türkçe şart cümlelerinden regex'le
+ * üretiyor; bu kopyalanmaz, şartlar olduğu gibi gösterilir ki metin değişince bant bozulmasın ve
+ * iş kuralı istemciye gömülmesin (yapılandırılmış başlık için connect #30).
  */
-export function CartCampaignGiftSlide({ campaignName, gift, onGoToCart }: CartCampaignGiftSlideProps) {
-  return (
-    <YStack gap="$1.5" paddingHorizontal="$3" testID="cart-campaign-gift-slide">
-      <XStack alignItems="center" gap="$1.5" justifyContent="center">
-        <Gift color="white" size={14} />
-        <Paragraph
-          color="white"
-          flexShrink={1}
-          fontSize={13}
-          fontWeight="700"
-          lineHeight={18}
-          numberOfLines={1}
-          textAlign="center"
-        >
-          {campaignName}
-        </Paragraph>
-      </XStack>
+export function CartCampaignGiftSlide({
+  campaignName,
+  gift,
+  onGoToCart,
+  onTermsVisibilityChange,
+}: CartCampaignGiftSlideProps) {
+  const [termsOpen, setTermsOpen] = useState(false);
+  const firstImageUrl = gift.products[0]?.imageUrl;
+  const productsLabel = gift.products.map((product) => `${product.quantity} adet ${product.name}`).join(', ');
 
-      <YStack
+  const setTermsVisibility = (open: boolean) => {
+    setTermsOpen(open);
+    onTermsVisibilityChange?.(open);
+  };
+
+  return (
+    <>
+      <XStack
+        alignItems="center"
         backgroundColor="$background"
         borderRadius="$4"
         gap="$2"
-        paddingHorizontal="$2.5"
-        paddingVertical="$2"
+        marginHorizontal="$3"
+        paddingLeft="$2.5"
+        paddingRight="$1.5"
+        paddingVertical="$1.5"
+        testID="cart-campaign-gift-slide"
       >
-        <XStack alignItems="center" gap="$2">
-          <YStack flex={1} gap="$1.5" minWidth={0}>
-            {gift.products.map((product) => (
-              <GiftProductRow key={product.productId} product={product} />
-            ))}
-            <Paragraph color="$brand" fontSize={13} fontWeight="800">
-              HEDİYE!!!
-            </Paragraph>
-          </YStack>
+        <YStack
+          backgroundColor="$backgroundHover"
+          borderRadius="$2"
+          height={GIFT_IMAGE_HEIGHT}
+          overflow="hidden"
+          width={GIFT_IMAGE_WIDTH}
+        >
+          {firstImageUrl ? (
+            <Image
+              accessibilityIgnoresInvertColors
+              contentFit="contain"
+              source={{ uri: firstImageUrl }}
+              style={{ width: '100%', height: '100%' }}
+            />
+          ) : null}
+        </YStack>
 
-          <CartCampaignCtaButton onPress={onGoToCart} />
-        </XStack>
+        <Paragraph color="$color" flex={1} fontSize={12} lineHeight={17} minWidth={0} numberOfLines={3}>
+          {`${campaignName} `}
+          <Paragraph color="$color" fontSize={12} fontWeight="700" lineHeight={17}>
+            {productsLabel}
+          </Paragraph>
+          {' '}
+          <Paragraph color="$brand" fontSize={12} fontWeight="800" lineHeight={17}>
+            HEDİYE!!!
+          </Paragraph>
+        </Paragraph>
 
-        {gift.conditions.length > 0 ? (
-          <YStack gap={2}>
-            <Paragraph color="$color" fontSize={12} fontWeight="700">
-              Şartlar:
-            </Paragraph>
-            {gift.conditions.map((condition, index) => (
-              <Paragraph
-                color="$color10"
-                fontSize={12}
-                key={`${index}-${condition}`}
-                lineHeight={16}
-                numberOfLines={2}
-              >
-                {`• ${condition}`}
-              </Paragraph>
-            ))}
-          </YStack>
-        ) : null}
-      </YStack>
-    </YStack>
+        <IconButton
+          accessibilityLabel="Kampanya şartlarını göster"
+          accessibilityState={{ expanded: termsOpen }}
+          onPress={() => setTermsVisibility(true)}
+          testID="cart-campaign-gift-terms-button"
+        >
+          <CircleAlert color="$brandTintText" size={20} />
+        </IconButton>
+
+        <CompactButton
+          backgroundColor="$brand"
+          color="white"
+          label="Sepete git"
+          onPress={onGoToCart}
+          testID="cart-campaign-banner-cta"
+        />
+      </XStack>
+
+      <CartCampaignGiftTermsSheet
+        conditions={gift.conditions}
+        heading={campaignName}
+        onOpenChange={setTermsVisibility}
+        open={termsOpen}
+      />
+    </>
   );
 }

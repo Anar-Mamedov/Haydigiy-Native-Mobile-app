@@ -37,16 +37,23 @@ function renderCard(overrides: Partial<AvailableGiftsCardViewProps> = {}, theme?
 }
 
 describe('AvailableGiftsCardView', () => {
-  it('explains that the gift is free and optional', () => {
+  it('says the gift is optional in one short note, without the long explanation', () => {
     renderCard();
 
     expect(screen.getByText('Hediyenizi seçin')).toBeTruthy();
-    expect(
-      screen.getByText('Bedeninizi seçip hediyenizi ücretsiz olarak sepetinize ekleyebilirsiniz.'),
-    ).toBeTruthy();
-    expect(screen.getByText('Hediyedir, seçmek zorunda değilsiniz')).toBeTruthy();
-    expect(screen.getByText('Pamuklu Çorap')).toBeTruthy();
+    expect(screen.getByText('Hediyedir, seçmek zorunda değilsiniz.')).toBeTruthy();
+    expect(screen.queryByText(/Bedeninizi seçip/)).toBeNull();
     expect(screen.getByText('2 adet HEDİYE')).toBeTruthy();
+  });
+
+  // Web gibi ad görünmez; ekran okuyucu yine hangi hediyeyi seçtiğini duyar.
+  it('hides the gift name visually but keeps it in the screen reader labels', () => {
+    renderCard();
+
+    expect(screen.queryByText('Pamuklu Çorap')).toBeNull();
+    expect(screen.getByLabelText('Pamuklu Çorap hediye ürün görseli')).toBeTruthy();
+    expect(screen.getByLabelText('Pamuklu Çorap bedeni')).toBeTruthy();
+    expect(screen.getByLabelText('Pamuklu Çorap hediyesini sepete ekle')).toBeTruthy();
   });
 
   it('renders nothing when there is no gift to pick', () => {

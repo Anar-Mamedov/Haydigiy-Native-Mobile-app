@@ -3,11 +3,12 @@ import { XStack, YStack } from 'tamagui';
 import { AppButton, AppSelect, AppSelectOption } from '@/components/ui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { Gift } from '@/components/ui/icons';
+import { GIFT_OPTIONAL_NOTE } from '@/features/cart/constants/gift-texts';
 import { useAvailableGiftSelection } from '@/features/cart/hooks/use-available-gift-selection';
 import { AvailableGift } from '@/types/cart.types';
 
-const IMAGE_WIDTH = 72;
-const IMAGE_HEIGHT = 96;
+const IMAGE_WIDTH = 42;
+const IMAGE_HEIGHT = 56;
 
 /** Stoğu yetmeyen beden listede kalır ama seçilemez; nedeni etikette yazar. */
 function toSizeOptions(gift: AvailableGift): AppSelectOption[] {
@@ -40,7 +41,10 @@ function AvailableGiftRow({
 }: AvailableGiftRowProps) {
   return (
     <XStack backgroundColor="$background" borderRadius="$4" gap="$3" padding="$3">
+      {/* Web gibi ürün adı görünmez; ekran okuyucu adı görselden ve beden/ekle etiketlerinden duyar. */}
       <YStack
+        accessibilityLabel={`${gift.name} hediye ürün görseli`}
+        accessible
         backgroundColor="$backgroundHover"
         borderRadius="$3"
         height={IMAGE_HEIGHT}
@@ -50,7 +54,7 @@ function AvailableGiftRow({
         {gift.imageUrl ? (
           <Image
             accessibilityIgnoresInvertColors
-            contentFit="cover"
+            contentFit="contain"
             source={{ uri: gift.imageUrl }}
             style={{ width: '100%', height: '100%' }}
           />
@@ -58,14 +62,9 @@ function AvailableGiftRow({
       </YStack>
 
       <YStack flex={1} gap="$2" minWidth={0}>
-        <YStack gap="$1">
-          <Paragraph color="$color" fontSize={14} fontWeight="600" numberOfLines={2}>
-            {gift.name}
-          </Paragraph>
-          <Paragraph color="$brandTintText" fontSize={12} fontWeight="700">
-            {`${gift.quantity} adet HEDİYE`}
-          </Paragraph>
-        </YStack>
+        <Paragraph color="$brandTintText" fontSize={12} fontWeight="700">
+          {`${gift.quantity} adet HEDİYE`}
+        </Paragraph>
 
         <AppSelect
           disabled={locked}
@@ -139,11 +138,8 @@ export function AvailableGiftsCardView({
             Hediyenizi seçin
           </Paragraph>
         </XStack>
-        <Paragraph color="$color10" fontSize={13} lineHeight={18}>
-          Bedeninizi seçip hediyenizi ücretsiz olarak sepetinize ekleyebilirsiniz.
-        </Paragraph>
-        <Paragraph color="$red10" fontSize={13} fontWeight="700" lineHeight={18}>
-          Hediyedir, seçmek zorunda değilsiniz
+        <Paragraph color="$red10" fontSize={12} lineHeight={16}>
+          {GIFT_OPTIONAL_NOTE}
         </Paragraph>
       </YStack>
 

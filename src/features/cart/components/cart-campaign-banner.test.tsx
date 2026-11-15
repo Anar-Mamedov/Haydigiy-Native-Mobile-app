@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { CartCampaignBanner, CartCampaignBannerView } from './cart-campaign-banner';
@@ -291,24 +291,56 @@ describe('CartCampaignBannerView — hediye kampanyası', () => {
     ],
   };
 
-  it('shows the gift products, the conditions and the call to action instead of an amount', () => {
+  it('shows one compact row: heading, gift products and HEDİYE!!!, but no amount or conditions', () => {
     const onGoToCart = jest.fn();
     renderWithTamagui(<CartCampaignBannerView onGoToCart={onGoToCart} status={GIFT} />);
 
-    expect(screen.getByTestId('cart-campaign-gift-slide')).toBeTruthy();
-    expect(screen.getByText('Pijama alana çorap hediye')).toBeTruthy();
-    expect(screen.getByText('2 adet Çorap')).toBeTruthy();
-    expect(screen.getByText('HEDİYE!!!')).toBeTruthy();
-    expect(screen.getByText('Şartlar:')).toBeTruthy();
-    expect(screen.getByText('• Pijama kategorisinden ürün')).toBeTruthy();
-    expect(screen.getByText('• En az 2 ürün')).toBeTruthy();
+    const row = within(screen.getByTestId('cart-campaign-gift-slide'));
+    expect(row.getByText(/^Pijama alana çorap hediye /)).toBeTruthy();
+    expect(row.getByText('2 adet Çorap')).toBeTruthy();
+    expect(row.getByText('HEDİYE!!!')).toBeTruthy();
+    // Şartlar bantta listelenmez; yalnız ⓘ ile açılan yüzeyde.
+    expect(row.queryByText('• Pijama kategorisinden ürün')).toBeNull();
     expect(screen.queryByText(/Toplam:/)).toBeNull();
 
     fireEvent.press(screen.getByLabelText('Sepete git'));
     expect(onGoToCart).toHaveBeenCalledTimes(1);
   });
 
-  it('leaves out the conditions block when the backend sends none', () => {
+  it('writes the quantity for every gift, joined in one line', () => {
+    const slide = GIFT.slides[0];
+    const products = [
+      ...slide.gift!.products,
+      { productId: '78', name: 'Toka', imageUrl: '', quantity: 1 },
+    ];
+    renderWithTamagui(
+      <CartCampaignBannerView
+        onGoToCart={jest.fn()}
+        status={{ ...GIFT, slides: [{ ...slide, gift: { ...slide.gift!, products } }] }}
+      />,
+    );
+
+    expect(screen.getByText('2 adet Çorap, 1 adet Toka')).toBeTruthy();
+  });
+
+  it('opens the conditions and the optional-gift note from the ⓘ button', () => {
+    renderWithTamagui(<CartCampaignBannerView onGoToCart={jest.fn()} status={GIFT} />);
+    const termsButton = () => screen.getByLabelText('Kampanya şartlarını göster');
+    expect(termsButton().props.accessibilityState).toEqual(expect.objectContaining({ expanded: false }));
+
+    fireEvent.press(termsButton());
+
+    expect(termsButton().props.accessibilityState).toEqual(expect.objectContaining({ expanded: true }));
+    expect(screen.getByText('Kampanya şartları')).toBeTruthy();
+    expect(screen.getByText('• Pijama kategorisinden ürün')).toBeTruthy();
+    expect(screen.getByText('• En az 2 ürün')).toBeTruthy();
+    expect(screen.getByText('Hediyedir, seçmek zorunda değilsiniz.')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('Kapat'));
+    expect(termsButton().props.accessibilityState).toEqual(expect.objectContaining({ expanded: false }));
+  });
+
+  it('leaves out the condition list when the backend sends none, the note stays', () => {
     const slide = GIFT.slides[0];
     renderWithTamagui(
       <CartCampaignBannerView
@@ -317,13 +349,66 @@ describe('CartCampaignBannerView — hediye kampanyası', () => {
       />,
     );
 
-    expect(screen.queryByText('Şartlar:')).toBeNull();
+    fireEvent.press(screen.getByLabelText('Kampanya şartlarını göster'));
+
+    expect(screen.queryByText(/^• /)).toBeNull();
+    expect(screen.getByText('Hediyedir, seçmek zorunda değilsiniz.')).toBeTruthy();
+  });
+
+  it('pauses the carousel while the conditions are open and resumes after closing', () => {
+    const status: CartCampaignBannerStatus = { ...MULTIPLE, slides: [GIFT.slides[0], ...MULTIPLE.slides] };
+    jest.useFakeTimers();
+    try {
+      renderWithTamagui(<CartCampaignBannerView onGoToCart={jest.fn()} status={status} />);
+      measureCarousel('cart-campaign-banner');
+
+      fireEvent.press(screen.getByLabelText('Kampanya şartlarını göster'));
+      act(() => {
+        jest.advanceTimersByTime(12000);
+      });
+      expect(screen.getByLabelText('Kampanya 1 / 4')).toBeTruthy();
+
+      fireEvent.press(screen.getByLabelText('Kapat'));
+      act(() => {
+        jest.advanceTimersByTime(4000);
+      });
+      expect(screen.getByLabelText('Kampanya 2 / 4')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not restart auto-advance on close after the reader swiped', () => {
+    const status: CartCampaignBannerStatus = { ...MULTIPLE, slides: [GIFT.slides[0], ...MULTIPLE.slides] };
+    jest.useFakeTimers();
+    try {
+      renderWithTamagui(<CartCampaignBannerView onGoToCart={jest.fn()} status={status} />);
+      measureCarousel('cart-campaign-banner');
+
+      fireEvent(screen.getByTestId('cart-campaign-banner-scroll'), 'scrollBeginDrag', {
+        nativeEvent: {
+          contentOffset: { x: 0, y: 0 },
+          layoutMeasurement: { width: 320, height: 120 },
+          contentSize: { width: 1280, height: 120 },
+        },
+      });
+      fireEvent.press(screen.getByLabelText('Kampanya şartlarını göster'));
+      fireEvent.press(screen.getByLabelText('Kapat'));
+      act(() => {
+        jest.advanceTimersByTime(12000);
+      });
+
+      expect(screen.getByLabelText('Kampanya 1 / 4')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('keeps its labels readable in the dark theme', () => {
     renderWithTamagui(<CartCampaignBannerView onGoToCart={jest.fn()} status={GIFT} />, 'dark');
 
     expect(screen.getByText('2 adet Çorap')).toBeTruthy();
+    expect(screen.getByLabelText('Kampanya şartlarını göster')).toBeTruthy();
     expect(screen.getByLabelText('Sepete git')).toBeTruthy();
   });
 });

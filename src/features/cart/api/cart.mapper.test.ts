@@ -195,6 +195,21 @@ describe('mapCartItemDto (kampanya hediyesi)', () => {
     expect(mapCartItemDto(makeDto({ quantity: 2, gift_quantity: 1 })).isGift).toBeUndefined();
     expect(mapCartItemDto(makeDto({ gift_quantity: null })).isGift).toBeUndefined();
   });
+
+  it('carries the parent line key the backend gives a gift row', () => {
+    expect(
+      mapCartItemDto(makeDto({ cart_item_id: 950, quantity: 1, gift_quantity: 1, parent_cart_key: ' cart:901 ' })).parentLineKey,
+    ).toBe('cart:901');
+    expect(
+      mapCartItemDto(makeDto({ cart_item_id: 951, quantity: 1, gift_quantity: 1, parent_cart_key: 'bundle:b-1' })).parentLineKey,
+    ).toBe('bundle:b-1');
+  });
+
+  it('ignores the parent key on a paid row and an empty or missing key', () => {
+    expect(mapCartItemDto(makeDto({ gift_quantity: 0, parent_cart_key: 'cart:901' })).parentLineKey).toBeUndefined();
+    expect(mapCartItemDto(makeDto({ quantity: 1, gift_quantity: 1, parent_cart_key: '  ' })).parentLineKey).toBeUndefined();
+    expect(mapCartItemDto(makeDto({ quantity: 1, gift_quantity: 1, parent_cart_key: null })).parentLineKey).toBeUndefined();
+  });
 });
 
 describe('mapAvailableGifts', () => {

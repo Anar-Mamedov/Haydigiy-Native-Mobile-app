@@ -108,6 +108,12 @@ export type CartLineItem = {
   cartItemId?: string;
   /** Satırın tamamı ücretsiz kampanya hediyesi; adedi değiştirilemez, yalnız silinebilir. */
   isGift?: boolean;
+  /**
+   * Hediye satırının bağlı olduğu ücretli satırın anahtarı, `getCartLineKey` biçiminde
+   * (`cart:<id>` / `bundle:<id>`). Backend'in `parent_cart_key` alanı; yalnız hediye satırında gelir.
+   * Sepet ekranı hediyeyi bu satırın kartının altında gösterir.
+   */
+  parentLineKey?: string;
   /** Catalog slug used to deep-link back to the product detail screen. */
   slug?: string;
   /** Pre-discount unit price; drives the struck-through original price. */

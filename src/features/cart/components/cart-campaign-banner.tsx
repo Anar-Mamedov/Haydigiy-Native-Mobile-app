@@ -29,6 +29,11 @@ type SlideProps = {
   slide: CartCampaignBannerSlide;
 };
 
+type CampaignSlideProps = SlideProps & {
+  /** Sayfanın ayrıntı yüzeyi (hediye şartları) açılınca/kapanınca; karusel açıkken bekler. */
+  onDetailsVisibilityChange: (open: boolean) => void;
+};
+
 /** "0/2.000 TL"; eşiksiz kampanyalarda yalnızca mevcut tutar gösterilir. */
 function buildAmountLabel(currentAmount: number, threshold: number | null): string {
   const current = formatAmount(currentAmount);
@@ -89,13 +94,14 @@ function CartCampaignBannerSlideView({ currentAmount, onGoToCart, slide }: Slide
 }
 
 /** Sayfanın türüne göre görünümü seçer: hediye kampanyası ya da tutar/eşik kampanyası. */
-function CampaignSlide({ currentAmount, onGoToCart, slide }: SlideProps) {
+function CampaignSlide({ currentAmount, onDetailsVisibilityChange, onGoToCart, slide }: CampaignSlideProps) {
   if (slide.gift) {
     return (
       <CartCampaignGiftSlide
         campaignName={slide.campaignName}
         gift={slide.gift}
         onGoToCart={onGoToCart}
+        onTermsVisibilityChange={onDetailsVisibilityChange}
       />
     );
   }
@@ -125,11 +131,14 @@ export function CartCampaignBannerView({ status, onGoToCart }: CartCampaignBanne
   // Kullanıcı bir kez kaydırdıysa otomatik ilerleme durur; aksi halde okumaya
   // çalıştığı sayfayı altından çekmiş oluruz.
   const [isAutoAdvancing, setIsAutoAdvancing] = useState(true);
+  // Bir sayfanın ayrıntısı (hediye şartları) açıkken karusel bekler. Bu ayrı tutulur: kapanış,
+  // kullanıcının kaydırarak durdurduğu otomatik ilerlemeyi yeniden başlatmamalı.
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const hasCarousel = slides.length > 1;
 
   useEffect(() => {
-    if (!hasCarousel || !isAutoAdvancing || width <= 0) return undefined;
+    if (!hasCarousel || !isAutoAdvancing || isDetailsOpen || width <= 0) return undefined;
 
     const interval = setInterval(() => {
       setActiveIndex((current) => {
@@ -140,7 +149,7 @@ export function CartCampaignBannerView({ status, onGoToCart }: CartCampaignBanne
     }, AUTO_ADVANCE_MS);
 
     return () => clearInterval(interval);
-  }, [hasCarousel, isAutoAdvancing, slides.length, width]);
+  }, [hasCarousel, isAutoAdvancing, isDetailsOpen, slides.length, width]);
 
   const handleLayout = (event: LayoutChangeEvent) => {
     const nextWidth = event.nativeEvent.layout.width;
@@ -190,7 +199,12 @@ export function CartCampaignBannerView({ status, onGoToCart }: CartCampaignBanne
               key={slide.id}
               width={width}
             >
-              <CampaignSlide currentAmount={currentAmount} onGoToCart={onGoToCart} slide={slide} />
+              <CampaignSlide
+                currentAmount={currentAmount}
+                onDetailsVisibilityChange={setIsDetailsOpen}
+                onGoToCart={onGoToCart}
+                slide={slide}
+              />
             </YStack>
           ))}
         </ScrollView>
@@ -198,7 +212,12 @@ export function CartCampaignBannerView({ status, onGoToCart }: CartCampaignBanne
         // Tek kampanyada karusel hiç kurulmaz; çoklu kampanyada da genişlik
         // ölçülene kadar ilk sayfa çizilir, böylece bant boş bir kutu olarak
         // görünmez.
-        <CampaignSlide currentAmount={currentAmount} onGoToCart={onGoToCart} slide={slides[0]} />
+        <CampaignSlide
+          currentAmount={currentAmount}
+          onDetailsVisibilityChange={setIsDetailsOpen}
+          onGoToCart={onGoToCart}
+          slide={slides[0]}
+        />
       )}
 
       {hasCarousel ? (

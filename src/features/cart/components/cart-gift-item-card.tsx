@@ -2,43 +2,62 @@ import { Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
+import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
 import { Gift, Trash2 } from '@/components/ui/icons';
 import { CartLineItem } from '@/types/cart.types';
 
-const IMAGE_WIDTH = 96;
-const IMAGE_HEIGHT = 120;
-const REMOVE_COLUMN_WIDTH = 64;
+const IMAGE_WIDTH = 36;
+const IMAGE_HEIGHT = 48;
+const IMAGE_MARGIN = 8;
+const REMOVE_COLUMN_WIDTH = 56;
+/** Görsel küçük kalır; dokunma alanı yanlardan 48dp'ye tamamlanır. */
+const IMAGE_HIT_SLOP = { left: IMAGE_MARGIN, right: IMAGE_MARGIN };
 
 type CartGiftItemCardProps = {
   item: CartLineItem;
+  /**
+   * Hediye ait olduğu ürünün kartının altında, kartın parçası olarak çizilir: kendi çerçevesi
+   * ve köşeleri olmaz, üstte bir ayırıcı çizgi kalır. Ebeveyni sepette olmayan hediye kendi
+   * kartında (`false`) durur.
+   */
+  attached?: boolean;
   onPressProduct: () => void;
   onRemovePress: () => void;
 };
 
 /**
- * Tamamı ücretsiz kampanya hediyesi olan sepet satırı — web `GiftCartItem`
- * karşılığı. Hediyenin adedini backend belirler; kartta adet kontrolü yoktur,
- * satır yalnızca silinebilir.
+ * Tamamı ücretsiz kampanya hediyesi olan sepet satırı — web `GiftCartItem` karşılığı. Kompakt
+ * tek satır: küçük görsel, "HEDİYE" ve "Beden · adet · Ücretsiz". Ürün adı görünmez, ekran okuyucu
+ * etiketlerinde kalır. Hediyenin adedini backend belirler; adet kontrolü yoktur, satır yalnızca
+ * silinebilir.
  */
-export function CartGiftItemCard({ item, onPressProduct, onRemovePress }: CartGiftItemCardProps) {
+export function CartGiftItemCard({ attached = false, item, onPressProduct, onRemovePress }: CartGiftItemCardProps) {
+  const details = [item.size ? `Beden: ${item.size}` : null, `${item.quantity} adet`, 'Ücretsiz']
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <XStack
+      alignItems="stretch"
       backgroundColor="$brandTint"
       borderColor="$brandTintBorder"
-      borderRadius="$5"
-      borderWidth={1}
+      borderRadius={attached ? 0 : '$5'}
+      borderWidth={attached ? 0 : 1}
+      borderTopWidth={1}
+      minHeight={MIN_TOUCH_TARGET}
       overflow="hidden"
-      testID="cart-gift-item-card"
+      testID={attached ? 'cart-gift-item-attached' : 'cart-gift-item-card'}
     >
       <Pressable
         accessibilityLabel={`${item.title} ürün detayı`}
         accessibilityRole="button"
+        hitSlop={IMAGE_HIT_SLOP}
         onPress={onPressProduct}
-        style={{ margin: 12 }}
+        style={{ alignSelf: 'center', margin: IMAGE_MARGIN }}
       >
         <YStack
           backgroundColor="$background"
-          borderRadius="$3"
+          borderRadius="$2"
           height={IMAGE_HEIGHT}
           overflow="hidden"
           width={IMAGE_WIDTH}
@@ -54,49 +73,15 @@ export function CartGiftItemCard({ item, onPressProduct, onRemovePress }: CartGi
         </YStack>
       </Pressable>
 
-      <YStack flex={1} gap="$1.5" minWidth={0} paddingRight="$2" paddingVertical="$3">
-        <XStack
-          alignItems="center"
-          alignSelf="flex-start"
-          backgroundColor="$background"
-          borderColor="$brandTintBorder"
-          borderRadius="$10"
-          borderWidth={1}
-          gap="$1"
-          paddingHorizontal="$2"
-          paddingVertical={2}
-        >
+      <YStack flex={1} justifyContent="center" minWidth={0} paddingRight="$2" paddingVertical="$2">
+        <XStack alignItems="center" gap="$1">
           <Gift color="$brandTintText" size={14} />
           <Paragraph color="$brandTintText" fontSize={12} fontWeight="800">
             HEDİYE
           </Paragraph>
         </XStack>
-
-        <Paragraph
-          color="$color"
-          fontSize={15}
-          fontWeight="600"
-          numberOfLines={2}
-          onPress={onPressProduct}
-        >
-          {item.title}
-        </Paragraph>
-
-        {item.size ? (
-          <Paragraph color="$color10" fontSize={13}>
-            Beden: <Paragraph color="$color" fontWeight="600">{item.size}</Paragraph>
-          </Paragraph>
-        ) : null}
-
-        <Paragraph color="$color10" fontSize={13}>
-          {`${item.quantity} adet · `}
-          <Paragraph color="$discount" fontWeight="700">
-            Ücretsiz
-          </Paragraph>
-        </Paragraph>
-
-        <Paragraph color="$brandTintText" fontSize={12} lineHeight={16}>
-          Kampanya hediyesi · Adet değiştirilemez
+        <Paragraph color="$color10" fontSize={12} lineHeight={16} numberOfLines={2}>
+          {details}
         </Paragraph>
       </YStack>
 
@@ -112,11 +97,11 @@ export function CartGiftItemCard({ item, onPressProduct, onRemovePress }: CartGi
           borderLeftColor="$brandTintBorder"
           borderLeftWidth={1}
           flex={1}
-          gap="$1.5"
+          gap="$1"
           justifyContent="center"
         >
-          <Trash2 color="$brandTintText" size={22} />
-          <Paragraph color="$brandTintText" fontSize={13} fontWeight="700">
+          <Trash2 color="$brandTintText" size={16} />
+          <Paragraph color="$brandTintText" fontSize={12} fontWeight="700">
             Sil
           </Paragraph>
         </YStack>

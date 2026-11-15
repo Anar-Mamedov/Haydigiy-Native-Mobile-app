@@ -76,6 +76,9 @@ export function mapCartItemDto(dto: CartItemDto): CartLineItem {
   const campaignTotal = toAmount(dto.campaign_total);
   const hasCampaignPrice = campaignDiscount > 0 && campaignTotal !== null;
   const hasCartItemId = !isBundle && dto.cart_item_id != null;
+  const isGift = isWholeGiftLine(dto, isBundle);
+  // Hediyenin hangi satıra ait olduğunu backend söyler; istemci eşleştirme kuralı yazmaz.
+  const parentLineKey = typeof dto.parent_cart_key === 'string' ? dto.parent_cart_key.trim() : '';
 
   return {
     // Bundle satırının `variant_id`'si yoktur; kimlik `bundleGroupId` üzerinden taşınır.
@@ -99,7 +102,8 @@ export function mapCartItemDto(dto: CartItemDto): CartLineItem {
     ...(hasCampaignPrice ? { campaignDiscount, campaignTotal } : {}),
     // Bundle satırı `bundle_group_id` ile hedeflenir; satır kimliği yalnız normal ürünlerde taşınır.
     ...(hasCartItemId ? { cartItemId: String(dto.cart_item_id) } : {}),
-    ...(isWholeGiftLine(dto, isBundle) ? { isGift: true } : {}),
+    ...(isGift ? { isGift: true } : {}),
+    ...(isGift && parentLineKey ? { parentLineKey } : {}),
     ...(isBundle
       ? {
           itemType: 'bundle' as const,
