@@ -1,5 +1,7 @@
 import { screen } from '@testing-library/react-native';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
+import { useCategorySlugIndexQuery } from '@/features/category/api/category.queries';
+import type { CategorySlugEntry, CategorySlugIndex } from '@/types/category-slug-index.types';
 import { useSeoRedirectQuery } from '../api/seo-redirect.queries';
 import { MissingResourceRedirect } from './missing-resource-redirect';
 
@@ -22,16 +24,38 @@ jest.mock('../api/seo-redirect.queries', () => ({
   useSeoRedirectQuery: jest.fn(),
 }));
 
+jest.mock('@/features/category/api/category.queries', () => ({
+  useCategorySlugIndexQuery: jest.fn(),
+}));
+
 const mockedQuery = jest.mocked(useSeoRedirectQuery);
+const mockedCategoryQuery = jest.mocked(useCategorySlugIndexQuery);
 
 function mockQueryResult(result: { data?: unknown; isPending: boolean }) {
   mockedQuery.mockReturnValue(result as never);
 }
 
+function mockCategoryIndex(result: { data?: CategorySlugIndex; isPending: boolean }) {
+  mockedCategoryQuery.mockReturnValue(result as never);
+}
+
+function buildIndex(entries: CategorySlugEntry[]): CategorySlugIndex {
+  return {
+    byId: new Map(entries.map((entry) => [entry.id, entry])),
+    bySlug: new Map(entries.map((entry) => [entry.slug, entry])),
+  };
+}
+
+const CATEGORY_INDEX = buildIndex([
+  { id: 187, slug: 'kadin-elbise' },
+  { id: 31, slug: 'kadin-buyuk-beden-3' },
+]);
+
 describe('MissingResourceRedirect', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockParams = {};
+    mockCategoryIndex({ data: CATEGORY_INDEX, isPending: false });
   });
 
   it('shows a loading state while the redirect rule is being resolved', () => {
@@ -107,6 +131,62 @@ describe('MissingResourceRedirect', () => {
     renderWithTamagui(<MissingResourceRedirect webPath="" />);
 
     expect(mockedQuery).toHaveBeenCalledWith({ path: '', queryString: '' }, { enabled: false });
+    expect(mockRedirect).toHaveBeenCalledWith('/not-found');
+  });
+
+  it('does not look up categories while the redirect rule is pending or when a rule matched', () => {
+    mockQueryResult({ data: undefined, isPending: true });
+    renderWithTamagui(<MissingResourceRedirect webPath="/kadin-elbise" />);
+    expect(mockedCategoryQuery).toHaveBeenLastCalledWith({ enabled: false });
+
+    mockQueryResult({ data: { matched: true, statusCode: 301, targetUrl: '/kadin-aksesuar?c=1' }, isPending: false });
+    renderWithTamagui(<MissingResourceRedirect webPath="/kadin-elbise" />);
+    expect(mockedCategoryQuery).toHaveBeenLastCalledWith({ enabled: false });
+    expect(mockRedirect).toHaveBeenLastCalledWith('/kategori/kadin-aksesuar?c=1&seo_redirect_hop=1');
+  });
+
+  it('opens the category listing for a category link without its id', () => {
+    mockQueryResult({ data: { matched: false }, isPending: false });
+
+    renderWithTamagui(<MissingResourceRedirect webPath="/kadin-elbise" />);
+
+    expect(mockedCategoryQuery).toHaveBeenLastCalledWith({ enabled: true });
+    expect(mockRedirect).toHaveBeenCalledWith('/kategori/kadin-elbise?c=187&seo_redirect_hop=1');
+  });
+
+  it('opens the category listing for a category slug that ends with digits', () => {
+    mockQueryResult({ data: { matched: false }, isPending: false });
+
+    renderWithTamagui(<MissingResourceRedirect webPath="/kadin-buyuk-beden-3" />);
+
+    expect(mockRedirect).toHaveBeenCalledWith('/kategori/kadin-buyuk-beden-3?c=31&seo_redirect_hop=1');
+  });
+
+  it('keeps the loading state while the category tree is loading', () => {
+    mockQueryResult({ data: { matched: false }, isPending: false });
+    mockCategoryIndex({ data: undefined, isPending: true });
+
+    renderWithTamagui(<MissingResourceRedirect webPath="/kadin-elbise" />);
+
+    expect(screen.getByText('Sayfa yükleniyor...')).toBeTruthy();
+    expect(mockRedirect).not.toHaveBeenCalled();
+  });
+
+  it('opens the 404 screen when the category tree cannot be loaded', () => {
+    mockQueryResult({ data: { matched: false }, isPending: false });
+    mockCategoryIndex({ data: undefined, isPending: false });
+
+    renderWithTamagui(<MissingResourceRedirect webPath="/kadin-elbise" />);
+
+    expect(mockRedirect).toHaveBeenCalledWith('/not-found');
+  });
+
+  it('does not look up categories for multi-segment paths', () => {
+    mockQueryResult({ data: { matched: false }, isPending: false });
+
+    renderWithTamagui(<MissingResourceRedirect webPath="/s/123" />);
+
+    expect(mockedCategoryQuery).toHaveBeenLastCalledWith({ enabled: false });
     expect(mockRedirect).toHaveBeenCalledWith('/not-found');
   });
 });

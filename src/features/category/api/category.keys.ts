@@ -3,4 +3,5 @@ export const categoryKeys = {
   groups: () => [...categoryKeys.all, 'groups'] as const,
   items: (groupId: number) => [...categoryKeys.all, 'items', groupId] as const,
   firstProductImage: (categoryId: number) => [...categoryKeys.all, 'productImage', categoryId] as const,
+  slugIndex: () => [...categoryKeys.all, 'slugIndex'] as const,
 };

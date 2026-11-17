@@ -89,7 +89,7 @@ const APP_INFO_PAGE_ROOT = '/bilgi';
  * Web'de `c` olmadan da menü tabanlı liste olan özel sayfalar; web bunları
  * `menu_url={slug}` ile listeler (bkz. frontend `src/app/[slug]/page.tsx`).
  */
-const WEB_MENU_LISTING_ROOTS = new Set(['cok-satanlar', 'yeni-gelenler', 'indirimdekiler']);
+export const WEB_MENU_LISTING_ROOTS: ReadonlySet<string> = new Set(['cok-satanlar', 'yeni-gelenler', 'indirimdekiler']);
 
 /** Yardım sayfası; web `?kategori=` ile açılacak SSS kategorisini seçer. */
 const WEB_HELP_ROOT = 'yardim';

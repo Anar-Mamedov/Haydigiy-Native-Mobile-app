@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { categoryKeys } from './category.keys';
 import { fetchMenuGroups, fetchMenuItems, fetchCategoryFirstProductImage } from '../services/category.service';
+import { fetchCategoryTreeDto } from '@/services/category-tree.service';
+import { mapCategorySlugIndex } from './category-slug-index.mapper';
 
 export function useMenuGroupsQuery() {
   return useQuery({
@@ -24,6 +26,20 @@ export function useCategoryFirstProductImageQuery(categoryId: number | null | un
     queryFn: () => (categoryId ? fetchCategoryFirstProductImage(categoryId) : Promise.resolve({ image: null })),
     queryKey: categoryKeys.firstProductImage(categoryId || 0),
     enabled: !!categoryId,
+    staleTime: 60 * 60 * 1000, // 1 hour
+  });
+}
+
+/**
+ * Kategori ağacının id/slug indeksi; bulunamayan bir adresin kategori olup olmadığını anlamak için.
+ * Web ağacı 1 saat önbellekler. Hata tekrar denenmez: kullanıcı 404 ekranını beklememeli.
+ */
+export function useCategorySlugIndexQuery({ enabled }: { enabled: boolean }) {
+  return useQuery({
+    enabled,
+    queryFn: async () => mapCategorySlugIndex(await fetchCategoryTreeDto()),
+    queryKey: categoryKeys.slugIndex(),
+    retry: false,
     staleTime: 60 * 60 * 1000, // 1 hour
   });
 }
