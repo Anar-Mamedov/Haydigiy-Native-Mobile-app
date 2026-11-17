@@ -10,7 +10,7 @@ yalnızca Insider kuruluydu. Bu doküman mobil tarafta **ne yapıldığını** v
 | --- | --- | --- |
 | Insider | `components/analytics/InsiderScript.tsx` + `InsiderInit.tsx` | ✅ Tam — `docs/insider-events.md` |
 | HaydiGiy kendi collector'ı | `src/lib/analytics.ts` → `/analytics/events/batch` | ✅ Tam — bu doküman |
-| Google Analytics 4 (`G-ED6DZ66SH6`) | `layout.tsx` + `src/lib/ga4.ts` | ✅ Kod tamam — env değerleri bekliyor |
+| Google Analytics 4 (`G-ED6DZ66SH6`) | `layout.tsx` + `src/lib/ga4.ts` | ✅ Firebase Analytics ile kendi iOS/Android stream'lerinden (HMA-67) — bkz. sondaki "Firebase Analytics" bölümü; eski sürümler backend MP ile |
 | Meta Pixel (`246021789341141`) | `components/analytics/FacebookPixel.tsx` (yalnızca `PageView`) | ✅ Kod tamam — env değerleri bekliyor |
 | TikTok Pixel (`DAMGINJC77U9262DST40`) | `components/analytics/TikTokPixel.tsx` (yalnızca `Pageview`) | ✅ Kod tamam — env değerleri bekliyor |
 | Google Ads (`AW-816642529`) | `GoogleAds.tsx` + `GoogleAdsConversion.tsx` (Ads'e **doğrudan** dönüşüm) | ⚠️ Karar gerektirir — bkz. adım 7, naif import web'i iki kez saydırır |
@@ -547,3 +547,78 @@ Kod dokunduğu için şu üç akışı iOS/Android'de bir kez deneyin — ölç�
    Meta'ya reklam kimliği (`madid`), TikTok'a `ttclid`/`ttp` gönderilemiyor;
    eşleşme hash'li e-posta/telefona dayanıyor, yani **oturum açmış**
    kullanıcılarda iyi, misafirlerde zayıf.
+
+# Firebase Analytics — GA4 uygulama stream'leri (HMA-67, 2026-11-17)
+
+## Neden
+
+Backend'in Measurement Protocol ile web stream'ine gönderdiği uygulama
+event'leri `session_start` ve trafik kaynağı taşıyamıyor. GA4 bu oturumları
+"(not set)" / "Unassigned" gösteriyordu: 2026-10-19'dan beri günde ~49 bin
+oturum, gelirin ~%46'sı. Tarayıcı ve ülke de "(not set)" çıkıyor, etkileşim 0.
+Measurement Protocol'de bunu düzeltecek bir alan yok; çözüm uygulamanın GA4'e
+kendi stream'lerinden gitmesi.
+
+## Kurulum durumu
+
+- Firebase projesi `haydigiy-mobile` (sahibi `dev@haydigiy.com`, haydigiy.com
+  organizasyonu) "haydigiy - GA4" (307528515) mülküne **mevcut mülk** olarak bağlı.
+- GA4 stream'leri: **Haydigiy Android** `com.faprika.haydigiy` (16360690274),
+  **Haydigiy iOS** `com.faprika.haydigiy.app` (16360711316).
+- SDK: `@react-native-firebase/app` + `analytics` **26.4.2'ye sabit**. v27
+  yalnızca SPM ile kuruluyor ve iOS'ta dynamic framework istiyor. Bu proje ise
+  static zorunlu (Insider push extension'ları ve `react-native-webview` paketi,
+  bkz. `app.config.js`). v26'da `ios.disableSPM: true` Firebase'i CocoaPods'tan
+  kurar. iOS'ta `withoutAdIdSupport` var: ATT izni olmadığı için IDFA kullanılmaz.
+- `firebase.json`: otomatik toplama, otomatik ekran raporu, reklam kimliği
+  (ADID) toplaması ve Consent Mode varsayılanlarının hepsi **kapalı**.
+- Android'de Firebase'in eklediği `com.google.android.gms.permission.AD_ID`
+  izni `android.blockedPermissions` ile kaldırılır. Uygulamada reklam kimliği
+  daha önce de yoktu. İzin kalsaydı Play Console'daki "Reklam Kimliği" beyanı
+  ve Veri Güvenliği formu değişmek zorunda kalırdı. Toplama açılmak istenirse
+  izin, firebase.json bayrağı ve Play beyanı birlikte değişir.
+
+## Kod
+
+```
+src/lib/firebase-analytics.ts                        # Dar istemci + Expo Go korumalı yükleyici
+src/features/analytics/services/firebase-analytics.mapper.ts  # Domain event → GA4 komutu
+src/features/analytics/services/firebase-analytics.sink.ts    # Sink: event, kimlik, izin
+src/features/analytics/utils/route-pattern.ts        # Ekran adı = rota kalıbı (/product/[id])
+```
+
+- **İzin:** dispatcher, kayıtlı tercihi ilk event'ten önce, kullanıcının
+  tercih değişikliklerini de anında sink'in `applyConsent`'ine iletir.
+  Analitik izni toplamayı ve `analytics_storage`'ı açar; pazarlama izni
+  `ad_storage`, `ad_user_data` ve `ad_personalization`'ı açar. İzin geri
+  alınınca toplama durur.
+- **Event seti** backend'in GA4'e ilettiği setin aynısı: `screen_view`,
+  `view_item`, `view_item_list`, `search`, `add_to_cart`, `remove_from_cart`,
+  `add_to_wishlist`, `begin_checkout`, `purchase`, `sign_up`, `login`. İki
+  taraf birlikte değişmeli.
+- **Çift sayım:** Firebase etkinse first-party event'ine `ga4_native: true`
+  eklenir. Backend (HB-1, `AnalyticsEventMap::isSentToGa4ByClient`) işaretli
+  event'leri GA4'e MP ile tekrar iletmez; Meta/TikTok iletimi değişmez. Expo
+  Go'da ve eski sürümlerde işaret yoktur, iletim MP ile sürer.
+
+## Yayın sırası (önemli)
+
+1. **Backend HB-1 prod'a çıkmadan Firebase'li uygulama sürümü yayınlanmaz.**
+   Yoksa yeni sürümün her event'i GA4'te iki kez sayılır.
+2. EAS'te `GOOGLE_SERVICE_INFO_PLIST` **file** değişkeni (Secret;
+   `development`, `preview` ve `production` ortamları) tanımlanmalı. İçeriği
+   Firebase → haydigiy-mobile → Haydigiy iOS → `GoogleService-Info.plist`.
+   Dosya, `google-services.json` gibi git'e ve EAS arşivine girmez; değişken
+   yoksa iOS EAS derlemesi dosyayı bulamaz.
+3. Native değişiklik olduğu için OTA ile gitmez; mağaza sürümü gerekir.
+4. Sürüm yayıldıkça "(not set)" payı düşer. Eski sürümler MP ile gitmeye devam
+   eder.
+
+## Doğrulama
+
+- GA4 → Yönetici → DebugView: cihazda debug modu açılınca (Android:
+  `adb shell setprop debug.firebase.analytics.app com.faprika.haydigiy`; iOS:
+  Xcode scheme argümanı `-FIRDebugEnabled`) event'ler canlı görünür.
+- GA4 → Veri akışları: Haydigiy Android/iOS "son 48 saatte veri alındı" olmalı.
+- Trafik edinme → Oturum kaynağı/aracısı + ikincil boyut **Tarayıcı**:
+  "(not set) / (not set)" satırı yeni sürüm yayıldıkça küçülmeli.

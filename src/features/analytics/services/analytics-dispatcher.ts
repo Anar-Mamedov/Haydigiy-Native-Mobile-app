@@ -2,9 +2,11 @@ import { AnalyticsConsentGate, analyticsConsentGate } from './analytics-consent'
 import { AnalyticsDeviceInfo, getAnalyticsDeviceInfo } from './analytics-device';
 import { AnalyticsSession, analyticsSession } from './analytics-session';
 import { AnalyticsContext, AnalyticsSink } from './analytics-sink';
+import { firebaseAnalyticsSink } from './firebase-analytics.sink';
 import { firstPartySink } from './first-party.sink';
 import { metaClickIdStore } from './meta-click-id-store';
 import { AnalyticsEvent, AnalyticsIdentity } from '../types/analytics.types';
+import { ConsentPreferences } from '@/features/consent/types/consent.types';
 import { getDeviceId } from '@/lib/storage/device-id';
 
 /**
@@ -39,17 +41,25 @@ export type AnalyticsDispatcherDependencies = {
   loadDeviceId: () => Promise<string>;
   loadMetaClickId: () => Promise<string | null>;
   clearMetaClickId: () => Promise<void>;
+  /**
+   * GA4'e uygulamanın kendi stream'inden gönderim etkin mi? Bağlamın
+   * `ga4NativeDelivery` alanı buradan gelir; backend bu işaretle çift sayımı önler.
+   */
+  isGa4NativeDeliveryActive: () => boolean;
   onError: (message: string, error: unknown) => void;
 };
 
 const defaultDependencies: AnalyticsDispatcherDependencies = {
-  sinks: [firstPartySink],
+  sinks: [firstPartySink, firebaseAnalyticsSink],
   consent: analyticsConsentGate,
   session: analyticsSession,
   loadDeviceInfo: getAnalyticsDeviceInfo,
   loadDeviceId: getDeviceId,
   loadMetaClickId: () => metaClickIdStore.getFbc(),
   clearMetaClickId: () => metaClickIdStore.clear(),
+  // Firebase sink'i ile aynı izin kategorisinde (analytics): first-party event'i gidiyorsa
+  // Firebase'e de gidiyordur; native modül yoksa (Expo Go) işaret düşer, backend MP ile iletir.
+  isGa4NativeDeliveryActive: () => firebaseAnalyticsSink.isEnabled(),
   onError: (message, error) => console.warn(message, error),
 };
 
@@ -74,8 +84,27 @@ export function createAnalyticsDispatcher(
    */
   let consentReady: Promise<void> | null = null;
 
+  /**
+   * İzni kendi tarafında da tutan sink'lere (Firebase toplamayı kapalı başlatır)
+   * tercihi iletir. Kategori kapısından bağımsızdır: izin geri alındığında da
+   * haber verilmeli ki sağlayıcı toplamayı durdursun.
+   */
+  const propagateConsent = (preferences: ConsentPreferences): void => {
+    dependencies.sinks.forEach((sink) => {
+      try {
+        sink.applyConsent?.(preferences);
+      } catch (error) {
+        dependencies.onError(`[Analytics] ${sink.id} izin tercihini alamadı.`, error);
+      }
+    });
+  };
+
   const ensureConsentReady = (): Promise<void> => {
-    if (!consentReady) consentReady = dependencies.consent.restore();
+    if (!consentReady) {
+      consentReady = dependencies.consent
+        .restore()
+        .then(() => propagateConsent(dependencies.consent.current()));
+    }
     return consentReady;
   };
 
@@ -107,6 +136,7 @@ export function createAnalyticsDispatcher(
         ? await dependencies.loadMetaClickId().catch(() => null)
         : null,
       marketingConsent,
+      ga4NativeDelivery: dependencies.isGa4NativeDeliveryActive(),
       ...device,
     };
   };
@@ -182,6 +212,7 @@ export function createAnalyticsDispatcher(
       // Kullanıcı az önce cevapladı; artık depoyu okumayı beklemek gereksiz.
       consentReady = Promise.resolve();
       dependencies.consent.apply(preferences);
+      propagateConsent(preferences);
 
       // Pazarlama onayı geri alınınca cihazda saklanan reklam tanımlayıcısı da silinir.
       if (!preferences.marketing) {

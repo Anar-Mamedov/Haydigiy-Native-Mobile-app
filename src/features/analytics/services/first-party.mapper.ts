@@ -204,6 +204,8 @@ export function toFirstPartyEventDto(
     page_url: context.screenPath,
     marketing_consent: context.marketingConsent,
     ...(context.metaClickId ? { fbc: context.metaClickId } : {}),
+    // Yalnızca `true` gönderilir: işaretsiz event backend için "GA4'e MP ile ilet" demektir.
+    ...(context.ga4NativeDelivery ? { ga4_native: true } : {}),
     ...fields,
   };
 }

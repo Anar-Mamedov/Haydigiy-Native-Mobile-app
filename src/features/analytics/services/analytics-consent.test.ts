@@ -55,4 +55,14 @@ describe('analytics consent gate', () => {
 
     expect(gate.isAllowed('analytics')).toBe(false);
   });
+
+  it('exposes a copy of the current choice that callers cannot mutate', () => {
+    const gate = createAnalyticsConsentGate(async () => null);
+    gate.apply({ analytics: true, functional: false, marketing: false });
+
+    const snapshot = gate.current();
+    snapshot.marketing = true;
+
+    expect(gate.current()).toEqual({ analytics: true, functional: false, marketing: false });
+  });
 });

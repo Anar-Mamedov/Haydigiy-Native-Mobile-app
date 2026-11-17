@@ -49,6 +49,14 @@ export type AnalyticsEventDto = {
    * issue'su çıkana kadar iletim bugünkü gibi sürer.
    */
   marketing_consent?: boolean;
+  /**
+   * Uygulama bu event'i GA4'e Firebase Analytics ile kendisi gönderdi. Backend
+   * (connect `AnalyticsEventMap::isSentToGa4ByClient`, HB-1) işaretli event'leri
+   * GA4'e Measurement Protocol ile tekrar iletmez; Meta/TikTok etkilenmez.
+   * Yalnızca iletim kararı içindir, ClickHouse'a yazılmaz. Bu alanı tanımayan
+   * eski backend doğrulaması onu sessizce düşürür.
+   */
+  ga4_native?: boolean;
   properties?: Record<string, unknown>;
 };
 

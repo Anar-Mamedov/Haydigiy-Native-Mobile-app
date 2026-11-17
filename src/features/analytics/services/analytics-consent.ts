@@ -18,6 +18,8 @@ export interface AnalyticsConsentGate {
   /** Kullanıcı tercihini değiştirdiğinde çağrılır. */
   apply(preferences: ConsentPreferences): void;
   isAllowed(category: keyof ConsentPreferences): boolean;
+  /** Bellekteki tercihin kopyası; izni kendi tarafında da tutan sink'lere iletilir. */
+  current(): ConsentPreferences;
 }
 
 export function createAnalyticsConsentGate(
@@ -43,6 +45,10 @@ export function createAnalyticsConsentGate(
 
     isAllowed(category) {
       return preferences[category] === true;
+    },
+
+    current() {
+      return { ...preferences };
     },
   };
 }

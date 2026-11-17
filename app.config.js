@@ -1,11 +1,19 @@
 const insiderConfig = require('./insider.config.json');
 
 const GOOGLE_SERVICES_FILE = './google-services.json';
+// Firebase iOS yapılandırması (haydigiy-mobile → Haydigiy iOS). google-services.json gibi
+// git'e ve EAS arşivine girmez; EAS'te GOOGLE_SERVICE_INFO_PLIST file değişkeniyle verilir.
+const GOOGLE_SERVICE_INFO_PLIST_FILE = './GoogleService-Info.plist';
 const OPTIONAL_LOCATION_PERMISSIONS = [
   'android.permission.ACCESS_FINE_LOCATION',
   'android.permission.ACCESS_COARSE_LOCATION',
   'android.permission.ACCESS_BACKGROUND_LOCATION',
 ];
+// Firebase Analytics (play-services-measurement) reklam kimliği iznini kendiliğinden
+// ekliyor. Uygulama reklam kimliği toplamıyor (iOS'ta da IDFA yok, firebase.json'da
+// adid toplaması kapalı); izin kalırsa Play Console "Reklam Kimliği" beyanı ve Veri
+// Güvenliği formu değişmek zorunda kalır. Toplama açılmak istenirse ikisi birlikte açılır.
+const ADVERTISING_ID_PERMISSION = 'com.google.android.gms.permission.AD_ID';
 
 function getApnsMode() {
   return process.env.INSIDER_APNS_MODE === 'production' ? 'production' : 'development';
@@ -15,6 +23,7 @@ module.exports = ({ config }) => ({
   ...config,
   ios: {
     ...config.ios,
+    googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST || GOOGLE_SERVICE_INFO_PLIST_FILE,
     infoPlist: {
       ...config.ios?.infoPlist,
       // Required by iOS for the API's optional content-available payloads.
@@ -34,6 +43,7 @@ module.exports = ({ config }) => ({
     blockedPermissions: [
       ...(config.android?.blockedPermissions || []),
       ...OPTIONAL_LOCATION_PERMISSIONS,
+      ADVERTISING_ID_PERMISSION,
     ],
   },
   plugins: [
@@ -89,6 +99,17 @@ module.exports = ({ config }) => ({
         },
       },
     ],
+    // Firebase Analytics: uygulama GA4'e kendi iOS/Android stream'lerinden gider
+    // (haydigiy-mobile ↔ "haydigiy - GA4"). Toplama ve izin varsayılanları
+    // firebase.json'da kapalı; kullanıcı analitik izni verince JS açar.
+    //
+    // RNFB v26'ya sabit: v27 yalnızca SPM ile kuruluyor ve dynamic framework istiyor,
+    // bu proje ise yukarıdaki sebeplerle static. Static framework ile SPM birlikte
+    // kullanılamadığı için (her pod Firebase'i ayrı gömer, çift sembol) `disableSPM`
+    // Firebase'i CocoaPods'tan kurar.
+    ['@react-native-firebase/app', { ios: { disableSPM: true } }],
+    // Uygulamada ATT izni yok; IDFA'sız Analytics (GoogleAppMeasurement, AdSupport yok).
+    ['@react-native-firebase/analytics', { ios: { withoutAdIdSupport: true } }],
     [
       'expo-insider-plugin',
       {

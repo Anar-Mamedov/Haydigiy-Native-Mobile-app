@@ -11,6 +11,7 @@ function buildContext(overrides: Partial<AnalyticsContext> = {}): AnalyticsConte
     os: 'iOS',
     osVersion: '18.2',
     marketingConsent: true,
+    ga4NativeDelivery: false,
     metaClickId: null,
     screenHeight: 844,
     screenPath: '/cart',
@@ -87,6 +88,18 @@ describe('toFirstPartyEventDto', () => {
     expect(
       toFirstPartyEventDto({ name: 'user_signed_up' }, buildContext({ marketingConsent: false }))
         .marketing_consent,
+    ).toBe(false);
+  });
+
+  it('flags events the app also sent to GA4 itself, so the backend does not count them twice', () => {
+    expect(
+      toFirstPartyEventDto({ name: 'user_signed_up' }, buildContext({ ga4NativeDelivery: true }))
+        .ga4_native,
+    ).toBe(true);
+    // İşaretsiz event backend için "GA4'e MP ile ilet" demek; `false` hiç gönderilmez.
+    expect(
+      'ga4_native' in
+        toFirstPartyEventDto({ name: 'user_signed_up' }, buildContext({ ga4NativeDelivery: false })),
     ).toBe(false);
   });
 

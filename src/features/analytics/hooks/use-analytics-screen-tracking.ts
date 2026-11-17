@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { usePathname } from 'expo-router';
+import { usePathname, useSegments } from 'expo-router';
 import { analytics } from '../services/analytics-dispatcher';
+import { toRoutePattern } from '../utils/route-pattern';
 
 /**
  * Rota değişimini `screen_viewed` event'ine çevirir (web `Providers` içindeki
@@ -12,6 +13,7 @@ import { analytics } from '../services/analytics-dispatcher';
  */
 export function useAnalyticsScreenTracking(): void {
   const pathname = usePathname();
+  const route = toRoutePattern(useSegments());
   const lastPathRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -22,6 +24,6 @@ export function useAnalyticsScreenTracking(): void {
 
     // Sıra önemli: yol önce bağlama yazılır, event o bağlamla gider.
     analytics.setScreenPath(pathname);
-    analytics.track({ name: 'screen_viewed', screen: pathname });
-  }, [pathname]);
+    analytics.track({ name: 'screen_viewed', screen: pathname, route });
+  }, [pathname, route]);
 }

@@ -17,6 +17,9 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+# Firebase yapılandırmaları EAS'e dosya değişkeni olarak verilir
+# (GOOGLE_SERVICES_JSON / GOOGLE_SERVICE_INFO_PLIST), arşive girmez.
+GoogleService-Info.plist
 google-services.json
 firebase-service-account*.json
 *-firebase-adminsdk-*.json

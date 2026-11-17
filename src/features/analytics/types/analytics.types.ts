@@ -38,7 +38,16 @@ export type AnalyticsIdentity = {
  * — analytics asla akışı kırmamalı.
  */
 export type AnalyticsEvent =
-  | { name: 'screen_viewed'; screen: string }
+  | {
+      name: 'screen_viewed';
+      /** Somut yol (`/product/123`); web'deki `page_url` karşılığı. */
+      screen: string;
+      /**
+       * Dinamik parçaları açılmamış rota kalıbı (`/product/[id]`). Düşük
+       * kardinaliteli ekran adı isteyen sink'ler (GA4) bunu kullanır.
+       */
+      route?: string;
+    }
   | { name: 'product_viewed'; product: AnalyticsProduct }
   | { name: 'category_viewed'; categoryId: number; categoryName?: string }
   | { name: 'search_performed'; query: string; resultCount?: number }

@@ -34,6 +34,7 @@ function createConsentGate(preferences: ConsentPreferences): AnalyticsConsentGat
       current = next;
     },
     isAllowed: (category: keyof ConsentPreferences) => current[category] === true,
+    current: () => ({ ...current }),
     restore: async () => {
       gate.restoreCount += 1;
     },
@@ -58,6 +59,7 @@ function createDispatcher(
     loadDeviceId: async () => 'device-1',
     loadMetaClickId: async () => null,
     clearMetaClickId: async () => undefined,
+    isGa4NativeDeliveryActive: () => false,
     loadDeviceInfo: () => ({
       appVersion: '2.3.24',
       deviceType: 'mobile',
@@ -138,6 +140,7 @@ describe('consent gating', () => {
       apply: () => undefined,
       // Depo okunana kadar izin yok; asıl test bu sırayı doğrular.
       isAllowed: () => restored,
+      current: () => ({ analytics: restored, functional: restored, marketing: restored }),
       restore: async () => {
         await settle();
         restored = true;
@@ -434,6 +437,74 @@ describe('identity', () => {
     await settle();
 
     expect(onError).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('consent propagation', () => {
+  it('hands the stored choice to consent-aware sinks before the first event is delivered', async () => {
+    const order: string[] = [];
+    const sink = createSinkSpy({
+      applyConsent: (preferences) => order.push(`consent:${preferences.analytics}`),
+      id: 'a',
+      track: () => order.push('track'),
+    });
+    const { dispatcher } = createDispatcher([sink]);
+
+    dispatcher.track(screenEvent);
+    await settle();
+
+    expect(order).toEqual(['consent:true', 'track']);
+  });
+
+  it('tells every sink about a withdrawal, even sinks the gate now blocks', async () => {
+    const applyConsent = jest.fn();
+    const sink = createSinkSpy({ applyConsent, id: 'a' });
+    const { dispatcher } = createDispatcher([sink]);
+
+    dispatcher.applyConsent(NO_CONSENT);
+
+    expect(applyConsent).toHaveBeenCalledWith(NO_CONSENT);
+  });
+
+  it('keeps going when one sink fails to take the choice', () => {
+    const healthy = jest.fn();
+    const failing = createSinkSpy({
+      applyConsent: () => {
+        throw new Error('native consent failed');
+      },
+      id: 'failing',
+    });
+    const { dispatcher, onError } = createDispatcher([
+      failing,
+      createSinkSpy({ applyConsent: healthy, id: 'healthy' }),
+    ]);
+
+    dispatcher.applyConsent(FULL_CONSENT);
+
+    expect(healthy).toHaveBeenCalledWith(FULL_CONSENT);
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('GA4 native delivery flag', () => {
+  it('marks the context when the app itself delivers to GA4', async () => {
+    const sink = createSinkSpy({ id: 'a' });
+    const { dispatcher } = createDispatcher([sink], { isGa4NativeDeliveryActive: () => true });
+
+    dispatcher.track(screenEvent);
+    await settle();
+
+    expect(sink.calls[0].context.ga4NativeDelivery).toBe(true);
+  });
+
+  it('leaves the flag off when native delivery is unavailable', async () => {
+    const sink = createSinkSpy({ id: 'a' });
+    const { dispatcher } = createDispatcher([sink]);
+
+    dispatcher.track(screenEvent);
+    await settle();
+
+    expect(sink.calls[0].context.ga4NativeDelivery).toBe(false);
   });
 });
 

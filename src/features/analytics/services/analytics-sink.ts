@@ -41,6 +41,14 @@ export interface AnalyticsSink {
    * kuyruk tutmayan sink'ler uygulamaz.
    */
   flush?(): void | Promise<void>;
+
+  /**
+   * Kayıtlı izin tercihi yüklendiğinde ve kullanıcı tercihini her
+   * değiştirdiğinde çağrılır — `consentCategory`'den bağımsız olarak, izin geri
+   * alındığında da. Toplama/izin durumunu kendi tarafında tutan sağlayıcılar
+   * (Firebase Analytics) uygular; diğerleri için dispatcher'ın kapısı yeterli.
+   */
+  applyConsent?(preferences: ConsentPreferences): void;
 }
 
 /**
@@ -69,4 +77,10 @@ export type AnalyticsContext = {
    * reklam sağlayıcılarına (Meta) iletim kararı bu bilgiyle backend'de verilir.
    */
   marketingConsent: boolean;
+  /**
+   * Bu event GA4'e uygulamanın kendi Firebase stream'inden de gidiyor mu?
+   * `true` iken backend aynı event'i GA4'e Measurement Protocol ile tekrar
+   * iletmez (çift sayım); Meta/TikTok iletimi etkilenmez.
+   */
+  ga4NativeDelivery: boolean;
 };

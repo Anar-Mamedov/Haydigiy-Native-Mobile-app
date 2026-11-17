@@ -18,6 +18,7 @@ function buildContext(): AnalyticsContext {
     osVersion: '15',
     screenHeight: 844,
     marketingConsent: false,
+    ga4NativeDelivery: false,
     metaClickId: null,
     screenPath: '/cart',
     screenWidth: 390,
