@@ -1,7 +1,9 @@
 import { screen } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { Input, TextArea, type ColorTokens } from 'tamagui';
 import { config } from '../../../tamagui.config';
 import { AppInput } from '@/components/ui/app-input';
+import { SearchInput } from '@/components/ui/search-input';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { TEXT_FIELD_DEFAULT_PROPS, TEXT_FIELD_PLACEHOLDER_COLOR } from './text-field-defaults';
 
@@ -44,5 +46,29 @@ describe('text field placeholder color', () => {
 
     expect(screen.getByPlaceholderText('Özel').props.placeholderTextColor).toBe(expected);
     expect(expected).not.toBe(resolvedPlaceholderColor(TEXT_FIELD_PLACEHOLDER_COLOR));
+  });
+});
+
+/** Metin alanında yazılan metnin native `color` stili. */
+function typedTextColor(placeholder: string) {
+  return StyleSheet.flatten(screen.getByPlaceholderText(placeholder).props.style)?.color;
+}
+
+// HMA-65: yazılan metnin rengi de temadan gelmeli. Alan `color` taşımazsa native varsayılan
+// kullanılır ve telefonun koyu modunda açık zeminde beyaz görünür.
+describe('text field typed text color', () => {
+  it('is set by the theme on every shared text field', () => {
+    renderWithTamagui(
+      <>
+        <Input placeholder="Ürün/Sipariş ara" />
+        <TextArea placeholder="Yorumunuz" />
+        <AppInput label="Kupon kodu" onChangeText={jest.fn()} placeholder="Kupon" value="" />
+        <SearchInput onChangeText={jest.fn()} placeholder="Sorularda Ara" value="" />
+      </>,
+    );
+
+    for (const placeholder of ['Ürün/Sipariş ara', 'Yorumunuz', 'Kupon', 'Sorularda Ara']) {
+      expect(typedTextColor(placeholder)).toEqual(expect.any(String));
+    }
   });
 });

@@ -6,10 +6,12 @@ import { TamaguiProvider, Theme } from 'tamagui';
 import { queryClient } from '@/lib/query-client';
 import { useAndroidNavigationBarStyle } from '@/lib/theme/use-android-navigation-bar-style';
 import { useAppTheme } from '@/lib/theme/use-app-theme';
+import { useNativeColorScheme } from '@/lib/theme/use-native-color-scheme';
 import config from '../../../tamagui.config';
 
 export function AppProviders({ children }: PropsWithChildren) {
-  const { resolvedTheme } = useAppTheme();
+  const { resolvedTheme, themePreference } = useAppTheme();
+  useNativeColorScheme(themePreference);
   useAndroidNavigationBarStyle(resolvedTheme);
 
   return (
