@@ -65,8 +65,8 @@ describe('first-party sink', () => {
     expect(createSink().sink.isEnabled()).toBe(true);
   });
 
-  it('needs analytics consent, not marketing consent', () => {
-    expect(createSink().sink.consentCategory).toBe('analytics');
+  it('runs regardless of the consent choice (Meta receives every user, business decision)', () => {
+    expect(createSink().sink.consentCategory).toBe('none');
   });
 
   it('does not send a single event immediately; it waits for the batch window', () => {

@@ -100,16 +100,6 @@ describe('meta click id store', () => {
     }
   });
 
-  it('deletes the stored click id on clear', async () => {
-    const { store, data } = createStore();
-
-    await store.capture(adLink(FIRST));
-    await store.clear();
-
-    await expect(store.getFbc()).resolves.toBeNull();
-    expect(data.has(STORAGE_KEY)).toBe(false);
-  });
-
   it('reads storage once and serves later calls from memory', async () => {
     const { store, storage } = createStore();
 

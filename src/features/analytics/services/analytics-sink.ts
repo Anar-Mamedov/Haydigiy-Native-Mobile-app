@@ -1,3 +1,4 @@
+import { AnalyticsConsentRequirement } from './analytics-consent';
 import { AnalyticsEvent, AnalyticsIdentity } from '../types/analytics.types';
 import { ConsentPreferences } from '@/features/consent/types/consent.types';
 
@@ -15,11 +16,12 @@ export interface AnalyticsSink {
   readonly id: string;
 
   /**
-   * KVKK/GDPR kategorisi. Kullanıcı bu kategoriye izin vermediyse dispatcher
-   * sink'i hiç çağırmaz. Ölçüm hedefleri `analytics`, reklam/dönüşüm hedefleri
-   * `marketing` olmalıdır.
+   * Çalışması için gereken KVKK/GDPR izni. Kullanıcı bu kategoriye izin vermediyse
+   * dispatcher sink'i hiç çağırmaz. Ölçüm hedefleri `analytics`, reklam/dönüşüm
+   * hedefleri `marketing` olmalıdır; `'none'` izinden bağımsız demektir ve yalnızca
+   * bilinçli bir iş kararıyla kullanılır (bkz. `first-party.sink.ts`).
    */
-  readonly consentCategory: keyof ConsentPreferences;
+  readonly consentCategory: AnalyticsConsentRequirement;
 
   /**
    * Hedef bu çalışma ortamında kullanılabilir mi (yapılandırma tanımlı mı,
@@ -70,17 +72,21 @@ export type AnalyticsContext = {
   screenHeight: number;
   /** Aktif ekranın yolu; web'deki `page_url` karşılığı. */
   screenPath: string | null;
-  /** Reklamdan açılışta yakalanan Meta tıklama kimliği (`fbc`); yoksa ya da süresi dolduysa null. */
+  /**
+   * Reklamdan açılışta yakalanan Meta tıklama kimliği (`fbc`); yoksa ya da süresi dolduysa
+   * null. İzin seçiminden bağımsız gönderilir (bkz. `first-party.sink.ts`).
+   */
   metaClickId: string | null;
   /**
-   * Kullanıcı pazarlama çerezlerine izin verdi mi? Sink'ler analitik onayıyla çalışır;
-   * reklam sağlayıcılarına (Meta) iletim kararı bu bilgiyle backend'de verilir.
+   * Kullanıcı pazarlama çerezlerine izin verdi mi? Bilgi olarak backend'e iletilir;
+   * Meta iletimi buna bağlı değildir (iş kararı, bkz. `first-party.sink.ts`).
    */
   marketingConsent: boolean;
   /**
-   * Bu event GA4'e uygulamanın kendi Firebase stream'inden de gidiyor mu?
-   * `true` iken backend aynı event'i GA4'e Measurement Protocol ile tekrar
-   * iletmez (çift sayım); Meta/TikTok iletimi etkilenmez.
+   * GA4 iletimi uygulamanın kendi Firebase stream'ine mi ait? `true` iken backend
+   * event'i GA4'e Measurement Protocol ile iletmez (çift sayım). Firebase kendi izin
+   * kapısını (analytics) uygular: izin yoksa event GA4'e hiç gitmez, MP'ye de düşmez.
+   * Meta/TikTok iletimi etkilenmez.
    */
   ga4NativeDelivery: boolean;
 };

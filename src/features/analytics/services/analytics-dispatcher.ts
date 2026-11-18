@@ -40,7 +40,6 @@ export type AnalyticsDispatcherDependencies = {
   loadDeviceInfo: () => AnalyticsDeviceInfo;
   loadDeviceId: () => Promise<string>;
   loadMetaClickId: () => Promise<string | null>;
-  clearMetaClickId: () => Promise<void>;
   /**
    * GA4'e uygulamanın kendi stream'inden gönderim etkin mi? Bağlamın
    * `ga4NativeDelivery` alanı buradan gelir; backend bu işaretle çift sayımı önler.
@@ -56,9 +55,10 @@ const defaultDependencies: AnalyticsDispatcherDependencies = {
   loadDeviceInfo: getAnalyticsDeviceInfo,
   loadDeviceId: getDeviceId,
   loadMetaClickId: () => metaClickIdStore.getFbc(),
-  clearMetaClickId: () => metaClickIdStore.clear(),
-  // Firebase sink'i ile aynı izin kategorisinde (analytics): first-party event'i gidiyorsa
-  // Firebase'e de gidiyordur; native modül yoksa (Expo Go) işaret düşer, backend MP ile iletir.
+  // GA4 iletimi Firebase sink'ine ait: native modül varsa işaret konur, backend MP ile tekrar
+  // göndermez. Firebase analitik izni yoksa event'i kendisi göndermez; first-party event'i
+  // izinden bağımsız gitse de GA4'e MP'den düşmez. Native modül yoksa (Expo Go) işaret düşer,
+  // backend MP ile iletir.
   isGa4NativeDeliveryActive: () => firebaseAnalyticsSink.isEnabled(),
   onError: (message, error) => console.warn(message, error),
 };
@@ -130,11 +130,9 @@ export function createAnalyticsDispatcher(
       userId,
       deviceId: await dependencies.loadDeviceId(),
       screenPath,
-      // Reklam tanımlayıcısı yalnızca pazarlama onayıyla gider. Eşleştirmeyi güçlendirir ama
-      // zorunlu değil; okunamazsa event yine gider.
-      metaClickId: marketingConsent
-        ? await dependencies.loadMetaClickId().catch(() => null)
-        : null,
+      // Meta tıklama kimliği izin seçiminden bağımsız gider (bkz. `first-party.sink.ts`).
+      // Eşleştirmeyi güçlendirir ama zorunlu değil; okunamazsa event yine gider.
+      metaClickId: await dependencies.loadMetaClickId().catch(() => null),
       marketingConsent,
       ga4NativeDelivery: dependencies.isGa4NativeDeliveryActive(),
       ...device,
@@ -213,13 +211,6 @@ export function createAnalyticsDispatcher(
       consentReady = Promise.resolve();
       dependencies.consent.apply(preferences);
       propagateConsent(preferences);
-
-      // Pazarlama onayı geri alınınca cihazda saklanan reklam tanımlayıcısı da silinir.
-      if (!preferences.marketing) {
-        dependencies.clearMetaClickId().catch((error) => {
-          dependencies.onError('[Analytics] Meta tıklama kimliği silinemedi.', error);
-        });
-      }
     },
   };
 }

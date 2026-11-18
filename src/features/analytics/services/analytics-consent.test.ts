@@ -9,6 +9,15 @@ describe('analytics consent gate', () => {
     expect(gate.isAllowed('marketing')).toBe(false);
   });
 
+  it('always allows a consent-independent requirement, whatever the choice', async () => {
+    const unanswered = createAnalyticsConsentGate(async () => null);
+    expect(unanswered.isAllowed('none')).toBe(true);
+
+    const rejected = createAnalyticsConsentGate(async () => null);
+    rejected.apply({ analytics: false, functional: false, marketing: false });
+    expect(rejected.isAllowed('none')).toBe(true);
+  });
+
   it('still denies everything after restoring an unanswered choice', async () => {
     const gate = createAnalyticsConsentGate(async () => null);
 

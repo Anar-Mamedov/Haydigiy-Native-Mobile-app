@@ -1,4 +1,4 @@
-import { AnalyticsConsentGate } from './analytics-consent';
+import { AnalyticsConsentGate, AnalyticsConsentRequirement } from './analytics-consent';
 import {
   AnalyticsDispatcherDependencies,
   createAnalyticsDispatcher,
@@ -33,7 +33,8 @@ function createConsentGate(preferences: ConsentPreferences): AnalyticsConsentGat
     apply: (next: ConsentPreferences) => {
       current = next;
     },
-    isAllowed: (category: keyof ConsentPreferences) => current[category] === true,
+    isAllowed: (requirement: AnalyticsConsentRequirement) =>
+      requirement === 'none' || current[requirement] === true,
     current: () => ({ ...current }),
     restore: async () => {
       gate.restoreCount += 1;
@@ -58,7 +59,6 @@ function createDispatcher(
     consent,
     loadDeviceId: async () => 'device-1',
     loadMetaClickId: async () => null,
-    clearMetaClickId: async () => undefined,
     isGa4NativeDeliveryActive: () => false,
     loadDeviceInfo: () => ({
       appVersion: '2.3.24',
@@ -120,6 +120,21 @@ describe('consent gating', () => {
 
     expect(measurement.calls).toHaveLength(1);
     expect(advertising.calls).toHaveLength(0);
+  });
+
+  it('delivers to a consent-independent sink even without any consent', async () => {
+    const collector = createSinkSpy({ consentCategory: 'none', id: 'collector' });
+    const measurement = createSinkSpy({ consentCategory: 'analytics', id: 'measurement' });
+    const { dispatcher } = createDispatcher([collector, measurement], {
+      consent: createConsentGate(NO_CONSENT),
+    });
+
+    dispatcher.track(screenEvent);
+    await settle();
+
+    expect(collector.calls).toHaveLength(1);
+    expect(collector.calls[0].context.marketingConsent).toBe(false);
+    expect(measurement.calls).toHaveLength(0);
   });
 
   it('reads the stored choice once, not on every event', async () => {
@@ -296,30 +311,17 @@ describe('event context', () => {
     expect(sink.calls[0].context.metaClickId).toBe('fb.1.1700000000000.IwAR0abcDEF123');
   });
 
-  it('leaves the Meta click id out without marketing consent', async () => {
-    const sink = createSinkSpy({ id: 'a' });
-    const loadMetaClickId = jest.fn(async () => 'fb.1.1700000000000.IwAR0abcDEF123');
+  it('stamps the Meta click id even when marketing consent is rejected', async () => {
+    const sink = createSinkSpy({ consentCategory: 'none', id: 'a' });
     const { dispatcher } = createDispatcher([sink], {
-      consent: createConsentGate({ analytics: true, functional: true, marketing: false }),
-      loadMetaClickId,
+      consent: createConsentGate(NO_CONSENT),
+      loadMetaClickId: async () => 'fb.1.1700000000000.IwAR0abcDEF123',
     });
 
     dispatcher.track(screenEvent);
     await settle();
 
-    expect(sink.calls[0].context.metaClickId).toBeNull();
-    expect(loadMetaClickId).not.toHaveBeenCalled();
-  });
-
-  it('deletes the stored Meta click id when marketing consent is withdrawn', async () => {
-    const clearMetaClickId = jest.fn(async () => undefined);
-    const { dispatcher } = createDispatcher([], { clearMetaClickId });
-
-    dispatcher.applyConsent(FULL_CONSENT);
-    expect(clearMetaClickId).not.toHaveBeenCalled();
-
-    dispatcher.applyConsent({ analytics: true, functional: true, marketing: false });
-    expect(clearMetaClickId).toHaveBeenCalledTimes(1);
+    expect(sink.calls[0].context.metaClickId).toBe('fb.1.1700000000000.IwAR0abcDEF123');
   });
 
   it('still delivers the event when the Meta click id cannot be read', async () => {

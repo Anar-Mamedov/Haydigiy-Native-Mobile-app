@@ -5,11 +5,19 @@ import {
 } from '@/features/consent/types/consent.types';
 
 /**
+ * Bir analytics hedefinin çalışması için gereken izin: bir izin kategorisi ya da
+ * `'none'` (izinden bağımsız). `'none'` yalnızca bilinçli bir iş kararıyla verilir
+ * (bkz. `first-party.sink.ts`).
+ */
+export type AnalyticsConsentRequirement = keyof ConsentPreferences | 'none';
+
+/**
  * Analytics'in KVKK kapısı. Dispatcher her sink'i, o sink'in bildirdiği izin
- * kategorisi açık değilse hiç çağırmaz.
+ * açık değilse hiç çağırmaz.
  *
- * Varsayılan **izin yok**: kullanıcı çerez sayfasını henüz cevaplamadıysa hiçbir
- * event gitmez. Bu, izin öncesi ölçüm yapmama (prior consent) modelidir.
+ * Varsayılan **izin yok**: kullanıcı çerez sayfasını henüz cevaplamadıysa izin isteyen
+ * hiçbir hedefe event gitmez (izin öncesi ölçüm yapmama, prior consent). İstisna,
+ * izinden bağımsız çalışan (`'none'`) hedeflerdir.
  */
 
 export interface AnalyticsConsentGate {
@@ -17,7 +25,7 @@ export interface AnalyticsConsentGate {
   restore(): Promise<void>;
   /** Kullanıcı tercihini değiştirdiğinde çağrılır. */
   apply(preferences: ConsentPreferences): void;
-  isAllowed(category: keyof ConsentPreferences): boolean;
+  isAllowed(requirement: AnalyticsConsentRequirement): boolean;
   /** Bellekteki tercihin kopyası; izni kendi tarafında da tutan sink'lere iletilir. */
   current(): ConsentPreferences;
 }
@@ -43,8 +51,9 @@ export function createAnalyticsConsentGate(
       preferences = next;
     },
 
-    isAllowed(category) {
-      return preferences[category] === true;
+    isAllowed(requirement) {
+      if (requirement === 'none') return true;
+      return preferences[requirement] === true;
     },
 
     current() {

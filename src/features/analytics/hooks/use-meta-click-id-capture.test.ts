@@ -12,14 +12,11 @@ jest.mock('expo-linking', () => ({
 }));
 
 const AD_LINK = 'https://haydigiy.com/urun-1?fbclid=IwAR0abcDEF123';
-const allowed = async () => true;
-const denied = async () => false;
 
 function createStoreSpy(): MetaClickIdStore & { capture: jest.Mock } {
   return {
     capture: jest.fn(async () => undefined),
     getFbc: jest.fn(async () => null),
-    clear: jest.fn(async () => undefined),
   };
 }
 
@@ -42,14 +39,14 @@ describe('useMetaClickIdCapture', () => {
     mockGetInitialURL.mockResolvedValue(AD_LINK);
     const store = createStoreSpy();
 
-    renderHook(() => useMetaClickIdCapture(store, allowed));
+    renderHook(() => useMetaClickIdCapture(store));
 
     await waitFor(() => expect(store.capture).toHaveBeenCalledWith(AD_LINK));
   });
 
   it('captures links that arrive while the app is running', async () => {
     const store = createStoreSpy();
-    renderHook(() => useMetaClickIdCapture(store, allowed));
+    renderHook(() => useMetaClickIdCapture(store));
     await waitFor(() => expect(mockGetInitialURL).toHaveBeenCalled());
 
     urlListener?.({ url: 'haydigiywebviewapp:///?to=%2Fsepet&al_applink_data=%7B%7D' });
@@ -61,22 +58,9 @@ describe('useMetaClickIdCapture', () => {
     );
   });
 
-  it('does not store the ad identifier without marketing consent', async () => {
-    mockGetInitialURL.mockResolvedValue(AD_LINK);
-    const isMarketingAllowed = jest.fn(denied);
-    const store = createStoreSpy();
-
-    renderHook(() => useMetaClickIdCapture(store, isMarketingAllowed));
-    await waitFor(() => expect(isMarketingAllowed).toHaveBeenCalled());
-    urlListener?.({ url: AD_LINK });
-    await waitFor(() => expect(isMarketingAllowed).toHaveBeenCalledTimes(2));
-
-    expect(store.capture).not.toHaveBeenCalled();
-  });
-
   it('does nothing without an opening link and stops listening on unmount', async () => {
     const store = createStoreSpy();
-    const { unmount } = renderHook(() => useMetaClickIdCapture(store, allowed));
+    const { unmount } = renderHook(() => useMetaClickIdCapture(store));
     await waitFor(() => expect(mockGetInitialURL).toHaveBeenCalled());
 
     unmount();
@@ -91,7 +75,7 @@ describe('useMetaClickIdCapture', () => {
     const store = createStoreSpy();
     store.capture.mockRejectedValue(new Error('storage unavailable'));
 
-    renderHook(() => useMetaClickIdCapture(store, allowed));
+    renderHook(() => useMetaClickIdCapture(store));
 
     await waitFor(() => expect(warn).toHaveBeenCalled());
     warn.mockRestore();

@@ -3,8 +3,8 @@ import { buildFbc, extractFbclid } from '../utils/meta-click-id';
 
 /**
  * Reklamdan gelen Meta tıklama kimliğinin cihazda saklanması (web `_fbc` çerezinin
- * native karşılığı). Pazarlama çerezi gibi yalnızca pazarlama onayıyla saklanır
- * (`useMetaClickIdCapture`), onay geri alınınca silinir (dispatcher `applyConsent`).
+ * native karşılığı). İzin seçiminden bağımsız saklanır (iş kararı, bkz.
+ * `first-party.sink.ts`); süresi dolunca kendiliğinden düşer.
  *
  * Korelasyon kimliğidir, kimlik bilgisi değildir — bu yüzden MMKV (SecureStore değil).
  */
@@ -32,8 +32,6 @@ export type MetaClickIdStore = {
   capture(url: string): Promise<void>;
   /** Geçerli `fbc` değeri; kayıt yoksa ya da süresi dolduysa null. */
   getFbc(): Promise<string | null>;
-  /** Saklanan kimliği siler (pazarlama onayı geri alındığında). */
-  clear(): Promise<void>;
 };
 
 function parseStored(raw: string | null): StoredClick | null {
@@ -94,11 +92,6 @@ export function createMetaClickIdStore(
       }
 
       return buildFbc(current.fbclid, current.createdAt);
-    },
-
-    async clear() {
-      cached = null;
-      await dependencies.storage.removeItem(STORAGE_KEY);
     },
   };
 }

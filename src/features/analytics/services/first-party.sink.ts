@@ -84,8 +84,11 @@ export function createFirstPartySink(
 
   return {
     id: 'first-party',
-    // Kendi altyapımız ölçüm amaçlıdır; reklam/dönüşüm izni gerektirmez.
-    consentCategory: 'analytics',
+    // İzinden bağımsız (iş kararı 2026-11-18, HMA-69; yasal sorumluluk yönetimde): backend bu
+    // event'leri Meta Dönüşümler API'sine iletiyor ve Meta'ya her kullanıcının verisi gitmeli:
+    // kabul eden, reddeden ve hiç seçim yapmayan. Aynı event'ler backend'den TikTok'a da gider;
+    // GA4 iletimi Firebase sink'ine aittir ve analitik iznine bağlı kalır (`ga4_native`).
+    consentCategory: 'none',
 
     isEnabled() {
       // Uç, uygulamanın kendi API tabanında; ayrı bir yapılandırma gerekmez.
