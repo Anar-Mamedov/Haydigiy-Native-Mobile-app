@@ -87,12 +87,18 @@ describe('Auth Validation Schemas', () => {
       surname: 'Mamedov',
       phone: '5551234567',
       password: 'password123',
+      explicitConsent: false,
       kvkk: true,
       commercial: true,
     };
 
     it('passes with valid inputs', () => {
       const result = registerSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+
+    it('keeps the explicit and commercial consents optional (HF-62)', () => {
+      const result = registerSchema.safeParse({ ...validData, explicitConsent: false, commercial: false });
       expect(result.success).toBe(true);
     });
 
@@ -112,12 +118,13 @@ describe('Auth Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('fails if KVKK consent is not approved', () => {
+    it('fails with the web message if the Aydınlatma Metni box is not checked', () => {
       const result = registerSchema.safeParse({
         ...validData,
         kvkk: false,
       });
       expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.message).toBe('Devam etmek için Aydınlatma Metni’ni okuduğunuzu onaylayın.');
     });
   });
 

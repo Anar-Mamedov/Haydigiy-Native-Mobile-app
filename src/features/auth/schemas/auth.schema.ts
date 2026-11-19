@@ -62,10 +62,14 @@ export const registerSchema = z.object({
     .string()
     .min(1, { message: 'Şifre zorunludur' })
     .min(6, { message: 'Şifre en az 6 karakter olmalıdır' }),
-  kvkk: z.boolean().refine((val) => val === true, {
-    message: 'KVKK onayı zorunludur',
-  }),
+  /** Avantajlı teklifler için kişisel verilerin işlenmesine ve paylaşılmasına açık rıza (isteğe bağlı). */
+  explicitConsent: z.boolean(),
+  /** Ticari elektronik ileti onayı (isteğe bağlı). */
   commercial: z.boolean(),
+  /** "Aydınlatma Metni'ni okudum ve anladım" (zorunlu, web ile aynı mesaj). */
+  kvkk: z.boolean().refine((val) => val === true, {
+    message: 'Devam etmek için Aydınlatma Metni’ni okuduğunuzu onaylayın.',
+  }),
 });
 
 export const otpSchema = z.object({

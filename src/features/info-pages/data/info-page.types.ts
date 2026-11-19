@@ -17,8 +17,9 @@ export type WebInfoDocumentSlug =
 /**
  * Web'de ayrı bir yolu olmayan (web bunları pencerede gösterir), yalnızca
  * uygulama içi bağlantılarla açılan belgeler. Derin bağlantı eşlemesinde yer almaz.
+ * Açık rıza ve ticari elektronik ileti metinleri kayıt formundaki onay kutularından açılır.
  */
-export type AppOnlyInfoDocumentSlug = 'aydinlatma-metni';
+export type AppOnlyInfoDocumentSlug = 'aydinlatma-metni' | 'acik-riza-metni' | 'ticari-elektronik-ileti';
 
 export type InfoDocumentSlug = WebInfoDocumentSlug | AppOnlyInfoDocumentSlug;
 

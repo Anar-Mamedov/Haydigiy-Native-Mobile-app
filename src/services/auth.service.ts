@@ -41,6 +41,11 @@ export interface RegisterPayload {
   password: string;
   kvkk_consent: boolean;
   communication_consent: boolean;
+  /**
+   * Avantajlı teklifler için açık rıza; connect `users.explicit_consent`'e yazar (HB-2).
+   * Alanı tanımayan backend sürümleri yok sayar.
+   */
+  explicit_consent: boolean;
 }
 
 export interface SendCodeResponse {

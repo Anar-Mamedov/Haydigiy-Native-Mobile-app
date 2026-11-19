@@ -35,6 +35,20 @@ describe('info documents registry', () => {
     expect(WEB_PAGE_SLUGS).not.toContain('aydinlatma-metni');
   });
 
+  it('serves the register consent texts as app-only pages', () => {
+    // Web bu iki metni kayıt formunda pencerede gösteriyor; ayrı bir web yolu yok.
+    expect(findInfoDocument('acik-riza-metni')?.title).toBe('Açık Rıza Metni');
+    expect(findInfoDocument('ticari-elektronik-ileti')?.title).toBe('Ticari Elektronik İleti');
+    expect(WEB_PAGE_SLUGS).not.toContain('acik-riza-metni');
+    expect(WEB_PAGE_SLUGS).not.toContain('ticari-elektronik-ileti');
+  });
+
+  it('shows the same disclosure on the KVKK page as the register form (HF-62)', () => {
+    const blocks = findInfoDocument('kisisel-verilerin-korunmasi')?.blocks ?? [];
+    expect(blocks[0]).toEqual({ type: 'heading', text: '1. Giriş' });
+    expect(blocks.some((block) => block.type === 'heading' && block.text === '9. Başvuru yöntemleri')).toBe(true);
+  });
+
   it.each(WEB_PAGE_SLUGS)(
     'opens the web /%s link on the same app route the in-app links use',
     (slug) => {
