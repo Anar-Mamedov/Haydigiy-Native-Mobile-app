@@ -195,6 +195,7 @@ describe('resolveDeepLinkPath', () => {
     'subeden-al',
     'cerez-politikasi',
     'kisisel-verilerin-korunmasi',
+    'gizlilik-politikasi',
     'kullanim-kosullari',
   ])('opens the /%s info page on its app screen', (slug) => {
     // Regresyon: bilgi sayfaları ana ekrana, `/subeden-al` ürün ekranına düşüyordu.

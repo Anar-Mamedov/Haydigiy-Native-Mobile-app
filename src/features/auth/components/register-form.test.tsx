@@ -72,7 +72,7 @@ describe('RegisterForm consents (HF-62)', () => {
     ['Tarafıma elektronik ileti gönderilmesini kabul ediyorum.', '/bilgi/ticari-elektronik-ileti'],
     ['Aydınlatma Metni', '/bilgi/kisisel-verilerin-korunmasi'],
     ['Kullanım Koşulları', '/bilgi/kullanim-kosullari'],
-    ['Gizlilik Politikası', '/bilgi/uyelik-sozlesmesi'],
+    ['Gizlilik Politikası', '/bilgi/gizlilik-politikasi'],
   ])('opens “%s” on its info page without toggling a box', (linkText, route) => {
     renderForm();
 

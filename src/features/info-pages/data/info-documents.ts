@@ -4,6 +4,7 @@ import { DISCLOSURE } from '@/features/agreements/data/disclosure';
 import { EXPLICIT_CONSENT } from '@/features/agreements/data/explicit-consent';
 import { KVKK_DISCLOSURE_NOTICE } from '@/features/agreements/data/kvkk-disclosure-notice';
 import { MEMBERSHIP_AGREEMENT } from '@/features/agreements/data/membership-agreement';
+import { SITE_PRIVACY_POLICY } from '@/features/agreements/data/site-privacy-policy';
 import { TERMS_OF_USE } from '@/features/agreements/data/terms-of-use';
 import { ABOUT_US } from './about-us';
 import { CANCELLATION_RETURN } from './cancellation-return';
@@ -34,6 +35,11 @@ const INFO_DOCUMENTS: Record<InfoDocumentSlug, InfoDocument> = {
     slug: 'kisisel-verilerin-korunmasi',
     title: 'Kişisel Verilerin Korunması',
     blocks: KVKK_DISCLOSURE_NOTICE,
+  },
+  'gizlilik-politikasi': {
+    slug: 'gizlilik-politikasi',
+    title: 'Gizlilik Politikası',
+    blocks: SITE_PRIVACY_POLICY,
   },
   'kullanim-kosullari': {
     slug: 'kullanim-kosullari',

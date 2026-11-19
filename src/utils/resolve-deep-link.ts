@@ -75,6 +75,7 @@ const SUPPLIER_ROOT = 's';
  */
 const WEB_INFO_PAGE_ROOTS = new Set([
   'cerez-politikasi',
+  'gizlilik-politikasi',
   'hakkimizda',
   'iptal-iade-kosullari',
   'islem-rehberi',

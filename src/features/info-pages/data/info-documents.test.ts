@@ -49,6 +49,11 @@ describe('info documents registry', () => {
     expect(blocks.some((block) => block.type === 'heading' && block.text === '9. Başvuru yöntemleri')).toBe(true);
   });
 
+  it('serves the privacy policy as a web page (HF-64)', () => {
+    expect(findInfoDocument('gizlilik-politikasi')?.title).toBe('Gizlilik Politikası');
+    expect(WEB_PAGE_SLUGS).toContain('gizlilik-politikasi');
+  });
+
   it.each(WEB_PAGE_SLUGS)(
     'opens the web /%s link on the same app route the in-app links use',
     (slug) => {

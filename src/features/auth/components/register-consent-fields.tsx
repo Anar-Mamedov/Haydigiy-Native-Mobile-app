@@ -76,7 +76,7 @@ export function RegisterConsentFields({ control, errors }: RegisterConsentFields
         Hesap oluşturarak{' '}
         <InlineTextLink onPress={() => openDocument('kullanim-kosullari')}>Kullanım Koşulları</InlineTextLink>
         ’nı kabul etmiş olursunuz. Lütfen platformumuzun{' '}
-        <InlineTextLink onPress={() => openDocument('uyelik-sozlesmesi')}>Gizlilik Politikası</InlineTextLink>
+        <InlineTextLink onPress={() => openDocument('gizlilik-politikasi')}>Gizlilik Politikası</InlineTextLink>
         ’nı okuyun.
       </Paragraph>
     </YStack>

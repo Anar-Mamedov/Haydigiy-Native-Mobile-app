@@ -12,6 +12,7 @@ export type WebInfoDocumentSlug =
   | 'uyelik-sozlesmesi'
   | 'cerez-politikasi'
   | 'kisisel-verilerin-korunmasi'
+  | 'gizlilik-politikasi'
   | 'kullanim-kosullari';
 
 /**
