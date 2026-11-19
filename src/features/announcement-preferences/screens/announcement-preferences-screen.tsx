@@ -3,8 +3,9 @@ import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Separator, Spinner, YStack } from 'tamagui';
 import { AppButton, AppScreen, EmptyState, ScreenHeader, SectionCard } from '@/components/ui';
+import { Paragraph } from '@/components/ui/app-paragraph';
 import { useAuthStatus } from '@/features/auth/hooks/use-auth-status';
-import { ANNOUNCEMENT_OPTIONS, ANNOUNCEMENT_PREFERENCES_TEXTS } from '../constants/announcement-options';
+import { ANNOUNCEMENT_OPTIONS, ANNOUNCEMENT_PREFERENCES_TEXTS, WHATSAPP_OPTION } from '../constants/announcement-options';
 import { useAnnouncementPreferencesForm } from '../hooks/use-announcement-preferences-form';
 import { AnnouncementPreferenceRow } from '../components/announcement-preference-row';
 
@@ -78,11 +79,28 @@ export function AnnouncementPreferencesScreen() {
         ))}
       </SectionCard>
 
+      {/* Backend notify_whatsapp döndürmüyorsa (whatsapp === null) bölüm gösterilmez. */}
+      {form.values.whatsapp !== null ? (
+        <YStack gap="$2" testID="announcement-whatsapp-section">
+          <Paragraph color="$color" fontSize={15} fontWeight="700" paddingHorizontal="$1">
+            {ANNOUNCEMENT_PREFERENCES_TEXTS.whatsappSection}
+          </Paragraph>
+          <SectionCard elevated paddingVertical="$1">
+            <AnnouncementPreferenceRow
+              disabled={form.isSaving}
+              onToggle={() => form.toggle(WHATSAPP_OPTION.channel)}
+              option={WHATSAPP_OPTION}
+              value={form.values.whatsapp}
+            />
+          </SectionCard>
+        </YStack>
+      ) : null}
+
       <AppButton
         backgroundColor="$brand"
         borderColor="transparent"
         color="white"
-        disabled={form.isSaving}
+        disabled={form.isSaving || !form.isDirty}
         id="announcement-preferences-submit"
         onPress={handleSave}
         pressStyle={{ opacity: 0.85 }}

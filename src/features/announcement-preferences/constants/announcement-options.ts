@@ -1,17 +1,17 @@
-import { AnnouncementChannel, AnnouncementPreferences } from '../types/announcement-preferences.types';
+import { AnnouncementChannel, AnnouncementPreferences, MarketingChannel } from '../types/announcement-preferences.types';
 
-export type AnnouncementOption = {
-  channel: AnnouncementChannel;
+export type AnnouncementOption<C extends AnnouncementChannel = AnnouncementChannel> = {
+  channel: C;
   label: string;
   description: string;
 };
 
-/** Web "Duyuru Tercihlerim" sayfasındaki seçenekler ve metinler, aynı sırayla. */
-export const ANNOUNCEMENT_OPTIONS: AnnouncementOption[] = [
+/** Web "Duyuru Tercihlerim" sayfasındaki kampanya kanalları ve metinleri, aynı sırayla. */
+export const ANNOUNCEMENT_OPTIONS: AnnouncementOption<MarketingChannel>[] = [
   {
     channel: 'email',
     label: 'E-mail',
-    description: 'İlgimi çekebilecek kampanyalarla ve butik bültenleriyle ilgili e-posta almak istiyorum.',
+    description: 'İlgimi çekebilecek kampanyalarla ve bültenlerle ilgili e-posta almak istiyorum.',
   },
   {
     channel: 'sms',
@@ -25,10 +25,18 @@ export const ANNOUNCEMENT_OPTIONS: AnnouncementOption[] = [
   },
 ];
 
+/** Web'deki ayrı WhatsApp bölümü; kayıtta açılmaz, kullanıcı yalnız bu ekrandan açar. */
+export const WHATSAPP_OPTION: AnnouncementOption<'whatsapp'> = {
+  channel: 'whatsapp',
+  label: 'WhatsApp',
+  description: 'Harika fırsatlardan yararlan; yeni ürünler ve sana özel tekliflerden haberdar ol.',
+};
+
 export const DEFAULT_ANNOUNCEMENT_PREFERENCES: AnnouncementPreferences = {
   email: false,
   phone: false,
   sms: false,
+  whatsapp: null,
 };
 
 export const ANNOUNCEMENT_PREFERENCES_TEXTS = {
@@ -36,4 +44,5 @@ export const ANNOUNCEMENT_PREFERENCES_TEXTS = {
   saveSuccess: 'Tercihleriniz başarıyla kaydedildi.',
   title: 'Duyuru Tercihlerim',
   updateButton: 'Güncelle',
+  whatsappSection: 'WhatsApp',
 } as const;

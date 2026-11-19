@@ -60,7 +60,7 @@ describe('AnnouncementPreferencesScreen', () => {
     expect(await screen.findByText('E-mail')).toBeTruthy();
     expect(screen.getByText('Duyuru Tercihlerim')).toBeTruthy();
     expect(
-      screen.getByText('İlgimi çekebilecek kampanyalarla ve butik bültenleriyle ilgili e-posta almak istiyorum.'),
+      screen.getByText('İlgimi çekebilecek kampanyalarla ve bültenlerle ilgili e-posta almak istiyorum.'),
     ).toBeTruthy();
     expect(switchState('E-mail')).toBe(true);
     expect(switchState('SMS')).toBe(false);
@@ -107,6 +107,55 @@ describe('AnnouncementPreferencesScreen', () => {
 
     fireEvent.press(screen.getByText('Tekrar Dene'));
     expect(await screen.findByText('E-mail')).toBeTruthy();
+  });
+
+  it('keeps Güncelle disabled until a preference changes', async () => {
+    renderWithTamagui(<AnnouncementPreferencesScreen />);
+    await screen.findByText('E-mail');
+    const isDisabled = () => Boolean(screen.getByRole('button', { name: 'Güncelle' }).props['aria-disabled']);
+
+    expect(isDisabled()).toBe(true);
+    fireEvent.press(screen.getByLabelText('SMS'));
+    expect(isDisabled()).toBe(false);
+    // Geri alınınca kaydedilecek bir şey kalmaz
+    fireEvent.press(screen.getByLabelText('SMS'));
+    expect(isDisabled()).toBe(true);
+  });
+
+  it('hides WhatsApp when the backend does not return notify_whatsapp', async () => {
+    renderWithTamagui(<AnnouncementPreferencesScreen />);
+    await screen.findByText('E-mail');
+
+    expect(screen.queryByTestId('announcement-whatsapp-section')).toBeNull();
+    expect(screen.queryByLabelText('WhatsApp')).toBeNull();
+  });
+
+  it('shows WhatsApp in its own section and saves it with the other channels (HF-63)', async () => {
+    mockGet.mockResolvedValue({ notify_email: true, notify_sms: true, notify_call: true, notify_whatsapp: false });
+    mockUpdate.mockResolvedValue({
+      data: { notify_email: true, notify_sms: true, notify_call: true, notify_whatsapp: true },
+    });
+    renderWithTamagui(<AnnouncementPreferencesScreen />);
+    await screen.findByText('E-mail');
+
+    expect(screen.getByTestId('announcement-whatsapp-section')).toBeTruthy();
+    expect(
+      screen.getByText('Harika fırsatlardan yararlan; yeni ürünler ve sana özel tekliflerden haberdar ol.'),
+    ).toBeTruthy();
+    expect(switchState('WhatsApp')).toBe(false);
+
+    fireEvent.press(screen.getByLabelText('WhatsApp'));
+    fireEvent.press(screen.getByText('Güncelle'));
+
+    await waitFor(() =>
+      expect(mockUpdate).toHaveBeenCalledWith({
+        notify_email: true,
+        notify_sms: true,
+        notify_call: true,
+        notify_whatsapp: true,
+      }),
+    );
+    expect(switchState('WhatsApp')).toBe(true);
   });
 
   it('asks guests to sign in', () => {

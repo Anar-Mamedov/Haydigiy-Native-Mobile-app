@@ -6,12 +6,16 @@ export interface AnnouncementPreferencesDto {
   notify_email?: boolean | number | string | null;
   notify_sms?: boolean | number | string | null;
   notify_call?: boolean | number | string | null;
+  /** HB-3 ile gelir; alanı tanımayan backend sürümleri hiç döndürmez. */
+  notify_whatsapp?: boolean | number | string | null;
 }
 
 export interface UpdateAnnouncementPreferencesPayloadDto {
   notify_email: boolean;
   notify_sms: boolean;
   notify_call: boolean;
+  /** Yalnız backend WhatsApp tercihini döndürüyorsa gönderilir. */
+  notify_whatsapp?: boolean;
 }
 
 export interface UpdateAnnouncementPreferencesResponseDto {
@@ -20,12 +24,11 @@ export interface UpdateAnnouncementPreferencesResponseDto {
 }
 
 /**
- * Duyuru (e-posta / SMS / arama) tercihleri.
+ * Duyuru (e-posta / SMS / arama / WhatsApp) tercihleri.
  *
- * Web `/user/preferences` adresini çağırıyor, ancak backend `UserPreferenceController`'ı
- * `auth` grubunda yayınlıyor (`GET|PUT /auth/preferences`); `/user/preferences` canlıda
- * 404 dönüyor. Controller, istek ve yanıt gövdesi aynı olduğu için uygulama çalışan
- * adresi kullanır.
+ * Backend `UserPreferenceController`'ı `auth` grubunda yayınlıyor (`GET|PUT /auth/preferences`).
+ * Web eskiden var olmayan `/user/preferences` adresini çağırıyordu (canlıda 404); HF-63'ten
+ * beri o da bu adresi kullanıyor.
  */
 const PREFERENCES_PATH = '/auth/preferences';
 
@@ -37,7 +40,7 @@ export async function getAnnouncementPreferencesDto(): Promise<AnnouncementPrefe
   return response.data ?? null;
 }
 
-/** Üç tercihi birlikte kaydeder (`PUT /auth/preferences`), web ile aynı gövdeyle. */
+/** Tercihleri birlikte kaydeder (`PUT /auth/preferences`), web ile aynı gövdeyle. */
 export async function updateAnnouncementPreferencesDto(
   payload: UpdateAnnouncementPreferencesPayloadDto,
 ): Promise<UpdateAnnouncementPreferencesResponseDto> {

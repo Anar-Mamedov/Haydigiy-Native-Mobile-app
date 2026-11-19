@@ -6,17 +6,24 @@ import { AnnouncementChannel, AnnouncementPreferences } from '../types/announcem
 
 export type AnnouncementSaveResult = { ok: boolean; message: string };
 
+const CHANNELS: AnnouncementChannel[] = ['email', 'sms', 'phone', 'whatsapp'];
+
+const sameChoices = (a: AnnouncementPreferences, b: AnnouncementPreferences) =>
+  CHANNELS.every((channel) => a[channel] === b[channel]);
+
 /**
  * Duyuru tercihleri formu. Web gibi seçimler önce yerelde değişir, "Güncelle"
- * ile üçü birlikte kaydedilir (iyimser güncelleme yok). Kaydedilene kadar
- * yerel taslak tutulur; başarılı kayıttan sonra sunucu değeri esas alınır.
+ * ile birlikte kaydedilir (iyimser güncelleme yok). Kaydedilene kadar yerel
+ * taslak tutulur; başarılı kayıttan sonra sunucu değeri esas alınır. `isDirty`,
+ * web'deki gibi değişiklik yokken "Güncelle"yi pasif tutmak içindir.
  */
 export function useAnnouncementPreferencesForm(enabled: boolean) {
   const query = useAnnouncementPreferencesQuery(enabled);
   const mutation = useUpdateAnnouncementPreferencesMutation();
   const [draft, setDraft] = useState<AnnouncementPreferences | null>(null);
 
-  const values = draft ?? query.data ?? DEFAULT_ANNOUNCEMENT_PREFERENCES;
+  const saved = query.data ?? DEFAULT_ANNOUNCEMENT_PREFERENCES;
+  const values = draft ?? saved;
 
   const toggle = (channel: AnnouncementChannel) => {
     setDraft({ ...values, [channel]: !values[channel] });
@@ -33,6 +40,7 @@ export function useAnnouncementPreferencesForm(enabled: boolean) {
   };
 
   return {
+    isDirty: draft !== null && !sameChoices(draft, saved),
     isError: query.isError,
     isLoading: query.isPending,
     isSaving: mutation.isPending,
