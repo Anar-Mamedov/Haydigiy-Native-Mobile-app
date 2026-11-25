@@ -7,23 +7,36 @@ export interface LoginResponse {
   user: User & { phone?: string };
 }
 
+type RawAuthUser = User & {
+  phone?: string;
+  email_verified?: boolean;
+  birth_date?: string | null;
+  phone_e164?: string | null;
+};
+
 /**
  * Maps the raw backend user onto the domain User, normalizing the verification
- * flag (`email_verified` → `emailVerified`) and the birth date
- * (`birth_date` → `birthDate`) so screens consume a stable shape.
+ * flag (`email_verified` → `emailVerified`), the birth date
+ * (`birth_date` → `birthDate`) and the E.164 phone (`phone_e164` → `phoneE164`)
+ * so screens consume a stable shape. The raw `phone_e164` key is dropped so a
+ * later spread of the stored user cannot carry it past a phone change.
  * All other fields are preserved as-is.
  */
-function normalizeAuthUser(
-  raw: (User & { phone?: string; email_verified?: boolean; birth_date?: string | null }) | undefined,
-) {
+function normalizeAuthUser(raw: RawAuthUser | undefined) {
   if (!raw) return raw;
+  const { phone_e164: phoneE164, ...rest } = raw;
   const verified =
     typeof raw.emailVerified === 'boolean'
       ? raw.emailVerified
       : typeof raw.email_verified === 'boolean'
         ? raw.email_verified
         : undefined;
-  return { ...raw, emailVerified: verified, birthDate: raw.birthDate ?? raw.birth_date ?? null };
+  return {
+    ...rest,
+    emailVerified: verified,
+    birthDate: raw.birthDate ?? raw.birth_date ?? null,
+    phoneE164: phoneE164 ?? null,
+  };
 }
 
 export interface RegisterResponse {

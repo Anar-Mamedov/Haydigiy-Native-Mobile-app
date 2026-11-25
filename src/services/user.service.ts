@@ -5,6 +5,8 @@ export interface UserProfileDto {
   name?: string | null;
   surname?: string | null;
   phone?: string | null;
+  /** `phone` in E.164 as the backend formats it; what the app sends to Insider. */
+  phone_e164?: string | null;
   email?: string | null;
   birth_date?: string | null;
   gender?: string | null;
