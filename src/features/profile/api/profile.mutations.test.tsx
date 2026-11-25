@@ -150,4 +150,60 @@ describe('useUpdateProfileMutation', () => {
       expect(useAuthStore.getState().user?.birthDate).toBe('1990-05-12');
     });
   });
+
+  /** Insider'a giden telefon; telefon değişince eski numaranın E.164'ü oturumda kalmamalı. */
+  describe('E.164 phone in the session', () => {
+    const payload = {
+      birth_date: null,
+      email: 'anar26271@gmail.com',
+      gender: 'male',
+      name: 'Anar',
+      phone: '5321234567',
+      surname: 'Mamedov',
+    };
+
+    beforeEach(() => {
+      useAuthStore.setState({
+        user: {
+          email: 'anar26271@gmail.com',
+          id: '42',
+          name: 'Anar',
+          phoneE164: '+905551234567',
+          phoneNumber: '5551234567',
+        },
+      });
+    });
+
+    async function save(response: userService.UpdateProfileResponseDto) {
+      updateProfileDto.mockResolvedValueOnce(response);
+      const { queryClient, wrapper } = createMutationHarness();
+      const { result, unmount } = renderHook(() => useUpdateProfileMutation(), { wrapper });
+
+      await act(async () => {
+        await result.current.mutateAsync(payload);
+      });
+
+      unmount();
+      queryClient.clear();
+    }
+
+    it('stores the E.164 phone the backend saved', async () => {
+      await save({ success: true, user: { phone: '5321234567', phone_e164: '+905321234567' } });
+
+      expect(useAuthStore.getState().user).toEqual(
+        expect.objectContaining({ phoneE164: '+905321234567', phoneNumber: '5321234567' }),
+      );
+    });
+
+    it.each<[string, userService.UpdateProfileResponseDto]>([
+      ['the response has no user', { success: true }],
+      ['the backend does not return the field yet', { success: true, user: { phone: '5321234567' } }],
+    ])('drops the previous number’s E.164 phone when %s', async (_label, response) => {
+      await save(response);
+
+      const { user } = useAuthStore.getState();
+      expect(user?.phoneE164).toBeUndefined();
+      expect(user?.phoneNumber).toBe('5321234567');
+    });
+  });
 });

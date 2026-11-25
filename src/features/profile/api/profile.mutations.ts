@@ -34,6 +34,9 @@ export function useUpdateProfileMutation() {
           surname: payload.surname,
           email: payload.email ?? user.email,
           phoneNumber: payload.phone ?? undefined,
+          // Never carried over from the old session: after a phone change it would
+          // still hold the previous number. Without it Insider falls back to `phoneNumber`.
+          phoneE164: result.user?.phone_e164 ?? undefined,
           // The saved value wins: the backend may keep a stored date it was sent `null` for.
           birthDate:
             result.user?.birth_date !== undefined ? result.user.birth_date : payload.birth_date,
