@@ -16,11 +16,20 @@ export function toInsiderIdentifierValue(value: unknown): string | null {
   return null;
 }
 
-/** Kayıtlı telefonlar ulusal formatta (5XXXXXXXXX); Insider E164 bekler. */
+/**
+ * Kayıtlı telefonlar ulusal formatta (5XXXXXXXXX); Insider E164 bekler.
+ *
+ * Yalnızca backend `phone_e164` döndürmediğinde kullanılan yedek kural. `+` ile
+ * başlayan değer zaten uluslararası kabul edilir ve backend formatter'ı gibi
+ * `+` ile rakamlarına indirgenir (`+90 555 123 45 67` → `+905551234567`).
+ */
 export function toE164TurkishPhone(phone: string | undefined): string | null {
   if (!phone) return null;
   const trimmed = phone.trim();
-  if (trimmed.startsWith('+')) return trimmed;
+  if (trimmed.startsWith('+')) {
+    const digits = trimmed.replace(/\D/g, '');
+    return digits ? `+${digits}` : null;
+  }
 
   const national = extractTurkishNationalNumber(trimmed);
   if (!isValidTurkishMobile(national)) return null;
@@ -37,12 +46,18 @@ export type InsiderUserIdentity = {
  * Kullanıcının Insider'a gidecek identifier değerleri. Gönderim ve değişiklik
  * tespiti aynı kuralı kullanır; ayrışırlarsa tespit, gönderilen değerin
  * değiştiğini kaçırabilir.
+ *
+ * Telefon backend'in `phone_e164` alanından gelir: biçimlendirme kuralı tek yerde,
+ * backend'de durur ve web, uygulama ve backend'in Insider'a gönderdiği değer aynı
+ * olur. `toE164TurkishPhone` yedeği yalnızca alan olmadan saklanmış eski oturumlar
+ * (MMKV'deki, backend alanı döndürmeden önce açılmış oturumlar) ve alanı henüz
+ * döndürmeyen backend sürümleri içindir; sonraki giriş ya da profil kaydı alanı doldurur.
  */
 export function toInsiderUserIdentity(user: User): InsiderUserIdentity {
   return {
     userId: toInsiderIdentifierValue(user.id),
     email: user.email?.includes('@') ? user.email.trim() : null,
-    phone: toE164TurkishPhone(user.phoneNumber),
+    phone: user.phoneE164?.trim() || toE164TurkishPhone(user.phoneNumber),
   };
 }
 

@@ -492,6 +492,28 @@ describe('insider tracker', () => {
     expect(insiderUser.login).toHaveBeenCalledWith(identifiers[0]);
   });
 
+  // Telefon kuralı backend'de tek yerde: kural dışı kayıtta da web/backend ile aynı değer gitmeli.
+  it('logs in and sets the phone with the E.164 value the backend formatted', () => {
+    const { tracker, insiderUser, identifiers } = createSdkHarness();
+    tracker.identifyUser({
+      ...testUser,
+      phoneNumber: '4915112345678',
+      phoneE164: '+4915112345678',
+    });
+
+    expect(identifiers[0].phones).toEqual(['+4915112345678']);
+    expect(insiderUser.login).toHaveBeenCalledWith(identifiers[0]);
+    expect(insiderUser.setPhoneNumber).toHaveBeenCalledWith('+4915112345678');
+  });
+
+  it('falls back to the national number for a stored session without the E.164 field', () => {
+    const { tracker, insiderUser, identifiers } = createSdkHarness();
+    tracker.identifyUser({ ...testUser, phoneE164: undefined });
+
+    expect(identifiers[0].phones).toEqual(['+905321234567']);
+    expect(insiderUser.setPhoneNumber).toHaveBeenCalledWith('+905321234567');
+  });
+
   // Regresyon: backend `user.id`'yi JSON number döndürüyor. SDK String olmayan
   // identifier'ı sessizce düşürdüğü için CRM kimliği hiç gitmiyor ve eventler
   // kullanıcının profiliyle eşleşmiyordu.
