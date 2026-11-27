@@ -6,6 +6,13 @@ import { CheckoutSection } from './checkout-section';
 import { CheckoutOptionRow } from './checkout-option-row';
 import { CheckoutCargoCoverage } from './checkout-cargo-coverage';
 import { buildCargoAccessibilityLabel, getCargoCoverageItems } from '../utils/cargo-coverage';
+import { StorePickupLocation } from '@/features/store-pickup/components/store-pickup-location';
+import { isStorePickupCargo } from '@/features/store-pickup/data/store-pickup-location';
+import {
+  handleStorePickupAccessibilityAction,
+  STORE_PICKUP_ACCESSIBILITY_ACTIONS,
+  withStorePickupAddress,
+} from '@/features/store-pickup/utils/store-pickup-accessibility';
 import { resolveCdnUrl } from '@/utils/cdn';
 import { formatCurrency } from '@/utils/format-currency';
 import { CargoCompany } from '@/types/checkout.types';
@@ -58,12 +65,18 @@ export function CheckoutCargoSection({
         companies.map((company, index) => {
           const logo = resolveCdnUrl(company.logo);
           const coverage = getCargoCoverageItems(company);
+          const isStorePickup = isStorePickupCargo(company);
+          const accessibilityLabel = buildCargoAccessibilityLabel(company);
           return (
             <YStack key={company.id}>
               {index > 0 ? <Separator borderColor="$borderColor" /> : null}
               <CheckoutOptionRow
-                accessibilityLabel={buildCargoAccessibilityLabel(company)}
+                accessibilityActions={isStorePickup ? STORE_PICKUP_ACCESSIBILITY_ACTIONS : undefined}
+                accessibilityLabel={
+                  isStorePickup ? withStorePickupAddress(accessibilityLabel) : accessibilityLabel
+                }
                 disabled={disabled}
+                onAccessibilityAction={isStorePickup ? handleStorePickupAccessibilityAction : undefined}
                 onPress={() => onSelect(company)}
                 right={
                   hasFreeShipping ? (
@@ -101,6 +114,7 @@ export function CheckoutCargoSection({
                     {company.name}
                   </Paragraph>
                   <CheckoutCargoCoverage items={coverage} />
+                  {isStorePickup ? <StorePickupLocation /> : null}
                 </YStack>
               </CheckoutOptionRow>
             </YStack>
