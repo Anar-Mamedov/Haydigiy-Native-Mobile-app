@@ -1,7 +1,8 @@
 import { CargoCompany, PaymentMethod } from '@/types/checkout.types';
+import { STORE_PICKUP_CARGO_ID } from '@/features/store-pickup/data/store-pickup-location';
 
-/** Cargo id 5 is the in-store pickup ("Mağazadan Al") option that only allows card payment (web parity). */
-export const CARD_ONLY_CARGO_ID = 5;
+/** The in-store pickup ("Mağazadan Al") option only allows card payment (web parity). */
+export const CARD_ONLY_CARGO_ID = STORE_PICKUP_CARGO_ID;
 
 const CARD_PAYMENT_SLUG = 'credit_card';
 
