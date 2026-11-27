@@ -7,6 +7,8 @@ import { BRAND_COLOR } from '@/lib/theme/colors';
 import { OrderDetail } from '@/types/order.types';
 import { CARGO_TRACKING_PENDING_MESSAGE, getCustomerTrackingCode } from '../utils/cargo-tracking';
 import { openInvoicePdf } from '../utils/open-invoice-pdf';
+import { StorePickupLocation } from '@/features/store-pickup/components/store-pickup-location';
+import { isStorePickupCargo } from '@/features/store-pickup/data/store-pickup-location';
 
 type OrderDetailSummaryProps = {
   order: OrderDetail;
@@ -23,6 +25,8 @@ export function OrderDetailSummary({ order, onPressCargoTracking }: OrderDetailS
     orderNo: order.orderNo,
     trackingCode: order.trackingCode,
   });
+  // Mağazadan alımda kargo takibi yok; takip alanı yerine mağaza adresi gösterilir.
+  const isStorePickupOrder = isStorePickupCargo({ name: order.cargoCompanyName });
   const isDelivered =
     DELIVERED_STATUSES.includes(order.status) || order.statusId === 8;
 
@@ -133,7 +137,9 @@ export function OrderDetailSummary({ order, onPressCargoTracking }: OrderDetailS
                     </Paragraph>
                   </XStack>
                 ) : null}
-                {customerTrackingCode ? (
+                {isStorePickupOrder ? (
+                  <StorePickupLocation label="Teslim alma adresi" />
+                ) : customerTrackingCode ? (
                   <Paragraph color="$color10" fontSize={12} numberOfLines={1}>
                     Takip:{' '}
                     <Paragraph color="$blue10" fontSize={12} fontWeight="700">
@@ -147,7 +153,7 @@ export function OrderDetailSummary({ order, onPressCargoTracking }: OrderDetailS
                 )}
               </YStack>
             </XStack>
-            {customerTrackingCode && onPressCargoTracking ? (
+            {customerTrackingCode && onPressCargoTracking && !isStorePickupOrder ? (
               <Button
                 accessibilityLabel="Kargo Takip"
                 backgroundColor="$brand"

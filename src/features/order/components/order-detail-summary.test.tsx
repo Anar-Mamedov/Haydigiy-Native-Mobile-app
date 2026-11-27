@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native';
+import { Linking } from 'react-native';
 import { OrderDetailSummary } from './order-detail-summary';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { OrderDetail } from '@/types/order.types';
@@ -146,5 +147,60 @@ describe('OrderDetailSummary', () => {
     );
 
     expect(screen.queryByLabelText('Kargo Takip')).toBeNull();
+  });
+
+  // HMA-75: mağazadan alımda kargo takibi yok; takip alanı yerine mağaza adresi çıkar.
+  describe('Mağazadan Al siparişi', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('shows the store address and map link instead of the tracking message', () => {
+      renderWithTamagui(
+        <OrderDetailSummary
+          order={makeOrder({ cargoCompanyName: 'Mağazadan Al', trackingCode: null, statusId: 2 })}
+          onPressCargoTracking={jest.fn()}
+        />,
+      );
+
+      expect(screen.getByTestId('store-pickup-location')).toBeTruthy();
+      expect(screen.getByText(/Teslim alma adresi/)).toBeTruthy();
+      expect(screen.getByText(/Selçuk Mah\. Gemili Park Karşısı Haydigiy Mağaza/)).toBeTruthy();
+      expect(screen.queryByText(CARGO_TRACKING_PENDING_MESSAGE)).toBeNull();
+    });
+
+    it('opens the store location from the map link', () => {
+      const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+      renderWithTamagui(
+        <OrderDetailSummary
+          order={makeOrder({ cargoCompanyName: 'Mağazadan Al', trackingCode: null, statusId: 2 })}
+        />,
+      );
+
+      fireEvent.press(screen.getByLabelText('Konum İçin Tıklayın'));
+
+      expect(openURL).toHaveBeenCalledWith('https://maps.app.goo.gl/9FFKFdVv4tTwyjZKA');
+    });
+
+    it('never offers cargo tracking, even if a tracking code is present', () => {
+      renderWithTamagui(
+        <OrderDetailSummary
+          order={makeOrder({ cargoCompanyName: 'Mağazadan Al', trackingCode: 'TRK123' })}
+          onPressCargoTracking={jest.fn()}
+        />,
+      );
+
+      expect(screen.queryByLabelText('Kargo Takip')).toBeNull();
+      expect(screen.queryByText('TRK123')).toBeNull();
+    });
+
+    it('keeps the tracking message for carriers other than store pickup', () => {
+      renderWithTamagui(
+        <OrderDetailSummary order={makeOrder({ trackingCode: null })} onPressCargoTracking={jest.fn()} />,
+      );
+
+      expect(screen.getByText(CARGO_TRACKING_PENDING_MESSAGE)).toBeTruthy();
+      expect(screen.queryByTestId('store-pickup-location')).toBeNull();
+    });
   });
 });
