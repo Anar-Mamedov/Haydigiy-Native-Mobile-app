@@ -1,6 +1,8 @@
 import { ComponentProps, ReactNode } from 'react';
-import { Pressable } from 'react-native';
+import { AccessibilityActionEvent, AccessibilityActionInfo, Pressable } from 'react-native';
 import { XStack, YStack } from 'tamagui';
+
+const ACTIVATE_ACTION = 'activate';
 
 interface CheckoutOptionRowProps {
   selected: boolean;
@@ -12,6 +14,13 @@ interface CheckoutOptionRowProps {
   /** Optional trailing content (price, badge). */
   right?: ReactNode;
   paddingVertical?: ComponentProps<typeof XStack>['paddingVertical'];
+  /**
+   * Extra screen-reader actions for pressable content nested in the row (e.g. a map link).
+   * The row is a single accessibility element, so nested links are otherwise unreachable.
+   */
+  accessibilityActions?: AccessibilityActionInfo[];
+  /** Receives the name of an extra action; `activate` always selects the row. */
+  onAccessibilityAction?: (actionName: string) => void;
 }
 
 /** A theme-aware radio circle that stays visible/contrasted in light and dark. */
@@ -46,13 +55,32 @@ export function CheckoutOptionRow({
   children,
   right,
   paddingVertical = '$3',
+  accessibilityActions,
+  onAccessibilityAction,
 }: CheckoutOptionRowProps) {
+  const hasExtraActions = Boolean(accessibilityActions?.length);
+
+  // With custom actions declared, activation is handled here explicitly: the platform's
+  // fallback taps the row's centre, which could land on a nested link instead.
+  const handleAccessibilityAction = (event: AccessibilityActionEvent) => {
+    const { actionName } = event.nativeEvent;
+    if (actionName === ACTIVATE_ACTION) {
+      if (!disabled) onPress();
+      return;
+    }
+    onAccessibilityAction?.(actionName);
+  };
+
   return (
     <Pressable
+      accessibilityActions={
+        hasExtraActions ? [{ name: ACTIVATE_ACTION }, ...(accessibilityActions ?? [])] : undefined
+      }
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="radio"
       accessibilityState={{ checked: selected, disabled: Boolean(disabled) }}
       disabled={disabled}
+      onAccessibilityAction={hasExtraActions ? handleAccessibilityAction : undefined}
       onPress={onPress}
     >
       <XStack
