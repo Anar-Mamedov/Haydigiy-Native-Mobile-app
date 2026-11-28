@@ -2,8 +2,7 @@ import { AgreementBlock } from './agreement.types';
 
 /**
  * Gizlilik Politikası — web `/gizlilik-politikasi` sayfasıyla aynı metin (frontend
- * `src/components/legal/documents/PrivacyPolicyText.tsx`). Mevcut `PRIVACY_POLICY` ise
- * Sözleşmeler'deki "Kişisel Verilerin Korunması" metnidir; bu ondan ayrıdır.
+ * `src/components/legal/documents/PrivacyPolicyText.tsx`).
  * Metin içi bağlantılar web yollarıyla `link` blokları olarak tutulur; ekran
  * bunları uygulama rotasına çevirir.
  */
