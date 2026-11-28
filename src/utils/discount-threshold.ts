@@ -19,7 +19,7 @@ export type DiscountDisplaySurface = keyof typeof DISCOUNT_DISPLAY_THRESHOLDS;
 /** Yüzde, verilen yüzeyde indirim olarak gösterilecek kadar büyük mü (sonlu ve eşiğin üstünde). */
 export function isDisplayableDiscountPercent(
   percent: number | null | undefined,
-  surface: DiscountDisplaySurface = 'card',
+  surface: DiscountDisplaySurface,
 ): percent is number {
   return (
     typeof percent === 'number' &&
