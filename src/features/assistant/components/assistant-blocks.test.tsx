@@ -3,6 +3,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Linking } from 'react-native';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import type { AssistantButtonsBlock as ButtonsBlock } from '@/types/assistant.types';
+import { trackAssistantEvent } from '../services/assistant-events';
 import { selectAssistantOption } from '../services/assistant-turn-flow';
 import { useAssistantStore } from '../store/use-assistant-store';
 import { DEFAULT_ASSISTANT_TEXTS } from '../utils/assistant-texts';
@@ -75,6 +76,91 @@ describe('AssistantButtonsBlock', () => {
     renderWithTamagui(<AssistantButtonsBlock block={block} restored={false} />, 'dark');
     expect(screen.getByText('Siparişlerim')).toBeTruthy();
     expect(screen.getByLabelText('📦 Siparişlerim')).toBeTruthy();
+  });
+});
+
+// Web `c25e8d8e0`: WhatsApp kategorisi düğmesi wa.me adresini doğrudan açar, seçim göndermez.
+describe('AssistantButtonsBlock — WhatsApp kategorisi', () => {
+  const href = 'https://wa.me/905327805100?text=Merhaba';
+  const whatsappBlock: ButtonsBlock = {
+    type: 'buttons',
+    id: 'menu',
+    layout: 'list',
+    items: [
+      { id: 'menu.wa', label: 'WhatsApp ile Yaz', payload: 'p9', disabled: false, href, icon: 'whatsapp' },
+      { id: 'menu.orders', label: '📦 Siparişlerim', payload: 'p1', disabled: false },
+    ],
+  };
+
+  it('dokununca WhatsApp açar, olayı kind=whatsapp ile hemen gönderir ve seçim göndermez', () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    renderWithTamagui(<AssistantButtonsBlock block={whatsappBlock} restored={false} />);
+
+    const button = screen.getByLabelText('WhatsApp ile Yaz');
+    expect(button.props.accessibilityRole).toBe('link');
+    fireEvent.press(button);
+
+    expect(openURL).toHaveBeenCalledWith(href);
+    expect(trackAssistantEvent).toHaveBeenCalledWith(
+      'live_support_click',
+      { blockId: 'menu', kind: 'whatsapp' },
+      { flushNow: true },
+    );
+    expect(selectAssistantOption).not.toHaveBeenCalled();
+  });
+
+  it('geri yüklenen geçmişte ve istek uçuştayken de açılır; seçim düğmesi etkisiz kalır', () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const { rerender } = renderWithTamagui(<AssistantButtonsBlock block={whatsappBlock} restored />);
+    fireEvent.press(screen.getByLabelText('WhatsApp ile Yaz'));
+    fireEvent.press(screen.getByLabelText('📦 Siparişlerim'));
+
+    act(() => useAssistantStore.getState().setBusy(true));
+    rerender(<AssistantButtonsBlock block={whatsappBlock} restored={false} />);
+    fireEvent.press(screen.getByLabelText('WhatsApp ile Yaz'));
+    fireEvent.press(screen.getByLabelText('📦 Siparişlerim'));
+
+    expect(openURL).toHaveBeenCalledTimes(2);
+    expect(selectAssistantOption).not.toHaveBeenCalled();
+  });
+
+  it('disabled iken açılmaz', () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    renderWithTamagui(
+      <AssistantButtonsBlock
+        block={{ ...whatsappBlock, items: [{ ...whatsappBlock.items[0], disabled: true }] }}
+        restored={false}
+      />,
+    );
+    fireEvent.press(screen.getByLabelText('WhatsApp ile Yaz'));
+
+    expect(openURL).not.toHaveBeenCalled();
+    expect(trackAssistantEvent).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, 'dark'] as const)('liste ve çip düzeninde WhatsApp logosunu çizer (%s tema)', (theme) => {
+    const { rerender } = renderWithTamagui(<AssistantButtonsBlock block={whatsappBlock} restored={false} />, theme);
+    expect(screen.getByTestId('assistant-button-menu.wa-whatsapp-icon')).toBeTruthy();
+    expect(screen.getByText('WhatsApp ile Yaz')).toBeTruthy();
+    // Logosuz öğe emoji kutusunu korur.
+    expect(screen.queryByTestId('assistant-button-menu.orders-whatsapp-icon')).toBeNull();
+    expect(screen.getByText('📦')).toBeTruthy();
+
+    rerender(<AssistantButtonsBlock block={{ ...whatsappBlock, layout: 'chips' }} restored={false} />);
+    expect(screen.getByTestId('assistant-button-menu.wa-whatsapp-icon')).toBeTruthy();
+    expect(screen.getByText('WhatsApp ile Yaz')).toBeTruthy();
+  });
+
+  it('logo varken etiketteki emoji simge kutusuna alınmaz', () => {
+    renderWithTamagui(
+      <AssistantButtonsBlock
+        block={{ ...whatsappBlock, items: [{ ...whatsappBlock.items[0], label: '💬 WhatsApp ile Yaz' }] }}
+        restored={false}
+      />,
+    );
+    expect(screen.getByTestId('assistant-button-menu.wa-whatsapp-icon')).toBeTruthy();
+    expect(screen.queryByText('💬')).toBeNull();
+    expect(screen.getByText('WhatsApp ile Yaz')).toBeTruthy();
   });
 });
 

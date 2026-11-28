@@ -49,7 +49,10 @@ export const AssistantCard = styled(YStack, {
   padding: '$3.5',
 });
 
-/** Seçenek ve bağlantı düğmelerinin baştaki simge kutusu (beyaz simge ya da emoji). */
+/**
+ * Seçenek ve bağlantı düğmelerinin baştaki simge kutusu (beyaz simge ya da emoji). `whatsapp`
+ * kutusu Canlı Destek yeşilidir (web `c25e8d8e0` WhatsApp kategorisi düğmesi).
+ */
 export const AssistantIconTile = styled(YStack, {
   name: 'AssistantIconTile',
   alignItems: 'center',
@@ -59,6 +62,11 @@ export const AssistantIconTile = styled(YStack, {
   height: 36,
   justifyContent: 'center',
   width: 36,
+  variants: {
+    whatsapp: {
+      true: { backgroundColor: '$assistantLiveSupport' },
+    },
+  } as const,
 });
 
 /** Düğme ve sipariş kartlarının sağındaki yuvarlak ok halkası; simge `$brandTintText` ile çizilir. */
