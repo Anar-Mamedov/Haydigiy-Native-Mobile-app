@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { ImagePlus, Star, X } from '@/components/ui/icons';
-import { Button, Input, ScrollView, Sheet, Spinner, TextArea, XStack, YStack } from 'tamagui';
+import { Button, Input, Sheet, Spinner, TextArea, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { AppCheckbox, AppSheetOverlay, KeyboardAwareSheetScrollView } from '@/components/ui';
 import { WARNING_COLOR } from '@/lib/theme/colors';
@@ -13,6 +13,7 @@ import { resolveReviewVariantId, ReviewPhoto } from '@/services/review.service';
 import { useSubmitReviewMutation } from '../api/review.mutations';
 import { toPlainText } from '@/utils/normalize-text';
 import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
+import { ReviewSheetInfoView } from './review-sheet-info-view';
 
 const MAX_COMMENT = 2000;
 
@@ -157,37 +158,16 @@ export function OrderReviewSheet({
         </XStack>
 
         {showCriteria ? (
-          <YStack flex={1} justifyContent="space-between">
-            <ScrollView contentContainerStyle={{ padding: 16, gap: 8 }}>
-              <Paragraph color="$color" fontSize={13} fontWeight="700">
-                Uygunluk Kriterleri
+          <ReviewSheetInfoView onBack={() => setShowCriteria(false)}>
+            <Paragraph color="$color" fontSize={13} fontWeight="700">
+              Uygunluk Kriterleri
+            </Paragraph>
+            {CRITERIA.map((line) => (
+              <Paragraph color="$color10" fontSize={12} key={line}>
+                • {line}
               </Paragraph>
-              {CRITERIA.map((line) => (
-                <Paragraph color="$color10" fontSize={12} key={line}>
-                  • {line}
-                </Paragraph>
-              ))}
-            </ScrollView>
-            <YStack
-              borderTopColor="$borderColor"
-              borderTopWidth={1}
-              paddingBottom={Math.max(insets.bottom, 16)}
-              paddingHorizontal="$4"
-              paddingTop="$4"
-            >
-              <Button
-                backgroundColor="$brand"
-                borderRadius="$4"
-                height={46}
-                onPress={() => setShowCriteria(false)}
-                pressStyle={{ backgroundColor: '$brand', opacity: 0.85 }}
-              >
-                <Paragraph color="white" fontWeight="700">
-                  Geri
-                </Paragraph>
-              </Button>
-            </YStack>
-          </YStack>
+            ))}
+          </ReviewSheetInfoView>
         ) : (
           <YStack flex={1} justifyContent="space-between">
             <KeyboardAwareSheetScrollView
