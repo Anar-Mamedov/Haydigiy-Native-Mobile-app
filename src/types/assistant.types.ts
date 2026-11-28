@@ -17,6 +17,13 @@ export interface AssistantButtonItem {
   label: string;
   payload: string;
   disabled: boolean;
+  /**
+   * "WhatsApp kategorisi" (web `c25e8d8e0`): doğrulanmış wa.me adresi. Varsa düğme bağlantı gibi
+   * davranır ve sunucuya seçim GÖNDERİLMEZ; desen dışıysa alan düşer, düğme normal seçim olur.
+   */
+  href?: string;
+  /** `whatsapp`: etiketin soluna WhatsApp logosu çizilir (sunucu bu durumda etikete emoji koymaz). */
+  icon?: 'whatsapp';
 }
 
 export interface AssistantButtonsBlock {
