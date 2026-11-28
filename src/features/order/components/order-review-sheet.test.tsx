@@ -1,7 +1,8 @@
-import { screen } from '@testing-library/react-native';
+import { fireEvent, screen } from '@testing-library/react-native';
 import { OrderReviewSheet } from './order-review-sheet';
 import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { ReviewTarget } from '@/types/review.types';
+import { KVKK_DISCLOSURE_NOTICE } from '@/features/agreements/data/kvkk-disclosure-notice';
 
 jest.mock('expo-router', () => ({
   usePathname: () => '/orders',
@@ -51,5 +52,26 @@ describe('OrderReviewSheet', () => {
     expect(scroller.props.alwaysBounceVertical).toBe(false);
     expect(scroller.props.overScrollMode).toBe('never');
     expect(screen.getByPlaceholderText('Ürün hakkındaki düşüncelerinizi paylaşın.')).toBeTruthy();
+  });
+
+  it('opens the shared Aydınlatma Metni inside the sheet and keeps the entered review', () => {
+    renderWithTamagui(<OrderReviewSheet item={item} onOpenChange={jest.fn()} open orderId="order-1" />);
+
+    const placeholder = 'Ürün hakkındaki düşüncelerinizi paylaşın.';
+    fireEvent.changeText(screen.getByPlaceholderText(placeholder), 'Kalıbı tam oldu');
+
+    fireEvent.press(screen.getByRole('link', { name: 'Aydınlatma Metni' }));
+
+    // Kayıt ve giriş ekranlarıyla aynı metin: KVKK_DISCLOSURE_NOTICE
+    expect(screen.getByTestId('order-review-disclosure')).toBeTruthy();
+    const firstBlock = KVKK_DISCLOSURE_NOTICE[0];
+    expect(firstBlock.type).toBe('heading');
+    expect(screen.getByText((firstBlock as { text: string }).text)).toBeTruthy();
+    expect(screen.queryByPlaceholderText(placeholder)).toBeNull();
+
+    fireEvent.press(screen.getByText('Geri'));
+
+    expect(screen.queryByTestId('order-review-disclosure')).toBeNull();
+    expect(screen.getByPlaceholderText(placeholder).props.value).toBe('Kalıbı tam oldu');
   });
 });

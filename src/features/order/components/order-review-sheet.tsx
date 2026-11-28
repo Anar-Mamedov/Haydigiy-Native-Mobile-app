@@ -6,13 +6,15 @@ import { Image } from 'expo-image';
 import { ImagePlus, Star, X } from '@/components/ui/icons';
 import { Button, Input, Sheet, Spinner, TextArea, XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { AppCheckbox, AppSheetOverlay, KeyboardAwareSheetScrollView } from '@/components/ui';
+import { AppCheckbox, AppSheetOverlay, InlineTextLink, KeyboardAwareSheetScrollView } from '@/components/ui';
 import { WARNING_COLOR } from '@/lib/theme/colors';
 import { ReviewTarget } from '@/types/review.types';
 import { resolveReviewVariantId, ReviewPhoto } from '@/services/review.service';
 import { useSubmitReviewMutation } from '../api/review.mutations';
 import { toPlainText } from '@/utils/normalize-text';
 import { MAX_FONT_SCALE } from '@/lib/theme/font-scale';
+import { AgreementContent } from '@/features/agreements/components/agreement-content';
+import { KVKK_DISCLOSURE_NOTICE } from '@/features/agreements/data/kvkk-disclosure-notice';
 import { ReviewSheetInfoView } from './review-sheet-info-view';
 
 const MAX_COMMENT = 2000;
@@ -25,6 +27,19 @@ const CRITERIA = [
   'Yanıltıcı bilgi içermemeli',
   'Sağlık beyanı içermemeli',
 ];
+
+/**
+ * Pencerenin gösterdiği görünüm. Kriterler ve Aydınlatma Metni formun yerine
+ * pencerenin içinde açılır: bilgi sayfasına gitmek tam ekran pencereyi kapatıp
+ * girilen yorumu silerdi.
+ */
+type ReviewSheetView = 'form' | 'criteria' | 'disclosure';
+
+const VIEW_TITLES: Record<ReviewSheetView, string> = {
+  form: 'Ürünü Değerlendir',
+  criteria: 'Yorum Yayınlama Kriterleri',
+  disclosure: 'Aydınlatma Metni',
+};
 
 type OrderReviewSheetProps = {
   open: boolean;
@@ -47,7 +62,7 @@ export function OrderReviewSheet({
   const [weight, setWeight] = useState('');
   const [consent, setConsent] = useState(false);
   const [photo, setPhoto] = useState<ReviewPhoto | null>(null);
-  const [showCriteria, setShowCriteria] = useState(false);
+  const [view, setView] = useState<ReviewSheetView>('form');
 
   const submit = useSubmitReviewMutation(orderId);
   const insets = useSafeAreaInsets();
@@ -60,7 +75,7 @@ export function OrderReviewSheet({
       setWeight('');
       setConsent(false);
       setPhoto(null);
-      setShowCriteria(false);
+      setView('form');
     }
   }, [open]);
 
@@ -144,7 +159,7 @@ export function OrderReviewSheet({
           paddingTop={insets.top + 12}
         >
           <Paragraph color="$color" fontSize={16} fontWeight="700">
-            {showCriteria ? 'Yorum Yayınlama Kriterleri' : 'Ürünü Değerlendir'}
+            {VIEW_TITLES[view]}
           </Paragraph>
           <Pressable
             accessibilityLabel="Kapat"
@@ -157,8 +172,8 @@ export function OrderReviewSheet({
           </Pressable>
         </XStack>
 
-        {showCriteria ? (
-          <ReviewSheetInfoView onBack={() => setShowCriteria(false)}>
+        {view === 'criteria' ? (
+          <ReviewSheetInfoView onBack={() => setView('form')}>
             <Paragraph color="$color" fontSize={13} fontWeight="700">
               Uygunluk Kriterleri
             </Paragraph>
@@ -167,6 +182,11 @@ export function OrderReviewSheet({
                 • {line}
               </Paragraph>
             ))}
+          </ReviewSheetInfoView>
+        ) : view === 'disclosure' ? (
+          // Kayıt ve giriş ekranlarının açtığı Aydınlatma Metni ile aynı kaynak (HMA-77)
+          <ReviewSheetInfoView onBack={() => setView('form')} testID="order-review-disclosure">
+            <AgreementContent blocks={KVKK_DISCLOSURE_NOTICE} />
           </ReviewSheetInfoView>
         ) : (
           <YStack flex={1} justifyContent="space-between">
@@ -239,7 +259,7 @@ export function OrderReviewSheet({
                   <Paragraph
                     color="$color10"
                     fontSize={11}
-                    onPress={() => setShowCriteria(true)}
+                    onPress={() => setView('criteria')}
                     textDecorationLine="underline"
                   >
                     Yorum Yayınlama Kriterleri
@@ -331,9 +351,7 @@ export function OrderReviewSheet({
                 <Paragraph color="$color10" fontSize={12} flex={1} lineHeight={17}>
                   Yorumlarda ismimin gözükmesine ve yorum detaylarının platform genelinde
                   kullanılmasına izin veriyorum.{' '}
-                  <Paragraph color="$blue10" fontSize={12} textDecorationLine="underline">
-                    Aydınlatma Metni
-                  </Paragraph>
+                  <InlineTextLink onPress={() => setView('disclosure')}>Aydınlatma Metni</InlineTextLink>
                   &apos;ne ulaşmak için tıklayınız.
                 </Paragraph>
               </AppCheckbox>
