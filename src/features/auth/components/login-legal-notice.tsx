@@ -1,29 +1,24 @@
 import React from 'react';
-import { useRouter } from 'expo-router';
 import { InlineTextLink } from '@/components/ui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { infoPageRoute } from '@/features/info-pages/routes';
-import { InfoDocumentSlug } from '@/features/info-pages/data/info-page.types';
+import { useOpenAuthLegalDocument } from '../hooks/use-open-auth-legal-document';
 
 /**
- * Giriş formunun altındaki yasal bilgilendirme. Üç metin de alt bilgideki
- * bağlantılarla aynı bilgi sayfası ekranında açılır; metin web giriş ekranıyla
- * aynıdır.
+ * Giriş formunun altındaki yasal bilgilendirme. Metin web giriş ekranıyla
+ * aynıdır; Aydınlatma Metni ve Gizlilik Politikası kayıt formundaki belgelerin
+ * aynısını açar (`AUTH_LEGAL_DOCUMENTS`).
  */
 export function LoginLegalNotice() {
-  const router = useRouter();
-  const openDocument = (slug: InfoDocumentSlug) => router.push(infoPageRoute(slug));
+  const openDocument = useOpenAuthLegalDocument();
 
   return (
     <Paragraph size="$2" color="$color10" textAlign="center" lineHeight="$4">
       Kişisel verileriniz,{' '}
-      <InlineTextLink onPress={() => openDocument('aydinlatma-metni')}>Aydınlatma Metni</InlineTextLink>{' '}
+      <InlineTextLink onPress={() => openDocument('disclosure')}>Aydınlatma Metni</InlineTextLink>{' '}
       kapsamında işlenmektedir. “Giriş Yap” butonuna basarak{' '}
-      <InlineTextLink onPress={() => openDocument('uyelik-sozlesmesi')}>Üyelik Sözleşmesi</InlineTextLink>
+      <InlineTextLink onPress={() => openDocument('membershipAgreement')}>Üyelik Sözleşmesi</InlineTextLink>
       ’ni ve{' '}
-      <InlineTextLink onPress={() => openDocument('kisisel-verilerin-korunmasi')}>
-        Gizlilik Politikası
-      </InlineTextLink>
+      <InlineTextLink onPress={() => openDocument('privacyPolicy')}>Gizlilik Politikası</InlineTextLink>
       ’nı okuduğunuzu ve kabul ettiğinizi onaylıyorsunuz.
     </Paragraph>
   );

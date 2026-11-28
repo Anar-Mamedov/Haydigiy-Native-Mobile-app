@@ -21,10 +21,11 @@ describe('LoginLegalNotice', () => {
     expect(screen.getByRole('link', { name: 'Gizlilik Politikası' })).toBeTruthy();
   });
 
+  // Aydınlatma Metni ve Gizlilik Politikası kayıt formundaki belgelerin aynısı olmalı (HMA-77)
   it.each([
-    ['Aydınlatma Metni', '/bilgi/aydinlatma-metni'],
+    ['Aydınlatma Metni', '/bilgi/kisisel-verilerin-korunmasi'],
     ['Üyelik Sözleşmesi', '/bilgi/uyelik-sozlesmesi'],
-    ['Gizlilik Politikası', '/bilgi/kisisel-verilerin-korunmasi'],
+    ['Gizlilik Politikası', '/bilgi/gizlilik-politikasi'],
   ])('opens %s on its info page', (label, route) => {
     renderWithTamagui(<LoginLegalNotice />);
 
