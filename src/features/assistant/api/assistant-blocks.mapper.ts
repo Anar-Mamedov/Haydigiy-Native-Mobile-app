@@ -56,6 +56,9 @@ const toButtonItem = (value: unknown): AssistantButtonItem | null => {
     label: str(raw.label),
     payload: str(raw.payload),
     disabled: raw.disabled === true,
+    // Web `c25e8d8e0`: adres yalnız wa.me deseniyse alınır; değilse düşer ve düğme normal seçim olur.
+    ...(isSafeWhatsappHref(raw.href) ? { href: raw.href } : {}),
+    ...(raw.icon === 'whatsapp' ? { icon: 'whatsapp' as const } : {}),
   };
 };
 

@@ -213,6 +213,45 @@ describe('Haydi Asistan sözleşmesi', () => {
     expect(listResult.issues).toEqual([{ code: 'bad_image', blockId: 'orders' }]);
   });
 
+  // Web `c25e8d8e0` + connect `95d8af8`: WhatsApp kategorisi düğmesi wa.me adresi ve logo taşır.
+  it('buttons öğesi: wa.me href ve whatsapp simgesi taşınır, desen dışı href ve bilinmeyen simge düşer', () => {
+    const href = 'https://wa.me/905327805100?text=Merhaba%2C%20WhatsApp%27tan%20yaz%C4%B1yorum';
+    const [block] = normalizeBlocks(
+      [
+        {
+          type: 'buttons',
+          id: 'menu',
+          layout: 'list',
+          items: [
+            { id: 'menu.wa', label: 'WhatsApp ile Yaz', payload: 'p1', kind: 'whatsapp', href, icon: 'whatsapp' },
+            { id: 'menu.bad', label: 'Kötü', payload: 'p2', href: 'https://evil.com/wa', icon: 'telegram' },
+            { id: 'menu.js', label: 'JS', payload: 'p3', href: 'javascript:alert(1)' },
+            { id: 'menu.orders', label: '📦 Siparişlerim', payload: 'p4' },
+          ],
+        },
+      ],
+      CTX,
+    ).blocks;
+
+    if (block.type !== 'buttons') throw new Error('blok türü beklenmiyor');
+    expect(block.items[0]).toStrictEqual({
+      id: 'menu.wa',
+      label: 'WhatsApp ile Yaz',
+      payload: 'p1',
+      disabled: false,
+      href,
+      icon: 'whatsapp',
+    });
+    expect(block.items[1]).toStrictEqual({ id: 'menu.bad', label: 'Kötü', payload: 'p2', disabled: false });
+    expect(block.items[2]).toStrictEqual({ id: 'menu.js', label: 'JS', payload: 'p3', disabled: false });
+    expect(block.items[3]).toStrictEqual({
+      id: 'menu.orders',
+      label: '📦 Siparişlerim',
+      payload: 'p4',
+      disabled: false,
+    });
+  });
+
   it('wa.me deseni bozuksa yedek Canlı Destek adresi kullanılır', () => {
     const [block] = normalizeBlocks(
       [
