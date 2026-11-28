@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Linking } from 'react-native';
 import { XStack, YStack } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
 import { MIN_TOUCH_TARGET } from '@/components/ui/icon-button';
@@ -7,6 +6,7 @@ import { WhatsappIcon } from '@/components/ui/whatsapp-icon';
 import type { AssistantTexts } from '@/types/assistant.types';
 import { useAssistantCopy } from '../../hooks/use-assistant-copy';
 import { trackAssistantEvent } from '../../services/assistant-events';
+import { openAssistantWhatsapp } from '../../services/assistant-whatsapp-link';
 import { splitLeadingEmoji } from '../../utils/assistant-label-emoji';
 import { AssistantMutedText } from '../assistant-surfaces';
 
@@ -40,8 +40,7 @@ export function AssistantLiveSupport({
   const { state, copy } = useAssistantCopy();
 
   const handleOpen = () => {
-    trackAssistantEvent('live_support_click', { blockId }, { flushNow: true });
-    Linking.openURL(href).catch(() => undefined);
+    openAssistantWhatsapp(href, { blockId });
     setShowBackup(true);
   };
 
