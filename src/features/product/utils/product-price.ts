@@ -45,7 +45,7 @@ function toFiniteNumber(value: number | null | undefined): number | undefined {
  */
 export function resolveProductDiscount(
   { discountRate, firstPrice, hasDiscount, price }: ProductDiscountInput,
-  surface: DiscountDisplaySurface = 'card',
+  surface: DiscountDisplaySurface,
 ): ProductDiscount {
   const rate = toFiniteNumber(discountRate);
   const previousPrice = toFiniteNumber(firstPrice);
