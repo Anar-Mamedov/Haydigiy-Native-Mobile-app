@@ -1,6 +1,10 @@
 /** Ürün fiyatının ekranda nasıl türetilip biçimlendirileceğini belirleyen saf kurallar. */
 
-import { getDiscountPercent, isDisplayableDiscountPercent } from '@/utils/discount-threshold';
+import {
+  type DiscountDisplaySurface,
+  getDiscountPercent,
+  isDisplayableDiscountPercent,
+} from '@/utils/discount-threshold';
 
 export type ProductDiscountInput = {
   /** İndirim yüzdesi (`discount_rate`). */
@@ -34,15 +38,15 @@ function toFiniteNumber(value: number | null | undefined): number | undefined {
  * yüzden böyle bir durumda normal fiyat düzenine geri düşülür. Aynı şekilde güncel
  * fiyattan yüksek olmayan bir `first_price` üstü çizili gösterilmez.
  *
- * %3 ve altındaki indirim de indirim sayılmaz (web `has_discount && discount_rate > 3`).
- * Oran gelmediyse eşik, üstü çizili fiyattan türetilen yüzdeyle uygulanır.
+ * Eşik yüzeye bağlıdır (`DISCOUNT_DISPLAY_THRESHOLDS`): liste kartında %3 ve altı indirim
+ * sayılmaz (web `has_discount && discount_rate > 3`), ürün detayında her pozitif indirim
+ * gösterilir (web `fd30ed0a6`, `discount_rate > 0`). Oran gelmediyse eşik, üstü çizili
+ * fiyattan türetilen yüzdeyle uygulanır.
  */
-export function resolveProductDiscount({
-  discountRate,
-  firstPrice,
-  hasDiscount,
-  price,
-}: ProductDiscountInput): ProductDiscount {
+export function resolveProductDiscount(
+  { discountRate, firstPrice, hasDiscount, price }: ProductDiscountInput,
+  surface: DiscountDisplaySurface = 'card',
+): ProductDiscount {
   const rate = toFiniteNumber(discountRate);
   const previousPrice = toFiniteNumber(firstPrice);
   const currentPrice = toFiniteNumber(price) ?? 0;
@@ -54,7 +58,7 @@ export function resolveProductDiscount({
     usableRate ??
     (usablePreviousPrice !== undefined ? getDiscountPercent(usablePreviousPrice, currentPrice) : undefined);
 
-  const isDiscounted = hasDiscount === true && isDisplayableDiscountPercent(effectiveRate);
+  const isDiscounted = hasDiscount === true && isDisplayableDiscountPercent(effectiveRate, surface);
 
   if (!isDiscounted) {
     return { isDiscounted: false };
