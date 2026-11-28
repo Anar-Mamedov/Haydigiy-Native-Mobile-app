@@ -113,6 +113,7 @@ describe('ProductCard', () => {
     expect(screen.queryByText(/^-%/)).toBeNull();
   });
 
+  // Web fd30ed0a6 eşiği yalnız ürün detayında 0'a indirdi; liste kartı hâlâ `discount_rate > 3`.
   it('shows the plain price for a discount of 3% or less, like the web', () => {
     renderWithTamagui(
       <ProductCard

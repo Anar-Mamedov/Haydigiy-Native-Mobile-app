@@ -89,15 +89,20 @@ describe('ProductStickyFooter', () => {
     expect(screen.getByText('199,90')).toBeTruthy();
   });
 
-  it('keeps the regular orange price box for a discount of 3% or less, like the web', () => {
+  // HMA-73 (web fd30ed0a6): detayda %3 ve altındaki indirim de yeşil indirim kutusuyla çizilir.
+  it.each([
+    [2, 203.9],
+    [3, 205.9],
+  ])('shows the discount box for a %i%% discount, like the web product detail', (rate, firstPrice) => {
     renderWithTamagui(
-      <ProductStickyFooter {...baseProps} discountRate={3} firstPrice={205.9} hasDiscount />,
+      <ProductStickyFooter {...baseProps} discountRate={rate} firstPrice={firstPrice} hasDiscount />,
     );
 
-    expect(screen.queryByTestId('product-sticky-footer-discount-price')).toBeNull();
-    expect(screen.queryByText('%3')).toBeNull();
-    expect(screen.queryByText('205,90 TL')).toBeNull();
-    expect(screen.getByText('199,90')).toBeTruthy();
+    expect(screen.getByTestId('product-sticky-footer-discount-price')).toBeTruthy();
+    expect(screen.getByText(`%${rate}`)).toBeTruthy();
+    expect(screen.getByText('199,90 TL')).toBeTruthy();
+    const struck = screen.getByText(`${firstPrice.toFixed(2).replace('.', ',')} TL`);
+    expect(StyleSheet.flatten(struck.props.style)?.textDecorationLine).toBe('line-through');
   });
 
   it.each([

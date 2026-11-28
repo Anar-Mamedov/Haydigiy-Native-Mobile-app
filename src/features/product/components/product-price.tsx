@@ -48,7 +48,7 @@ export function ProductCardPrice({
   price,
   testID,
 }: ProductPriceProps) {
-  const discount = resolveProductDiscount({ discountRate, firstPrice, hasDiscount, price });
+  const discount = resolveProductDiscount({ discountRate, firstPrice, hasDiscount, price }, 'card');
   const priceLabel = formatProductPrice(price);
   const firstPriceLabel = discount.firstPrice ? formatProductPrice(discount.firstPrice) : '';
 
@@ -123,7 +123,7 @@ export function ProductDetailDiscountPrice({
   scale = 1,
   testID,
 }: ProductPriceProps) {
-  const discount = resolveProductDiscount({ discountRate, firstPrice, hasDiscount, price });
+  const discount = resolveProductDiscount({ discountRate, firstPrice, hasDiscount, price }, 'detail');
   if (!discount.isDiscounted) return null;
 
   const priceLabel = formatProductPrice(price);

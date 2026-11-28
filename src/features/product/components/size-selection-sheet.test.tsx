@@ -87,6 +87,25 @@ describe('SizeSelectionSheet — price', () => {
       flexDirection: 'row',
     });
   });
+
+  // HMA-73 (web fd30ed0a6): listeden açılan hızlı ekle/detay penceresi de %3 ve altını indirim gösterir.
+  it('shows the discount box for a discount of 3% or less', () => {
+    renderWithTamagui(
+      <SizeSelectionSheet
+        {...sheetBaseProps}
+        discountRate={2}
+        firstPrice={356.99}
+        hasDiscount
+        price={349.99}
+        selectedVariant={null}
+        variants={[inStockVariant]}
+      />,
+    );
+
+    expect(screen.getByTestId('size-selection-sheet-discount-price')).toBeTruthy();
+    expect(screen.getByText('%2')).toBeTruthy();
+    expect(screen.getByText('356,99 TL')).toBeTruthy();
+  });
 });
 
 describe('SizeSelectionSheet — sold-out sizes', () => {

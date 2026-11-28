@@ -65,7 +65,7 @@ export function ProductStickyFooter({
   const scale = useFontScale(COMPACT_MAX_FONT_SCALE);
   const actionHeight = Math.round(FOOTER_ACTION_HEIGHT * scale);
 
-  const discount = resolveProductDiscount({ discountRate, firstPrice, hasDiscount, price });
+  const discount = resolveProductDiscount({ discountRate, firstPrice, hasDiscount, price }, 'detail');
   const showDiscount = originalPrice !== undefined && originalPrice > price;
 
   return (

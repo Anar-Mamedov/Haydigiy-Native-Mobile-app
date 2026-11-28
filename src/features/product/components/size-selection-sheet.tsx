@@ -82,12 +82,10 @@ export function SizeSelectionSheet({
   onNotifyMe,
 }: SizeSelectionSheetProps) {
   const insets = useSafeAreaInsets();
-  const discount = resolveProductDiscount({
-    discountRate,
-    firstPrice,
-    hasDiscount,
-    price: price ?? 0,
-  });
+  const discount = resolveProductDiscount(
+    { discountRate, firstPrice, hasDiscount, price: price ?? 0 },
+    'detail',
+  );
 
   const isSelectedVariantOutOfStock = Boolean(
     selectedVariant && (!selectedVariant.hasStock || selectedVariant.quantity < 1),
