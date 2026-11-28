@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { YStack, XStack, Button, Spinner } from 'tamagui';
 import { Paragraph } from '@/components/ui/app-paragraph';
-import { AppButton, AppCheckbox, DisclosureSheet, OtpCodeInput } from '@/components/ui';
+import { AppButton, AppCheckbox, OtpCodeInput } from '@/components/ui';
 import {
   useFastLoginInitMutation,
   useFastLoginVerifyMutation,
@@ -12,7 +12,6 @@ import { otpSchema } from '../schemas/auth.schema';
 import { useAuthStore } from '../store/use-auth-store';
 import { insiderTracker } from '@/features/insider/services/insider-tracker';
 import { analytics } from '@/features/analytics/services/analytics-dispatcher';
-import { KVKK_DISCLOSURE_TEXT, COMMERCIAL_CONSENT_TEXT } from '../constants/auth-texts';
 import {
   formatOtpCooldown,
   getOtpRateLimit,
@@ -20,6 +19,7 @@ import {
   parseOtpCooldownSeconds,
 } from '../utils/otp-delivery';
 import { useOtpCooldown } from '../hooks/use-otp-cooldown';
+import { useOpenAuthLegalDocument } from '../hooks/use-open-auth-legal-document';
 
 interface OtpVerificationProps {
   identifier: string;
@@ -61,8 +61,7 @@ export function OtpVerification({
   // Consents for fast login new user
   const [kvkkConsent, setKvkkConsent] = useState(false);
   const [commercialConsent, setCommercialConsent] = useState(false);
-  const [sheetContent, setSheetContent] = useState<{ title: string; text: string } | null>(null);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const openLegalDocument = useOpenAuthLegalDocument();
 
   useEffect(() => {
     startCooldown(initialCooldown);
@@ -194,15 +193,6 @@ export function OtpVerification({
     }
   };
 
-  const openDisclosureSheet = (type: 'kvkk' | 'commercial') => {
-    if (type === 'kvkk') {
-      setSheetContent({ title: 'AYDINLATMA METNİ', text: KVKK_DISCLOSURE_TEXT });
-    } else {
-      setSheetContent({ title: 'AÇIK RIZA METNİ', text: COMMERCIAL_CONSENT_TEXT });
-    }
-    setIsSheetOpen(true);
-  };
-
   return (
     <YStack gap="$5" width="100%" alignItems="center">
       <YStack gap="$1" width="100%">
@@ -245,7 +235,7 @@ export function OtpVerification({
                 color="$brand"
                 fontWeight="700"
                 textDecorationLine="underline"
-                onPress={() => openDisclosureSheet('kvkk')}
+                onPress={() => openLegalDocument('disclosure')}
               >
                 Aydınlatma Metni
               </Paragraph>
@@ -266,7 +256,7 @@ export function OtpVerification({
                 color="$brand"
                 fontWeight="700"
                 textDecorationLine="underline"
-                onPress={() => openDisclosureSheet('commercial')}
+                onPress={() => openLegalDocument('electronicMessage')}
               >
                 ticari ileti gönderilmesini
               </Paragraph>{' '}
@@ -337,13 +327,6 @@ export function OtpVerification({
           </Button>
         </XStack>
       </YStack>
-
-      <DisclosureSheet
-        open={isSheetOpen}
-        onOpenChange={setIsSheetOpen}
-        title={sheetContent?.title}
-        text={sheetContent?.text}
-      />
     </YStack>
   );
 }

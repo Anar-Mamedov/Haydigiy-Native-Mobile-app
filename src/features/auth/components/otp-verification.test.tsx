@@ -4,9 +4,10 @@ import { renderWithTamagui } from '@/test/render-with-tamagui';
 import { OtpVerification } from './otp-verification';
 
 const mockVerifyCode = jest.fn();
+const mockPush = jest.fn();
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ back: jest.fn(), canGoBack: () => false, push: jest.fn(), replace: jest.fn() }),
+  useRouter: () => ({ back: jest.fn(), canGoBack: () => false, push: mockPush, replace: jest.fn() }),
 }));
 
 jest.mock('tamagui', () => {
@@ -89,5 +90,30 @@ describe('OtpVerification profile flow', () => {
     expect(await screen.findByText(lockMessage)).toBeTruthy();
     expect(screen.getByText('03:55')).toBeTruthy();
     expect(screen.queryByText('Kodu Tekrar Gönder')).toBeNull();
+  });
+});
+
+describe('OtpVerification fast login consents', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  // Yeni üye onaylarındaki metinler kayıt formundakilerin aynısı olmalı (HMA-77)
+  it.each([
+    ['Aydınlatma Metni', '/bilgi/kisisel-verilerin-korunmasi'],
+    ['ticari ileti gönderilmesini', '/bilgi/ticari-elektronik-ileti'],
+  ])('opens the register form text behind “%s” for a new fast login user', (linkText, route) => {
+    renderWithTamagui(
+      <OtpVerification
+        flowType="fast-login"
+        identifier="5076534634"
+        initialCooldown={0}
+        isNewUser
+        onCancel={jest.fn()}
+        onSuccess={jest.fn()}
+      />,
+    );
+
+    fireEvent.press(screen.getByText(linkText));
+
+    expect(mockPush).toHaveBeenCalledWith(route);
   });
 });
