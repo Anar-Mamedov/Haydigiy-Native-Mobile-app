@@ -1,6 +1,5 @@
 import { COMMERCIAL_MESSAGE_CONSENT } from '@/features/agreements/data/commercial-message-consent';
 import { COOKIE_POLICY } from '@/features/agreements/data/cookie-policy';
-import { DISCLOSURE } from '@/features/agreements/data/disclosure';
 import { EXPLICIT_CONSENT } from '@/features/agreements/data/explicit-consent';
 import { KVKK_DISCLOSURE_NOTICE } from '@/features/agreements/data/kvkk-disclosure-notice';
 import { MEMBERSHIP_AGREEMENT } from '@/features/agreements/data/membership-agreement';
@@ -46,11 +45,6 @@ const INFO_DOCUMENTS: Record<InfoDocumentSlug, InfoDocument> = {
     title: 'Kullanım Koşulları',
     blocks: TERMS_OF_USE,
   },
-  'aydinlatma-metni': {
-    slug: 'aydinlatma-metni',
-    title: 'Aydınlatma Metni',
-    blocks: DISCLOSURE,
-  },
   'acik-riza-metni': {
     slug: 'acik-riza-metni',
     title: 'Açık Rıza Metni',
@@ -67,7 +61,6 @@ export const INFO_DOCUMENT_SLUGS = Object.keys(INFO_DOCUMENTS) as InfoDocumentSl
 
 /** Web'de karşılığı olmayan, derin bağlantıyla açılmayan belgeler. */
 export const APP_ONLY_INFO_DOCUMENT_SLUGS: readonly AppOnlyInfoDocumentSlug[] = [
-  'aydinlatma-metni',
   'acik-riza-metni',
   'ticari-elektronik-ileti',
 ];

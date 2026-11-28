@@ -30,9 +30,9 @@ describe('info documents registry', () => {
     expect(findInfoDocument('__proto__')).toBeNull();
   });
 
-  it('serves the disclosure text as an app-only page', () => {
-    expect(findInfoDocument('aydinlatma-metni')?.title).toBe('Aydınlatma Metni');
-    expect(WEB_PAGE_SLUGS).not.toContain('aydinlatma-metni');
+  it('keeps a single disclosure page so login and register cannot drift apart (HMA-77)', () => {
+    // Giriş ve kayıt Aydınlatma Metni için yalnız /bilgi/kisisel-verilerin-korunmasi sayfasını açar
+    expect(findInfoDocument('aydinlatma-metni')).toBeNull();
   });
 
   it('serves the register consent texts as app-only pages', () => {
