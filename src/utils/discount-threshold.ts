@@ -1,15 +1,31 @@
 /**
- * İndirim sayılmak için aşılması gereken en küçük yüzde. Web ile aynı kural: %3 ve altındaki
- * fark — ürün indirimi de paket kazancı da — indirim olarak gösterilmez; ne oran rozeti ne üstü
- * çizili fiyat ne de yeşil indirim düzeni çizilir, fiyat normal (turuncu) düzende kalır.
+ * İndirim sayılmak için aşılması gereken en küçük yüzde, yüzeye göre. Web ile aynı kural:
+ * - Liste/ızgara kartı ve paket kazancı: %3 ve altındaki fark indirim olarak gösterilmez; ne oran
+ *   rozeti ne üstü çizili fiyat ne de yeşil indirim düzeni çizilir, fiyat normal düzende kalır.
+ * - Ürün detayı (alt bar, beden seçim sayfası): her pozitif indirim gösterilir (web `fd30ed0a6`,
+ *   `discount_rate > 0`; webde liste kartları ve paket kazancı `> 3`te kaldı).
  *
- * Eşik yalnızca burada durur; ürün kartı, ürün detayı ve paket kutuları aynı kararı buradan alır.
+ * Eşikler yalnızca burada durur; ürün kartı, ürün detayı ve paket kutuları kararı buradan alır.
  */
-export const MIN_DISPLAYED_DISCOUNT_PERCENT = 3;
+export const DISCOUNT_DISPLAY_THRESHOLDS = {
+  bundle: 3,
+  card: 3,
+  detail: 0,
+} as const;
 
-/** Yüzde, ekranda indirim olarak gösterilecek kadar büyük mü (sonlu ve eşiğin üstünde). */
-export function isDisplayableDiscountPercent(percent: number | null | undefined): percent is number {
-  return typeof percent === 'number' && Number.isFinite(percent) && percent > MIN_DISPLAYED_DISCOUNT_PERCENT;
+/** İndirimin çizildiği yüzey; her yüzeyin eşiği `DISCOUNT_DISPLAY_THRESHOLDS`'tadır. */
+export type DiscountDisplaySurface = keyof typeof DISCOUNT_DISPLAY_THRESHOLDS;
+
+/** Yüzde, verilen yüzeyde indirim olarak gösterilecek kadar büyük mü (sonlu ve eşiğin üstünde). */
+export function isDisplayableDiscountPercent(
+  percent: number | null | undefined,
+  surface: DiscountDisplaySurface = 'card',
+): percent is number {
+  return (
+    typeof percent === 'number' &&
+    Number.isFinite(percent) &&
+    percent > DISCOUNT_DISPLAY_THRESHOLDS[surface]
+  );
 }
 
 /**

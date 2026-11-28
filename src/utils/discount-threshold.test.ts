@@ -1,31 +1,41 @@
 import {
+  DISCOUNT_DISPLAY_THRESHOLDS,
   getDiscountPercent,
   isDisplayableDiscountPercent,
-  MIN_DISPLAYED_DISCOUNT_PERCENT,
 } from './discount-threshold';
 
 describe('isDisplayableDiscountPercent', () => {
-  it('uses the same 3% threshold as the web', () => {
-    expect(MIN_DISPLAYED_DISCOUNT_PERCENT).toBe(3);
+  it('uses the same per-surface thresholds as the web', () => {
+    // Web: kart ve paket `> 3`, ürün detayı `> 0` (fd30ed0a6).
+    expect(DISCOUNT_DISPLAY_THRESHOLDS).toEqual({ bundle: 3, card: 3, detail: 0 });
   });
 
-  it('treats 3% or less as no discount', () => {
-    expect(isDisplayableDiscountPercent(0)).toBe(false);
-    expect(isDisplayableDiscountPercent(2)).toBe(false);
-    expect(isDisplayableDiscountPercent(3)).toBe(false);
+  it.each(['card', 'bundle'] as const)('treats 3%% or less as no discount on the %s surface', (surface) => {
+    expect(isDisplayableDiscountPercent(0, surface)).toBe(false);
+    expect(isDisplayableDiscountPercent(2, surface)).toBe(false);
+    expect(isDisplayableDiscountPercent(3, surface)).toBe(false);
   });
 
-  it('shows anything above 3% as a discount', () => {
-    expect(isDisplayableDiscountPercent(3.5)).toBe(true);
-    expect(isDisplayableDiscountPercent(4)).toBe(true);
-    expect(isDisplayableDiscountPercent(20)).toBe(true);
+  it.each(['card', 'bundle'] as const)('shows anything above 3%% as a discount on the %s surface', (surface) => {
+    expect(isDisplayableDiscountPercent(3.5, surface)).toBe(true);
+    expect(isDisplayableDiscountPercent(4, surface)).toBe(true);
+    expect(isDisplayableDiscountPercent(20, surface)).toBe(true);
   });
 
-  it('rejects missing or malformed values', () => {
-    expect(isDisplayableDiscountPercent(undefined)).toBe(false);
-    expect(isDisplayableDiscountPercent(null)).toBe(false);
-    expect(isDisplayableDiscountPercent(Number.NaN)).toBe(false);
-    expect(isDisplayableDiscountPercent(Number.POSITIVE_INFINITY)).toBe(false);
+  // HMA-73 (web fd30ed0a6): detayda %1–3'lük indirim de indirim olarak çizilir.
+  it('shows every positive discount on the product detail surface', () => {
+    expect(isDisplayableDiscountPercent(1, 'detail')).toBe(true);
+    expect(isDisplayableDiscountPercent(2, 'detail')).toBe(true);
+    expect(isDisplayableDiscountPercent(3, 'detail')).toBe(true);
+    expect(isDisplayableDiscountPercent(0, 'detail')).toBe(false);
+    expect(isDisplayableDiscountPercent(-5, 'detail')).toBe(false);
+  });
+
+  it.each(['card', 'bundle', 'detail'] as const)('rejects missing or malformed values on the %s surface', (surface) => {
+    expect(isDisplayableDiscountPercent(undefined, surface)).toBe(false);
+    expect(isDisplayableDiscountPercent(null, surface)).toBe(false);
+    expect(isDisplayableDiscountPercent(Number.NaN, surface)).toBe(false);
+    expect(isDisplayableDiscountPercent(Number.POSITIVE_INFINITY, surface)).toBe(false);
   });
 });
 
