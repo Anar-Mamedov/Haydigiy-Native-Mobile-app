@@ -17,7 +17,6 @@ export * from '@/components/ui/corner-chip-button';
 export * from '@/components/ui/count-badge';
 export * from '@/components/ui/deferred-mount';
 export * from '@/components/ui/discount-rate-badge';
-export * from '@/components/ui/disclosure-sheet';
 export * from '@/components/ui/empty-state';
 export * from '@/components/ui/filter-checkbox';
 export * from '@/components/ui/header-back-button';
