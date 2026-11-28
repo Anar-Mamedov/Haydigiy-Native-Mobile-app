@@ -23,7 +23,7 @@ export type BundleSavings = {
  */
 export function resolveBundleSavings(summary: BundleSummary): BundleSavings {
   const rate = summary.savingsPercent;
-  const hasSavings = summary.savings > 0 && isDisplayableDiscountPercent(rate);
+  const hasSavings = summary.savings > 0 && isDisplayableDiscountPercent(rate, 'bundle');
 
   return {
     discountRate: hasSavings ? rate : undefined,
@@ -63,5 +63,5 @@ export function resolveBundleListingSavings(
   if (!(product.price > 0) || itemsTotal <= product.price) return null;
 
   const savingsPercent = getDiscountPercent(itemsTotal, product.price);
-  return isDisplayableDiscountPercent(savingsPercent) ? { itemsTotal, savingsPercent } : null;
+  return isDisplayableDiscountPercent(savingsPercent, 'bundle') ? { itemsTotal, savingsPercent } : null;
 }
